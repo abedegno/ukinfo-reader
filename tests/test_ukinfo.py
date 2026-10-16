@@ -111,7 +111,9 @@ class DatabaseTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             for name in ("Uk1.idx", "Ukdemo.dat"):
                 (Path(directory) / name).write_bytes(b"synthetic placeholder")
-            with self.assertRaisesRegex(UnsupportedEditionError, "earlier format is unsupported"):
+            with self.assertRaisesRegex(
+                UnsupportedEditionError, "Unrecognized edition or incomplete files"
+            ):
                 identify_edition(directory)
 
     def test_cli_uses_only_synthetic_records(self):

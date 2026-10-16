@@ -1,0 +1,89 @@
+{
+  "edition": "se-pcf78-1998-01",
+  "reader_version": "0.2.0",
+  "validated_at": "2026-10-16T15:11:44.535069+00:00",
+  "elapsed_seconds": 48.14,
+  "sha256": {
+    "Uk1.idx": "16beac35d7aa3dfea8a44c848b5f9148e8e11b8ab433325a1f71a94b33095cc7",
+    "Ukdemo.dat": "7016525fe30110ed9dd15d5b0d5b17e29667496b766cd5fc90a16780d0985bcd",
+    "d1.dat": "f5fb840dfc8b1ddd78ad617ba9e623d63e43e358aa137e94d449376549edf09d",
+    "d2.dat": "92aee9a144ea724e19ebd2ce3faabb6511f35b9575522069af806cccd3e4309b",
+    "d3.dat": "be17e492a4ebf0f68c8d47c9569147df7e97096f7724a67a15077edc21ba563b",
+    "d4.dat": "32dcaa41ce31e790d6cc6fe760d4185c018a1ac35504e8cb294c3a8be656c03a",
+    "d5.idx": "4da5d4740a0815a8a4b9cac46a4188c8867418230c8a53e4e65b87e79f30d757",
+    "d6.dat": "19ddd4cd62fbc0ed7129e39bf37afc41889d0223c61fb9b53c4d51363ec8adf0",
+    "d7.dat": "faf20038dc387880c54ae3fd8c365d9315ddc2fa1cb0d8c491ed28db497f14a6"
+  },
+  "totals": {
+    "physical_records": 19018604,
+    "index_keys": 19018492,
+    "indexed_records": 19018491,
+    "unindexed_records": 113,
+    "entries": 27983545,
+    "building_names": 307914,
+    "place_navigation_offsets": 23711,
+    "dictionaries": {
+      "place": 23844,
+      "surname": 305054,
+      "firstName": 228118,
+      "houseno": 9888,
+      "postcode": 1164520,
+      "street": 283148
+    }
+  },
+  "indexed_records_by_flags": [
+    439,
+    440059,
+    7608919,
+    399564,
+    135,
+    407700,
+    10028561,
+    133114
+  ],
+  "source_issues": {
+    "mismatched_index_pointers": [
+      {
+        "index_ordinal": 3402050,
+        "pointer": 150994689
+      }
+    ],
+    "place_navigation_mismatches": [
+      {
+        "dictionary_place_id": 19899,
+        "record_place_id": 19898,
+        "pointer": 259849361
+      }
+    ],
+    "ambiguous_place_records": 275,
+    "ambiguous_place_entries": 433,
+    "invalid_surname_code": "002c22",
+    "invalid_surname_records": 3,
+    "invalid_surname_entries": 3,
+    "nonstandard_postcode_dictionary_values": 37,
+    "nonstandard_postcode_records": 13,
+    "nonstandard_postcode_entries": 16
+  },
+  "checks": [
+    "source_sha256",
+    "fixed_dictionary_bounds_and_text",
+    "postcode_street_references",
+    "place_hierarchy_references",
+    "place_navigation_offsets_agree_except_reported_source_defect",
+    "leaf_chain_links_counts_and_payloads",
+    "index_key_order",
+    "index_record_key_agreement_except_reported_source_defect",
+    "unique_index_pointers",
+    "contiguous_physical_record_coverage",
+    "index_pointers_are_record_boundaries",
+    "all_record_dictionary_references"
+  ],
+  "limitations": [
+    "One mismatched index pointer is excluded from queries and exports.",
+    "Unindexed physical records are excluded; their historical status is unknown.",
+    "Invalid source surname references are emitted as null with the raw code.",
+    "Nonstandard source postcodes are preserved and flagged.",
+    "Ambiguous place references are retained as decoded and flagged.",
+    "No comparison against a running original application."
+  ]
+}

@@ -16,13 +16,13 @@ with Database('extracted') as db:
         process(record)  # Your own analysis function.
 ```
 
-`Database` selects a candidate edition using exact file sizes. Only the release listed in
-[Supported editions](editions.md) is supported. `edition.verify(directory)` confirms exact
-source identity. The library opens both source files read-only and memory-maps them; using
+`Database` selects a candidate edition using exact file sizes. Only the releases listed in
+[Supported editions](editions.md) are supported. `edition.verify(directory)` confirms exact
+source identity. The library opens the required source files read-only and memory-maps them; using
 a context manager closes the mappings and file handles even when your code raises an error.
 Do not use the object after closing it.
 
-## Methods
+## SE 4.0 methods
 
 - `column(segment, field)`: decoded list for a field name or integer field ID. Treat this
   cached list as read-only. It contains stored column values; relationship arrays include
@@ -51,3 +51,28 @@ unknown field names raise `KeyError`.
 
 The low-level codec functions are implementation details. Their format and regression evidence
 are documented in [SE 4.0](formats/se4.md).
+
+## PC Format 78 API
+
+`Database(directory)` dispatches explicitly by `edition.format`. For the earlier release,
+it returns a `PCF78Database`, with `format == 'pcf78'`; the SE 4.0 object has `format == 'se4'`.
+It supports the same context manager, `edition.verify()` and `close()` operations. It has
+no SE 4.0 `segment_count`, `column()` or `sector()` method.
+
+```python
+with Database('extracted78') as db:
+    for row in db.search(surname='Smith', first_name='John', sector='AB10 1'):
+        process(row)
+    # db.records() streams all indexed entries in original index order.
+```
+
+`search(surname=None, first_name=None, postcode=None, sector=None)` combines exact filters
+with AND. Surname lookup uses the original index; searches without a surname scan it.
+`records()` yields the same stream as `search()` with no filters. `fields` describes output
+names. `decode_record(offset)` returns raw references for one physical record; it does not
+establish that the record belongs to the live index. This low-level method is intended for
+format research. [Record fields, joins and anomalies](formats/pcf78.md) are edition-specific.
+
+`validate(directory)` selects the format's complete validator. Earlier-disc progress callbacks
+receive `(completed_bytes, total_bytes, entries)`; SE 4.0 callbacks receive
+`(completed_segments, total_segments, entries)`. Reports use different format-specific totals.

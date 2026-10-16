@@ -1,6 +1,7 @@
 # Adding support for another edition
 
-Currently, only **SE 4.0 from PC Format 94, April 1999** is supported. The reader rejects
+Currently, **PC Format 78 (January 1998)** and **SE 4.0 from PC Format 94 (April 1999)**
+are supported. The reader rejects
 unknown database sizes and verifies exact source hashes on request. This prevents a familiar
 filename or a partly readable table from being mistaken for established compatibility.
 
@@ -33,7 +34,9 @@ The implementation is organized as:
 |---|---|
 | `editions.py` | Exact release identities, candidate selection and SHA-256 verification |
 | `codecs.py` | SE 4.0 binary primitives with small synthetic regression tests |
-| `reader.py` | Memory mapping, schema/block reading, columns, records and relationship checks |
+| `reader.py` | Explicit decoder dispatch and SE 4.0 schema, blocks, columns and joins |
+| `pcf78.py`, `ctree.py` | Earlier release's records, dictionaries and B-tree leaves |
+| `pcf78_validation.py` | Earlier release's complete validation and source anomaly accounting |
 | `cli.py` | User-facing search and export |
 | `validation.py` | Whole-disc validation and a metadata-only report |
 
@@ -43,8 +46,8 @@ by edition; avoid speculative conditionals based on dates or filenames. Share bi
 only when their behavior is verified to be the same. Keep edition-specific field names and
 uncertain semantics documented.
 
-The current registry intentionally has one decoder family; a general multi-format plugin
-system has not been implemented in advance of evidence from another release.
+The registry names the decoder family explicitly. Add a new family only when the source
+evidence requires it; preserve the public CLI filters while documenting edition-specific APIs.
 
 ## 4. Test with invented fixtures
 
@@ -63,7 +66,8 @@ not done. Do not advertise counts as unique people or households without support
 
 Run the new decoder locally across the whole release. Save its data-free JSON report under
 `docs/validation/<edition-id>.json`, including hashes, counts, reader version and checks run.
-Run the existing SE 4.0 regression tests and full validation after shared decoder changes.
+Run regression tests for both existing editions. Repeat their full validation after changes
+to shared decoding behavior.
 
 ## 6. Declare support
 

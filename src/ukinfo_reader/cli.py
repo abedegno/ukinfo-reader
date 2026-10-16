@@ -25,7 +25,11 @@ def run():
         action="store_true",
         help="identify the release and verify source SHA-256 hashes",
     )
-    p.add_argument("--data", default="extracted", help="directory containing ukid.dat and ukid.idx")
+    p.add_argument(
+        "--data",
+        default="extracted",
+        help="directory containing the edition's extracted database files",
+    )
     p.add_argument("--segment", type=int, help="restrict to one numbered segment")
     p.add_argument("--sector", help='restrict to a postcode sector, e.g. "AB10 1"')
     p.add_argument("--surname", help="exact surname, ignoring case")
@@ -70,6 +74,35 @@ def run():
                     dict(edition=db.edition.id, title=db.edition.title, sha256=hashes), indent=2
                 )
             )
+            return
+        if db.format == "pcf78":
+            if args.segment is not None or args.field:
+                p.error("PC Format 78 has no SE 4.0 segments or columns")
+            if args.schema:
+                print(json.dumps(dict(edition=db.edition.id, fields=db.fields), indent=2))
+                return
+            print(
+                "Source note: known mismatched index keys are excluded; unresolved source "
+                "values are preserved and flagged. See docs/formats/pcf78.md.",
+                file=sys.stderr,
+            )
+            rows = db.search(
+                surname=args.surname,
+                first_name=args.first_name,
+                postcode=args.postcode,
+                sector=args.sector,
+            )
+            writer = None
+            for emitted, row in enumerate(rows, 1):
+                if args.format == "jsonl":
+                    print(json.dumps(row, ensure_ascii=False))
+                else:
+                    if writer is None:
+                        writer = csv.DictWriter(sys.stdout, fieldnames=list(row))
+                        writer.writeheader()
+                    writer.writerow(row)
+                if args.limit and emitted >= args.limit:
+                    break
             return
         if args.segment is not None and args.segment >= db.segment_count:
             p.error(f"--segment must be below {db.segment_count}")

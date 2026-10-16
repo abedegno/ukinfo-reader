@@ -20,6 +20,15 @@ class Database:
     Use ``db.edition.verify(directory)`` to confirm exact source fingerprints.
     """
 
+    format = "se4"
+
+    def __new__(cls, directory="extracted"):
+        if cls is Database and identify_edition(directory).format == "pcf78":
+            from .pcf78 import PCF78Database
+
+            return PCF78Database(directory)
+        return super().__new__(cls)
+
     def __init__(self, directory="extracted"):
         self._resources = ExitStack()
         try:

@@ -21,6 +21,10 @@ def validate(directory="extracted", progress=None):
     start = time.monotonic()
     totals = dict(postcodes=0, localities=0, addresses=0, entries=0)
     with Database(directory) as db:
+        if db.format == "pcf78":
+            from .pcf78_validation import validate_database
+
+            return validate_database(db, directory, progress)
         hashes = db.edition.verify(directory)
         last = 0
         for segment in range(db.segment_count):
@@ -68,7 +72,7 @@ def main():
     args = parser.parse_args()
 
     def progress(done, total, entries):
-        print(f"{done}/{total} segments; {entries:,} entries", file=sys.stderr)
+        print(f"{done}/{total} units; {entries:,} entries", file=sys.stderr)
 
     try:
         report = validate(args.data, progress=progress)

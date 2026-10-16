@@ -2,17 +2,12 @@
 
 | Edition ID | Product | Distribution | Status |
 |---|---|---|---|
+| `se-pcf78-1998-01` | UK-Info Disk SE | PC Format issue 78, January 1998 | Supported; entire database validated with documented source defects |
 | `se4-pcf94-1999-04` | UK-Info Disk SE 4.0 | PC Format issue 94, April 1999 | Supported; entire database validated |
 
 **No later editions, or Standard/Pro releases, are currently supported.** Matching product
 names or familiar filenames do not establish format compatibility. To propose another
 release, follow [Adding editions](adding-editions.md).
-
-## Investigated editions
-
-| Distribution | Status | Evidence |
-|---|---|---|
-| PC Format 78, January 1998, UK-Info Disk SE | Unsupported; different layout | [Initial investigation](pcf78-investigation.md) |
 
 ## Identify your copy
 
@@ -21,7 +16,7 @@ ukinfo-read --editions
 ukinfo-read --data extracted --identify
 ```
 
-Ordinary queries select the edition profile by the exact sizes of both database files.
+Ordinary queries select the edition profile by the exact sizes of all required database files.
 `--identify` and `ukinfo-validate` additionally verify their SHA-256 fingerprints. Use these
 commands to establish byte-for-byte identity. Unknown sizes are rejected with an unsupported
 edition error. A checksum mismatch may indicate an altered, damaged or different release;
@@ -52,3 +47,22 @@ No unshield code, original binaries, disassemblies or database contents are dist
 The public implementation uses Python's standard library.
 
 See the [format evidence](formats/se4.md) and [validation report](validation/se4-pcf94-1999-04.json).
+
+## PC Format 78, January 1998
+
+Source: [Internet Archive item `pc-format-78`](https://archive.org/details/pc-format-78), file
+`PC_FORMAT_78.iso`. Its size is 518,256,640 bytes and SHA-1 is
+`9d41302896f6e73ead112a4206080aaaa62c00f0`. These match the item's
+[file metadata](https://archive.org/metadata/pc-format-78). A downloaded copy with a browser-added
+`(1)` filename suffix has the same identity. ISO mastering dates are November 1997;
+`Uk1.idx` and `Ukdemo.dat` carry September 1997 timestamps. The underlying records' reference
+date is unverified. The program is named `UK-Info Disk SE.exe`; a numbered SE release
+has not been established from this source.
+
+Nine files are required: `Uk1.idx`, `Ukdemo.dat`, `d1.dat`, `d2.dat`, `d3.dat`, `d4.dat`,
+`d5.idx`, `d6.dat`, `d7.dat`. Exact byte sizes and SHA-256 values appear in the
+[edition registry](../src/ukinfo_reader/editions.py) and [full report](validation/se-pcf78-1998-01.json).
+No original program, runtime DLL or installer is required to use the Python reader.
+
+The decoder was reconstructed by static inspection of the executable and `ctreestd.dll`,
+then checked against the entire database. See [the format and source defects](formats/pcf78.md).

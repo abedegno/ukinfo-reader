@@ -24,7 +24,7 @@ macOS and Windows. The optional development tools are separate from runtime depe
 ## Working with a source disc
 
 Keep source material under `private/`, `data/` or `extracted/`; those directories are ignored.
-To run the local regression tests against the supported disc:
+To run the local regression tests against the SE 4.0 disc:
 
 ```sh
 # macOS/Linux:
@@ -32,6 +32,9 @@ UKINFO_TEST_DATA=extracted python -m unittest discover -s tests -v
 # PowerShell: $env:UKINFO_TEST_DATA='extracted'; python -m unittest discover -s tests -v
 ukinfo-validate --data extracted --output validation.json
 ```
+
+For the earlier release, use `UKINFO_TEST_DATA_78=private/pcf78` with the same test command,
+and `ukinfo-validate --data private/pcf78 --output validation.json`.
 
 Only publish a validation report after checking that it contains metadata, hashes and counts.
 Do not contribute directory records, real personal information, original images or programs,
