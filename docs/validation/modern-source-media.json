@@ -1,0 +1,22 @@
+[
+  {
+    "file": "PCF175DVD1_06_05.7z",
+    "bytes": 4388913561,
+    "sha256": "2277cd27f77cdc1f7b820fe28431d255b42bc68be96ac89bb6b8843fae6f182a"
+  },
+  {
+    "file": "PCF175DVD2_06_05.7z",
+    "bytes": 4138795168,
+    "sha256": "8ca0380adac96490283b0b6fcfe25b8c1894b2c68ae4eac167f76e18085a1c3f"
+  },
+  {
+    "file": "PCF175DVD2_06_05.ISO",
+    "bytes": 4326948864,
+    "sha256": "7d4f33e19e17fb27e4d344f61a9a4e18b369bc5533ae7ca0f20cd1a562b87b5c"
+  },
+  {
+    "file": "PCP218_DVD.iso",
+    "bytes": 4508475392,
+    "sha256": "9f638f8fb8eca9de6c2efe89d39a3f6e92d84ebe972721349bfb194d8c55f30a"
+  }
+]

@@ -1,0 +1,163 @@
+{
+  "edition": "se2005-pcf175-2005-06",
+  "title": "UK-Info Disk V10.5 SE \u2014 PC Format 175, June 2005",
+  "status": "experimental-structural-only",
+  "files": {
+    "uk.dat": {
+      "bytes": 347726510,
+      "sha256": "f20130f0034ad7e8e3f136945a23acd603b436fac3f9a540d9c488723b81e485"
+    },
+    "d2.dat": {
+      "bytes": 27668480,
+      "sha256": "63a4cf5bf71d6c3dd588ed30db671a34ab83259f67fbb1fc2636cc2051817090"
+    },
+    "d3.dat": {
+      "bytes": 40697856,
+      "sha256": "c586e24bca1559bc6608d83aef17362d0fb9c7096dffb8c1b2cb1b90d654c1cc"
+    },
+    "d4.dat": {
+      "bytes": 286720,
+      "sha256": "6d229adfbe04d4fd2e7d18e88bae875f1c8824a5dc3269482f078ea436350e71"
+    },
+    "d6new.dat": {
+      "bytes": 37773312,
+      "sha256": "e7a5a68c2ecd8e3ffd3fd128b2beb6f4f93431801cf88136e3234fe1a58dcf63"
+    },
+    "ukspos.idx": {
+      "bytes": 11735040,
+      "sha256": "fba13eb6b3b128ad8e6aaf6bda0d3d7d4978e13f680d351741dfeee567adf3e7"
+    },
+    "ukupd.dat": {
+      "bytes": 19929983,
+      "sha256": "e32752ce8eef5594aa047ed6e44ecbcdba68cb7599d4ffe12a565de6efcda629"
+    },
+    "d2upd.dat": {
+      "bytes": 19398656,
+      "sha256": "9564de3d9f50b839e5b1356208645a777e0e77a7ec9764f551c1836a9a17a703"
+    },
+    "d3upd.dat": {
+      "bytes": 3645440,
+      "sha256": "3b8c0ac205f7424187ef3b60de2136225cd94e4ef4a90e40822b074445791e88"
+    },
+    "d4upd.dat": {
+      "bytes": 180224,
+      "sha256": "e05abd0fd7f729f1320fd70c1726f4e02d4e3655d4119e3ace5d56518aac4c43"
+    },
+    "d6newupd.dat": {
+      "bytes": 37773312,
+      "sha256": "00507ded24d67941ffd06f5a1ee27f71883d78274e09ccd58a046fdbefe8f1b9"
+    },
+    "uksposupd.idx": {
+      "bytes": 2347008,
+      "sha256": "740428aa0eb4d18c5c013016b5edc92669f0722d3b9852c48967a05403c0b2d7"
+    },
+    "delr.idx": {
+      "bytes": 3149824,
+      "sha256": "bd0ab6c719549e3b8905fa4cda71fb756330d992155788ddee70ef059ac8096b"
+    }
+  },
+  "streams": {
+    "uk.dat": {
+      "bytes": 347726510,
+      "physical_records": 25760148,
+      "stored_name_codes": 37201126,
+      "kind_counts": {
+        "0": 13617926,
+        "3": 5149266,
+        "4": 4857007,
+        "5": 2135949
+      },
+      "maximum_dictionary_ids": {
+        "name": 1271713,
+        "postcode": 1716747,
+        "house": 23349
+      },
+      "absent_dictionary_ids": {
+        "name": 9552,
+        "postcode": 0,
+        "house": 2454578
+      },
+      "surname_groups": 813668,
+      "unindexed_prefix_bytes": 0,
+      "record_boundaries_valid": true,
+      "dictionary_references_valid": true,
+      "surname_range_references_valid": true,
+      "deletion_references_valid": true,
+      "deletion_index_keys": 377311
+    },
+    "ukupd.dat": {
+      "bytes": 19929983,
+      "physical_records": 1371048,
+      "stored_name_codes": 1371048,
+      "kind_counts": {
+        "0": 1,
+        "3": 1360264,
+        "4": 8290,
+        "5": 2493
+      },
+      "maximum_dictionary_ids": {
+        "name": 82784,
+        "postcode": 1716747,
+        "house": 8764
+      },
+      "absent_dictionary_ids": {
+        "name": 1579,
+        "postcode": 1,
+        "house": 192516
+      },
+      "surname_groups": 186846,
+      "unindexed_prefix_bytes": 14,
+      "record_boundaries_valid": true,
+      "dictionary_references_valid": true,
+      "surname_range_references_valid": true
+    }
+  },
+  "dictionaries": {
+    "d2.dat": {
+      "first_record": 2312,
+      "width": 34,
+      "count": 813697
+    },
+    "d3.dat": {
+      "first_record": 2272,
+      "width": 32,
+      "count": 1271713
+    },
+    "d4.dat": {
+      "first_record": 2268,
+      "width": 12,
+      "count": 23480
+    },
+    "d6new.dat": {
+      "first_record": 2310,
+      "width": 22,
+      "count": 1716747
+    },
+    "d2upd.dat": {
+      "first_record": 2322,
+      "width": 54,
+      "count": 359188
+    },
+    "d3upd.dat": {
+      "first_record": 2332,
+      "width": 44,
+      "count": 82784
+    },
+    "d4upd.dat": {
+      "first_record": 2300,
+      "width": 20,
+      "count": 8764
+    },
+    "d6newupd.dat": {
+      "first_record": 2310,
+      "width": 22,
+      "count": 1716747
+    }
+  },
+  "limitations": [
+    "Physical source records and stored name codes are not live directory totals.",
+    "Address joins, name flag semantics and business records are not validated.",
+    "Normal Database/search/export APIs do not support this source.",
+    "2005 deletion keys are structurally decoded but not applied; base and update streams are not merged."
+  ]
+}

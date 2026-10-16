@@ -15,6 +15,11 @@ Both complete source databases have been validated, with [known early-disc sourc
 reported explicitly. Other editions, years, Standard and Pro releases are not yet supported. Later-edition support
 is welcome; each release needs its own identification and validation evidence.
 
+**Experimental archaeology:** the PC Plus 218 UK-Info 2004 SE and PC Format 175
+UK-Info V10.5 SE (2005) sources have separate [structural decoders](docs/formats/modern-se.md)
+and `ukinfo-inspect` reports. These editions are **not yet supported by normal searches
+or exports**. Their physical record counts must not be treated as live directory totals.
+
 This repository contains original reader code, format documentation and synthetic tests.
 The disc image, original software, database and exported directory records are excluded.
 

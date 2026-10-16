@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ukinfo-reader"
-version = "0.2.0"
+version = "0.3.0"
 description = "A documented Python reader for historical UK-Info Disk databases"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -24,6 +24,7 @@ classifiers = [
 [project.scripts]
 ukinfo-read = "ukinfo_reader.cli:main"
 ukinfo-validate = "ukinfo_reader.validation:main"
+ukinfo-inspect = "ukinfo_reader.modern_inspect:main"
 
 [project.urls]
 Repository = "https://github.com/abedegno/ukinfo-reader"

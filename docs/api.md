@@ -22,6 +22,25 @@ source identity. The library opens the required source files read-only and memor
 a context manager closes the mappings and file handles even when your code raises an error.
 Do not use the object after closing it.
 
+## Experimental 2004/2005 structural inspection
+
+These sources are not accepted by `Database`. To reproduce aggregate checks of an exact
+extracted experimental source:
+
+```python
+from ukinfo_reader.modern_inspect import inspect
+
+report = inspect('private/2004-inspect')
+assert report['status'] == 'experimental-structural-only'
+print(report['streams']['uk.dat']['physical_records'])
+```
+
+`inspect()` verifies source fingerprints and scans the entire residential stream. It returns
+metadata and counts, with explicit limitations. It does not return directory entries.
+The lower-level record, fixed-table and index primitives are documented in
+[the experimental format notes](formats/modern-se.md). They retain raw values and do not
+apply address joins or merge the 2005 base/update streams.
+
 ## SE 4.0 methods
 
 - `column(segment, field)`: decoded list for a field name or integer field ID. Treat this

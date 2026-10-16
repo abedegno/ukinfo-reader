@@ -9,6 +9,17 @@
 names or familiar filenames do not establish format compatibility. To propose another
 release, follow [Adding editions](adding-editions.md).
 
+## Experimental sources
+
+| Source ID | Product and distribution | Available |
+|---|---|---|
+| `se2004-pcp218-2004-07` | UK-Info 2004 SE, PC Plus 218 | Physical residential decoder, fixed tables, surname indexes, full structural inspection |
+| `se2005-pcf175-2005-06` | UK-Info Disk V10.5 SE, PC Format 175 | Same primitives for separate base/update streams; deletion index structure |
+
+These sources are deliberately outside `SUPPORTED_EDITIONS`. `Database`, `ukinfo-read`
+and `ukinfo-validate` continue to reject them. Use `ukinfo-inspect` for aggregate structural
+reports; it does not produce search results. See [extraction, evidence and remaining work](formats/modern-se.md).
+
 ## Identify your copy
 
 ```sh

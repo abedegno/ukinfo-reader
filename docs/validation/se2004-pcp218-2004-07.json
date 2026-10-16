@@ -1,0 +1,84 @@
+{
+  "edition": "se2004-pcp218-2004-07",
+  "title": "UK-Info 2004 SE \u2014 PC Plus 218, July 2004",
+  "status": "experimental-structural-only",
+  "files": {
+    "uk.dat": {
+      "bytes": 540263828,
+      "sha256": "9e808616da93dff7e376b26e8244af8b878da4e8cf42b2c70d2d20a3d5ef2336"
+    },
+    "d2.dat": {
+      "bytes": 23515136,
+      "sha256": "6a1b4e4bbb5889489b20682264ee4bceda50c3f23a0e97fda3904abeda7d8baa"
+    },
+    "d3.dat": {
+      "bytes": 40742912,
+      "sha256": "b3b3ea40d8d1b3a7fb2787c9a9715b6192460efa0045c19e714decfa8bc79cbb"
+    },
+    "d4.dat": {
+      "bytes": 524288,
+      "sha256": "4a962e8042303c189e59369de07a3c4f7250f427bb68ccc6ced45a1850826f97"
+    },
+    "d6new.dat": {
+      "bytes": 35745792,
+      "sha256": "f639146a7b248859829897b5b968288bdef8614a04bb287aae5e248727470368"
+    },
+    "ukspos.idx": {
+      "bytes": 5394432,
+      "sha256": "4cf0246011670b444dc55f274d46b5b91a9109146b471ba7e66d52dd646edd4a"
+    }
+  },
+  "streams": {
+    "uk.dat": {
+      "bytes": 540263828,
+      "physical_records": 46227729,
+      "stored_name_codes": 53936981,
+      "kind_counts": {
+        "0": 36790735,
+        "5": 9436994
+      },
+      "maximum_dictionary_ids": {
+        "name": 1939986,
+        "postcode": 1624563,
+        "house": 51883
+      },
+      "absent_dictionary_ids": {
+        "name": 11,
+        "postcode": 0,
+        "house": 3939859
+      },
+      "surname_groups": 858089,
+      "unindexed_prefix_bytes": 9,
+      "record_boundaries_valid": true,
+      "dictionary_references_valid": true,
+      "surname_range_references_valid": true
+    }
+  },
+  "dictionaries": {
+    "d2.dat": {
+      "first_record": 2304,
+      "width": 24,
+      "count": 979557
+    },
+    "d3.dat": {
+      "first_record": 2310,
+      "width": 21,
+      "count": 1939986
+    },
+    "d4.dat": {
+      "first_record": 2270,
+      "width": 10,
+      "count": 52194
+    },
+    "d6new.dat": {
+      "first_record": 2310,
+      "width": 22,
+      "count": 1624563
+    }
+  },
+  "limitations": [
+    "Physical source records and stored name codes are not live directory totals.",
+    "Address joins, name flag semantics and business records are not validated.",
+    "Normal Database/search/export APIs do not support this source."
+  ]
+}

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0
+
+- Add experimental structural decoders for the exact 2004 SE / PC Plus 218 and
+  V10.5 SE / PC Format 175 sources, outside the normal query edition registry.
+- Recover physical residential records, c-tree prefix/fill compression and fixed-table resources.
+- Add `ukinfo-inspect` for hash verification and aggregate full-stream structural checks.
+- Document source differences and unindexed prefixes; keep unverified joins and update
+  semantics explicit. No normal search/export support is claimed for these editions.
+- Add invented fixtures covering every residential field condition and corrupt inputs.
+
 ## 0.2.0
 
 - Add a separate decoder for UK-Info Disk SE from PC Format 78, January 1998.
