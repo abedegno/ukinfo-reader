@@ -201,3 +201,76 @@ def decode_residence(data, offset=0):
         e,
         f,
     )
+
+
+@dataclass(frozen=True)
+class PhysicalBusiness:
+    """Business source values; word codes are one-based byte offsets in dd.dat."""
+
+    offset: int
+    length: int
+    flags: int
+    kind: int
+    word_codes: tuple[int, ...]
+    postcode_id: int
+    house_id: int
+    lob_reference: int | None
+    sic_id: int | None
+    building_reference: int | None
+    subbuilding_id: int | None
+    subscriber: int | None
+    area: int | None
+    fax_area: int | None
+    fax_subscriber: int | None
+    precision: int
+
+
+def decode_business(data, offset=0):
+    """Decode the V10.5 business stream, checking every optional field's bounds."""
+    if offset < 0 or offset + 10 > len(data):
+        raise FormatError("Truncated modern business record")
+    flags, control = data[offset : offset + 2]
+    count = (control & 15) + 1
+    cursor = offset + 7
+
+    def take(width, present=True):
+        nonlocal cursor
+        if not present:
+            return None
+        if cursor + width > len(data):
+            raise FormatError("Truncated modern business record")
+        value = int.from_bytes(data[cursor : cursor + width], "little")
+        cursor += width
+        return value
+
+    codes = tuple(take(3) for _ in range(count))
+    lob = take(3, flags & 1)
+    sic = take(2, flags & 2)
+    building = take(3, flags & 4)
+    if building is not None and control & 64:
+        building |= 1 << 24
+    flat = take(2, flags & 8)
+    phone = take(3, flags & 16)
+    area = take(2, flags & 32)
+    fax_area = take(3, flags & 64)
+    fax = take(3, flags & 128)
+    precision = take(1, control & 128) or 0
+    return PhysicalBusiness(
+        offset,
+        cursor - offset,
+        flags,
+        (control >> 4) & 3,
+        codes,
+        int.from_bytes(data[offset + 2 : offset + 5], "little") & 0x1FFFFF,
+        int.from_bytes(data[offset + 5 : offset + 7], "little")
+        | (0x10000 if data[offset + 4] & 128 else 0),
+        lob,
+        sic,
+        building,
+        flat,
+        phone,
+        area,
+        fax_area,
+        fax,
+        precision,
+    )

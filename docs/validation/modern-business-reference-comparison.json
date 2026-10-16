@@ -1,0 +1,19 @@
+{
+  "edition": "se2005-pcf175-2005-06",
+  "business_length_cases": 1536,
+  "business_telephone_cases": 2006,
+  "mismatches": 0,
+  "method": "Original length callback and business telephone formatter executed locally; synthetic inputs only. Field metadata reconstructed from the original constructor.",
+  "limitations": [
+    "Length comparison does not independently check field values or dictionary joins.",
+    "Industry wrap recovery is a reader inference, not an original-formatter comparison."
+  ],
+  "original_library": "icd_10.dll",
+  "original_library_sha256": "b6bbbde186efb9575450082b03172fc8fcac79b64574e998646f6d78bd7b16a9",
+  "business_length_word_counts": [
+    1,
+    2,
+    16
+  ],
+  "length_getter_note": "The word-count getter was stubbed to its constructor-defined low-four-bit value; optional-field length logic ran from the original image."
+}

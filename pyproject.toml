@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ukinfo-reader"
-version = "0.4.0"
+version = "0.5.0"
 description = "A documented Python reader for historical UK-Info Disk databases"
 readme = "README.md"
 requires-python = ">=3.10"

@@ -40,7 +40,7 @@ ukinfo-read --all --format csv > directory.csv
 ```
 
 A full export contains about 28 million rows (PC Format 78) or 46 million rows (SE 4.0)
-and about 63 million or 45 million residential occurrences for the supported 2004/2005 sources.
+and about 63 million occurrences for 2004 or 51 million residential/business occurrences for 2005.
 Exports require substantial time and disk space.
 `--limit` is useful for inspecting output. The command streams rows and does not assemble
 the full export in memory. Output is UTF-8; original spelling/case is preserved.
@@ -92,19 +92,22 @@ source defects](formats/pcf78.md#source-defects-and-validation-limits).
 
 Use the same search/export options after [extracting all required files](formats/modern-se.md#source-extraction).
 The default includes both electoral and residential telephone occurrences, with 2005
-telephone deletions applied and indexed updates included. Business databases are not read.
+telephone deletions applied and indexed updates included. V10.5 SE business entries and
+their updates are also included; `--entry-type electoral`, `telephone` or `business` restricts
+the output. `--organisation` selects an exact business name, ignoring case. Name filters
+(`--surname`, `--first-name`) select residential entries.
 
 | Field | Interpretation |
 |---|---|
 | `entry_id`, `source_stream`, `record_offset` | Stable occurrence ID, base/update stream and physical byte offset |
-| `entry_type`, `kind` | Electoral/telephone occurrence and original physical kind |
+| `entry_type`, `kind` | Electoral/telephone/business occurrence and original physical kind |
 | `surname`, `firstName`, `surname_id` | Stored name text and source surname reference |
 | `name_code`, `name_flags` | Original 24-bit name code and retained flag bits |
 | `postcode`, `postcode_raw`, `postcode_precision` | Precision-limited display, stored dictionary text and source precision control |
 | `street`, `houseno`, `building`, `subbuilding` | Joined address components; house identifiers remain text |
 | `building_raw`, `building_reference`, `building_reference_raw` | Stored substring, effective offset after any exact correction, and original offset |
 | `place_id`, `place`, `place_type`, `locality`, `town`, `county` | Source place and resolved hierarchy |
-| `phone_area_code`, `phone_subscriber`, `phone` | Historical telephone components; populated only for telephone occurrences |
+| `phone_area_code`, `phone_subscriber`, `phone` | Historical telephone components; populated for telephone and business occurrences |
 | `source_warning` | Semicolon-separated source anomaly codes |
 
 Warnings include `building_reference_inside_string`, `building_reference_out_of_range`,
@@ -118,6 +121,34 @@ Both are retained, since they are separate source occurrences. Some stored names
 initials; `--first-name` matches that stored text exactly and does not expand initials. Electoral rows do not
 inherit another contact's telephone number. A source precision control can hide address
 components; `postcode_raw` is not proof of a complete postcode for that record.
+
+## V10.5 SE business output
+
+```sh
+ukinfo-read --data private/2005-inspect --organisation 'FICTIONAL WORKS' --format csv
+ukinfo-read --data private/2005-inspect --entry-type business --sector 'AB10 1'
+```
+
+The business filter scans the business streams; it does not use the residential surname index.
+All modern rows have the same columns, so mixed CSV exports retain a consistent header.
+Residential rows leave business-only columns empty; business rows leave personal-name columns empty.
+Business IDs are `business:base:OFFSET` or `business:update:OFFSET`.
+
+| Field | Interpretation |
+|---|---|
+| `organisation`, `business_word_codes` | Ordered company-name words joined by spaces; original one-based byte references |
+| `industry`, `industry_reference`, `industry_reference_raw` | Stored activity description, resolved string offset and original 24-bit code |
+| `sic_code`, `sic_id` | Source SIC dictionary text and one-based reference; no modern classification mapping is inferred |
+| `fax_area_code`, `fax_subscriber`, `fax` | Stored historical fax components and formatted number |
+
+The base activity dictionary exceeds the 24-bit reference range. The reader considers all
+string starts with the stored low 24 bits: a unique upper-range match is recovered with
+`industry_reference_wrap_recovered`; multiple matches yield null industry/reference and
+`ambiguous_industry_reference`. No match yields `invalid_industry_reference`.
+The original code is always retained. Recovery establishes a unique dictionary candidate,
+not an independently verified description of that organisation. Business telephone/fax values
+use their own legacy numeric formatter, which differs from V10.5 residential numbers.
+The supplied 2004 SE disc has no separate business record payload; business searches return no rows.
 
 ## Validate
 

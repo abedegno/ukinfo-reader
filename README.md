@@ -11,13 +11,14 @@ original Windows application.
 | UK-Info Disk SE | PC Format 78, January 1998 | 27,983,545 |
 | UK-Info Disk SE 4.0 | PC Format 94, April 1999 | 46,355,850 |
 | UK-Info 2004 SE (residential) | PC Plus 218, July 2004 | 63,373,974 |
-| UK-Info Disk V10.5 SE (residential) | PC Format 175, June 2005 | 45,198,601 |
+| UK-Info Disk V10.5 SE (residential + business) | PC Format 175, June 2005 | 51,350,897 |
 
 All supported scopes have been validated across their complete source streams. Known
 [early-disc defects](docs/formats/pcf78.md#source-defects-and-validation-limits) and
 [2004/2005 anomalies](docs/formats/modern-se.md#source-anomalies-and-validation) are reported
 explicitly. Counts are source entries, not distinct people. The two newer readers include
-electoral and residential telephone entries; their business databases are not included.
+electoral and residential telephone entries. V10.5 SE also includes business records and
+business updates/deletions; the supplied 2004 SE disc omits the business record file.
 Other editions, Standard and Pro releases require separate identification and validation.
 
 This repository contains original reader code, format documentation and synthetic tests.
@@ -69,7 +70,7 @@ name/postcode/sector filters, JSON Lines and CSV export. Its row format differs 
 `--segment` and `--field` apply only to SE 4.0. See [the early format](docs/formats/pcf78.md)
 for recovered fields, index membership and preserved source anomalies.
 
-### 2004 and 2005 residential sources
+### 2004 and 2005 sources
 
 Obtain the matching [2004 disc](https://archive.org/details/pcp-218-dvd) or
 [2005 archives](https://archive.org/details/pcf-175-dvd-1-06-05.7z), then follow
@@ -85,7 +86,9 @@ ukinfo-validate --data private/2005-inspect --output private/2005-report.json
 ```
 
 Replace the directory for 2004. Output distinguishes electoral and telephone occurrences,
-applies the 2005 telephone updates, and flags source address anomalies. See
+applies the 2005 residential and business updates, and flags source anomalies.
+For business searches use `--organisation "EXACT STORED NAME"` or `--entry-type business`.
+`--all` and postcode searches include businesses by default. See
 [the output field reference](docs/usage.md#20042005-residential-output-fields).
 
 ## Search and export
@@ -153,7 +156,7 @@ The 2004 and 2005 residential readers reconstruct the address hierarchy and sepa
 electoral names from telephone contacts. The 2005 deletion index removes telephone
 occurrences while retaining electoral names in combined records. Full reports for
 [2004](docs/validation/se2004-pcp218-2004-07-residential.json) and
-[2005](docs/validation/se2005-pcf175-2005-06-residential.json) record every stream's
+[2005](docs/validation/se2005-pcf175-2005-06-complete.json) record every stream's
 counts, fingerprints and source anomalies. All place joins were compared independently
 with the original decoder routines.
 

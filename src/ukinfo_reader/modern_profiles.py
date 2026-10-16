@@ -1,4 +1,4 @@
-"""Fingerprints for validated residential readers; original data is not included."""
+"""Fingerprints for validated modern sources; original data is not included."""
 
 MODERN_PROFILE_DATA = (
     (
@@ -83,6 +83,43 @@ MODERN_PROFILE_DATA = (
                 "d8upd.dat",
                 335872,
                 "498ae821464be94349dcf17f5e631c606d6c03f04585adad4bb865b02c4506c4",
+            ),
+            (
+                "bus.dat",
+                133409274,
+                "7febc775ae185ee09ec6de6be4f2436a2d8d318b7de0e888c03b4dc95ced92e1",
+            ),
+            ("dd.dat", 5646579, "faa4dd1a779ce4d1be62526ef703c5bdf0affcc7b41406c133e03bfc0d5afd2d"),
+            ("dbsic.dat", 8192, "c20ce7afaf8cb3565d085ef48240d1faa2a77900c5484bdefac0b59109553dc8"),
+            (
+                "busupd.dat",
+                23161864,
+                "27e7eae9bc4c2b475080a06212dac0da33db6e360414be0880050855d4272e31",
+            ),
+            (
+                "ddupd.dat",
+                1984768,
+                "cc1e9b2f421fca906c7d434c9ac11b92fed7f080845b8d526a9ade152d0c5a76",
+            ),
+            (
+                "dbsicupd.dat",
+                8192,
+                "4db5e2d0423977b8fdf628c1ddff0c9bb25853e2606a0b2258b0e1a17ab05e5d",
+            ),
+            (
+                "lobdesc.dat",
+                17643694,
+                "77c31a851b5c02f57c17af37905ccd4412d4d612655d1844dd80973eb3c43c2d",
+            ),
+            (
+                "lobdescupd.dat",
+                2007527,
+                "42fa3093c1833e00ad02de9d0424cec52d83cb13db7cc2609501b5c5b0a52bd4",
+            ),
+            (
+                "delb.idx",
+                1626112,
+                "9539928bae7723c1ce4e4837ecdb66096821334ac166ffa265f32c3ffdeddcee",
             ),
         ),
     ),

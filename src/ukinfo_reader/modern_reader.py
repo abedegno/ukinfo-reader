@@ -1,4 +1,4 @@
-"""Residential entries from the verified 2004 and 2005 SE sources."""
+"""Residential and business entries from the verified 2004 and 2005 SE sources."""
 
 import mmap
 import struct
@@ -163,7 +163,7 @@ class ResidenceStream:
 
 
 class ModernDatabase:
-    """Read joined residential entries; business databases are outside this API."""
+    """Read joined residential and available business entries."""
 
     format = "modern"
     fields = [
@@ -199,6 +199,16 @@ class ModernDatabase:
             "phone_subscriber",
             "phone",
             "source_warning",
+            "organisation",
+            "business_word_codes",
+            "industry",
+            "industry_reference",
+            "industry_reference_raw",
+            "sic_code",
+            "sic_id",
+            "fax_area_code",
+            "fax_subscriber",
+            "fax",
         )
     ]
 
@@ -222,6 +232,14 @@ class ModernDatabase:
             self.streams = [ResidenceStream(self.mapped, "")]
             if "ukupd.dat" in self.mapped:
                 self.streams.append(ResidenceStream(self.mapped, "upd"))
+            from .modern_business import BusinessStream
+
+            self.business_streams = []
+            if "bus.dat" in self.mapped:
+                self.business_streams = [
+                    BusinessStream(self.mapped, ""),
+                    BusinessStream(self.mapped, "upd"),
+                ]
         except BaseException:
             self.close()
             raise
@@ -330,7 +348,8 @@ class ModernDatabase:
                 else ""
             )
             yield dict(
-                common,
+                dict.fromkeys((f["name"] for f in self.fields), ""),
+                **common,
                 entry_id=f"{stream.name}:{offset}:{ordinal}",
                 entry_type=entry_type,
                 firstName=first,
@@ -345,7 +364,57 @@ class ModernDatabase:
     def records(self):
         yield from self.search()
 
-    def search(self, surname=None, first_name=None, postcode=None, sector=None):
+    def search(
+        self,
+        surname=None,
+        first_name=None,
+        postcode=None,
+        sector=None,
+        organisation=None,
+        entry_type=None,
+    ):
+        """Search source occurrences; organisation filters select business entries."""
+        if entry_type not in (None, "business", "electoral", "telephone"):
+            raise ValueError("Unknown entry type")
+        if organisation is None and entry_type != "business":
+            for row in self._search_residential(surname, first_name, postcode, sector):
+                if entry_type is None or row["entry_type"] == entry_type:
+                    yield row
+        if surname is None and first_name is None and entry_type in (None, "business"):
+            yield from self.search_business(organisation, postcode, sector)
+
+    def search_business(self, organisation=None, postcode=None, sector=None):
+        """Exact business-name and postcode filters, in base then update order."""
+        from .modern_business import joined_business
+
+        for index, stream in enumerate(self.business_streams):
+            for record in stream.physical_records():
+                if record.offset in stream.deleted:
+                    continue
+                if (
+                    organisation is not None
+                    and stream.organisation(record).casefold() != organisation.casefold()
+                ):
+                    continue
+                if postcode or sector:
+                    pc = (
+                        self._cached_word(index, "postcode", record.postcode_id)
+                        .replace(" ", "")
+                        .casefold()
+                    )
+                    if postcode and pc != postcode.replace(" ", "").casefold():
+                        continue
+                    if sector and pc[:-2] != sector.replace(" ", "").casefold():
+                        continue
+                row = joined_business(self, index, stream, record)
+                visible = row["postcode"].replace(" ", "").casefold()
+                if postcode and visible != postcode.replace(" ", "").casefold():
+                    continue
+                if sector and not visible.startswith(sector.replace(" ", "").casefold()):
+                    continue
+                yield row
+
+    def _search_residential(self, surname=None, first_name=None, postcode=None, sector=None):
         """Exact case-insensitive filters; surnames restrict the physical ranges scanned."""
         target_pc = postcode.replace(" ", "").casefold() if postcode else None
         target_sector = sector.replace(" ", "").casefold() if sector else None

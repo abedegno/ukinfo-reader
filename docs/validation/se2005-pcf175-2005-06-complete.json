@@ -1,0 +1,147 @@
+{
+  "edition": "se2005-pcf175-2005-06",
+  "reader_version": "0.5.0",
+  "scope": "residential-and-business",
+  "sha256": {
+    "uk.dat": "f20130f0034ad7e8e3f136945a23acd603b436fac3f9a540d9c488723b81e485",
+    "d2.dat": "63a4cf5bf71d6c3dd588ed30db671a34ab83259f67fbb1fc2636cc2051817090",
+    "d3.dat": "c586e24bca1559bc6608d83aef17362d0fb9c7096dffb8c1b2cb1b90d654c1cc",
+    "d4.dat": "6d229adfbe04d4fd2e7d18e88bae875f1c8824a5dc3269482f078ea436350e71",
+    "d6new.dat": "e7a5a68c2ecd8e3ffd3fd128b2beb6f4f93431801cf88136e3234fe1a58dcf63",
+    "ukspos.idx": "fba13eb6b3b128ad8e6aaf6bda0d3d7d4978e13f680d351741dfeee567adf3e7",
+    "ukupd.dat": "e32752ce8eef5594aa047ed6e44ecbcdba68cb7599d4ffe12a565de6efcda629",
+    "d2upd.dat": "9564de3d9f50b839e5b1356208645a777e0e77a7ec9764f551c1836a9a17a703",
+    "d3upd.dat": "3b8c0ac205f7424187ef3b60de2136225cd94e4ef4a90e40822b074445791e88",
+    "d4upd.dat": "e05abd0fd7f729f1320fd70c1726f4e02d4e3655d4119e3ace5d56518aac4c43",
+    "d6newupd.dat": "00507ded24d67941ffd06f5a1ee27f71883d78274e09ccd58a046fdbefe8f1b9",
+    "uksposupd.idx": "740428aa0eb4d18c5c013016b5edc92669f0722d3b9852c48967a05403c0b2d7",
+    "delr.idx": "bd0ab6c719549e3b8905fa4cda71fb756330d992155788ddee70ef059ac8096b",
+    "d1.dat": "48b76e41c589b0fccc7f55092a573341a0091391a881d63eb51519f918928241",
+    "d5.dat": "384c5206246336df1a558f66059e20f42fb87549aacff21635087dbe74683508",
+    "d7.dat": "3514a293d7774800d5f08f534c71b11438bcdb9683ef7209120f3ffc5b6e386f",
+    "d8.dat": "81833eeb8b6bcc1e660ae465bcd7973857686a69ac12412942195de54176470b",
+    "d5upd.dat": "46d44811d153f74870319681f7a3974e7d5bad73482e9ff850dd5384d78dd91f",
+    "d8upd.dat": "498ae821464be94349dcf17f5e631c606d6c03f04585adad4bb865b02c4506c4",
+    "bus.dat": "7febc775ae185ee09ec6de6be4f2436a2d8d318b7de0e888c03b4dc95ced92e1",
+    "dd.dat": "faa4dd1a779ce4d1be62526ef703c5bdf0affcc7b41406c133e03bfc0d5afd2d",
+    "dbsic.dat": "c20ce7afaf8cb3565d085ef48240d1faa2a77900c5484bdefac0b59109553dc8",
+    "busupd.dat": "27e7eae9bc4c2b475080a06212dac0da33db6e360414be0880050855d4272e31",
+    "ddupd.dat": "cc1e9b2f421fca906c7d434c9ac11b92fed7f080845b8d526a9ade152d0c5a76",
+    "dbsicupd.dat": "4db5e2d0423977b8fdf628c1ddff0c9bb25853e2606a0b2258b0e1a17ab05e5d",
+    "lobdesc.dat": "77c31a851b5c02f57c17af37905ccd4412d4d612655d1844dd80973eb3c43c2d",
+    "lobdescupd.dat": "42fa3093c1833e00ad02de9d0424cec52d83cb13db7cc2609501b5c5b0a52bd4",
+    "delb.idx": "9539928bae7723c1ce4e4837ecdb66096821334ac166ffa265f32c3ffdeddcee"
+  },
+  "streams": {
+    "base": {
+      "counts": {
+        "physical_records": 25760148,
+        "indexed_physical_records": 25760148,
+        "telephone_entries": 11764911,
+        "entries": 43816771,
+        "deleted_telephone_records": 377311,
+        "electoral_entries": 32051860
+      },
+      "source_kinds": {
+        "3": 5149266,
+        "0": 13617926,
+        "4": 4857007,
+        "5": 2135949
+      },
+      "source_warnings": {
+        "building_reference_out_of_range": 4272,
+        "unknown_telephone_name": 5
+      },
+      "surname_groups": 813668,
+      "unindexed_prefix_bytes": 0,
+      "building_fix_keys": 0,
+      "invalid_dictionary_text_rows": {
+        "surname": 6,
+        "name": 15
+      }
+    },
+    "update": {
+      "counts": {
+        "physical_records": 1371048,
+        "unindexed_physical_records": 1,
+        "indexed_physical_records": 1371047,
+        "telephone_entries": 1371046,
+        "entries": 1381830,
+        "electoral_entries": 10784
+      },
+      "source_kinds": {
+        "3": 1360264,
+        "4": 8290,
+        "5": 2493,
+        "0": 1
+      },
+      "source_warnings": {},
+      "surname_groups": 186846,
+      "unindexed_prefix_bytes": 14,
+      "building_fix_keys": 0
+    }
+  },
+  "totals": {
+    "entries": 51350897,
+    "electoral_entries": 32062644,
+    "telephone_entries": 13135957,
+    "business_entries": 6152296
+  },
+  "place_types": {
+    "T": 1524,
+    "V": 26247,
+    "v": 80,
+    "C": 107
+  },
+  "checks": [
+    "source_sha256",
+    "fixed_table_resources_and_bounds",
+    "dictionary_text",
+    "postcode_street_locality_joins",
+    "physical_record_boundaries",
+    "surname_range_boundaries",
+    "residential_name_references",
+    "building_and_subbuilding_references",
+    "telephone_only_deletion_selection",
+    "business_record_boundaries",
+    "business_word_and_industry_references",
+    "business_address_phone_fax_joins",
+    "business_deletion_selection"
+  ],
+  "limitations": [
+    "Entries are source occurrences, not deduplicated people or households.",
+    "Ambiguous building substrings are exposed as building_raw and flagged; building is null.",
+    "Source precision limits are retained; postcode_raw is the stored dictionary value."
+  ],
+  "business_streams": {
+    "base": {
+      "counts": {
+        "physical_records": 5310345,
+        "entries": 5122214,
+        "deleted_records": 188131
+      },
+      "source_kinds": {
+        "1": 2700465,
+        "2": 2609880
+      },
+      "source_warnings": {
+        "industry_reference_wrap_recovered": 121513,
+        "ambiguous_industry_reference": 9101,
+        "unterminated_place_text": 10277
+      }
+    },
+    "update": {
+      "counts": {
+        "physical_records": 1030082,
+        "entries": 1030082
+      },
+      "source_kinds": {
+        "2": 401835,
+        "1": 628247
+      },
+      "source_warnings": {
+        "unterminated_place_text": 2005
+      }
+    }
+  }
+}

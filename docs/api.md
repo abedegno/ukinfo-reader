@@ -104,3 +104,20 @@ format research. [Record fields, joins and anomalies](formats/pcf78.md) are edit
 `validate(directory)` selects the format's complete validator. Earlier-disc progress callbacks
 receive `(completed_bytes, total_bytes, entries)`; SE 4.0 callbacks receive
 `(completed_segments, total_segments, entries)`. Reports use different format-specific totals.
+
+## V10.5 SE business API
+
+```python
+with Database("private/2005-inspect") as db:
+    for row in db.search_business(organisation="FICTIONAL WORKS", sector="AB10 1"):
+        print(row["organisation"], row["phone"], row["industry"])
+    # Equivalent shared entry point:
+    rows = db.search(entry_type="business", postcode="AB10 1AL")
+```
+
+Modern `records()` and unqualified `search()` now include residential and business
+occurrences. An organisation filter selects businesses; surname/first-name filters select
+residential occurrences. `entry_type` accepts `business`, `electoral`, `telephone` or `None`.
+The supplied 2004 SE source returns no separate businesses because its media omits `bus.dat`.
+`decode_business()` exposes the physical business fields and rejects truncated records.
+See [business fields and industry reference limits](usage.md#v105-se-business-output).

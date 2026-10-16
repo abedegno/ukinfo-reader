@@ -5,7 +5,7 @@
 | `se-pcf78-1998-01` | UK-Info Disk SE | PC Format issue 78, January 1998 | Supported; entire database validated with documented source defects |
 | `se4-pcf94-1999-04` | UK-Info Disk SE 4.0 | PC Format issue 94, April 1999 | Supported; entire database validated |
 | `se2004-pcp218-2004-07` | UK-Info 2004 SE | PC Plus issue 218, July 2004 | Supported residential searches/exports; source anomalies documented |
-| `se2005-pcf175-2005-06` | UK-Info Disk V10.5 SE | PC Format issue 175, June 2005 | Supported residential searches/exports, including telephone updates/deletions |
+| `se2005-pcf175-2005-06` | UK-Info Disk V10.5 SE | PC Format issue 175, June 2005 | Supported residential and business searches/exports, including updates/deletions |
 
 **Other editions and Standard/Pro releases are not supported.** Matching product
 names or familiar filenames do not establish format compatibility. To propose another
@@ -13,12 +13,14 @@ release, follow [Adding editions](adding-editions.md).
 
 ## 2004 SE and V10.5 SE (2005)
 
-These exact residential sources are in `SUPPORTED_EDITIONS`. `Database`, `ukinfo-read`
+These exact sources are in `SUPPORTED_EDITIONS`. `Database`, `ukinfo-read`
 and `ukinfo-validate` support them. Extraction requires additional address files beyond
 the smaller profiles used by the earlier structural inspector. See
 [extraction, source identities, entry selection and anomalies](formats/modern-se.md).
 No other 2004/2005 distribution is implicitly supported; matching product names alone
-do not establish compatible source identity. Business files are outside these readers' scope.
+do not establish compatible source identity. V10.5 SE business records are included. The supplied 2004 SE media contains a business
+word index/dictionary but no `bus.dat`, so it supplies no separate business listings.
+The 2005 query profile now requires the nine additional business files listed in the format guide.
 
 ## Identify your copy
 

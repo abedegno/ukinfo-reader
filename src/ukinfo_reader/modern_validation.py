@@ -34,14 +34,13 @@ def validate_database(db, directory, progress=None):
             "telephone_only_deletion_selection",
         ],
         limitations=[
-            "Business data is not read by the residential API.",
             "Entries are source occurrences, not deduplicated people or households.",
             "Ambiguous building substrings are exposed as building_raw and flagged; building is null.",
             "Source precision limits are retained; postcode_raw is the stored dictionary value.",
         ],
     )
     completed = 0
-    total_bytes = sum(len(stream.data) for stream in db.streams)
+    total_bytes = sum(len(stream.data) for stream in [*db.streams, *db.business_streams])
     for stream_index, stream in enumerate(db.streams):
         invalid_text = Counter()
         for field, table in stream.tables.items():
@@ -124,6 +123,32 @@ def validate_database(db, directory, progress=None):
         for name in report["totals"]:
             report["totals"][name] += counts[name]
         completed += len(stream.data)
+    if db.business_streams:
+        from .modern_business import validate_business
+
+        residential_entries = report["totals"]["entries"]
+        business_progress = (
+            (
+                lambda done, total, entries: progress(
+                    completed + done, total_bytes, residential_entries + entries
+                )
+            )
+            if progress
+            else None
+        )
+        report["business_streams"] = validate_business(db, business_progress)
+        report["scope"] = "residential-and-business"
+        business_total = sum(s["counts"]["entries"] for s in report["business_streams"].values())
+        report["totals"]["business_entries"] = business_total
+        report["totals"]["entries"] += business_total
+        report["checks"].extend(
+            [
+                "business_record_boundaries",
+                "business_word_and_industry_references",
+                "business_address_phone_fax_joins",
+                "business_deletion_selection",
+            ]
+        )
     if progress:
         progress(total_bytes, total_bytes, report["totals"]["entries"])
     return report

@@ -61,7 +61,7 @@ def place(name, kind, county=0, town=0):
 
 
 @contextmanager
-def modern_source(updated=True, undefined_name=False):
+def modern_source(updated=True, undefined_name=False, business=False):
     with tempfile.TemporaryDirectory() as temporary:
         root = Path(temporary)
         files = {}
@@ -130,6 +130,30 @@ def modern_source(updated=True, undefined_name=False):
             files["hfix.idx"] = leaf_fixture(
                 [(offsets[0].to_bytes(4, "big"), 15), ((4096).to_bytes(4, "big"), 15)]
             )
+        if business:
+            assert updated
+            for suffix in ("", "upd"):
+                files["dd" + suffix + ".dat"] = b"FICTIONAL\0WORKS\0"
+                files["lobdesc" + suffix + ".dat"] = b"\0INVENTED INDUSTRY\0"
+                files["dbsic" + suffix + ".dat"] = fixed_table(5, [b"1234"])
+                # All optional fields, including both fax values and precision.
+                raw = bytes([255, 0x91]) + (1).to_bytes(3, "little") + (1).to_bytes(2, "little")
+                for value, width in [
+                    (1, 3),
+                    (11, 3),
+                    (1, 3),
+                    (1, 2),
+                    (1, 3),
+                    (1, 2),
+                    (10000123, 3),
+                    (1234, 2),
+                    (1234, 3),
+                    (7654321, 3),
+                    (10, 1),
+                ]:
+                    raw += value.to_bytes(width, "little")
+                files["bus" + suffix + ".dat"] = raw if suffix else raw + raw
+            files["delb.idx"] = leaf_fixture([(bytes(4), 1)])
         for name, content in files.items():
             (root / name).write_bytes(content)
         edition = Edition(

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0
+
+- Include V10.5 SE businesses in normal search and JSON Lines/CSV export.
+- Add exact organisation filters, entry-type filters and a business Python API.
+- Join ordered business-name words, addresses, activity/SIC descriptions, telephones and fax numbers.
+- Apply business deletions and separate update dictionaries; retain stable source occurrence IDs.
+- Flag ambiguous activity references and identify unique 24-bit wrapped dictionary candidates.
+- Expand source fingerprints and whole-source validation to include nine business files.
+- Document that the supplied 2004 SE media omits the separate business record payload.
+
 ## 0.4.0
 
 - Support residential search, JSON Lines/CSV export and full validation for the exact

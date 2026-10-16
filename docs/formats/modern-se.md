@@ -5,7 +5,8 @@
 The exact PC Plus 218 (2004 SE) and PC Format 175 (V10.5 SE, 2005) residential
 sources support `Database`, `ukinfo-read` searches, JSON Lines/CSV export and
 `ukinfo-validate`. Electoral and residential telephone entries are separate source
-occurrences. Business databases are outside this reader's scope.
+occurrences. V10.5 SE also supports the separate business streams. The supplied 2004 SE
+media omits `bus.dat`; its business word dictionary/index does not supply listings.
 
 Address components and telephone numbers are joined from their source tables. The 2005
 reader uses separate base/update dictionaries and applies telephone deletions. Known
@@ -43,9 +44,9 @@ DVD images. The UK-Info installer and data are on **DVD 2**, under
 unshield -d private/2005-cab x \
   'private/2005-disc/Data/Bonus/Bonus 01/InfoDisk/data1.cab'
 mkdir -p private/2005-inspect
-cp 'private/2005-disc/Data/Bonus/Bonus 01/InfoDisk/'{uk.dat,d5.dat} private/2005-inspect/
-cp private/2005-cab/Data_Files/{d1.dat,d2.dat,d3.dat,d4.dat,d6new.dat,d7.dat,d8.dat,ukspos.idx} private/2005-inspect/
-cp private/2005-cab/Update_data/{ukupd.dat,d2upd.dat,d3upd.dat,d4upd.dat,d5upd.dat,d6newupd.dat,d8upd.dat,uksposupd.idx,delr.idx} private/2005-inspect/
+cp 'private/2005-disc/Data/Bonus/Bonus 01/InfoDisk/'{uk.dat,d5.dat,lobdesc.dat} private/2005-inspect/
+cp private/2005-cab/Data_Files/{d1.dat,d2.dat,d3.dat,d4.dat,d6new.dat,d7.dat,d8.dat,ukspos.idx,bus.dat,dd.dat,dbsic.dat} private/2005-inspect/
+cp private/2005-cab/Update_data/{ukupd.dat,d2upd.dat,d3upd.dat,d4upd.dat,d5upd.dat,d6newupd.dat,d8upd.dat,uksposupd.idx,delr.idx,busupd.dat,ddupd.dat,dbsicupd.dat,lobdescupd.dat,delb.idx} private/2005-inspect/
 ukinfo-read --data private/2005-inspect --identify
 ukinfo-read --data private/2005-inspect --surname Smith --limit 20
 ukinfo-validate --data private/2005-inspect --output private/2005-report.json
@@ -248,7 +249,7 @@ with unknown names. Its base dictionaries also contain six surname rows and 15 n
 rows with bytes undefined in Windows-1252; replacement characters are flagged if emitted.
 These source defects do not prevent other fields or unaffected records from being read.
 
-Current full reports: [2004 residential](../validation/se2004-pcp218-2004-07-residential.json)
+Residential reports from version 0.4: [2004 residential](../validation/se2004-pcp218-2004-07-residential.json)
 and [2005 residential](../validation/se2005-pcf175-2005-06-residential.json).
 Earlier [2004](../validation/se2004-pcp218-2004-07.json) and
 [2005](../validation/se2005-pcf175-2005-06.json) structural-only reports record the state
@@ -263,7 +264,7 @@ These are source occurrences, not counts of distinct people or households. The o
 unindexed 2004 record and the one unindexed 2005 update record are excluded. Full
 validation checks every physical record, surname range, deletion, name/house/subbuilding
 reference and postcode/street/place join, verifies all required hashes, and reports the
-source defects above. Business files are not processed.
+source defects above. Business streams are additionally checked as described below.
 
 Research used static inspection and local emulation of the original decoder routines.
 The 2005 library's code was recovered from compressed sections for local analysis. No
@@ -271,3 +272,80 @@ installer or activation was run. No original binaries, recovered machine code,
 disassemblies or directory records are distributed here. Tests use invented fixtures,
 including combined electoral/telephone records, telephone-only deletions, update-specific
 dictionaries, building corrections and ambiguous references, precision controls and export.
+
+## V10.5 business layout and selection
+
+The headerless `bus.dat` and `busupd.dat` streams use little-endian fields.
+The business constructor and length callback in the original `icd_10.dll` establish
+this separate layout; it must not be decoded as a residential record.
+
+| Offset | Content |
+|---|---|
+| 0 | Optional-field mask `F` |
+| 1 | Word count minus one in low four bits; source kind in bits 4–5; building high bit in bit 6; precision-present bit 7 |
+| 2–4 | Postcode ID in low 21 bits; bit 7 of byte 4 supplies house ID bit 16 |
+| 5–6 | Low 16 bits of house ID |
+| 7 onward | `3 × word_count` bytes of one-based word references |
+
+Words reference byte offsets **plus one** in `dd.dat`/`ddupd.dat`; their stored order
+forms the organisation name. There are 1–16 words. Optional values follow the words:
+
+| Mask | Bytes | Meaning |
+|---|---:|---|
+| `F & 1` | 3 | Activity text reference (low 24 bits) |
+| `F & 2` | 2 | SIC dictionary ID |
+| `F & 4` | 3 | Building offset; byte 1 bit 6 adds bit 24 |
+| `F & 8` | 2 | Subbuilding ID |
+| `F & 16` | 3 | Telephone subscriber |
+| `F & 32` | 2 | Telephone area |
+| `F & 64` | 3 | Fax area |
+| `F & 128` | 3 | Fax subscriber |
+| byte 1 bit 7 | 1 | Postcode precision |
+
+Base and update streams use their own house, postcode, building, subbuilding, word,
+activity and SIC dictionaries; street/place dictionaries are shared. `dbsic*.dat`
+is a fixed table of five-byte SIC text. `lobdesc*.dat` contains NUL-terminated activity
+text. Industry references need the bounded recovery/ambiguity rules documented in
+[the output reference](../usage.md#v105-se-business-output): the base file exceeds 16 MiB.
+No ambiguous candidate is emitted as a resolved industry.
+
+`delb.idx` keys are four-byte little-endian **base business byte offsets**. They remove
+the entire business occurrence. Unlike residential `delr.idx`, there is no electoral
+component to retain. Both observed business source kinds (1 and 2) are emitted; they are
+not interpreted as dates. Update entries follow surviving base entries, without fuzzy
+deduplication. IDs include the business namespace to avoid residential offset collisions.
+The original business-selection routine checks `delb` before producing a result.
+
+`busw1*.idx` indexes name words, while the CAWS files are auxiliary word-search records
+and postings: they do not supply another stream of joined business listings. The reader
+scans business records, so these acceleration files are not query dependencies.
+
+The additional required files are `bus.dat`, `busupd.dat`, `dd.dat`, `ddupd.dat`,
+`dbsic.dat`, `dbsicupd.dat`, `lobdesc.dat`, `lobdescupd.dat` and `delb.idx`. Existing
+0.4 residential extraction directories must add them before V10.5 identification succeeds.
+Every source byte boundary, name reference, dictionary join and deletion target is checked
+by `ukinfo-validate`, including joins on entries suppressed by the deletion index.
+Reports contain counts and fingerprints only; original media/data are not distributed.
+
+### Whole-source business results
+
+| Stream | Physical records | Deleted | Exported entries |
+|---|---:|---:|---:|
+| Base | 5,310,345 | 188,131 | 5,122,214 |
+| Update | 1,030,082 | 0 | 1,030,082 |
+| Combined | 6,340,427 | 188,131 | **6,152,296** |
+
+All word references resolve to string boundaries, all address/SIC references are within
+their dictionaries, and all deletion keys reach physical business record boundaries.
+Among all physical base records, 121,513 industry references have a unique upper-range
+candidate and 9,101 have multiple candidates. The latter remain null and flagged.
+Existing place-text warnings affect 10,277 base and 2,005 update business records.
+These warning counts include deleted records; exported counts exclude them.
+
+The business length callback was compared on 1,536 synthetic combinations of optional
+flags, word counts and precision. The original business telephone formatter was compared
+on 2,006 numeric cases, with zero differences. See
+[the data-free reference comparison](../validation/modern-business-reference-comparison.json).
+This checks those routines, not every original-program display decision. Activity wrap
+recovery is an explicit reader inference. The full aggregate report is
+[the complete 2005 validation](../validation/se2005-pcf175-2005-06-complete.json).

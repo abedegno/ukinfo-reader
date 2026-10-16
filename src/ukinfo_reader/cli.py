@@ -32,6 +32,12 @@ def run():
     )
     p.add_argument("--segment", type=int, help="restrict to one numbered segment")
     p.add_argument("--sector", help='restrict to a postcode sector, e.g. "AB10 1"')
+    p.add_argument("--organisation", help="exact business name (modern editions)")
+    p.add_argument(
+        "--entry-type",
+        choices=["business", "electoral", "telephone"],
+        help="restrict modern entries by source type",
+    )
     p.add_argument("--surname", help="exact surname, ignoring case")
     p.add_argument("--first-name", help="exact first name, ignoring case")
     p.add_argument("--postcode", help="exact full postcode, ignoring spaces/case")
@@ -53,6 +59,8 @@ def run():
         p.error("--field requires --segment")
     if not any(
         (
+            args.organisation,
+            args.entry_type,
             args.identify,
             args.schema,
             args.field,
@@ -67,6 +75,8 @@ def run():
         p.error("choose --schema, --identify, --all or a search filter")
     db = Database(args.data)
     try:
+        if (args.organisation or args.entry_type) and db.format != "modern":
+            p.error("--organisation and --entry-type require a modern edition")
         if args.identify:
             hashes = db.edition.verify(args.data)
             print(
@@ -87,7 +97,13 @@ def run():
                     "values are preserved and flagged. See docs/formats/pcf78.md.",
                     file=sys.stderr,
                 )
+            extra = (
+                dict(organisation=args.organisation, entry_type=args.entry_type)
+                if db.format == "modern"
+                else {}
+            )
             rows = db.search(
+                **extra,
                 surname=args.surname,
                 first_name=args.first_name,
                 postcode=args.postcode,
