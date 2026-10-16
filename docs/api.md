@@ -22,24 +22,33 @@ source identity. The library opens the required source files read-only and memor
 a context manager closes the mappings and file handles even when your code raises an error.
 Do not use the object after closing it.
 
-## Experimental 2004/2005 structural inspection
-
-These sources are not accepted by `Database`. To reproduce aggregate checks of an exact
-extracted experimental source:
+## 2004/2005 residential API
 
 ```python
-from ukinfo_reader.modern_inspect import inspect
+from ukinfo_reader import Database
 
-report = inspect('private/2004-inspect')
-assert report['status'] == 'experimental-structural-only'
-print(report['streams']['uk.dat']['physical_records'])
+with Database('private/2005-inspect') as db:
+    for row in db.search(surname='Example', sector='ZZ99 1'):
+        process(row)
 ```
 
-`inspect()` verifies source fingerprints and scans the entire residential stream. It returns
-metadata and counts, with explicit limitations. It does not return directory entries.
-The lower-level record, fixed-table and index primitives are documented in
-[the experimental format notes](formats/modern-se.md). They retain raw values and do not
-apply address joins or merge the 2005 base/update streams.
+These editions support `records()` and `search(surname=None, first_name=None,
+postcode=None, sector=None)`, with the same case-insensitive exact filters as the CLI.
+They have no SE 4.0 segments or columns. Surname searches restrict scans using the
+source surname ranges; postcode/first-name searches without a surname scan the streams.
+
+Rows contain separate electoral/telephone occurrences, address components, source IDs,
+raw name flags, postcode precision and anomaly warnings. The 2005 reader applies
+telephone deletions and resolves updates against their own dictionaries. Entry IDs include
+the source stream. Do not count these rows as distinct people or merge their names by
+address automatically. See [output fields](usage.md#20042005-residential-output-fields)
+and [format/selection rules](formats/modern-se.md).
+
+`ukinfo_reader.modern_inspect.inspect(directory)` remains available for structural-only
+reports using the smaller file profile. Its status is `structural-only`. Use
+`ukinfo_reader.validation.validate(directory)` with all query files for complete
+residential checks. Low-level primitives in `ukinfo_reader.modern` retain physical values;
+`decode_residence()` does not apply joins or entry selection by itself.
 
 ## SE 4.0 methods
 

@@ -2,12 +2,20 @@
   {
     "file": "PCF175DVD1_06_05.7z",
     "bytes": 4388913561,
-    "sha256": "2277cd27f77cdc1f7b820fe28431d255b42bc68be96ac89bb6b8843fae6f182a"
+    "sha256": "2277cd27f77cdc1f7b820fe28431d255b42bc68be96ac89bb6b8843fae6f182a",
+    "sha1": "ad8c83f4c7d1075cf7b871661778106c914c7cb3",
+    "archive_item": "pcf-175-dvd-1-06-05.7z",
+    "archive_metadata_url": "https://archive.org/metadata/pcf-175-dvd-1-06-05.7z",
+    "archive_file_url": "https://archive.org/download/pcf-175-dvd-1-06-05.7z/PCF175DVD1_06_05.7z"
   },
   {
     "file": "PCF175DVD2_06_05.7z",
     "bytes": 4138795168,
-    "sha256": "8ca0380adac96490283b0b6fcfe25b8c1894b2c68ae4eac167f76e18085a1c3f"
+    "sha256": "8ca0380adac96490283b0b6fcfe25b8c1894b2c68ae4eac167f76e18085a1c3f",
+    "sha1": "fedd30dd43ee7c1db081d67c8b339b4656ba1a64",
+    "archive_item": "pcf-175-dvd-1-06-05.7z",
+    "archive_metadata_url": "https://archive.org/metadata/pcf-175-dvd-1-06-05.7z",
+    "archive_file_url": "https://archive.org/download/pcf-175-dvd-1-06-05.7z/PCF175DVD2_06_05.7z"
   },
   {
     "file": "PCF175DVD2_06_05.ISO",
@@ -17,6 +25,10 @@
   {
     "file": "PCP218_DVD.iso",
     "bytes": 4508475392,
-    "sha256": "9f638f8fb8eca9de6c2efe89d39a3f6e92d84ebe972721349bfb194d8c55f30a"
+    "sha256": "9f638f8fb8eca9de6c2efe89d39a3f6e92d84ebe972721349bfb194d8c55f30a",
+    "sha1": "3a841f07bf6c7ea5507d20d3c87bb0733465fb42",
+    "archive_item": "pcp-218-dvd",
+    "archive_metadata_url": "https://archive.org/metadata/pcp-218-dvd",
+    "archive_file_url": "https://archive.org/download/pcp-218-dvd/PCP218_DVD.iso"
   }
 ]

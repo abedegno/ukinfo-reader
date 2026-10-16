@@ -1,0 +1,71 @@
+{
+  "edition": "se2004-pcp218-2004-07",
+  "scope": "residential-electoral-and-telephone",
+  "sha256": {
+    "uk.dat": "9e808616da93dff7e376b26e8244af8b878da4e8cf42b2c70d2d20a3d5ef2336",
+    "d2.dat": "6a1b4e4bbb5889489b20682264ee4bceda50c3f23a0e97fda3904abeda7d8baa",
+    "d3.dat": "b3b3ea40d8d1b3a7fb2787c9a9715b6192460efa0045c19e714decfa8bc79cbb",
+    "d4.dat": "4a962e8042303c189e59369de07a3c4f7250f427bb68ccc6ced45a1850826f97",
+    "d6new.dat": "f639146a7b248859829897b5b968288bdef8614a04bb287aae5e248727470368",
+    "ukspos.idx": "4cf0246011670b444dc55f274d46b5b91a9109146b471ba7e66d52dd646edd4a",
+    "d1.dat": "5019dcdd7ca3a3789577691789a4bac72bc89614a62bfb98ffa6a7f5a5097bd9",
+    "d5.dat": "63371d343eae62c20b4675a83439a281ddbfba4f9f8611e42588657d4ea8fed8",
+    "d7.dat": "321fea410d14e736ef54eb9ed70f4047e3a1530178bef8cc35d3b3f35f837e9e",
+    "d8.dat": "82e5c7411ec74bf2004a66cd152739e0430c74d6f8d6e7566c0a5556b5b2a553",
+    "hfix.idx": "c655676490736ccde43e3608c3b30449d5f66e5e4fc34829e3d1c347bd91694e"
+  },
+  "streams": {
+    "base": {
+      "counts": {
+        "physical_records": 46227729,
+        "unindexed_physical_records": 1,
+        "indexed_physical_records": 46227728,
+        "electoral_entries": 53936980,
+        "entries": 63373974,
+        "telephone_entries": 9436994,
+        "building_corrections_applied": 16243
+      },
+      "source_kinds": {
+        "0": 36790735,
+        "5": 9436994
+      },
+      "source_warnings": {
+        "building_reference_inside_string": 981500,
+        "partial_postcode_source": 138198,
+        "unknown_telephone_name": 17465
+      },
+      "surname_groups": 858089,
+      "unindexed_prefix_bytes": 9,
+      "building_fix_keys": 1266114
+    }
+  },
+  "totals": {
+    "entries": 63373974,
+    "electoral_entries": 53936980,
+    "telephone_entries": 9436994
+  },
+  "place_types": {
+    "T": 1524,
+    "V": 26247,
+    "v": 80,
+    "C": 107
+  },
+  "checks": [
+    "source_sha256",
+    "fixed_table_resources_and_bounds",
+    "dictionary_text",
+    "postcode_street_locality_joins",
+    "physical_record_boundaries",
+    "surname_range_boundaries",
+    "residential_name_references",
+    "building_and_subbuilding_references",
+    "telephone_only_deletion_selection"
+  ],
+  "limitations": [
+    "Business data is not read by the residential API.",
+    "Entries are source occurrences, not deduplicated people or households.",
+    "Ambiguous building substrings are exposed as building_raw and flagged; building is null.",
+    "Source precision limits are retained; postcode_raw is the stored dictionary value."
+  ],
+  "reader_version": "0.4.0"
+}

@@ -98,7 +98,7 @@ def inspect_stream(data, surname_index, tables, name_mask, deletion_index=None):
 
 
 def inspect(directory):
-    """Verify an exact experimental source and inspect all residential streams.
+    """Verify an exact structural source profile and inspect residential streams.
 
     This is structural verification, not verification of the original program's
     results. The 2005 base and update streams are reported separately.
@@ -116,19 +116,19 @@ def inspect(directory):
         None,
     )
     if edition is None:
-        raise UnsupportedEditionError("Unknown experimental source or incomplete files")
+        raise UnsupportedEditionError("Unknown structural source or incomplete files")
     hashes = edition.verify(directory)
     report = dict(
         edition=edition.id,
         title=edition.title,
-        status="experimental-structural-only",
+        status="structural-only",
         files={n: dict(bytes=size, sha256=hashes[n]) for n, size, _ in edition.files},
         streams={},
         dictionaries={},
         limitations=[
             "Physical source records and stored name codes are not live directory totals.",
-            "Address joins, name flag semantics and business records are not validated.",
-            "Normal Database/search/export APIs do not support this source.",
+            "This report does not check joined residential output or business records.",
+            "Use ukinfo-validate with the complete residential profile for joined output checks.",
         ],
     )
     with ExitStack() as resources:

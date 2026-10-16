@@ -4,21 +4,21 @@
 |---|---|---|---|
 | `se-pcf78-1998-01` | UK-Info Disk SE | PC Format issue 78, January 1998 | Supported; entire database validated with documented source defects |
 | `se4-pcf94-1999-04` | UK-Info Disk SE 4.0 | PC Format issue 94, April 1999 | Supported; entire database validated |
+| `se2004-pcp218-2004-07` | UK-Info 2004 SE | PC Plus issue 218, July 2004 | Supported residential searches/exports; source anomalies documented |
+| `se2005-pcf175-2005-06` | UK-Info Disk V10.5 SE | PC Format issue 175, June 2005 | Supported residential searches/exports, including telephone updates/deletions |
 
-**No later editions, or Standard/Pro releases, are currently supported.** Matching product
+**Other editions and Standard/Pro releases are not supported.** Matching product
 names or familiar filenames do not establish format compatibility. To propose another
 release, follow [Adding editions](adding-editions.md).
 
-## Experimental sources
+## 2004 SE and V10.5 SE (2005)
 
-| Source ID | Product and distribution | Available |
-|---|---|---|
-| `se2004-pcp218-2004-07` | UK-Info 2004 SE, PC Plus 218 | Physical residential decoder, fixed tables, surname indexes, full structural inspection |
-| `se2005-pcf175-2005-06` | UK-Info Disk V10.5 SE, PC Format 175 | Same primitives for separate base/update streams; deletion index structure |
-
-These sources are deliberately outside `SUPPORTED_EDITIONS`. `Database`, `ukinfo-read`
-and `ukinfo-validate` continue to reject them. Use `ukinfo-inspect` for aggregate structural
-reports; it does not produce search results. See [extraction, evidence and remaining work](formats/modern-se.md).
+These exact residential sources are in `SUPPORTED_EDITIONS`. `Database`, `ukinfo-read`
+and `ukinfo-validate` support them. Extraction requires additional address files beyond
+the smaller profiles used by the earlier structural inspector. See
+[extraction, source identities, entry selection and anomalies](formats/modern-se.md).
+No other 2004/2005 distribution is implicitly supported; matching product names alone
+do not establish compatible source identity. Business files are outside these readers' scope.
 
 ## Identify your copy
 

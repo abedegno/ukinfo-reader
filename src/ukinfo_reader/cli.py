@@ -75,17 +75,18 @@ def run():
                 )
             )
             return
-        if db.format == "pcf78":
+        if db.format in ("pcf78", "modern"):
             if args.segment is not None or args.field:
-                p.error("PC Format 78 has no SE 4.0 segments or columns")
+                p.error("This edition has no SE 4.0 segments or columns")
             if args.schema:
                 print(json.dumps(dict(edition=db.edition.id, fields=db.fields), indent=2))
                 return
-            print(
-                "Source note: known mismatched index keys are excluded; unresolved source "
-                "values are preserved and flagged. See docs/formats/pcf78.md.",
-                file=sys.stderr,
-            )
+            if db.format == "pcf78":
+                print(
+                    "Source note: known mismatched index keys are excluded; unresolved source "
+                    "values are preserved and flagged. See docs/formats/pcf78.md.",
+                    file=sys.stderr,
+                )
             rows = db.search(
                 surname=args.surname,
                 first_name=args.first_name,

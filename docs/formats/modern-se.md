@@ -1,16 +1,15 @@
 # UK-Info SE: the 2004 and 2005 sources
 
-## Status and scope
+## Supported scope
 
-This is experimental format research. The independent Python implementation can decode
-physical residential records, fixed dictionaries and the observed c-tree leaf indexes.
-The inspector verifies exact source hashes and checks the entire residential streams.
-It produces aggregate reports without displaying directory records.
+The exact PC Plus 218 (2004 SE) and PC Format 175 (V10.5 SE, 2005) residential
+sources support `Database`, `ukinfo-read` searches, JSON Lines/CSV export and
+`ukinfo-validate`. Electoral and residential telephone entries are separate source
+occurrences. Business databases are outside this reader's scope.
 
-**Neither edition is supported by `Database`, `ukinfo-read` or normal exports.** Physical
-records include entries outside the surname indexes and, in 2005, records affected by
-updates. A clean structural scan does not establish the original program's result set.
-Address assembly, source flags, business records and update selection need further work.
+Address components and telephone numbers are joined from their source tables. The 2005
+reader uses separate base/update dictionaries and applies telephone deletions. Known
+source anomalies remain visible through raw references and `source_warning`.
 
 | Source | Base residential file | Update residential file |
 |---|---:|---:|
@@ -32,6 +31,7 @@ The following commands use [7-Zip](https://www.7-zip.org/) and
 
 ### PC Format 175 (2005)
 
+Source: [Internet Archive item `pcf-175-dvd-1-06-05.7z`](https://archive.org/details/pcf-175-dvd-1-06-05.7z).
 The supplied `PCF175DVD1_06_05.7z` and `PCF175DVD2_06_05.7z` archives contain separate
 DVD images. The UK-Info installer and data are on **DVD 2**, under
 `Data/Bonus/Bonus 01/InfoDisk/`.
@@ -43,14 +43,17 @@ DVD images. The UK-Info installer and data are on **DVD 2**, under
 unshield -d private/2005-cab x \
   'private/2005-disc/Data/Bonus/Bonus 01/InfoDisk/data1.cab'
 mkdir -p private/2005-inspect
-cp 'private/2005-disc/Data/Bonus/Bonus 01/InfoDisk/uk.dat' private/2005-inspect/
-cp private/2005-cab/Data_Files/{d2.dat,d3.dat,d4.dat,d6new.dat,ukspos.idx} private/2005-inspect/
-cp private/2005-cab/Update_data/{ukupd.dat,d2upd.dat,d3upd.dat,d4upd.dat,d6newupd.dat,uksposupd.idx,delr.idx} private/2005-inspect/
-ukinfo-inspect --data private/2005-inspect --output private/2005-report.json
+cp 'private/2005-disc/Data/Bonus/Bonus 01/InfoDisk/'{uk.dat,d5.dat} private/2005-inspect/
+cp private/2005-cab/Data_Files/{d1.dat,d2.dat,d3.dat,d4.dat,d6new.dat,d7.dat,d8.dat,ukspos.idx} private/2005-inspect/
+cp private/2005-cab/Update_data/{ukupd.dat,d2upd.dat,d3upd.dat,d4upd.dat,d5upd.dat,d6newupd.dat,d8upd.dat,uksposupd.idx,delr.idx} private/2005-inspect/
+ukinfo-read --data private/2005-inspect --identify
+ukinfo-read --data private/2005-inspect --surname Smith --limit 20
+ukinfo-validate --data private/2005-inspect --output private/2005-report.json
 ```
 
 ### PC Plus 218 (2004)
 
+Source: [Internet Archive item `pcp-218-dvd`](https://archive.org/details/pcp-218-dvd).
 Wait for the browser download to finish and the `.crdownload` suffix to disappear.
 The completed supplied ISO is named `PCP218_DVD.iso`. Its UK-Info payload is under
 `Software/Full/UK-Info/`. The cabinet puts the tables in `Data_Files_Compress`;
@@ -61,20 +64,22 @@ the extracted files themselves are directly readable.
 unshield -d private/2004-cab x private/2004-disc/Software/Full/UK-Info/data1.cab
 mkdir -p private/2004-inspect
 cp private/2004-disc/Software/Full/UK-Info/uk.dat private/2004-inspect/
-cp private/2004-cab/Data_Files_Compress/{d2.dat,d3.dat,d4.dat,d6new.dat,ukspos.idx} private/2004-inspect/
-ukinfo-inspect --data private/2004-inspect --output private/2004-report.json
+cp private/2004-cab/Data_Files_Compress/{d1.dat,d2.dat,d3.dat,d4.dat,d5.dat,d6new.dat,d7.dat,d8.dat,hfix.idx,ukspos.idx} private/2004-inspect/
+ukinfo-read --data private/2004-inspect --identify
+ukinfo-read --data private/2004-inspect --surname Smith --limit 20
+ukinfo-validate --data private/2004-inspect --output private/2004-report.json
 ```
 
 The `cp` examples use POSIX shells with brace expansion. On Windows, copy the listed
-files into one directory and run the same inspector command. Inspection uses only the
+files into one directory and run the same reader/validator commands. They use only the
 Python standard library and needs no original executable or DLL.
 
-The exact inspection file fingerprints are in
-[`modern_sources.py`](../../src/ukinfo_reader/modern_sources.py). These experimental
-profiles are deliberately separate from the supported query registry. Media fingerprints
-are recorded in [modern source media](../validation/modern-source-media.json). A matching
-Internet Archive item has not yet been independently established for these supplied files;
-do not substitute an unverified download with a similar product name.
+The exact query file fingerprints are in
+[`modern_profiles.py`](../../src/ukinfo_reader/modern_profiles.py). `ukinfo-inspect` remains
+available for a smaller structural-only profile; it does not replace full validation. Media fingerprints
+are recorded in [modern source media](../validation/modern-source-media.json). The local 2004 ISO and both 2005 archives were independently matched by size and SHA-1
+to the items' [2004 metadata](https://archive.org/metadata/pcp-218-dvd) and
+[2005 metadata](https://archive.org/metadata/pcf-175-dvd-1-06-05.7z).
 
 ## Residential physical layout
 
@@ -103,9 +108,9 @@ The variable cursor then consumes these fields **in this order**:
 
 Thus the physical length is `6 + 3*N` plus the sizes of present optional fields.
 `decode_residence()` retains all codes and optional values, using `None` for absent
-fields. It does not assign unverified human meanings to optional values. Source inspection
-suggests building/subbuilding, telephone and postcode-display uses, but these joins are
-not yet fully validated.
+fields. The joined reader interprets `flag80` as the building string offset, `flag40` as
+the subbuilding ID, `kind25` as the associated telephone name code, `kind16` as the
+subscriber number, `pc20` as the area code and `pc80` as the postcode precision control.
 
 The name dictionary mask differs between the libraries: `0x3fffff` for 2004 and
 `0x1fffff` for 2005. Keep the original 24-bit name codes so flag information is not lost.
@@ -145,9 +150,9 @@ Key interpretation is index-specific. In particular, `delr.idx` keys are **littl
 physical byte offsets**, although their stored byte strings are lexically ordered. Static
 inspection traces lookup using the residential source offset. Independently checking all
 377,311 supplied deletion keys places every one on a base residential record boundary.
-The inspector checks deletion index structure and base record boundary references;
-applying deletions and
-selecting between base/update results remains outside its claimed behavior.
+The joined reader applies these keys only to the telephone component of base records.
+It then reads the indexed update stream with the update dictionaries. The lower-level
+inspector reports structure and boundary checks only.
 
 ## Fixed tables
 
@@ -169,40 +174,100 @@ table, a legacy position column is not an adequate substitute for `ukspos.idx`; 
 source includes zero/sentinel/past-end values there. The update surname position column
 is zero throughout. Use the index, whose references are checked against the physical scan.
 
-## Reproducibility and remaining work
+## Entry selection and updates
 
-The published aggregate reports are
-[2004 SE](../validation/se2004-pcp218-2004-07.json) and
-[V10.5 SE](../validation/se2005-pcf175-2005-06.json).
-They verify fingerprints, every physical record length, bounds for stored name/postcode/
-house references, and every indexed surname range. They do not verify dictionary text
-encoding, address assembly, every optional reference or a merged result set.
+| Physical kind | Electoral occurrences | Telephone occurrences |
+|---|---|---|
+| 0 | Each primary stored name | None |
+| 3 | None | Each primary stored name, unless deleted |
+| 4 | Each primary stored name | One contact using the first primary name, unless deleted |
+| 5 | Each primary stored name | One contact using `optional_kind25`, unless deleted |
 
-| Stream | Physical records | Stored name codes | Surname groups | Unindexed prefix bytes |
-|---|---:|---:|---:|---:|
-| 2004 `uk.dat` | 46,227,729 | 53,936,981 | 858,089 | 9 |
-| 2005 `uk.dat` | 25,760,148 | 37,201,126 | 813,668 | 0 |
-| 2005 `ukupd.dat` | 1,371,048 | 1,371,048 | 186,846 | 14 |
+These are the kinds observed on the verified sources. Other kinds fail with `FormatError`.
+An offset in `delr.idx` suppresses the telephone occurrence, **not** the electoral names in
+that physical record. All 377,311 deletions target kinds 3, 4 or 5. Updates are read from
+their own surname, name, house, postcode, building and subbuilding dictionaries; streets
+and the place hierarchy are shared. No fuzzy matching or deduplication is used. An entry
+ID includes its stream, byte offset and source occurrence ordinal.
 
-These are physical storage counts, including absent name codes. They are not counts
-of distinct people, households or live search results.
+The 2004 source also supplies `hfix.idx`. Its keys are big-endian physical offsets and
+its values override building offsets. The reader applies an exact matching correction
+when a nonzero building reference is present, following the original lookup. Keys that
+are never reached in this source do not create records or cause guessed corrections.
+The full scan applies 16,243 corrections that change the stored building reference.
 
-Research used static inspection of the original libraries and whole-file consistency
-checks. The 2005 library's original code was recovered from compressed sections for local
-analysis. No program was installed or activated. No original binaries, disassemblies,
-database records or recovered code bytes are included in the repository. Tests construct
-invented bytes independently and exercise both compression modes, page resets, all
-residential field conditions and malformed inputs.
+Telephone encoding is edition-specific. In 2004, values strictly between 10,000,000
+and 11,000,000 restore one leading zero. The 2005 encoding supports multiple leading
+zeroes using the million bands above 10,000,000. Both implementations were compared
+with their original formatters for 2,009 generated/boundary cases each, with zero
+differences; see [the comparison evidence](../validation/modern-telephone-reference-comparison.json).
+The reader retains the historical area/subscriber form. Electoral occurrences do not
+inherit a telephone number from another contact stored in the same physical record.
+Unknown telephone-name code `0xffffff` produces an empty name with a warning.
 
-Before promoting either source into `SUPPORTED_EDITIONS`:
+## Address model and PAF
 
-1. Verify name flags, optional fields and complete address/telephone joins.
-2. Validate business records separately; establish which record kinds each API returns.
-3. Implement and validate the 2005 deletion/update selection against the original call paths.
-4. Preserve unindexed records explicitly and establish totals for the claimed result set.
-5. Add invented search/join fixtures, CLI integration and full validation of those semantics.
+Royal Mail's [PAF Programmer’s Guide, Section 1](https://www.poweredbypaf.com/wp-content/uploads/2025/01/Latest-Programmers_guide_Edition-7-Version-6-2.pdf)
+provided the component model: premises, thoroughfare, locality, post town and postcode.
+This disc uses its own compressed storage and locality IDs. It is not a raw PAF Mainfile;
+PAF rules alone do not establish its binary links or update selection.
 
-The experimental Python entry points are `ModernLeafIndex`, `ModernFixedTable`,
-`residential_length` and `decode_residence` in `ukinfo_reader.modern`. They are low-level
-research APIs, may change as the remaining semantics are established, and should not be
-used as evidence that a person appeared in a particular electoral roll.
+The postcode row has seven text bytes, a u16 LE place ID at byte 7 and a u24 LE street
+string offset at byte 9. `d7.dat` contains the street strings. `d1.dat` has 56-byte place
+rows: text in bytes 0–29, type in byte 30, county reference at byte 36 and town reference
+at byte 40 (u32 LE). A village resolves its town first, then uses that town's county.
+The original functions also contain a few named/ID-based overrides. Both editions' complete
+27,958-row place tables were independently compared with their original decoder functions
+in local x86 emulation: **zero differences with text bounded to the declared fields**.
+See [the comparison evidence](../validation/modern-locality-reference-comparison.json).
+
+The reader exports components separately; it does not claim certified PAF mailing-label
+formatting. Historical county text is retained. Full-length place names are bounded at
+30 bytes, preventing the original function's read into adjacent metadata; affected joins
+are flagged `unterminated_place_text`.
+
+The source precision byte is also retained. When neither zero nor 10 it shortens the displayed
+postcode and clears the street; values below 10 additionally clear locality/town/county
+text. `postcode_raw` preserves the dictionary value for research. Exact full-postcode
+filters do not treat a partial code as a verified full code. The original SE application's
+separate display cap on first names and postcodes is not reproduced: the reader exposes
+stored text subject to the source precision rule.
+
+## Source anomalies and validation
+
+Source building references can point inside a NUL-delimited string or beyond its file.
+An interior reference is ambiguous: it may be a suffix reference or inconsistent source
+metadata. The reader preserves its substring as `building_raw`, its numeric reference
+as `building_reference`, and sets `building` to null with a warning. Out-of-range
+references retain the number and set both text fields to null. No replacement is guessed.
+
+The 2004 scan finds 981,500 physical records with interior building references after
+corrections, 138,198 with postcode precision controls and 17,465 unknown telephone names.
+The 2005 base has 4,272 out-of-range building references and five live telephone entries
+with unknown names. Its base dictionaries also contain six surname rows and 15 name
+rows with bytes undefined in Windows-1252; replacement characters are flagged if emitted.
+These source defects do not prevent other fields or unaffected records from being read.
+
+Current full reports: [2004 residential](../validation/se2004-pcp218-2004-07-residential.json)
+and [2005 residential](../validation/se2005-pcf175-2005-06-residential.json).
+Earlier [2004](../validation/se2004-pcp218-2004-07.json) and
+[2005](../validation/se2005-pcf175-2005-06.json) structural-only reports record the state
+of the 0.3.0 investigation; their former query-support limitations are historical.
+
+| Edition | Electoral entries | Telephone entries | Total exported occurrences |
+|---|---:|---:|---:|
+| 2004 SE | 53,936,980 | 9,436,994 | 63,373,974 |
+| V10.5 SE (base plus updates) | 32,062,644 | 13,135,957 | 45,198,601 |
+
+These are source occurrences, not counts of distinct people or households. The one
+unindexed 2004 record and the one unindexed 2005 update record are excluded. Full
+validation checks every physical record, surname range, deletion, name/house/subbuilding
+reference and postcode/street/place join, verifies all required hashes, and reports the
+source defects above. Business files are not processed.
+
+Research used static inspection and local emulation of the original decoder routines.
+The 2005 library's code was recovered from compressed sections for local analysis. No
+installer or activation was run. No original binaries, recovered machine code,
+disassemblies or directory records are distributed here. Tests use invented fixtures,
+including combined electoral/telephone records, telephone-only deletions, update-specific
+dictionaries, building corrections and ambiguous references, precision controls and export.

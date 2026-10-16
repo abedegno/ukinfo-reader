@@ -1,4 +1,4 @@
-"""Exact sources for experimental structural inspection, not query support."""
+"""Minimal profiles for structural inspection; query profiles require more files."""
 
 from .editions import Edition
 

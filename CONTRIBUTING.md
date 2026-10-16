@@ -36,10 +36,11 @@ ukinfo-validate --data extracted --output validation.json
 For the earlier release, use `UKINFO_TEST_DATA_78=private/pcf78` with the same test command,
 and `ukinfo-validate --data private/pcf78 --output validation.json`.
 
-For the experimental 2004 and 2005 sources, follow the
+For the 2004 and 2005 residential sources, follow the
 [extraction and inspection instructions](docs/formats/modern-se.md). Use `ukinfo-inspect`
-to reproduce aggregate structural reports. Keep these profiles outside the supported
-query registry until joins and result selection have also been validated.
+to reproduce aggregate structural reports, or `ukinfo-validate` with the complete query
+profile to check joins and entry selection. Do not confuse source occurrences with
+distinct people, or remove electoral names when applying telephone deletions.
 
 Only publish a validation report after checking that it contains metadata, hashes and counts.
 Do not contribute directory records, real personal information, original images or programs,

@@ -1,0 +1,134 @@
+"""Fingerprints for validated residential readers; original data is not included."""
+
+MODERN_PROFILE_DATA = (
+    (
+        "se2005-pcf175-2005-06",
+        "UK-Info Disk V10.5 SE — PC Format 175, June 2005",
+        (
+            (
+                "uk.dat",
+                347726510,
+                "f20130f0034ad7e8e3f136945a23acd603b436fac3f9a540d9c488723b81e485",
+            ),
+            (
+                "d2.dat",
+                27668480,
+                "63a4cf5bf71d6c3dd588ed30db671a34ab83259f67fbb1fc2636cc2051817090",
+            ),
+            (
+                "d3.dat",
+                40697856,
+                "c586e24bca1559bc6608d83aef17362d0fb9c7096dffb8c1b2cb1b90d654c1cc",
+            ),
+            ("d4.dat", 286720, "6d229adfbe04d4fd2e7d18e88bae875f1c8824a5dc3269482f078ea436350e71"),
+            (
+                "d6new.dat",
+                37773312,
+                "e7a5a68c2ecd8e3ffd3fd128b2beb6f4f93431801cf88136e3234fe1a58dcf63",
+            ),
+            (
+                "ukspos.idx",
+                11735040,
+                "fba13eb6b3b128ad8e6aaf6bda0d3d7d4978e13f680d351741dfeee567adf3e7",
+            ),
+            (
+                "ukupd.dat",
+                19929983,
+                "e32752ce8eef5594aa047ed6e44ecbcdba68cb7599d4ffe12a565de6efcda629",
+            ),
+            (
+                "d2upd.dat",
+                19398656,
+                "9564de3d9f50b839e5b1356208645a777e0e77a7ec9764f551c1836a9a17a703",
+            ),
+            (
+                "d3upd.dat",
+                3645440,
+                "3b8c0ac205f7424187ef3b60de2136225cd94e4ef4a90e40822b074445791e88",
+            ),
+            (
+                "d4upd.dat",
+                180224,
+                "e05abd0fd7f729f1320fd70c1726f4e02d4e3655d4119e3ace5d56518aac4c43",
+            ),
+            (
+                "d6newupd.dat",
+                37773312,
+                "00507ded24d67941ffd06f5a1ee27f71883d78274e09ccd58a046fdbefe8f1b9",
+            ),
+            (
+                "uksposupd.idx",
+                2347008,
+                "740428aa0eb4d18c5c013016b5edc92669f0722d3b9852c48967a05403c0b2d7",
+            ),
+            (
+                "delr.idx",
+                3149824,
+                "bd0ab6c719549e3b8905fa4cda71fb756330d992155788ddee70ef059ac8096b",
+            ),
+            ("d1.dat", 1568768, "48b76e41c589b0fccc7f55092a573341a0091391a881d63eb51519f918928241"),
+            (
+                "d5.dat",
+                15891027,
+                "384c5206246336df1a558f66059e20f42fb87549aacff21635087dbe74683508",
+            ),
+            ("d7.dat", 5249845, "3514a293d7774800d5f08f534c71b11438bcdb9683ef7209120f3ffc5b6e386f"),
+            ("d8.dat", 393216, "81833eeb8b6bcc1e660ae465bcd7973857686a69ac12412942195de54176470b"),
+            (
+                "d5upd.dat",
+                2858817,
+                "46d44811d153f74870319681f7a3974e7d5bad73482e9ff850dd5384d78dd91f",
+            ),
+            (
+                "d8upd.dat",
+                335872,
+                "498ae821464be94349dcf17f5e631c606d6c03f04585adad4bb865b02c4506c4",
+            ),
+        ),
+    ),
+    (
+        "se2004-pcp218-2004-07",
+        "UK-Info 2004 SE — PC Plus 218, July 2004",
+        (
+            (
+                "uk.dat",
+                540263828,
+                "9e808616da93dff7e376b26e8244af8b878da4e8cf42b2c70d2d20a3d5ef2336",
+            ),
+            (
+                "d2.dat",
+                23515136,
+                "6a1b4e4bbb5889489b20682264ee4bceda50c3f23a0e97fda3904abeda7d8baa",
+            ),
+            (
+                "d3.dat",
+                40742912,
+                "b3b3ea40d8d1b3a7fb2787c9a9715b6192460efa0045c19e714decfa8bc79cbb",
+            ),
+            ("d4.dat", 524288, "4a962e8042303c189e59369de07a3c4f7250f427bb68ccc6ced45a1850826f97"),
+            (
+                "d6new.dat",
+                35745792,
+                "f639146a7b248859829897b5b968288bdef8614a04bb287aae5e248727470368",
+            ),
+            (
+                "ukspos.idx",
+                5394432,
+                "4cf0246011670b444dc55f274d46b5b91a9109146b471ba7e66d52dd646edd4a",
+            ),
+            ("d1.dat", 1568768, "5019dcdd7ca3a3789577691789a4bac72bc89614a62bfb98ffa6a7f5a5097bd9"),
+            (
+                "d5.dat",
+                19364401,
+                "63371d343eae62c20b4675a83439a281ddbfba4f9f8611e42588657d4ea8fed8",
+            ),
+            ("d7.dat", 4969322, "321fea410d14e736ef54eb9ed70f4047e3a1530178bef8cc35d3b3f35f837e9e"),
+            ("d8.dat", 167936, "82e5c7411ec74bf2004a66cd152739e0430c74d6f8d6e7566c0a5556b5b2a553"),
+            (
+                "hfix.idx",
+                9670656,
+                "c655676490736ccde43e3608c3b30449d5f66e5e4fc34829e3d1c347bd91694e",
+            ),
+        ),
+    ),
+)

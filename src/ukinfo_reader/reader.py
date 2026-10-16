@@ -23,10 +23,16 @@ class Database:
     format = "se4"
 
     def __new__(cls, directory="extracted"):
-        if cls is Database and identify_edition(directory).format == "pcf78":
-            from .pcf78 import PCF78Database
+        if cls is Database:
+            format_name = identify_edition(directory).format
+            if format_name == "pcf78":
+                from .pcf78 import PCF78Database
 
-            return PCF78Database(directory)
+                return PCF78Database(directory)
+            if format_name == "modern":
+                from .modern_reader import ModernDatabase
+
+                return ModernDatabase(directory)
         return super().__new__(cls)
 
     def __init__(self, directory="extracted"):

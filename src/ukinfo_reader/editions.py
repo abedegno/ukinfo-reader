@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .codecs import FormatError
+from .modern_profiles import MODERN_PROFILE_DATA
 
 
 class UnsupportedEditionError(FormatError):
@@ -63,7 +64,11 @@ PCF78 = Edition(
     ),
     format="pcf78",
 )
-SUPPORTED_EDITIONS = (SE4_PCF94, PCF78)
+MODERN_EDITIONS = tuple(
+    Edition(id=source_id, title=title, files=files, format="modern")
+    for source_id, title, files in MODERN_PROFILE_DATA
+)
+SUPPORTED_EDITIONS = (SE4_PCF94, PCF78) + MODERN_EDITIONS
 
 
 def identify_edition(directory):

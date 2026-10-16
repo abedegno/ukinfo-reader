@@ -1,0 +1,20 @@
+{
+  "method": "Original telephone formatting functions emulated locally with an integer-to-string stub, compared against ukinfo_reader.modern_reader.subscriber_text using boundary values and deterministic generated integers.",
+  "cases": "Nine boundary cases plus 2,000 integers from Random(17), uniformly sampled in [1, 2**24). Areas are fixed at 1234; the output separator is compared without display whitespace.",
+  "results": [
+    {
+      "edition": "se2004-pcp218-2004-07",
+      "original_library_sha256": "ca320183bf7dd69b0bd2f251769cfb02f0e0f3e2f5c0b67ee86197e9af79b0fc",
+      "original_function": "0x10015520",
+      "numeric_cases_compared": 2009,
+      "mismatches": 0
+    },
+    {
+      "edition": "se2005-pcf175-2005-06",
+      "original_library_sha256": "b6bbbde186efb9575450082b03172fc8fcac79b64574e998646f6d78bd7b16a9",
+      "original_function": "0x100189f0",
+      "numeric_cases_compared": 2009,
+      "mismatches": 0
+    }
+  ]
+}

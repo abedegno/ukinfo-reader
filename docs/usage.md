@@ -1,7 +1,7 @@
 # Command-line reference
 
-These commands support the **PC Format 78 (January 1998)** and **PC Format 94
-(SE 4.0, April 1999)** releases.
+These commands support the exact four releases in the [edition registry](editions.md),
+including residential entries from PC Plus 218 (2004 SE) and PC Format 175 (V10.5 SE).
 Run `ukinfo-read --help` or `ukinfo-validate --help` for built-in help.
 
 ## Search
@@ -24,7 +24,7 @@ Run `ukinfo-read --help` or `ukinfo-validate --help` for built-in help.
 | `--version` | Show the reader version |
 
 Name, postcode, sector and segment filters combine with AND. SE 4.0 scans name columns;
-PC Format 78 uses its surname index when a surname is given. Queries are exact matches,
+PC Format 78 and the 2004/2005 residential readers use surname indexes when a surname is given. Queries are exact matches,
 not substring or fuzzy searches.
 
 Successful searches with no matches produce no records and exit 0. Invalid options exit 2;
@@ -40,7 +40,8 @@ ukinfo-read --all --format csv > directory.csv
 ```
 
 A full export contains about 28 million rows (PC Format 78) or 46 million rows (SE 4.0)
-and requires substantial time and disk space.
+and about 63 million or 45 million residential occurrences for the supported 2004/2005 sources.
+Exports require substantial time and disk space.
 `--limit` is useful for inspecting output. The command streams rows and does not assemble
 the full export in memory. Output is UTF-8; original spelling/case is preserved.
 
@@ -86,6 +87,37 @@ an empty surname cell while retaining its source warning and raw code.
 does not emit a `household_id`. Queries exclude the one known mismatched index pointer and
 unindexed physical records. A source note is printed to stderr. See [format details and
 source defects](formats/pcf78.md#source-defects-and-validation-limits).
+
+## 2004/2005 residential output fields
+
+Use the same search/export options after [extracting all required files](formats/modern-se.md#source-extraction).
+The default includes both electoral and residential telephone occurrences, with 2005
+telephone deletions applied and indexed updates included. Business databases are not read.
+
+| Field | Interpretation |
+|---|---|
+| `entry_id`, `source_stream`, `record_offset` | Stable occurrence ID, base/update stream and physical byte offset |
+| `entry_type`, `kind` | Electoral/telephone occurrence and original physical kind |
+| `surname`, `firstName`, `surname_id` | Stored name text and source surname reference |
+| `name_code`, `name_flags` | Original 24-bit name code and retained flag bits |
+| `postcode`, `postcode_raw`, `postcode_precision` | Precision-limited display, stored dictionary text and source precision control |
+| `street`, `houseno`, `building`, `subbuilding` | Joined address components; house identifiers remain text |
+| `building_raw`, `building_reference`, `building_reference_raw` | Stored substring, effective offset after any exact correction, and original offset |
+| `place_id`, `place`, `place_type`, `locality`, `town`, `county` | Source place and resolved hierarchy |
+| `phone_area_code`, `phone_subscriber`, `phone` | Historical telephone components; populated only for telephone occurrences |
+| `source_warning` | Semicolon-separated source anomaly codes |
+
+Warnings include `building_reference_inside_string`, `building_reference_out_of_range`,
+`partial_postcode_source`, `unknown_telephone_name`, `unterminated_place_text` and
+`invalid_dictionary_text`. An ambiguous building is JSON null (empty CSV cell), with its
+raw reference retained. Undefined Windows-1252 bytes become replacement characters and
+are flagged. No building replacement or missing name is guessed.
+
+An electoral occurrence and a telephone occurrence can have the same name/address.
+Both are retained, since they are separate source occurrences. Some stored names are
+initials; `--first-name` matches that stored text exactly and does not expand initials. Electoral rows do not
+inherit another contact's telephone number. A source precision control can hide address
+components; `postcode_raw` is not proof of a complete postcode for that record.
 
 ## Validate
 

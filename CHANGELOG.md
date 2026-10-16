@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.4.0
+
+- Support residential search, JSON Lines/CSV export and full validation for the exact
+  2004 SE / PC Plus 218 and V10.5 SE / PC Format 175 sources.
+- Resolve postcode, street, locality, town, county, house, building and subbuilding fields.
+- Compare all 27,958 locality rows in each edition with its original decoder.
+- Preserve separate electoral and telephone occurrences; apply 2005 deletions only to
+  telephone entries, retaining electoral names in combined records.
+- Use separate update dictionaries, restore telephone leading zeroes, apply the 2004
+  building-fix index and preserve source postcode precision.
+- Validate 63,373,974 residential occurrences for 2004 and 45,198,601 for 2005.
+- Flag ambiguous/out-of-range building references and undefined dictionary text.
+- Keep business data outside the residential API and retain the structural inspector.
+
 ## 0.3.0
 
 - Add experimental structural decoders for the exact 2004 SE / PC Plus 218 and

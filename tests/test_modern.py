@@ -217,7 +217,7 @@ class ModernFormatTests(unittest.TestCase):
                 with redirect_stdout(output):
                     self.assertEqual(inspect_main(["--data", directory]), 0)
                 report = json.loads(output.getvalue())
-                self.assertEqual(report["status"], "experimental-structural-only")
+                self.assertEqual(report["status"], "structural-only")
                 self.assertEqual(report["streams"]["uk.dat"]["physical_records"], 1)
                 self.assertEqual(
                     report["files"]["uk.dat"]["sha256"], hashlib.sha256(data).hexdigest()

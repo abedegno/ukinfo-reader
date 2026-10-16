@@ -25,6 +25,10 @@ def validate(directory="extracted", progress=None):
             from .pcf78_validation import validate_database
 
             return validate_database(db, directory, progress)
+        if db.format == "modern":
+            from .modern_validation import validate_database
+
+            return validate_database(db, directory, progress)
         hashes = db.edition.verify(directory)
         last = 0
         for segment in range(db.segment_count):

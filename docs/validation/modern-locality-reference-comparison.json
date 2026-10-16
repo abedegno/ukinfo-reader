@@ -1,0 +1,25 @@
+{
+  "method": "Local x86 emulation of original locality function with a read-only source table lookup stub, compared with ukinfo_reader.modern_reader.location for every one-based place ID.",
+  "comparison": "Locality, town and county strings, bounded to the declared 30-byte text field. The Python reader flags full-width source text instead of reading adjacent metadata.",
+  "runtime_dependencies": "Emulation tools are used for local research only; the Python reader has no third-party runtime dependencies.",
+  "results": [
+    {
+      "edition": "se2004-pcp218-2004-07",
+      "original_library": "icd_92se.dll",
+      "original_library_sha256": "ca320183bf7dd69b0bd2f251769cfb02f0e0f3e2f5c0b67ee86197e9af79b0fc",
+      "place_table_sha256": "5019dcdd7ca3a3789577691789a4bac72bc89614a62bfb98ffa6a7f5a5097bd9",
+      "original_function": "0x1000d2a0",
+      "place_rows_compared": 27958,
+      "mismatches": 0
+    },
+    {
+      "edition": "se2005-pcf175-2005-06",
+      "original_library": "icd_10.dll",
+      "original_library_sha256": "b6bbbde186efb9575450082b03172fc8fcac79b64574e998646f6d78bd7b16a9",
+      "place_table_sha256": "48b76e41c589b0fccc7f55092a573341a0091391a881d63eb51519f918928241",
+      "original_function": "0x1000f980",
+      "place_rows_compared": 27958,
+      "mismatches": 0
+    }
+  ]
+}

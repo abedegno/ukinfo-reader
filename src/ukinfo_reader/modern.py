@@ -1,7 +1,7 @@
-"""Experimental structural decoders for the 2004 and 2005 SE sources.
+"""Physical structural decoders for the 2004 and 2005 SE sources.
 
-These primitives expose physical source records, not a merged directory. In particular,
-the 2005 deletion indexes have not been interpreted. See docs/formats/modern-se.md.
+These primitives expose physical source records. For joined entries and update
+selection use modern_reader or Database. See docs/formats/modern-se.md.
 """
 
 import struct
