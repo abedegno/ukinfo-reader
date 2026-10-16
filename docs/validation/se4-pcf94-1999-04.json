@@ -1,0 +1,26 @@
+{
+  "edition": "se4-pcf94-1999-04",
+  "reader_version": "0.1.0",
+  "validated_at": "2026-10-16T14:44:05.674496+00:00",
+  "segments": 9565,
+  "blocks": 248690,
+  "totals": {
+    "postcodes": 1462313,
+    "localities": 1478848,
+    "addresses": 24279520,
+    "entries": 46355850
+  },
+  "elapsed_seconds": 79.14,
+  "sha256": {
+    "ukid.idx": "9029772fd7d47e9e55a3c30908c464146c69c1dd6d2f13ec0d5fda2040080195",
+    "ukid.dat": "9e1eb85ecac003f3bc4cf74f050f984860dcd502c5be3f847eca8bb95faf0ce6"
+  },
+  "checks": [
+    "source_sha256",
+    "contiguous_data_coverage",
+    "numeric_checksums",
+    "column_lengths",
+    "parent_boundaries",
+    "inverse_postcode_relationships"
+  ]
+}

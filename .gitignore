@@ -1,0 +1,35 @@
+# Original discs, proprietary software and databases
+extracted/
+data/
+private/
+*.[iI][sS][oO]
+*.[bB][iI][nN]
+*.[cC][uU][eE]
+*.[dD][aA][tT]
+*.[iI][dD][xX]
+*.[dD][lL][lL]
+*.[eE][xX][eE]
+*.[cC][aA][bB]
+*.zip
+*.7z
+
+# Search results and local validation runs
+*.csv
+*.jsonl
+*.sqlite*
+*.db
+/validation.json
+
+# Python, build tools and editors
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+build/
+dist/
+.ruff_cache/
+.coverage
+htmlcov/
+*.code-workspace
+.DS_Store
+.env

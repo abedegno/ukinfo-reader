@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ukinfo-reader"
+version = "0.1.0"
+description = "A documented Python reader for historical UK-Info Disk databases"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{name = "ukinfo-reader contributors"}]
+keywords = ["uk-info", "genealogy", "digital-preservation", "reverse-engineering"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: System :: Archiving",
+]
+
+[project.scripts]
+ukinfo-read = "ukinfo_reader.cli:main"
+ukinfo-validate = "ukinfo_reader.validation:main"
+
+[project.urls]
+Repository = "https://github.com/abedegno/ukinfo-reader"
+Issues = "https://github.com/abedegno/ukinfo-reader/issues"
+
+[project.optional-dependencies]
+dev = ["ruff==0.14.0", "build>=1.2,<2"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
