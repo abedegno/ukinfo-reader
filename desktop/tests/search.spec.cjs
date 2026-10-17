@@ -105,3 +105,128 @@ test("partial source imports are explicitly labelled", async ({ page }) => {
   await expect(page.locator("#dataset")).toContainText("[SAMPLE]");
   await expect(page.locator("#import-open")).toBeHidden();
 });
+
+test("prefix search, postcode district, page sizes and bookmark restoration", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator("#dataset")).toHaveValue("all");
+  await page
+    .getByLabel("Edition", { exact: true })
+    .selectOption("synthetic-demo");
+  await page.getByLabel("Surname", { exact: true }).fill("Exam*");
+  await page.getByLabel("Postcode", { exact: false }).fill("ZZ1");
+  await page.locator("#page-size").selectOption("25");
+  await page.getByRole("button", { name: "Search archive" }).click();
+  await expect(page.locator("article")).toHaveCount(25);
+  await expect(page.locator("article").first()).toContainText("Synthetic demo");
+  await expect(page.locator("#status")).toContainText("Results 1–25");
+  await page.getByRole("button", { name: "Next page" }).click();
+  await expect(page.locator("#status")).toContainText("Results 26–50");
+  await page.reload();
+  await expect(page.locator("#status")).toContainText("Page 2");
+  await expect(page.locator("article").first()).toContainText("Person 025");
+  await page.goBack();
+  await expect(page.locator("article").first()).toContainText("Person 000");
+  await page
+    .locator("article")
+    .first()
+    .getByRole("button", { name: "View record" })
+    .click();
+  await expect(page.locator("#record-fields")).toContainText(
+    "Recorded address",
+  );
+  await expect(page.locator("#record-fields")).toContainText(
+    "Invented demonstration record",
+  );
+  await expect(page.locator("#record-fields details")).not.toHaveAttribute(
+    "open",
+  );
+  const recordDownload = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export original record" }).click();
+  const recordFile = await recordDownload;
+  const recordStream = await recordFile.createReadStream();
+  let original = "";
+  for await (const chunk of recordStream) original += chunk;
+  expect(JSON.parse(original).record.building).toBeNull();
+  await page.getByRole("button", { name: "Close details" }).click();
+  await page.locator("#export-format").selectOption("csv");
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export this page" }).click();
+  const file = await download;
+  const stream = await file.createReadStream();
+  let content = "";
+  for await (const chunk of stream) content += chunk;
+  expect(file.suggestedFilename()).toBe("ukinfo-page.csv");
+  expect(content).toContain('"Source entry","Citation"');
+  expect(content).toContain("invented:0");
+});
+
+test("conservative page grouping retains editions and excludes incomplete addresses", async ({
+  page,
+}) => {
+  const record = {
+    entry_type: "electoral",
+    surname: "Example",
+    firstName: "June",
+    houseno: "12",
+    street: "Invented Street",
+    postcode: "ZZ1 1ZZ",
+    place_type: "T",
+    town: "Fictional Town",
+  };
+  await page.route("**/api/datasets", (route) =>
+    route.fulfill({
+      json: [
+        {
+          key: "a",
+          manifest: { title: "Invented 1999", edition: "a" },
+          entries: 2,
+        },
+        {
+          key: "b",
+          manifest: { title: "Invented 2005", edition: "b" },
+          entries: 1,
+        },
+      ],
+    }),
+  );
+  await page.route("**/api/search?*", (route) =>
+    route.fulfill({
+      json: {
+        items: [
+          { dataset: "a", source_id: "one", record },
+          { dataset: "b", source_id: "two", record },
+          {
+            dataset: "a",
+            source_id: "three",
+            record: { ...record, houseno: "", street: "" },
+          },
+        ],
+        next_cursor: "",
+      },
+    }),
+  );
+  await page.goto("/");
+  await page.getByLabel("Surname", { exact: true }).fill("Example");
+  await page.getByRole("button", { name: "Search archive" }).click();
+  await expect(page.locator("article")).toHaveCount(3);
+  await page.locator("#group-results").check();
+  await expect(page.locator("article")).toHaveCount(2);
+  await expect(page.locator("article").first()).toContainText(
+    "Invented 1999 · Invented 2005",
+  );
+  await expect(page.locator("#group-note")).toBeVisible();
+  await page
+    .locator("article")
+    .first()
+    .getByRole("button", { name: "View record" })
+    .click();
+  await expect(page.locator("#record-fields")).toContainText("Town");
+  await expect(page.locator("#record-fields")).toContainText(
+    "Source entry one",
+  );
+  await expect(page.locator("#record-fields")).toContainText(
+    "Source entry two",
+  );
+});

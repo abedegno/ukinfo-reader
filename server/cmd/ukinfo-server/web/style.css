@@ -429,3 +429,88 @@ dt {
 #next {
   margin-left: auto;
 }
+
+.result-options {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.result-options label {
+  font-size: 11px;
+}
+.result-options select {
+  width: 85px;
+  padding: 7px;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+}
+.check input {
+  width: auto;
+  margin: 0;
+}
+.source-badges {
+  color: var(--accent);
+  font-weight: 500;
+}
+.record-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.record-actions button {
+  border: 1px solid var(--line);
+  background: white;
+  border-radius: 5px;
+  padding: 8px;
+  color: var(--accent);
+  font-size: 12px;
+}
+#record-fields h3 {
+  margin-top: 26px;
+  font-size: 14px;
+}
+#record-fields dd {
+  white-space: pre-line;
+}
+#record-fields details {
+  margin-top: 24px;
+}
+#record-fields summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--accent);
+}
+#record-feedback {
+  font-size: 12px;
+}
+
+.comparison {
+  overflow-x: auto;
+  margin: 12px 0;
+}
+.comparison table {
+  border-collapse: collapse;
+  font-size: 12px;
+  width: 100%;
+}
+.comparison th,
+.comparison td {
+  text-align: left;
+  vertical-align: top;
+  padding: 10px;
+  border: 1px solid var(--line);
+  min-width: 130px;
+  white-space: pre-line;
+}
+
+#export-format {
+  width: 140px;
+}
+#next-top {
+  margin-left: auto;
+}

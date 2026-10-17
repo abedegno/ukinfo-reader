@@ -20,18 +20,34 @@ import (
 )
 
 func TestParse(t *testing.T) {
-	for _, s := range []string{"dataset=a&surname=Li", "dataset=a&postcode=aa1+1aa", "dataset=a&kind=business&organisation=X"} {
+	for _, s := range []string{"dataset=a&surname=Li", "dataset=a&postcode=aa1+1aa", "dataset=a&kind=business&organisation=X", "dataset=all&surname=Sm*&first_name=J&match=prefix", "dataset=a&postcode=WS13", "dataset=a&postcode=WS13+7"} {
 		if _, err := parse(mustValues(s)); err != nil {
 			t.Fatal(err)
 		}
 	}
-	for _, s := range []string{"surname=Li", "dataset=a", "dataset=a&first_name=J", "dataset=a&surname=Li&limit=101", "dataset=a&kind=business&surname=Li", "dataset=a&kind=other&postcode=A"} {
+	for _, s := range []string{"surname=Li", "dataset=a", "dataset=a&first_name=J", "dataset=a&surname=Li&limit=101", "dataset=a&kind=business&surname=Li", "dataset=a&kind=other&postcode=A", "dataset=a&surname=*", "dataset=a&surname=S*", "dataset=a&surname=Sm?th", "dataset=a&surname=Sm%25", "dataset=a&surname=Smith&match=contains", "dataset=a&postcode=WS*13"} {
 		if _, err := parse(mustValues(s)); err == nil {
 			t.Fatalf("accepted %s", s)
 		}
 	}
 	if Normalize("  O'NEILL   J ") != "o'neill j" || Postcode("aB1  2cD") != "AB12CD" {
 		t.Fatal("normalization")
+	}
+}
+func TestPostcodeBoundaries(t *testing.T) {
+	for _, tc := range []struct {
+		input  string
+		length int
+	}{{"W11", 6}, {"W1 1", 5}, {"W1 1*", 5}, {"WS13", 7}, {"WS13*", 7}, {"WS13 7", 7}, {"WS137", 7}, {"WS13 7SW", 0}, {"W1 1AA", 0}, {"W11AA", 0}, {"GIR", 6}, {"GIR 0", 6}, {"GIR0", 6}} {
+		q, err := parse(url.Values{"dataset": {"all"}, "postcode": {tc.input}})
+		if err != nil || q.PostcodeLength != tc.length {
+			t.Fatalf("%s: %+v %v", tc.input, q, err)
+		}
+	}
+	a, _ := parse(mustValues("dataset=all&postcode=W11"))
+	b, _ := parse(mustValues("dataset=all&postcode=W1+1"))
+	if a.fingerprint() == b.fingerprint() {
+		t.Fatal("district and sector cursors overlap")
 	}
 }
 func mustValues(s string) url.Values { v, _ := url.ParseQuery(s); return v }
@@ -196,6 +212,7 @@ func TestPostgresIntegration(t *testing.T) {
 	if !strings.Contains(w.Body.String(), `"entries":5`) || strings.Contains(w.Body.String(), "broken") {
 		t.Fatal("catalogue", w.Body.String())
 	}
+	testExpandedSearch(t, db)
 }
 
 func testDesktopAdmin(t *testing.T, db *pgxpool.Pool) {
@@ -470,5 +487,95 @@ func testTermReuseDoesNotAllocateIdentity(t *testing.T, db *pgxpool.Pool) {
 	}
 	if before != after || again["invented-vocabulary-a"] != first["invented-vocabulary-a"] {
 		t.Fatal("cache eviction wasted or changed a vocabulary identity", before, after)
+	}
+}
+
+func testExpandedSearch(t *testing.T, db *pgxpool.Pool) {
+	t.Helper()
+	for _, dataset := range []string{"prefix-one", "prefix-two", "prefix-sample"} {
+		var input bytes.Buffer
+		enc := json.NewEncoder(&input)
+		_ = enc.Encode(Manifest{Type: "manifest", Protocol: 1, Dataset: dataset, Edition: "prefix-fixture", Title: dataset, SHA256: map[string]string{"invented": "not-a-real-source"}, Sample: dataset == "prefix-sample", Expected: 5})
+		for i, postcode := range []string{"W11 1AA", "W1 1AA", "WS13 7SW", "WS13", "WS1 3AA"} {
+			_ = enc.Encode(map[string]any{"type": "record", "source_id": fmt.Sprint(i), "record": map[string]any{"surname": "Quincetest", "firstName": "June", "postcode": postcode}})
+		}
+		_ = enc.Encode(map[string]any{"type": "end", "count": 5})
+		if _, err := Import(context.Background(), db, &input); err != nil {
+			t.Fatal(err)
+		}
+	}
+	handler := NewAPI(db).Handler()
+	fetch := func(params string) ([]result, string) {
+		t.Helper()
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, httptest.NewRequest("GET", "/api/search?"+params, nil))
+		if w.Code != 200 {
+			t.Fatalf("%s: %d %s", params, w.Code, w.Body.String())
+		}
+		var v struct {
+			Items []result `json:"items"`
+			Next  string   `json:"next_cursor"`
+		}
+		if err := json.Unmarshal(w.Body.Bytes(), &v); err != nil {
+			t.Fatal(err)
+		}
+		return v.Items, v.Next
+	}
+	for _, tc := range []struct {
+		query string
+		count int
+	}{
+		{"dataset=prefix-one&postcode=W11", 1}, {"dataset=prefix-one&postcode=W1+1", 1},
+		{"dataset=prefix-one&postcode=WS13", 2}, {"dataset=prefix-one&postcode=WS13*", 2}, {"dataset=prefix-one&postcode=WS13+7", 1},
+		{"dataset=prefix-one&postcode=WS13+7SW", 1}, {"dataset=prefix-one&postcode=WS1", 1},
+		{"dataset=prefix-one&surname=Quince*", 5}, {"dataset=prefix-one&surname=Quince&match=prefix&first_name=J", 5},
+		{"dataset=all&surname=Quincetest", 10},
+	} {
+		rows, _ := fetch(tc.query)
+		if len(rows) != tc.count {
+			t.Fatalf("%s: got %d want %d", tc.query, len(rows), tc.count)
+		}
+	}
+	firstEditions, _ := fetch("dataset=all&surname=Quincetest&limit=2")
+	if len(firstEditions) != 2 || firstEditions[0].Dataset == firstEditions[1].Dataset {
+		t.Fatal("first page did not interleave editions", firstEditions)
+	}
+	seen := map[string]bool{}
+	cursor := ""
+	for {
+		rows, next := fetch("dataset=all&surname=Quincetest&limit=3&cursor=" + cursor)
+		for _, row := range rows {
+			key := row.Dataset + ":" + row.SourceID
+			if seen[key] || row.Dataset == "prefix-sample" {
+				t.Fatal("duplicate or sample", key)
+			}
+			seen[key] = true
+		}
+		if next == "" {
+			break
+		}
+		cursor = next
+	}
+	seenPostcodes := map[string]bool{}
+	nextPostcode := ""
+	for {
+		rows, next := fetch("dataset=all&postcode=WS13&surname=Quincetest&limit=1&cursor=" + nextPostcode)
+		for _, row := range rows {
+			key := row.Dataset + ":" + row.SourceID
+			if seenPostcodes[key] {
+				t.Fatal("duplicate postcode page", key)
+			}
+			seenPostcodes[key] = true
+		}
+		if next == "" {
+			break
+		}
+		nextPostcode = next
+	}
+	if len(seenPostcodes) != 4 {
+		t.Fatal("postcode prefix pagination", len(seenPostcodes))
+	}
+	if len(seen) != 10 {
+		t.Fatal("cross-edition pagination lost records", len(seen))
 	}
 }

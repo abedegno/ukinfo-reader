@@ -5,18 +5,19 @@ that same service with an app-managed local PostgreSQL process. The original Pyt
 reader remains the verified decoder and importer: searches do not run Python.
 
 Development preview. Hosted capacity still needs testing on the intended server.
-Exact surname, first name, business name and postcode searches, keyset pagination,
-source details, forward/backward page navigation and lossless **current-page** JSONL
-export are implemented. Fuzzy search,
-sector search, cross-edition matching, background bulk exports,
-resumable ingestion, automatic database upgrades and signed installers are not yet implemented.
+Exact and prefix name searches, postcode district/sector searches, all-edition searches,
+keyset pagination, readable record details, page-local identical-listing grouping,
+source comparison, copyable citations and current-page JSONL/CSV exports are implemented.
+Catalogue-wide deduplication, alphabetical sorting, contains/fuzzy matching, stable direct
+record permalinks, background bulk exports, resumable ingestion, automatic database
+upgrades and signed installers are not yet implemented.
 
 ## Requirements and edition scope
 
 - Go 1.25+ (tested with 1.26.4), PostgreSQL **18**, Python 3.10+ for importing discs.
 - Node 22.12+ and npm for desktop development/browser tests, not hosted serving.
 - All four [verified release profiles](editions.md) can be imported. Each import is
-  searched separately. All **189,064,266** occurrences in the complete supported sources
+  searchable individually or together. All **189,064,266** occurrences in the complete supported sources
   have passed PostgreSQL record/projection verification. Modern entries retain their
   electoral/telephone/business types.
 - Business searching covers the validated **2005 V10.5 SE** business stream, including
@@ -198,21 +199,72 @@ and follow PostgreSQL recovery procedures. Preserve the password file with its c
 - `GET /api/datasets`: imported keys, source manifests, row counts, timestamps.
 - `GET /api/search?dataset=KEY&kind=person&surname=Smith&first_name=John&postcode=AB101AA`.
 - Business: `kind=business&organisation=Exact%20Name` or postcode.
-- Names match exactly after Unicode lowercase conversion and whitespace collapse;
-  postcode keys remove whitespace and uppercase. Display/source fields remain untouched.
+- Names match exactly after Unicode lowercase conversion and whitespace collapse by
+  default. `match=prefix` applies starts-with matching to supplied name fields; a single
+  trailing `*` enables it for one field (`surname=Smi*`). Prefixes require two Unicode
+  characters for surnames/business names; first-name prefixes can contain one. Exact
+  names such as Li and Ng have no minimum length. `?`, `%`, embedded/multiple `*`,
+  contains matching and fuzzy matching are not supported. Literal apostrophes are supported.
+- Postcode keys remove whitespace and uppercase. Districts (`WS13`), sectors (`WS13 7`)
+  and full postcodes (`WS13 7SW`) are supported. A trailing `*` is optional (`WS13*`). **Keep the sector space where ambiguous:**
+  `W11` is the district, `W1 1` is a sector. Matching checks the length of the full code,
+  so `WS1` does not include `WS13`. Displayed partial source values can match a district
+  when equal to that district; raw full postcodes never replace partial displayed codes.
+- A prefix expands to at most 8,192 vocabulary terms. Broader prefixes return an explicit
+  error asking for a longer prefix, never silently truncated results. The existing C-collated
+  vocabulary B-tree and integer entry indexes are used; no catalogue rebuild is required.
+- `dataset=all` searches imported editions together. Samples are excluded when a complete
+  import with the same manifest edition exists; samples remain individually selectable.
+  Results identify their originating `dataset`. This is occurrence search, not person identity matching.
 - People require surname or postcode; businesses require organisation or postcode.
-  First name is an additional exact filter. Names such as Li and Ng need no minimum length.
-- `limit=1..100` (default 50). Reply: `{items:[{id,source_id,record}],next_cursor:"..."}`.
-  Repeat the original filters with `cursor=...`. Cursors are opaque and bound to the
-  normalized filters and dataset; there is no exact-total query or offset scan.
-- Ordering uses internal name/first-name codes followed by import ordinal. It is stable
-  within an imported dataset but **not alphabetical**. Cursors from schema 1 are invalid.
-  Entries are never merged into inferred people or households.
+- `limit=1..100` (default 50). Reply: `{items:[{dataset,id,source_id,record}],next_cursor:"..."}`.
+  Repeat the original filters with `cursor=...`. Cursors are opaque and bound to normalized
+  filters, postcode precision and the edition selection; no exact-total query or offset scan.
+- Ordering uses internal name/first-name codes and import ordinal, with dataset IDs
+  breaking ties so editions interleave rather than exhausting one edition first. Each edition
+  contributes at most `limit+1` indexed candidates before the global page is selected.
+  Postcode-prefix searches order by postcode code before name codes to use the existing
+  postcode index efficiently. This order is stable, **not alphabetical or chronological**.
+  Old-version cursors may be invalid after upgrading. Edition labels use cover-disc dates,
+  not verified electoral-roll dates.
 - `GET /api/export` takes the same filters, limit and cursor and returns the matching
-  bounded page as NDJSON. It preserves original numeric precision and nulls; browser
-  downloads use the raw response rather than reserializing JavaScript numbers.
+  bounded page as NDJSON. Original JSONL page/record downloads retain exact source numeric
+  bytes and nulls. Readable CSV is generated in the UI with selected human-facing fields,
+  edition, source identity and citation; cells are quoted and formula prefixes neutralized.
+  CSV is a convenience view, not a lossless substitute for original JSONL.
 - Import ordinals are stable only within a dataset; source identity is edition plus
   source ID (SE4 additionally qualifies entry IDs with the source segment).
+
+## Using the interface
+
+The edition selector defaults to **All editions**. Choose exact names or **Starts with**,
+then enter a name or postcode. The result cards show their edition and directory type.
+Page sizes are 25/50/100 with controls above and below results. Search URLs preserve filters,
+page size and the current cursor; browser Back/Forward restores searches. A directly opened
+page URL cannot reconstruct the app's earlier page history; use browser history or start
+that search again. Search terms are visible in bookmarked URLs and browser history.
+
+**View record** separates person/business details, formatted addresses, sources and
+plain-language data-quality notes. Known place codes are translated (for example `T` is
+Town); undecoded fields/codes remain available in **Show original source fields**.
+Offsets and raw references are kept there rather than presented as the record's identity.
+![Readable record view using invented demo data](screenshots/record-preview.png)
+
+Copy addresses/citations, export the selected original record, or export the current page
+in original JSONL or readable CSV. Source warnings never disappear from original exports.
+
+**Group identical listings on this page** is optional and reversible. It groups matching
+normalized names, listing types, complete addresses and telephone numbers among the
+returned occurrences. It requires a recorded street and house/building, and leaves
+incomplete names/postcodes and warned records separate. Sources remain individually
+inspectable and a comparison table shows their human-facing fields. This does not establish
+that listings describe the same person. Grouping does not combine entries on different
+pages, alter the source pagination or remove occurrences from page exports. True
+catalogue-wide grouping needs a dedicated grouping index and group-aware cursors; it is
+not implemented by hiding duplicates after pagination.
+
+See [the interface polish measurements](research/search-polish.md) for bounded local
+checks of the new query paths. They do not establish hosted capacity.
 
 ## Verification
 

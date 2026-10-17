@@ -18,7 +18,7 @@
     <main>
       <section class="intro">
         <p class="eyebrow">THE DIRECTORY, REOPENED</p>
-        <h1>A name. A place.<br />A piece of history.</h1>
+        <h1>Find a name.<br />Follow the records.</h1>
         <p>
           Search preserved UK-Info directory editions. Explore people and
           businesses as they were recorded on the original discs.
@@ -39,6 +39,12 @@
               Businesses
             </button>
           </div>
+          <label
+            >Name matching<select name="match" id="match">
+              <option value="exact">Exact name</option>
+              <option value="prefix">Starts with</option>
+            </select></label
+          >
           <div id="person-fields" class="fields">
             <label
               >Surname<input
@@ -59,7 +65,7 @@
             >Business name<input
               name="organisation"
               autocomplete="off"
-              placeholder="Exact organisation name"
+              placeholder="e.g. Archive Supplies"
               maxlength="256"
           /></label>
           <div class="bottom-fields">
@@ -68,21 +74,21 @@
               ><input
                 name="postcode"
                 autocomplete="off"
-                placeholder="e.g. AB10 1AA"
+                placeholder="WS13, WS13 7 or WS13 7SW"
                 maxlength="12" /></label
             ><button class="primary" id="submit" type="submit">
               Search archive <span aria-hidden="true">↗</span>
             </button>
           </div>
           <p class="note">
-            Names match exactly, ignoring case and extra spaces. A surname or
-            postcode is required for people; a business name or postcode for
-            businesses.
+            Names ignore case and extra spaces. Use Starts with or a trailing *
+            (Smi*) for name prefixes. Postcodes accept districts, sectors and
+            full codes. Enter a name or postcode to begin.
           </p>
         </form>
         <section class="results" aria-labelledby="results-title">
           <div class="results-heading">
-            <h2 id="results-title">Your discoveries</h2>
+            <h2 id="results-title">Search results</h2>
             <button id="export" type="button" disabled>
               Export this page ↓
             </button>
@@ -90,6 +96,42 @@
           <p id="status" role="status" aria-live="polite">
             Choose an edition and enter a name or postcode to begin.
           </p>
+          <div class="result-options">
+            <label
+              >Export format<select id="export-format">
+                <option value="jsonl">Original JSONL</option>
+                <option value="csv">Readable CSV</option>
+              </select></label
+            ><label
+              >Results per page<select
+                name="limit"
+                id="page-size"
+                form="search"
+              >
+                <option>25</option>
+                <option selected>50</option>
+                <option>100</option>
+              </select></label
+            ><label class="check"
+              ><input type="checkbox" id="group-results" /> Group identical
+              listings on this page</label
+            >
+          </div>
+          <p id="group-note" class="note" hidden>
+            Groups match recorded names, listing types, addresses and telephone
+            numbers. Incomplete addresses and source warnings remain separate.
+            They do not establish identity. Listings on other pages remain
+            separate.
+          </p>
+          <p class="note">
+            Results use a stable catalogue order, not alphabetical order.
+            Edition dates refer to the cover disc.
+          </p>
+          <nav class="pagination" aria-label="Top search result navigation">
+            <button id="previous-top" type="button" hidden>
+              ← Previous results</button
+            ><button id="next-top" type="button" hidden>More results →</button>
+          </nav>
           <div id="items"></div>
           <nav class="pagination" aria-label="Search result pages">
             <button id="previous" type="button" hidden>← Previous page</button>
@@ -154,11 +196,19 @@
     </dialog>
     <dialog id="details">
       <div class="dialog-heading">
-        <h2>Original source record</h2>
+        <h2 id="record-title">Record details</h2>
         <button id="close-details" aria-label="Close details">✕</button>
       </div>
       <p id="provenance"></p>
-      <dl id="record-fields"></dl>
+      <div class="record-actions">
+        <button id="copy-address" type="button">Copy address</button
+        ><button id="copy-citation" type="button">Copy citation</button
+        ><button id="export-record" type="button">
+          Export original record
+        </button>
+      </div>
+      <p id="record-feedback" role="status"></p>
+      <div id="record-fields"></div>
     </dialog>
   </body>
 </html>

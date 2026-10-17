@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Add all-edition searches, bounded trailing name wildcards, Starts with matching and
+  postcode district/sector searches with distinct district/sector boundaries.
+- Add edition badges, readable record sections and place types, copyable addresses and
+  citations, source comparison, original-record export and readable CSV page exports.
+- Add page sizes, navigation above/below results, bookmarkable searches and optional
+  conservative grouping of identical listings on the current page.
+
 - Replace the preview JSONB catalogue with schema 2: integer search projections and
   checksummed Zstandard record blocks. Add full-catalogue verification, size statistics
   and a read-only schema-1 repacker into a separate destination.

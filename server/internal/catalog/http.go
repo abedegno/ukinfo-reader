@@ -5,15 +5,15 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/klauspost/compress/zstd"
 )
@@ -99,24 +99,61 @@ func (a *API) datasets(w http.ResponseWriter, r *http.Request) {
 
 type query struct {
 	Dataset, Kind, Surname, First, Organisation, Postcode string
+	Match                                                 string
+	PostcodeLength                                        int
 	Limit                                                 int
 	Cursor                                                string
 }
 type cursor struct {
-	Query   string `json:"q"`
-	Name    int32  `json:"n"`
-	First   int32  `json:"f"`
-	ID      int32  `json:"i"`
-	Dataset int16  `json:"d"`
+	Query    string `json:"q"`
+	Postcode int32  `json:"p"`
+	Name     int32  `json:"n"`
+	First    int32  `json:"f"`
+	ID       int32  `json:"i"`
+	Dataset  int16  `json:"d"`
 }
 type result struct {
+	Dataset  string          `json:"dataset"`
 	ID       int64           `json:"id"`
 	SourceID string          `json:"source_id"`
 	Record   json.RawMessage `json:"record"`
 }
 
+var postcodeSearch = regexp.MustCompile(`^(?:[A-Z]{1,2}[0-9][A-Z0-9]?(?:[0-9](?:[A-Z]{2})?)?|GIR(?:0(?:AA)?)?)$`)
+
+var fullPostcodeSearch = regexp.MustCompile(`^(?:[A-Z]{1,2}[0-9][A-Z0-9]?[0-9][A-Z]{2}|GIR0AA)$`)
+
 func parse(v url.Values) (query, error) {
-	q := query{Dataset: strings.TrimSpace(v.Get("dataset")), Kind: v.Get("kind"), Surname: Normalize(v.Get("surname")), First: Normalize(v.Get("first_name")), Organisation: Normalize(v.Get("organisation")), Postcode: Postcode(v.Get("postcode")), Limit: 50, Cursor: v.Get("cursor")}
+	q := query{Dataset: strings.TrimSpace(v.Get("dataset")), Kind: v.Get("kind"), Surname: Normalize(v.Get("surname")), First: Normalize(v.Get("first_name")), Organisation: Normalize(v.Get("organisation")), Postcode: strings.TrimSuffix(Postcode(v.Get("postcode")), "*"), Match: v.Get("match"), Limit: 50, Cursor: v.Get("cursor")}
+	if q.Match == "" {
+		q.Match = "exact"
+	}
+	if q.Match != "exact" && q.Match != "prefix" {
+		return q, fmt.Errorf("name matching must be exact or prefix")
+	}
+	for _, value := range []string{q.Surname, q.Organisation} {
+		if value == "" {
+			continue
+		}
+		prefix := strings.TrimSuffix(value, "*")
+		if strings.ContainsAny(prefix, "*?%") || (strings.HasSuffix(value, "*") || q.Match == "prefix") && utf8.RuneCountInString(prefix) < 2 {
+			return q, fmt.Errorf("use at least two characters followed by a single trailing *")
+		}
+	}
+	if strings.ContainsAny(strings.TrimSuffix(q.First, "*"), "*?%") || q.First == "*" {
+		return q, fmt.Errorf("use a single trailing * for first name prefixes")
+	}
+	if q.Postcode != "" && !postcodeSearch.MatchString(q.Postcode) {
+		return q, fmt.Errorf("enter a postcode, district (WS13) or sector (WS13 7)")
+	}
+	if q.Postcode != "" && !fullPostcodeSearch.MatchString(q.Postcode) {
+		raw := strings.Fields(strings.ToUpper(strings.TrimSuffix(strings.TrimSpace(v.Get("postcode")), "*")))
+		sector := q.Postcode == "GIR0" || len(q.Postcode) > 4 || (len(raw) == 2 && len(raw[1]) == 1 && raw[1][0] >= '0' && raw[1][0] <= '9')
+		q.PostcodeLength = len(q.Postcode) + 3
+		if sector {
+			q.PostcodeLength = len(q.Postcode) + 2
+		}
+	}
 	if q.Kind == "" {
 		q.Kind = "person"
 	}
@@ -167,88 +204,145 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 	defer cancel()
-	var dataset int16
-	if err = a.DB.QueryRow(ctx, "SELECT id FROM datasets WHERE key=$1", q.Dataset).Scan(&dataset); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			fail(w, 404, "Edition not imported")
-		} else {
-			fail(w, 503, "Catalogue unavailable")
+	datasetKeys := map[int16]string{}
+	datasetIDs := []int16{}
+	datasetSQL := "SELECT id,key FROM datasets WHERE key=$1 ORDER BY id"
+	datasetArgs := []any{q.Dataset}
+	if q.Dataset == "all" {
+		datasetSQL = `SELECT d.id,d.key FROM datasets d WHERE NOT (
+   COALESCE((d.manifest->>'sample')::boolean,false) AND EXISTS (
+    SELECT 1 FROM datasets full_edition WHERE full_edition.manifest->>'edition'=d.manifest->>'edition'
+    AND NOT COALESCE((full_edition.manifest->>'sample')::boolean,false))) ORDER BY d.id`
+		datasetArgs = nil
+	}
+	ds, err := a.DB.Query(ctx, datasetSQL, datasetArgs...)
+	if err != nil {
+		fail(w, 503, "Catalogue unavailable")
+		return
+	}
+	for ds.Next() {
+		var id int16
+		var key string
+		if err = ds.Scan(&id, &key); err != nil {
+			break
 		}
+		datasetIDs = append(datasetIDs, id)
+		datasetKeys[id] = key
+	}
+	if err == nil {
+		err = ds.Err()
+	}
+	ds.Close()
+	if err != nil {
+		fail(w, 503, "Catalogue unavailable")
+		return
+	}
+	if len(datasetIDs) == 0 {
+		fail(w, 404, "Edition not imported")
 		return
 	}
 	kind := int16(0)
 	if q.Kind == "business" {
 		kind = 1
 	}
-	requested := []string{}
-	for _, key := range []string{q.Surname, q.First, q.Organisation, q.Postcode} {
-		if key != "" {
-			requested = append(requested, key)
+	args := []any{datasetIDs, kind}
+	conditions := []string{"dataset_id=ANY($1::smallint[])", "kind=$2"}
+	missing := false
+	for _, filter := range []struct {
+		column, key string
+		postcode    bool
+	}{
+		{"name_id", q.Surname, false}, {"first_id", q.First, false}, {"name_id", q.Organisation, false}, {"postcode_id", q.Postcode, true},
+	} {
+		if filter.key == "" {
+			continue
 		}
-	}
-	terms := map[string]int32{}
-	termRows, err := a.DB.Query(ctx, "SELECT key,id FROM terms WHERE key=ANY($1::text[])", requested)
-	if err != nil {
-		fail(w, 503, "Search vocabulary unavailable")
-		return
-	}
-	for termRows.Next() {
-		var key string
-		var id int32
-		if err = termRows.Scan(&key, &id); err != nil {
-			termRows.Close()
+		key := strings.TrimSuffix(filter.key, "*")
+		prefix := (!filter.postcode && (q.Match == "prefix" || strings.HasSuffix(filter.key, "*"))) || (filter.postcode && q.PostcodeLength > 0)
+		ids := []int32{}
+		sql := "SELECT id FROM terms WHERE key=$1"
+		termArgs := []any{key}
+		if prefix {
+			sql = "SELECT id FROM terms WHERE key >= $1 AND key < $2 ORDER BY key LIMIT 8193"
+			termArgs = append(termArgs, key+"\U0010ffff")
+			if filter.postcode {
+				sql = "SELECT id FROM terms WHERE key >= $1 AND key < $2 AND (length(key)=$3 OR key=$1) ORDER BY key LIMIT 8193"
+				termArgs = append(termArgs, q.PostcodeLength)
+			}
+		}
+		rows, e := a.DB.Query(ctx, sql, termArgs...)
+		if e != nil {
 			fail(w, 503, "Search vocabulary unavailable")
 			return
 		}
-		terms[key] = id
-	}
-	err = termRows.Err()
-	termRows.Close()
-	if err != nil {
-		fail(w, 503, "Search vocabulary unavailable")
-		return
-	}
-	args := []any{dataset, kind}
-	conditions := []string{"dataset_id=$1", "kind=$2"}
-	missing := false
-	add := func(column, key string) {
-		if key != "" {
-			id, ok := terms[key]
-			if !ok {
-				missing = true
+		for rows.Next() {
+			var id int32
+			if err = rows.Scan(&id); err != nil {
+				break
 			}
-			args = append(args, id)
-			conditions = append(conditions, fmt.Sprintf("%s=$%d", column, len(args)))
+			ids = append(ids, id)
 		}
+		if err == nil {
+			err = rows.Err()
+		}
+		rows.Close()
+		if err != nil {
+			fail(w, 503, "Search vocabulary unavailable")
+			return
+		}
+		if len(ids) > 8192 {
+			fail(w, 400, "Too many matching terms; enter a longer name or postcode prefix")
+			return
+		}
+		if len(ids) == 0 {
+			missing = true
+		}
+		args = append(args, ids)
+		conditions = append(conditions, fmt.Sprintf("%s=ANY($%d::integer[])", filter.column, len(args)))
 	}
-	add("name_id", q.Surname)
-	add("first_id", q.First)
-	add("name_id", q.Organisation)
-	add("postcode_id", q.Postcode)
+	order := "name_id,first_id,id,dataset_id"
+	if q.PostcodeLength > 0 {
+		order = "postcode_id,name_id,first_id,id,dataset_id"
+	}
 	if q.Cursor != "" {
 		b, e := base64.RawURLEncoding.DecodeString(q.Cursor)
 		var c cursor
-		if e != nil || json.Unmarshal(b, &c) != nil || c.Query != q.fingerprint() || c.Dataset != dataset || c.ID < 1 || c.Name < 0 || c.First < 0 {
+		if e != nil || json.Unmarshal(b, &c) != nil || c.Query != q.fingerprint() || datasetKeys[c.Dataset] == "" || c.ID < 1 || c.Name < 0 || c.First < 0 || c.Postcode < 0 {
 			fail(w, 400, "Cursor does not match this search")
 			return
 		}
-		args = append(args, c.Name, c.First, c.ID)
-		conditions = append(conditions, fmt.Sprintf("(name_id,first_id,id)>($%d,$%d,$%d)", len(args)-2, len(args)-1, len(args)))
+		if q.PostcodeLength > 0 {
+			args = append(args, c.Postcode, c.Name, c.First, c.ID, c.Dataset)
+			conditions = append(conditions, fmt.Sprintf("(postcode_id,name_id,first_id,id,dataset_id)>($%d,$%d,$%d,$%d,$%d)", len(args)-4, len(args)-3, len(args)-2, len(args)-1, len(args)))
+		} else {
+			args = append(args, c.Name, c.First, c.ID, c.Dataset)
+			conditions = append(conditions, fmt.Sprintf("(name_id,first_id,id,dataset_id)>($%d,$%d,$%d,$%d)", len(args)-3, len(args)-2, len(args)-1, len(args)))
+		}
 	}
 	ids := []int32{}
+	recordDatasets := []int16{}
 	next := ""
 	var last cursor
 	if !missing {
 		args = append(args, q.Limit+1)
-		sql := fmt.Sprintf("SELECT id,name_id,first_id FROM entries WHERE %s ORDER BY name_id,first_id,id LIMIT $%d", strings.Join(conditions, " AND "), len(args))
+		limitArg := len(args)
+		branches := []string{}
+		// Each edition contributes at most limit+1 candidates. A global top-N is
+		// then exact without sorting every matching occurrence in the catalogue.
+		for _, dataset := range datasetIDs {
+			args = append(args, dataset)
+			branches = append(branches, fmt.Sprintf("(SELECT dataset_id,id,name_id,first_id,postcode_id FROM entries WHERE %s AND dataset_id=$%d ORDER BY %s LIMIT $%d)", strings.Join(conditions, " AND "), len(args), order, limitArg))
+		}
+		sql := fmt.Sprintf("SELECT * FROM (%s) candidates ORDER BY %s LIMIT $%d", strings.Join(branches, " UNION ALL "), order, limitArg)
 		rows, e := a.DB.Query(ctx, sql, args...)
 		if e != nil {
 			fail(w, 503, "Search unavailable or timed out; narrow the search")
 			return
 		}
 		for rows.Next() {
-			var id, name, first int32
-			if err = rows.Scan(&id, &name, &first); err != nil {
+			var id, name, first, postcode int32
+			var dataset int16
+			if err = rows.Scan(&dataset, &id, &name, &first, &postcode); err != nil {
 				rows.Close()
 				fail(w, 503, "Search unavailable")
 				return
@@ -259,7 +353,8 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 				break
 			}
 			ids = append(ids, id)
-			last = cursor{Query: q.fingerprint(), Name: name, First: first, ID: id, Dataset: dataset}
+			recordDatasets = append(recordDatasets, dataset)
+			last = cursor{Query: q.fingerprint(), Name: name, First: first, ID: id, Dataset: dataset, Postcode: postcode}
 		}
 		err = rows.Err()
 		rows.Close()
@@ -268,10 +363,30 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 			return
 		}
 	}
-	items, e := a.loadRecords(ctx, dataset, ids)
-	if e != nil {
-		fail(w, 503, "Source records unavailable; catalogue needs verification")
-		return
+	// Batch source blocks by edition, then restore the interleaved search order.
+	type recordKey struct {
+		dataset int16
+		id      int32
+	}
+	requestedRecords := map[int16][]int32{}
+	for i, id := range ids {
+		requestedRecords[recordDatasets[i]] = append(requestedRecords[recordDatasets[i]], id)
+	}
+	foundRecords := map[recordKey]result{}
+	for dataset, requestedIDs := range requestedRecords {
+		records, e := a.loadRecords(ctx, dataset, requestedIDs)
+		if e != nil {
+			fail(w, 503, "Source records unavailable; catalogue needs verification")
+			return
+		}
+		for _, record := range records {
+			record.Dataset = datasetKeys[dataset]
+			foundRecords[recordKey{dataset, int32(record.ID)}] = record
+		}
+	}
+	items := make([]result, 0, len(ids))
+	for i, id := range ids {
+		items = append(items, foundRecords[recordKey{recordDatasets[i], id}])
 	}
 	if export {
 		w.Header().Set("Content-Type", "application/x-ndjson")
@@ -282,7 +397,7 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 				Dataset  string          `json:"dataset"`
 				SourceID string          `json:"source_id"`
 				Record   json.RawMessage `json:"record"`
-			}{q.Dataset, item.SourceID, item.Record}); err != nil {
+			}{item.Dataset, item.SourceID, item.Record}); err != nil {
 				return
 			}
 		}

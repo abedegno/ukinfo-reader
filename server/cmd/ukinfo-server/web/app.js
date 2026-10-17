@@ -30,11 +30,21 @@ function reset() {
   $("items").replaceChildren();
   $("next").hidden = true;
   $("previous").hidden = true;
+  $("previous-top").hidden = true;
+  $("next-top").hidden = true;
   $("export").disabled = true;
   $("submit").disabled = datasets.length === 0;
   $("status").textContent = "Enter a name or postcode to search this edition.";
 }
 function editionNote() {
+  if (form.elements.dataset.value === "all") {
+    $("edition-note").textContent =
+      "Search all imported editions. Samples are excluded when their complete edition is available. " +
+      (datasets.some((d) => d.manifest.sample)
+        ? "Some imports are PARTIAL SAMPLES."
+        : "");
+    return;
+  }
   const selected = datasets.find((d) => d.key === form.elements.dataset.value);
   $("edition-note").textContent = selected
     ? `${selected.entries.toLocaleString()} imported entries${selected.manifest.sample ? " · PARTIAL SAMPLE, not the complete edition" : ""}. ${selected.manifest.edition.includes("2004") ? "This disc has no business listings." : ""}`
@@ -54,27 +64,286 @@ form.elements.dataset.addEventListener("change", () => {
   reset();
   editionNote();
 });
-function details(item) {
+function datasetFor(item) {
+  return datasets.find(
+    (d) => d.key === (item.dataset || lastQuery?.get("dataset")),
+  );
+}
+function editionTitle(item) {
+  const dataset = datasetFor(item);
+  return (
+    (dataset?.manifest.title || item.dataset || "Unknown edition") +
+    (dataset?.manifest.sample ? " · partial sample" : "")
+  );
+}
+function listingType(r) {
+  return (
+    {
+      electoral: "Electoral listing",
+      telephone: "Telephone listing",
+      business: "Business",
+      directory: "Directory listing",
+    }[r.entry_type] || "Directory listing"
+  );
+}
+function recordName(r) {
+  return r.entry_type === "business"
+    ? r.organisation
+    : [r.firstName, r.initial2, r.surname].filter(Boolean).join(" ");
+}
+function addressParts(r) {
+  const street = [r.houseno, r.street || r.street_1]
+    .filter((v) => v && v !== "0")
+    .join(" ");
+  return [
+    ...new Set(
+      [
+        r.subbuilding,
+        r.building,
+        street,
+        r.street_2,
+        r.locality || r.locality_1,
+        r.locality_2,
+        r.town,
+        r.county,
+      ].filter((v) => v && v !== "0"),
+    ),
+  ];
+}
+function addressText(r) {
+  return [...addressParts(r), r.postcode].filter(Boolean).join("\n");
+}
+const warningNames = {
+  synthetic_demo_not_a_real_person:
+    "Invented demonstration record; this is not a real person.",
+  partial_postcode_source:
+    "Only part of the postcode was recorded; the address may also be incomplete.",
+  building_reference_out_of_range:
+    "The source building reference could not be resolved. The building name is unavailable.",
+  building_reference_inside_string:
+    "The source building reference is ambiguous. The building name is unavailable.",
+  ambiguous_industry_reference:
+    "The source industry description has multiple possible matches and is not displayed.",
+  invalid_industry_reference:
+    "The source industry reference could not be resolved.",
+  industry_reference_wrap_recovered:
+    "The industry description was recovered from the source's shortened reference.",
+  invalid_dictionary_text: "Some source text contains undecodable characters.",
+  unknown_telephone_name:
+    "The telephone listing does not contain a resolvable first name.",
+  invalid_surname_reference:
+    "The source surname reference could not be resolved.",
+  nonstandard_postcode: "The source postcode has a nonstandard format.",
+  place_navigation_mismatch:
+    "The source place references disagree; inspect the recorded address carefully.",
+  unterminated_place_text: "The source place name may be incomplete.",
+};
+function warnings(r) {
+  const notes = (r.source_warning || "")
+    .split(";")
+    .filter(Boolean)
+    .map(
+      (code) =>
+        warningNames[code] ||
+        "The source contains an unresolved data issue. See original source fields for the recorded warning.",
+    );
+  if (r.postcode_precision != null && ![0, 10].includes(r.postcode_precision))
+    notes.push(
+      "The source postcode has limited precision; a full postcode cannot be confirmed.",
+    );
+  return [...new Set(notes)];
+}
+let selectedRecord = null;
+function citation(item) {
+  return `${recordName(item.record) || "Unnamed listing"}. ${editionTitle(item)}. Source entry ${item.source_id}. UK-Info Archive. Cover-disc date; underlying listing date unverified.`;
+}
+function details(item, occurrences = [item]) {
+  selectedRecord = item;
+  $("record-title").textContent = recordName(item.record) || "Record details";
   $("provenance").textContent =
-    `${lastQuery.get("dataset")} · source entry ${item.source_id}. Fields below retain the decoder's original names and values. Empty and null values are retained in page exports.`;
+    editionTitle(item) +
+    " · Cover-disc edition; underlying listing date unverified.";
+  $("record-feedback").textContent = "";
   const fields = [];
-  for (const [key, value] of Object.entries(item.record)) {
-    if (value === null || value === "") continue;
-    fields.push(
+  const r = item.record;
+  function section(title, pairs) {
+    const content = pairs.filter(
+      ([, v]) => v !== null && v !== undefined && v !== "",
+    );
+    if (!content.length) return;
+    fields.push(element("h3", title));
+    const dl = element("dl", "");
+    for (const [label, value] of content)
+      dl.append(element("dt", label), element("dd", String(value)));
+    fields.push(dl);
+  }
+  section(r.entry_type === "business" ? "Business" : "Person", [
+    ["Name", recordName(r) || "Not recorded"],
+    ["Listing type", listingType(r)],
+    ["Telephone", r.phone],
+    ["Fax", r.fax],
+    ["Industry", r.industry],
+    ["Industry classification (SIC)", r.sic_code],
+  ]);
+  section("Address", [
+    ["Recorded address", addressText(r) || "Not recorded"],
+    [
+      "Place type",
+      {
+        T: "Town",
+        TC: "Town with county",
+        C: "County",
+        V: "Locality",
+        v: "Locality",
+        VC: "Locality",
+      }[r.place_type],
+    ],
+  ]);
+  fields.push(element("h3", "Sources"));
+  for (const occurrence of occurrences) {
+    fields.push(element("p", citation(occurrence), "note"));
+    if (occurrences.length > 1) {
+      const button = element(
+        "button",
+        `View source: ${editionTitle(occurrence)}`,
+      );
+      button.type = "button";
+      button.addEventListener("click", () => details(occurrence));
+      fields.push(button);
+    }
+  }
+  if (occurrences.length > 1) {
+    const comparison = element("details", "");
+    comparison.append(element("summary", "Compare source fields"));
+    const wrap = element("div", "", "comparison");
+    const table = element("table", "");
+    const head = element("tr", "");
+    head.append(element("th", "Field"));
+    for (const source of occurrences)
+      head.append(element("th", editionTitle(source)));
+    table.append(head);
+    for (const [label, value] of [
+      ["Name", recordName],
+      ["Address", addressText],
+      ["Telephone", (r) => r.phone],
+      ["Industry", (r) => r.industry],
+      ["Listing type", listingType],
+    ]) {
+      const row = element("tr", "");
+      row.append(element("th", label));
+      for (const source of occurrences)
+        row.append(element("td", value(source.record) || "Not recorded"));
+      table.append(row);
+    }
+    wrap.append(table);
+    comparison.append(wrap);
+    fields.push(comparison);
+  }
+  const notes = warnings(r);
+  if (notes.length) {
+    fields.push(element("h3", "Data quality"));
+    for (const note of notes) fields.push(element("p", note, "warning"));
+  }
+  const raw = element("details", "");
+  raw.append(element("summary", "Show original source fields"));
+  const dl = element("dl", "");
+  dl.append(element("dt", "Source entry"), element("dd", item.source_id));
+  for (const [key, value] of Object.entries(r))
+    dl.append(
       element("dt", key),
       element(
         "dd",
-        typeof value === "object" ? JSON.stringify(value) : String(value),
+        value === null
+          ? "Not recorded (null)"
+          : value === ""
+            ? "Not recorded (empty)"
+            : typeof value === "object"
+              ? JSON.stringify(value)
+              : String(value),
       ),
     );
-  }
+  raw.append(dl);
+  fields.push(raw);
   $("record-fields").replaceChildren(...fields);
   $("details").showModal();
 }
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    $("record-feedback").textContent = "Copied.";
+  } catch {
+    $("record-feedback").textContent =
+      "Copy unavailable. Select and copy the text in this record.";
+  }
+}
+$("copy-address").addEventListener("click", () =>
+  copyText(addressText(selectedRecord.record)),
+);
+$("copy-citation").addEventListener("click", () =>
+  copyText(citation(selectedRecord)),
+);
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = element("a", "");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+$("export-record").addEventListener("click", async () => {
+  // Fetch original JSON bytes: browser JSON parsing can round source integers.
+  try {
+    const response = await fetch(`/api/export?${lastQuery}`);
+    if (!response.ok) throw new Error("Export unavailable");
+    const lines = (await response.text()).trim().split("\n");
+    const line = lines.find((line) => {
+      const v = JSON.parse(line);
+      return (
+        v.source_id === selectedRecord.source_id &&
+        v.dataset === selectedRecord.dataset
+      );
+    });
+    if (!line) throw new Error("Record no longer available in this page");
+    downloadBlob(
+      new Blob([line + "\n"], { type: "application/x-ndjson" }),
+      "ukinfo-record.jsonl",
+    );
+  } catch (e) {
+    $("record-feedback").textContent = e.message;
+  }
+});
 $("close-details").addEventListener("click", () => $("details").close());
 function render() {
   $("items").replaceChildren();
+  const groups = new Map();
   for (const item of page) {
+    const r = item.record;
+    const key =
+      $("group-results").checked &&
+      recordName(r) &&
+      (r.entry_type === "business" || (r.firstName && r.surname)) &&
+      (r.street || r.street_1) &&
+      ((r.houseno && r.houseno !== "0") || r.building) &&
+      /^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/i.test(r.postcode || "") &&
+      !r.source_warning &&
+      (r.postcode_precision == null || [0, 10].includes(r.postcode_precision))
+        ? JSON.stringify(
+            [
+              r.entry_type || "directory",
+              recordName(r),
+              addressText(r),
+              r.phone || "",
+            ].map((v) =>
+              v.normalize("NFKC").toLowerCase().replace(/\s+/g, " ").trim(),
+            ),
+          )
+        : `${item.dataset}:${item.source_id}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(item);
+  }
+  $("group-note").hidden = !$("group-results").checked;
+  for (const occurrences of groups.values()) {
+    const item = occurrences[0];
     const r = item.record;
     const card = element("article", "");
     const text = element("div", "");
@@ -83,54 +352,50 @@ function render() {
         ? r.organisation
         : [r.firstName, r.initial2, r.surname].filter(Boolean).join(" ");
     const heading = element("h3", title || "Unnamed source entry");
-    heading.append(element("span", r.entry_type || "directory", "tag"));
+    heading.append(element("span", listingType(r), "tag"));
     text.append(heading);
-    const address = [
-      "subbuilding",
-      "building",
-      "houseno",
-      "street",
-      "street_1",
-      "street_2",
-      "locality",
-      "locality_1",
-      "locality_2",
-      "town",
-      "county",
-    ]
-      .map((k) => r[k])
-      .filter((v) => v && v !== "0");
-    text.append(
-      element("p", [...new Set(address)].join(", ") || "Address not recorded"),
-    );
+    const address = addressParts(r);
+    text.append(element("p", address.join(", ") || "Address not recorded"));
+    const sources = [...new Set(occurrences.map(editionTitle))];
+    text.append(element("p", sources.join(" · "), "source-badges"));
+    if (occurrences.length > 1)
+      text.append(
+        element(
+          "p",
+          `${occurrences.length} identical listings on this page`,
+          "note",
+        ),
+      );
     if (r.postcode) text.append(element("p", r.postcode, "postcode"));
     if (r.phone) text.append(element("p", `Telephone · ${r.phone}`));
-    if (r.source_warning)
-      text.append(
-        element("p", `Source warning · ${r.source_warning}`, "warning"),
-      );
-    if (r.postcode_precision != null && ![0, 10].includes(r.postcode_precision))
-      text.append(
-        element("p", "Postcode has limited source precision", "warning"),
-      );
+    for (const note of warnings(r)) text.append(element("p", note, "warning"));
     const button = element("button", "View record ↗");
     button.type = "button";
-    button.addEventListener("click", () => details(item));
+    button.addEventListener("click", () => details(item, occurrences));
     card.append(text, button);
     $("items").append(card);
   }
   $("next").hidden = !next;
   $("previous").hidden = pageHistory.length === 0;
+  $("previous-top").hidden = $("previous").hidden;
+  $("next-top").hidden = $("next").hidden;
   $("export").disabled = page.length === 0;
   $("status").textContent = page.length
-    ? `Page ${pageHistory.length + 1} · ${page.length} source entries on this page.${next ? " More results available." : " End of results."}`
-    : "No matching entries. Check the edition, exact spelling or postcode. A partial sample covers only its imported entries.";
+    ? `Page ${Number(lastQuery.get("page") || 1)} · Results ${(Number(lastQuery.get("page") || 1) - 1) * Number(lastQuery.get("limit") || 50) + 1}–${(Number(lastQuery.get("page") || 1) - 1) * Number(lastQuery.get("limit") || 50) + page.length} · ${page.length} source entries on this page.${next ? " More results available." : " End of results."}`
+    : "No matching entries. Try Starts with, a postcode district, or All editions. A partial sample covers only its imported entries.";
 }
-async function search(params, trail = []) {
+async function search(params, trail = [], updateURL = true) {
+  if (updateURL) {
+    const url = new URL(location.href);
+    url.search = params.toString();
+    history.pushState(null, "", url);
+  }
   const id = ++generation;
   $("submit").disabled = true;
   $("next").hidden = true;
   $("previous").hidden = true;
+  $("previous-top").hidden = true;
+  $("next-top").hidden = true;
   $("export").disabled = true;
   $("status").textContent = "Searching the archive…";
   try {
@@ -141,9 +406,11 @@ async function search(params, trail = []) {
     page = data.items;
     next = data.next_cursor;
     render();
+    if (updateURL) $("results-title").scrollIntoView({ block: "start" });
   } catch (error) {
     if (id !== generation) return;
     page = [];
+    next = "";
     $("items").replaceChildren();
     $("status").textContent = error.message;
   } finally {
@@ -155,6 +422,8 @@ form.addEventListener("submit", (event) => {
   const params = new URLSearchParams({
     dataset: form.elements.dataset.value,
     kind,
+    match: form.elements.match.value,
+    limit: $("page-size").value,
   });
   for (const name of kind === "person"
     ? ["surname", "first_name", "postcode"]
@@ -167,6 +436,7 @@ form.addEventListener("submit", (event) => {
 $("next").addEventListener("click", () => {
   const params = new URLSearchParams(lastQuery);
   params.set("cursor", next);
+  params.set("page", String(Number(lastQuery.get("page") || 1) + 1));
   search(params, [...pageHistory, new URLSearchParams(lastQuery)]);
 });
 $("previous").addEventListener("click", () => {
@@ -176,6 +446,8 @@ $("previous").addEventListener("click", () => {
       pageHistory.slice(0, -1),
     );
 });
+$("previous-top").addEventListener("click", () => $("previous").click());
+$("next-top").addEventListener("click", () => $("next").click());
 $("export").addEventListener("click", async () => {
   $("export").disabled = true;
   try {
@@ -184,6 +456,52 @@ $("export").addEventListener("click", async () => {
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || "Export unavailable.");
+    }
+    if ($("export-format").value === "csv") {
+      const rows = (await response.text())
+        .trim()
+        .split("\n")
+        .filter(Boolean)
+        .map(JSON.parse);
+      const cell = (value) => {
+        let text = String(value ?? "");
+        if (/^(?:\s*[=+@\-]|[\t\r\n])/.test(text)) text = "'" + text;
+        return '"' + text.replaceAll('"', '""') + '"';
+      };
+      const values = [
+        [
+          "Name",
+          "Listing type",
+          "Address",
+          "Postcode",
+          "Telephone",
+          "Edition",
+          "Source entry",
+          "Citation",
+        ],
+        ...rows.map((item) => [
+          recordName(item.record),
+          listingType(item.record),
+          addressParts(item.record).join(", "),
+          item.record.postcode,
+          item.record.phone,
+          editionTitle(item),
+          item.source_id,
+          citation(item),
+        ]),
+      ];
+      downloadBlob(
+        new Blob(
+          [
+            "\ufeff" +
+              values.map((row) => row.map(cell).join(",")).join("\r\n") +
+              "\r\n",
+          ],
+          { type: "text/csv;charset=utf-8" },
+        ),
+        "ukinfo-page.csv",
+      );
+      return;
     }
     const url = URL.createObjectURL(await response.blob());
     const link = document.createElement("a");
@@ -201,6 +519,7 @@ $("export").addEventListener("click", async () => {
 async function refreshDatasets(preferred) {
   datasets = await api("/api/datasets");
   form.elements.dataset.replaceChildren(
+    Object.assign(element("option", "All editions"), { value: "all" }),
     ...datasets.map((d) => {
       const option = element(
         "option",
@@ -213,7 +532,7 @@ async function refreshDatasets(preferred) {
   if (preferred && datasets.some((d) => d.key === preferred))
     form.elements.dataset.value = preferred;
   $("coverage").textContent =
-    `${datasets.length} imported edition${datasets.length === 1 ? "" : "s"}`;
+    `${new Set(datasets.map((d) => d.manifest.edition)).size} editions · ${datasets.filter((d) => d.manifest.sample).length} samples`;
   $("submit").disabled = datasets.length === 0;
   if (!datasets.length)
     $("status").textContent = window.ukinfoDesktop
@@ -224,12 +543,45 @@ async function refreshDatasets(preferred) {
 (async () => {
   try {
     await refreshDatasets();
+    restoreURL();
   } catch (error) {
     $("coverage").textContent = "Connection unavailable";
     $("status").textContent = error.message;
     $("submit").disabled = true;
   }
 })();
+
+$("group-results").addEventListener("change", () => {
+  if (lastQuery) render();
+});
+$("page-size").addEventListener("change", () => {
+  if (lastQuery) form.requestSubmit();
+});
+function restoreURL() {
+  const params = new URLSearchParams(location.search);
+  if (
+    !params.has("surname") &&
+    !params.has("organisation") &&
+    !params.has("postcode")
+  ) {
+    reset();
+    return;
+  }
+  showKind(params.get("kind") === "business" ? "business" : "person");
+  for (const name of [
+    "dataset",
+    "surname",
+    "first_name",
+    "organisation",
+    "postcode",
+    "match",
+  ])
+    if (params.has(name)) form.elements[name].value = params.get(name);
+  $("page-size").value = params.get("limit") || "50";
+  editionNote();
+  search(params, [], false);
+}
+window.addEventListener("popstate", restoreURL);
 
 if (window.ukinfoDesktop) {
   const bridge = window.ukinfoDesktop;

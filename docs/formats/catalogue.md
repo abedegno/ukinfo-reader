@@ -13,7 +13,8 @@ original decoder output. Each edition is an independently searchable partition.
   ID zero means the empty key. Codes are implementation details, not alphabetical rank.
 - `entries`: list partition per dataset; integer import ordinal, kind (0 person,
   1 business), name/first-name/postcode term IDs. The primary key is `(dataset_id,id)`.
-  Separate name and postcode B-trees serve the supported exact filters.
+  Separate name and postcode B-trees serve exact filters and bounded prefix searches.
+  Prefixes expand through the C-collated vocabulary index before integer entry lookups.
 - `record_blocks`: list partition per dataset; zero-based block ID and `bytea` payload.
   An ordinal's block is `(id-1)/128`, with offset `(id-1)%128`.
 
