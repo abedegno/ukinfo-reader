@@ -6,7 +6,7 @@ reader remains the verified decoder and importer: searches do not run Python.
 
 Development preview. Hosted capacity still needs testing on the intended server.
 Exact and prefix name searches, postcode district/sector searches, optional nearby
-searches, all-edition searches,
+and [street/locality/town/county searches](address-search.md), all-edition searches,
 keyset pagination, readable record details, page-local identical-listing grouping,
 source comparison, copyable citations and current-page JSONL/CSV exports are implemented.
 Catalogue-wide deduplication, alphabetical sorting, contains/fuzzy matching, stable direct

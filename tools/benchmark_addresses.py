@@ -67,6 +67,7 @@ def main():
         ("locality", {"locality": "Shenstone"}),
         ("street-postcode", {"street": "High*", "postcode": "WS13"}),
         ("business-county", {"kind": "business", "county": "Staffordshire"}),
+        ("business-large-town", {"kind": "business", "town": "London"}),
         ("absent-town", {"town": "Invented Absent Place ZZZZZ"}),
     ]
 

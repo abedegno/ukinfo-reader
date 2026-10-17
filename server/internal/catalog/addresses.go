@@ -160,13 +160,17 @@ func IndexAddresses(ctx context.Context, db *pgxpool.Pool, key string, options A
 	if exists && !report.Pilot {
 		return report, errors.New("edition already has an address index")
 	}
+	locationsTable, membersTable := "address_locations", "address_members"
 	if report.Pilot {
+		// Separate names also prevent cached prepared statements from resolving a
+		// permanent table when a temporary shadow is created on a pooled connection.
 		// Shadow the permanent dictionary/members so a pilot consumes no permanent
 		// sequence values and changes no published index, including existing editions.
-		if _, err = tx.Exec(ctx, `CREATE TEMP TABLE address_locations (LIKE address_locations INCLUDING ALL) ON COMMIT DROP;
-   CREATE TEMP TABLE address_members (LIKE address_members INCLUDING ALL) ON COMMIT DROP`); err != nil {
+		if _, err = tx.Exec(ctx, `CREATE TEMP TABLE address_pilot_locations (LIKE address_locations INCLUDING ALL) ON COMMIT DROP;
+   CREATE TEMP TABLE address_pilot_members (LIKE address_members INCLUDING ALL) ON COMMIT DROP`); err != nil {
 			return report, err
 		}
+		locationsTable, membersTable = "pg_temp.address_pilot_locations", "pg_temp.address_pilot_members"
 	}
 	if _, err = tx.Exec(ctx, "CREATE TEMP TABLE address_stage(location_id integer NOT NULL,id integer NOT NULL) ON COMMIT DROP"); err != nil {
 		return report, err
@@ -221,7 +225,7 @@ func IndexAddresses(ctx context.Context, db *pgxpool.Pool, key string, options A
 			return rows.Err()
 		}
 		if len(keys) > 0 {
-			if e := consume(tx.Query(ctx, "SELECT key,id FROM address_locations WHERE key=ANY($1::text[])", keys)); e != nil {
+			if e := consume(tx.Query(ctx, "SELECT key,id FROM "+locationsTable+" WHERE key=ANY($1::text[])", keys)); e != nil {
 				return e
 			}
 			columns := make([][]string, 7)
@@ -235,7 +239,7 @@ func IndexAddresses(ctx context.Context, db *pgxpool.Pool, key string, options A
 				}
 			}
 			if len(columns[0]) > 0 {
-				if e := consume(tx.Query(ctx, `INSERT INTO address_locations(key,street,street_2,locality,locality_2,town,county)
+				if e := consume(tx.Query(ctx, `INSERT INTO `+locationsTable+`(key,street,street_2,locality,locality_2,town,county)
     SELECT * FROM unnest($1::text[],$2::text[],$3::text[],$4::text[],$5::text[],$6::text[],$7::text[]) RETURNING key,id`, columns[0], columns[1], columns[2], columns[3], columns[4], columns[5], columns[6])); e != nil {
 					return e
 				}
@@ -357,20 +361,20 @@ func IndexAddresses(ctx context.Context, db *pgxpool.Pool, key string, options A
 	if options.Progress != nil {
 		options.Progress(Progress{"grouping address postings", report.Records, expected})
 	}
-	if _, err = tx.Exec(ctx, `INSERT INTO address_members(dataset_id,location_id,ids) SELECT $1,location_id,array_agg(id ORDER BY id) FROM address_stage GROUP BY location_id`, dataset); err != nil {
+	if _, err = tx.Exec(ctx, `INSERT INTO `+membersTable+`(dataset_id,location_id,ids) SELECT $1,location_id,array_agg(id ORDER BY id) FROM address_stage GROUP BY location_id`, dataset); err != nil {
 		return report, err
 	}
 	var counted int64
-	if err = tx.QueryRow(ctx, "SELECT count(*),COALESCE(sum(cardinality(ids)),0)::bigint FROM address_members WHERE dataset_id=$1", dataset).Scan(&report.Locations, &counted); err != nil {
+	if err = tx.QueryRow(ctx, "SELECT count(*),COALESCE(sum(cardinality(ids)),0)::bigint FROM "+membersTable+" WHERE dataset_id=$1", dataset).Scan(&report.Locations, &counted); err != nil {
 		return report, err
 	}
 	if counted != report.Records {
 		return report, errors.New("address membership count mismatch")
 	}
-	if _, err = tx.Exec(ctx, "ANALYZE address_locations; ANALYZE address_members"); err != nil {
+	if _, err = tx.Exec(ctx, "ANALYZE "+locationsTable+"; ANALYZE "+membersTable); err != nil {
 		return report, err
 	}
-	if err = tx.QueryRow(ctx, "SELECT pg_total_relation_size('address_locations'),pg_total_relation_size('address_members')").Scan(&report.DictionaryBytes, &report.MembershipBytes); err != nil {
+	if err = tx.QueryRow(ctx, "SELECT pg_total_relation_size($1::regclass),pg_total_relation_size($2::regclass)", locationsTable, membersTable).Scan(&report.DictionaryBytes, &report.MembershipBytes); err != nil {
 		return report, err
 	}
 	if err = check(); err != nil {
@@ -385,6 +389,27 @@ func IndexAddresses(ctx context.Context, db *pgxpool.Pool, key string, options A
 	}
 	err = tx.Commit(ctx)
 	return report, err
+}
+
+// The serving role normally has a two-second SQL deadline. Broad cross-edition
+// address queries get four seconds inside their own read-only transaction; normal
+// name/postcode queries retain their existing budget. Caller closes rows first.
+func (a *API) addressRows(ctx context.Context, sql string, args []any) (pgx.Rows, func(), error) {
+	tx, err := a.DB.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadOnly})
+	if err != nil {
+		return nil, func() {}, err
+	}
+	finish := func() { _ = tx.Rollback(context.Background()) }
+	if _, err = tx.Exec(ctx, "SET LOCAL statement_timeout='4000'"); err != nil {
+		finish()
+		return nil, func() {}, err
+	}
+	rows, err := tx.Query(ctx, sql, args...)
+	if err != nil {
+		finish()
+		return nil, func() {}, err
+	}
+	return rows, finish, nil
 }
 
 func (a *API) addresses(w http.ResponseWriter, r *http.Request) {

@@ -1,0 +1,357 @@
+{
+  "date": "2026-10-17",
+  "method": {
+    "postgres": "18.6 Docker, 2 CPUs / 1 GiB RAM",
+    "api_and_indexer": "Host-native Go, outside the database CPU/memory cap, macOS ARM64",
+    "sampling": "Deterministic evenly spaced whole compressed blocks; clustered, not an unbiased population sample",
+    "timing": "Local HTTP, warmed repeated fields; no physical cold-cache claim; regression tests overlapped portions; not a hosted capacity test",
+    "validation": "Index construction reads all source blocks/checksums, projects only displayed fields, checks counts and publishes atomically. HTTP validation recomputes filters from original returned records and checks occurrence uniqueness across pages. This is not an independent full index completeness proof."
+  },
+  "small_pilots": [
+    {
+      "dataset": "se-pcf78-1998-01",
+      "pilot": true,
+      "records": 65536,
+      "locations": 35949,
+      "nonempty_fields": {
+        "county": 38173,
+        "locality": 19359,
+        "street": 64656,
+        "town": 65531
+      },
+      "dictionary_bytes": 11632640,
+      "membership_bytes": 3383296,
+      "seconds": 1.0765022499999999
+    },
+    {
+      "dataset": "se4-pcf94-1999-04",
+      "pilot": true,
+      "records": 65536,
+      "locations": 1892,
+      "nonempty_fields": {
+        "county": 56448,
+        "locality": 19931,
+        "locality_2": 396,
+        "street": 918,
+        "street_2": 63164,
+        "town": 65536
+      },
+      "dictionary_bytes": 884736,
+      "membership_bytes": 483328,
+      "seconds": 0.77472475
+    },
+    {
+      "dataset": "se2004-pcp218-2004-07",
+      "pilot": true,
+      "records": 65536,
+      "locations": 31358,
+      "nonempty_fields": {
+        "county": 38535,
+        "locality": 21809,
+        "street": 63614,
+        "town": 65374
+      },
+      "dictionary_bytes": 10371072,
+      "membership_bytes": 2998272,
+      "seconds": 1.4361995410000001
+    },
+    {
+      "dataset": "se2005-pcf175-2005-06",
+      "pilot": true,
+      "records": 65536,
+      "locations": 35451,
+      "nonempty_fields": {
+        "county": 39003,
+        "locality": 22858,
+        "street": 63200,
+        "town": 65517
+      },
+      "dictionary_bytes": 11608064,
+      "membership_bytes": 3350528,
+      "seconds": 1.530259375
+    }
+  ],
+  "larger_pilots": [
+    {
+      "dataset": "se2005-pcf175-2005-06",
+      "pilot": true,
+      "records": 2097152,
+      "locations": 472351,
+      "nonempty_fields": {
+        "county": 1225140,
+        "locality": 709828,
+        "street": 2025308,
+        "town": 2096162
+      },
+      "dictionary_bytes": 147111936,
+      "membership_bytes": 48775168,
+      "seconds": 36.542751833
+    },
+    {
+      "dataset": "se2004-pcp218-2004-07",
+      "pilot": true,
+      "records": 2097152,
+      "locations": 431487,
+      "nonempty_fields": {
+        "county": 1236886,
+        "locality": 703435,
+        "street": 2037629,
+        "town": 2093473
+      },
+      "dictionary_bytes": 134365184,
+      "membership_bytes": 45228032,
+      "seconds": 33.930865792
+    }
+  ],
+  "complete_indexes": [
+    {
+      "dataset": "se-pcf78-1998-01",
+      "pilot": false,
+      "records": 27983545,
+      "locations": 666822,
+      "nonempty_fields": {
+        "county": 16344660,
+        "locality": 8763729,
+        "street": 27633615,
+        "town": 27983533
+      },
+      "dictionary_bytes": 548413440,
+      "membership_bytes": 1034412032,
+      "seconds": 183.073842208
+    },
+    {
+      "dataset": "se4-pcf94-1999-04",
+      "pilot": false,
+      "records": 46355850,
+      "locations": 804261,
+      "nonempty_fields": {
+        "county": 39957254,
+        "locality": 15243048,
+        "locality_2": 191933,
+        "street": 704691,
+        "street_2": 44976866,
+        "town": 46355850
+      },
+      "dictionary_bytes": 261545984,
+      "membership_bytes": 257155072,
+      "seconds": 215.07209625
+    },
+    {
+      "dataset": "se2004-pcp218-2004-07",
+      "pilot": false,
+      "records": 63373974,
+      "locations": 785854,
+      "nonempty_fields": {
+        "county": 37379900,
+        "locality": 21339337,
+        "street": 61585294,
+        "town": 63260572
+      },
+      "dictionary_bytes": 522747904,
+      "membership_bytes": 865746944,
+      "seconds": 526.197626583
+    },
+    {
+      "dataset": "se2005-pcf175-2005-06",
+      "pilot": false,
+      "records": 51350897,
+      "locations": 856157,
+      "nonempty_fields": {
+        "county": 30030255,
+        "locality": 17377779,
+        "street": 49601309,
+        "town": 51327939
+      },
+      "dictionary_bytes": 521199616,
+      "membership_bytes": 539672576,
+      "seconds": 464.348299333
+    }
+  ],
+  "final_storage": {
+    "location_tuples": 1733324,
+    "membership_groups": 3120236,
+    "represented_occurrences": 189077392,
+    "indexed_datasets": 9,
+    "dictionary_bytes": 548413440,
+    "membership_bytes": 1035042816,
+    "publication_bytes": 24576,
+    "source_count_mismatches": 0
+  },
+  "all_editions_workload": {
+    "dataset": "all",
+    "method": "Local HTTP; sequential keyset pages of 50; recomputed filters on original records; per-case occurrence uniqueness. Four callers/12 requests to one repeated town query. No physical cold-cache claim or independent completeness proof.",
+    "cases": [
+      {
+        "case": "street-exact",
+        "records_checked": 250,
+        "page_ms": [
+          919.87,
+          225.84,
+          220.04,
+          231.79,
+          243.57
+        ],
+        "error_status": null
+      },
+      {
+        "case": "street-prefix",
+        "records_checked": 250,
+        "page_ms": [
+          1039.31,
+          609.66,
+          751.34,
+          592.85,
+          610.56
+        ],
+        "error_status": null
+      },
+      {
+        "case": "town",
+        "records_checked": 250,
+        "page_ms": [
+          135.34,
+          41.44,
+          40.67,
+          47.0,
+          43.47
+        ],
+        "error_status": null
+      },
+      {
+        "case": "county",
+        "records_checked": 250,
+        "page_ms": [
+          661.44,
+          409.99,
+          406.34,
+          366.84,
+          366.7
+        ],
+        "error_status": null
+      },
+      {
+        "case": "large-town",
+        "records_checked": 250,
+        "page_ms": [
+          2265.22,
+          2224.82,
+          2262.46,
+          2122.5,
+          2159.83
+        ],
+        "error_status": null
+      },
+      {
+        "case": "street-town",
+        "records_checked": 250,
+        "page_ms": [
+          77.18,
+          55.48,
+          53.21,
+          50.71,
+          42.14
+        ],
+        "error_status": null
+      },
+      {
+        "case": "name-county",
+        "records_checked": 250,
+        "page_ms": [
+          1794.46,
+          1890.82,
+          1890.12,
+          1832.42,
+          1776.24
+        ],
+        "error_status": null
+      },
+      {
+        "case": "name-prefix-county",
+        "records_checked": 250,
+        "page_ms": [
+          2221.78,
+          2018.19,
+          2206.64,
+          2330.73,
+          2118.71
+        ],
+        "error_status": null
+      },
+      {
+        "case": "locality",
+        "records_checked": 250,
+        "page_ms": [
+          72.65,
+          44.95,
+          43.91,
+          42.9,
+          42.15
+        ],
+        "error_status": null
+      },
+      {
+        "case": "street-postcode",
+        "records_checked": 250,
+        "page_ms": [
+          2306.74,
+          1898.06,
+          1371.59,
+          1172.66,
+          804.11
+        ],
+        "error_status": null
+      },
+      {
+        "case": "business-county",
+        "records_checked": 250,
+        "page_ms": [
+          1432.99,
+          1058.33,
+          1084.43,
+          986.84,
+          1171.49
+        ],
+        "error_status": null
+      },
+      {
+        "case": "business-large-town",
+        "records_checked": 250,
+        "page_ms": [
+          2983.83,
+          1567.35,
+          1571.51,
+          1562.52,
+          1754.96
+        ],
+        "error_status": null
+      },
+      {
+        "case": "absent-town",
+        "records_checked": 0,
+        "page_ms": [
+          7.33
+        ],
+        "error_status": null
+      }
+    ],
+    "concurrency": {
+      "callers": 4,
+      "requests": 12,
+      "ms": [
+        131.92,
+        132.45,
+        132.01,
+        132.54,
+        101.17,
+        100.36,
+        100.85,
+        29.88,
+        31.0,
+        31.35,
+        32.81,
+        29.83
+      ],
+      "errors": 0
+    }
+  }
+}

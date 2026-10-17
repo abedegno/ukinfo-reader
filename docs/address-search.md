@@ -18,6 +18,11 @@ automatic replacement with modern ONSPD geography, abbreviation expansion or spe
 correction. Nulls, raw references and fields withheld by source postcode precision
 are never used to reconstruct a searchable displayed address.
 
+Address searches admit four active requests per API process; additional admitted
+requests wait within a five-second total deadline. The main search statement gets
+a four-second timeout in a read-only transaction. Existing name/postcode-only SQL
+deadlines remain unchanged.
+
 Address-filtered searches use stable **source occurrence ID, then edition ID** order.
 This is not alphabetical or distance order. Keyset pagination and page exports retain
 all address predicates; changing a filter invalidates the previous cursor.
@@ -99,3 +104,6 @@ integer staging table allows PostgreSQL to group memberships on disk.
 House numbers, building/subbuilding names, address detail pages, household exploration,
 place autocomplete, fuzzy matching and cross-edition entity linkage are later work.
 A matching street/location tuple does not establish a shared household or identity.
+
+See the [complete-edition measurements](research/address-index.md) for the retained
+layout, storage, query experiments and benchmark limits.

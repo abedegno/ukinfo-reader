@@ -17,6 +17,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/klauspost/compress/zstd"
 )
@@ -27,6 +28,7 @@ type API struct {
 	decoder        *zstd.Decoder
 	geographyCache *geographyCache
 	geographySlots chan struct{}
+	addressSlots   chan struct{}
 }
 
 func NewAPI(db *pgxpool.Pool) *API {
@@ -34,7 +36,7 @@ func NewAPI(db *pgxpool.Pool) *API {
 	if err != nil {
 		panic(err)
 	}
-	return &API{DB: db, slots: make(chan struct{}, 32), decoder: decoder, geographyCache: newGeographyCache(), geographySlots: make(chan struct{}, 2)}
+	return &API{DB: db, slots: make(chan struct{}, 32), decoder: decoder, geographyCache: newGeographyCache(), geographySlots: make(chan struct{}, 2), addressSlots: make(chan struct{}, 4)}
 }
 func respond(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -253,11 +255,20 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 		return
 	}
 	timeout := 2 * time.Second
-	if q.Near != "" {
+	if q.Near != "" || q.hasAddress() {
 		timeout = 5 * time.Second
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), timeout)
 	defer cancel()
+	if q.hasAddress() {
+		select {
+		case a.addressSlots <- struct{}{}:
+			defer func() { <-a.addressSlots }()
+		case <-ctx.Done():
+			fail(w, 503, "Address search is busy; retry shortly")
+			return
+		}
+	}
 	datasetKeys := map[int16]string{}
 	datasetIDs := []int16{}
 	datasetSQL := "SELECT id,key FROM datasets WHERE key=$1 ORDER BY id"
@@ -307,9 +318,27 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 	if q.Kind == "business" {
 		kind = 1
 	}
+	if q.hasAddress() {
+		// A kind-prefix probe avoids expanding whole address areas for editions
+		// containing no listings of the requested type (notably pre-2005 businesses).
+		selected := []int16{}
+		for _, dataset := range datasetIDs {
+			var first int32
+			e := a.DB.QueryRow(ctx, `SELECT id FROM entries WHERE dataset_id=$1 AND kind=$2 ORDER BY name_id,first_id,id LIMIT 1`, dataset, kind).Scan(&first)
+			if errors.Is(e, pgx.ErrNoRows) {
+				continue
+			}
+			if e != nil {
+				fail(w, 503, "Catalogue listing types unavailable")
+				return
+			}
+			selected = append(selected, dataset)
+		}
+		datasetIDs = selected
+	}
 	args := []any{datasetIDs, kind}
 	conditions := []string{"dataset_id=ANY($1::smallint[])", "kind=$2"}
-	missing := false
+	missing := len(datasetIDs) == 0
 	var geography *GeographySearch
 	var nearbyIDs []int32
 	radiusArg := 0
@@ -472,7 +501,7 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 				// Each occurrence belongs to exactly one location tuple: no DISTINCT/hash
 				// aggregation is necessary. Preserve candidate ID order before looking up
 				// source projections so LIMIT stops the indexed probes after a page.
-				if q.Surname == "" && q.First == "" && q.Organisation == "" && q.Postcode == "" && q.Near == "" {
+				if q.Kind != "business" && q.Surname == "" && q.First == "" && q.Organisation == "" && q.Postcode == "" && q.Near == "" {
 					branches = append(branches, fmt.Sprintf(`(SELECT e.* FROM (%s ORDER BY candidate) address_ids
       CROSS JOIN LATERAL (SELECT dataset_id,id,name_id,first_id,postcode_id FROM entries
        WHERE %s AND dataset_id=$%d AND id=address_ids.candidate OFFSET 0) e
@@ -498,7 +527,14 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 		if len(termCTEs) > 0 {
 			sql = "WITH " + strings.Join(termCTEs, ", ") + " " + sql
 		}
-		rows, e := a.DB.Query(ctx, sql, args...)
+		var rows pgx.Rows
+		finish := func() {}
+		var e error
+		if q.hasAddress() {
+			rows, finish, e = a.addressRows(ctx, sql, args)
+		} else {
+			rows, e = a.DB.Query(ctx, sql, args...)
+		}
 		if e != nil {
 			log.Printf("Search query failed: %v", e)
 			fail(w, 503, "Search unavailable or timed out; narrow the search")
@@ -509,6 +545,7 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 			var dataset int16
 			if err = rows.Scan(&dataset, &id, &name, &first, &postcode); err != nil {
 				rows.Close()
+				finish()
 				fail(w, 503, "Search unavailable")
 				return
 			}
@@ -524,6 +561,7 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 		}
 		err = rows.Err()
 		rows.Close()
+		finish()
 		if err != nil {
 			fail(w, 503, "Search timed out; narrow the search")
 			return

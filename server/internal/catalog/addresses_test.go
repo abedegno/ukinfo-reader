@@ -120,15 +120,25 @@ func testAddresses(t *testing.T, db *pgxpool.Pool) {
 		t.Fatal("failed build changed dictionary", dictionaryBefore, dictionaryAfter, e)
 	}
 	fetch("/api/search?dataset="+key+"&street=High+Street", 503)
-	report, e := IndexAddresses(ctx, db, key, AddressIndexOptions{})
+	// Reuse one physical connection across a complete build and a pilot. This
+	// exercises prepared-statement caches rather than relying on pool selection.
+	singleConfig := db.Config()
+	singleConfig.MaxConns = 1
+	singleConfig.MinConns = 1
+	single, e := pgxpool.NewWithConfig(ctx, singleConfig)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer single.Close()
+	report, e := IndexAddresses(ctx, single, key, AddressIndexOptions{})
 	if e != nil || report.Records != 260 || report.Locations != 3 {
 		t.Fatal("complete", report, e)
 	}
-	if _, e = IndexAddresses(ctx, db, key, AddressIndexOptions{}); e == nil {
+	if _, e = IndexAddresses(ctx, single, key, AddressIndexOptions{}); e == nil {
 		t.Fatal("replaced published address index")
 	}
 	// Pilot over an already indexed edition must not change its dictionary or memberships.
-	_, e = IndexAddresses(ctx, db, key, AddressIndexOptions{SampleBlocks: 1})
+	_, e = IndexAddresses(ctx, single, key, AddressIndexOptions{SampleBlocks: 1})
 	if e != nil {
 		t.Fatal(e)
 	}
