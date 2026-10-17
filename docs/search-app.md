@@ -140,6 +140,11 @@ npm start
 npm run pack
 ```
 
+If your Python distribution installs its license outside the interpreter prefix, pass
+`--python-license /path/to/full/Python-license` when staging. Available Go/CPython/
+PyInstaller notices are collected in `runtime/notices`; retain PostgreSQL and shared
+library notices from the native distribution too.
+
 `npm run pack` produces an unsigned native development directory under `dist/desktop`.
 It includes Electron, the Go binary, a standalone Python decoder and the staged
 PostgreSQL runtime; **no catalogue**. End users do not need Python installed.

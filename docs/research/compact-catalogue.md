@@ -17,7 +17,7 @@ and stored-block verification agreed on SHA-256
 | Metric | Schema 1: JSONB | Schema 2: compact |
 |---|---:|---:|
 | Database bytes | 2,832,201,407 | 593,024,703 |
-| Ingestion seconds | 94.97 | 50.38 |
+| Ingestion wall seconds | 94.97 | 50.82 |
 | Warm 1-caller requests/s | 3,294 | 1,723 |
 | Warm 8-caller requests/s | 8,414 | 3,024 |
 | Warm 32-caller requests/s | 8,383 | 3,005 |
@@ -25,7 +25,7 @@ and stored-block verification agreed on SHA-256
 | Scheduled 100/s p99 | 5.678 ms | 7.414 ms |
 | Scheduled errors/drops | 0 / 0 | 0 / 0 |
 
-Compact storage is **79.1% smaller**, with a **46.9% shorter import** in this pilot.
+Compact storage is **79.1% smaller**, with a **46.5% shorter import** in this pilot.
 It also has substantially lower saturated throughput: fetching and decompressing blocks
 costs CPU. The observed 100/s latency remained low. Neither layout has been tested on a
 public VPS, across the internet or under a sustained production workload.
@@ -50,9 +50,11 @@ are measurements of those configurations rather than a universal speedup predict
 
 The complete source-verified 2005 edition imported **51,350,897 occurrences** in one
 transaction: 32,062,644 electoral, 13,135,957 telephone and 6,152,296 business records.
-The transaction took 1,285.59 seconds (21.43 minutes), including 1,225.93 seconds loading,
-4.94 seconds checking identities and 54.26 seconds building indexes. Producer decoding,
-source fingerprint work and pipeline startup can add wall time around that transaction.
+The importer recorded 1,285.59 seconds (21.43 minutes) through partition attachment,
+including 1,225.93 seconds loading,
+4.94 seconds checking identities and 54.26 seconds building indexes. This includes waiting for the producer while decoding and checking source fingerprints.
+Commit and post-commit `ANALYZE` are outside that statistic; supervised end-to-end wall
+time can therefore be longer.
 
 | Storage | Bytes |
 |---|---:|

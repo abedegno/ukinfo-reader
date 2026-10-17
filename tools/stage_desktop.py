@@ -13,14 +13,24 @@ import sysconfig
 from pathlib import Path
 
 
-def stage_notices(root, output):
+def stage_notices(root, output, python_license=None):
     """Retain available source notices; binary distributors still review runtimes."""
     notices = output / "notices"
-    notices.mkdir(exist_ok=True)
+    if notices.exists():
+        shutil.rmtree(notices)
+    notices.mkdir()
     shutil.copy2(root / "desktop/THIRD_PARTY_NOTICES.md", notices)
-    python_license = Path(sysconfig.get_path("stdlib")) / "LICENSE.txt"
-    if not python_license.is_file():
-        raise RuntimeError("Python standard-library LICENSE.txt is required for bundling")
+    if python_license is None:
+        candidates = [
+            Path(sysconfig.get_path("stdlib")) / "LICENSE.txt",
+            Path(sys.base_prefix) / "LICENSE.txt",
+            Path(sys.base_prefix) / "LICENSE",
+        ]
+        python_license = next((p for p in candidates if p.is_file()), None)
+    if python_license is None or not python_license.is_file():
+        raise RuntimeError(
+            "Provide --python-license with this Python distribution's full license notice"
+        )
     shutil.copy2(python_license, notices / "Python-LICENSE.txt")
     for name in ("pyinstaller", "altgraph", "macholib"):
         try:
@@ -69,6 +79,11 @@ def stage_notices(root, output):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--postgres", type=Path, required=True, help="PostgreSQL runtime root")
+    parser.add_argument(
+        "--python-license",
+        type=Path,
+        help="full CPython license notice if not installed under the interpreter prefix",
+    )
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     pg = args.postgres.resolve()
@@ -79,6 +94,10 @@ def main():
     if not version.startswith("postgres (PostgreSQL) 18."):
         parser.error("PostgreSQL 18 is required")
     output = root / "build/desktop"
+    if pg.is_relative_to(output / "pg"):
+        parser.error(
+            "supply a PostgreSQL runtime outside build/desktop/pg; staging replaces that directory"
+        )
     output.mkdir(parents=True, exist_ok=True)
     subprocess.run(
         ["go", "build", "-trimpath", "-o", str(output / "ukinfo-server"), "./cmd/ukinfo-server"],
@@ -109,7 +128,7 @@ def main():
         cwd=root,
         check=True,
     )
-    stage_notices(root, output)
+    stage_notices(root, output, args.python_license)
     if (output / "pg").exists():
         shutil.rmtree(output / "pg")
     shutil.copytree(pg, output / "pg", symlinks=False)

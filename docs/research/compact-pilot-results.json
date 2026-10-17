@@ -171,5 +171,10 @@
         "requests_per_second": 100.02387148378405
       }
     }
-  }
+  },
+  "import_wall_seconds": {
+    "jsonb": 94.97,
+    "compact": 50.82
+  },
+  "import_timing_note": "Wall-clock command times from the same full-field gzip input. Compact dataset stats report 50.3846 seconds through partition attachment; command wall time includes commit and post-commit work."
 }
