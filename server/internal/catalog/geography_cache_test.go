@@ -15,7 +15,7 @@ func TestGeographyCache(t *testing.T) {
 		calls.Add(1)
 		return map[int32]postcodeDistance{1: {Distance: 12}}, &GeographySearch{}, nil
 	}
-	key := geographyKey{"2026-08", "AA11AA", 1000, 1}
+	key := geographyKey{release: "2026-08", near: "AA11AA", radius: 1000, generation: 1}
 	var group sync.WaitGroup
 	for i := 0; i < 20; i++ {
 		group.Go(func() {
@@ -36,6 +36,16 @@ func TestGeographyCache(t *testing.T) {
 	}
 	if calls.Load() != 2 {
 		t.Fatal("new catalogue generation reused stale postcode links")
+	}
+	// Compact W11 can mean either W11 district or W1 1 sector.
+	key.near = "W11"
+	key.nearLength = 6
+	_, _, _ = cache.lookup(context.Background(), key, load)
+	beforeBoundary := calls.Load()
+	key.nearLength = 5
+	_, _, _ = cache.lookup(context.Background(), key, load)
+	if calls.Load() != beforeBoundary+1 {
+		t.Fatal("district and sector shared a centre cache entry")
 	}
 	for i := 0; i < 9; i++ {
 		key.near = fmt.Sprint(i)

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Move the search button below all location controls and support nearby district/sector
+  centres, with explicit centre provenance and current/retired postcode selection.
+
 - Add a hash-pinned ONSPD importer, versioned Great Britain postcode reference, spatial
   index and offline nearby search with distance/quality/source provenance.
 - Add nearby-area form controls, enriched page/record exports, bounded shared postcode

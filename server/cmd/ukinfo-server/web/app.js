@@ -342,7 +342,7 @@ function render() {
   $("geography-note").hidden = !searchGeography;
   if (searchGeography)
     $("geography-note").textContent =
-      `Within ${(searchGeography.radius_m / 1609.344).toFixed(1)} miles of ${searchGeography.near} · ONSPD ${searchGeography.reference.release} · approximate postcode positions. Results use catalogue order, not distance order.${searchGeography.terminated ? " The centre postcode is retired." : ""}`;
+      `Within ${(searchGeography.radius_m / 1609.344).toFixed(1)} miles of ${searchGeography.near}${searchGeography.centre_type && searchGeography.centre_type !== "postcode" ? ` (approximate ${searchGeography.centre_type} centre from ${searchGeography.centre_postcodes} postcode points${searchGeography.centre_retired_only ? "; retired postcodes only" : ""}; radius from centre, not boundary)` : ""} · ONSPD ${searchGeography.reference.release} · approximate postcode positions. Results use catalogue order, not distance order.${searchGeography.terminated ? " The centre postcode is retired." : ""}`;
   $("items").replaceChildren();
   const groups = new Map();
   for (const item of page) {

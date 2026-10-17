@@ -45,14 +45,17 @@ type GeographyRelease struct {
 	Generation    int16     `json:"-"`
 }
 type GeographySearch struct {
-	Reference  GeographyRelease `json:"reference"`
-	Near       string           `json:"near"`
-	Radius     int              `json:"radius_m"`
-	Latitude   float64          `json:"latitude"`
-	Longitude  float64          `json:"longitude"`
-	Quality    int16            `json:"quality"`
-	Terminated string           `json:"terminated"`
-	Notice     string           `json:"notice"`
+	Reference         GeographyRelease `json:"reference"`
+	Near              string           `json:"near"`
+	CentreType        string           `json:"centre_type"`
+	CentrePostcodes   int              `json:"centre_postcodes"`
+	CentreRetiredOnly bool             `json:"centre_retired_only"`
+	Radius            int              `json:"radius_m"`
+	Latitude          float64          `json:"latitude"`
+	Longitude         float64          `json:"longitude"`
+	Quality           int16            `json:"quality"`
+	Terminated        string           `json:"terminated"`
+	Notice            string           `json:"notice"`
 }
 type GeographyImportOptions struct {
 	Release, SHA256, SourceURL string
@@ -402,7 +405,7 @@ func (a *API) nearby(ctx context.Context, q *query) (map[int32]postcodeDistance,
 		return nil, nil, &geographyError{503, "Nearby search needs an imported ONSPD reference"}
 	}
 	q.GeoRelease = reference.Release
-	return a.geographyCache.lookup(ctx, geographyKey{reference.Release, q.Near, q.Radius, reference.Generation}, func() (map[int32]postcodeDistance, *GeographySearch, error) { return a.loadNearby(ctx, q, reference) })
+	return a.geographyCache.lookup(ctx, geographyKey{release: reference.Release, near: q.Near, radius: q.Radius, nearLength: q.NearLength, generation: reference.Generation}, func() (map[int32]postcodeDistance, *GeographySearch, error) { return a.loadNearby(ctx, q, reference) })
 }
 func (a *API) loadNearby(ctx context.Context, q *query, reference GeographyRelease) (map[int32]postcodeDistance, *GeographySearch, error) {
 	select {
@@ -419,8 +422,29 @@ func (a *API) loadNearby(ctx context.Context, q *query, reference GeographyRelea
 	if _, err = tx.Exec(ctx, "SET LOCAL statement_timeout='4000'"); err != nil {
 		return nil, nil, geographyUnavailable()
 	}
-	info := &GeographySearch{Reference: reference, Near: q.Near, Radius: q.Radius, Notice: geographyNotice}
-	err = tx.QueryRow(ctx, `SELECT latitude,longitude,quality,terminated FROM postcode_locations WHERE release=$1 AND postcode=$2 AND position IS NOT NULL AND quality NOT IN (6,9)`, reference.Release, q.Near).Scan(&info.Latitude, &info.Longitude, &info.Quality, &info.Terminated)
+	info := &GeographySearch{Reference: reference, Near: q.Near, Radius: q.Radius, Notice: geographyNotice, CentreType: "postcode", CentrePostcodes: 1}
+	if q.NearLength == 0 {
+		err = tx.QueryRow(ctx, `SELECT latitude,longitude,quality,terminated FROM postcode_locations WHERE release=$1 AND postcode=$2 AND position IS NOT NULL AND quality NOT IN (6,9)`, reference.Release, q.Near).Scan(&info.Latitude, &info.Longitude, &info.Quality, &info.Terminated)
+	} else {
+		info.CentreType = "district"
+		if q.NearLength == len(q.Near)+2 {
+			info.CentreType = "sector"
+			info.Near = q.Near[:len(q.Near)-1] + " " + q.Near[len(q.Near)-1:]
+		}
+		// Equal weight per usable postcode point, not per resident or area. Prefer
+		// current postcodes; retain a documented fallback for wholly retired areas.
+		err = tx.QueryRow(ctx, `WITH candidates AS MATERIALIZED (
+   SELECT latitude,longitude,terminated FROM postcode_locations
+   WHERE release=$1 AND postcode >= $2 AND postcode < $3
+   AND length(postcode)=$4 AND position IS NOT NULL AND quality NOT IN (6,9)
+  ), selected AS (
+   SELECT * FROM candidates WHERE terminated='' OR NOT EXISTS
+    (SELECT 1 FROM candidates WHERE terminated='')
+  ) SELECT avg(latitude),avg(longitude),count(*)::integer,bool_and(terminated<>'')
+    FROM selected HAVING count(*)>0`, reference.Release, q.Near, q.Near+"~", q.NearLength).
+			Scan(&info.Latitude, &info.Longitude, &info.CentrePostcodes, &info.CentreRetiredOnly)
+	}
+
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil, &geographyError{400, "Centre postcode has no usable Great Britain location in this ONSPD release"}

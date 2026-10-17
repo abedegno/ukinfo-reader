@@ -75,10 +75,8 @@
                 name="postcode"
                 autocomplete="off"
                 placeholder="WS13, WS13 7 or WS13 7SW"
-                maxlength="12" /></label
-            ><button class="primary" id="submit" type="submit">
-              Search archive <span aria-hidden="true">↗</span>
-            </button>
+                maxlength="12"
+            /></label>
           </div>
           <details id="nearby-controls" class="nearby-controls">
             <summary>Search near a postcode</summary>
@@ -90,7 +88,7 @@
                 >Centre postcode<input
                   name="near"
                   id="near"
-                  placeholder="e.g. WS13 7SW"
+                  placeholder="e.g. WS13 or WS13 7"
                   maxlength="12"
                   disabled /></label
               ><label
@@ -104,11 +102,15 @@
               >
             </div>
             <p class="note">
-              Uses approximate postcode positions. Northern Ireland and
-              incomplete source postcodes are excluded. You can search an area
-              without entering a name.
+              Districts and sectors use an approximate centre, not their
+              boundary. Uses approximate postcode positions. Northern Ireland
+              and incomplete source postcodes are excluded. You can search an
+              area without entering a name.
             </p>
           </details>
+          <button class="primary" id="submit" type="submit">
+            Search archive <span aria-hidden="true">↗</span>
+          </button>
           <p class="note">
             Names ignore case and extra spaces. Use Starts with or a trailing *
             (Smi*) for name prefixes. Postcodes accept districts, sectors and

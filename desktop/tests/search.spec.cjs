@@ -240,7 +240,7 @@ test("nearby area searches preserve radius, distances and coordinate provenance"
   );
   await page.route("**/api/search?*", (route) => {
     const params = new URL(route.request().url()).searchParams;
-    expect(params.get("near")).toBe("ZZ1 1ZZ");
+    expect(params.get("near")).toBe("ZZ1");
     expect(params.get("radius_m")).toBe("3219");
     expect(params.has("surname")).toBe(false);
     return route.fulfill({
@@ -265,7 +265,9 @@ test("nearby area searches preserve radius, distances and coordinate provenance"
         next_cursor: "",
         geography: {
           reference,
-          near: "ZZ11ZZ",
+          near: "ZZ1",
+          centre_type: "district",
+          centre_postcodes: 42,
           radius_m: 3219,
           terminated: "",
         },
@@ -275,7 +277,10 @@ test("nearby area searches preserve radius, distances and coordinate provenance"
   await page.goto("/");
   await page.getByText("Search near a postcode", { exact: true }).click();
   await expect(page.locator("#near")).toBeEnabled();
-  await page.getByLabel("Centre postcode", { exact: true }).fill("ZZ1 1ZZ");
+  await page.getByLabel("Centre postcode", { exact: true }).fill("ZZ1");
+  const centreBox = await page.locator("#near").boundingBox();
+  const submitBox = await page.locator("#submit").boundingBox();
+  expect(submitBox.y).toBeGreaterThan(centreBox.y + centreBox.height);
   await page.locator("#radius").selectOption("3219");
   await page.getByRole("button", { name: "Search archive" }).click();
   await expect(page.locator("article")).toHaveCount(1);
@@ -283,6 +288,9 @@ test("nearby area searches preserve radius, distances and coordinate provenance"
   await expect(page.locator("#geography-note")).toContainText("ONSPD 2026-08");
   await expect(page.locator("#geography-note")).toContainText(
     "not distance order",
+  );
+  await expect(page.locator("#geography-note")).toContainText(
+    "approximate district centre from 42 postcode points",
   );
   await page
     .locator("article")
@@ -297,7 +305,7 @@ test("nearby area searches preserve radius, distances and coordinate provenance"
   await page.getByRole("button", { name: "Close details" }).click();
   await page.reload();
   await expect(page.locator("#nearby-controls")).toHaveAttribute("open", "");
-  await expect(page.locator("#near")).toHaveValue("ZZ1 1ZZ");
+  await expect(page.locator("#near")).toHaveValue("ZZ1");
   await expect(page.locator("#radius")).toHaveValue("3219");
   await expect(page.locator("article")).toHaveCount(1);
   await expect(page.locator("#geography-attribution")).toContainText(

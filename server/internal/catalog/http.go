@@ -105,6 +105,7 @@ func (a *API) datasets(w http.ResponseWriter, r *http.Request) {
 type query struct {
 	Dataset, Kind, Surname, First, Organisation, Postcode string
 	Near                                                  string `json:",omitempty"`
+	NearLength                                            int    `json:",omitempty"`
 	GeoRelease                                            string `json:",omitempty"`
 	Radius                                                int    `json:",omitempty"`
 	Match                                                 string
@@ -134,12 +135,26 @@ var postcodeSearch = regexp.MustCompile(`^(?:[A-Z]{1,2}[0-9][A-Z0-9]?(?:[0-9](?:
 
 var fullPostcodeSearch = regexp.MustCompile(`^(?:[A-Z]{1,2}[0-9][A-Z0-9]?[0-9][A-Z]{2}|GIR0AA)$`)
 
+// Preserve the district/sector boundary before removing input spaces (W11 vs W1 1).
+func postcodeFullLength(input, compact string) int {
+	if compact == "" || fullPostcodeSearch.MatchString(compact) {
+		return 0
+	}
+	raw := strings.Fields(strings.ToUpper(strings.TrimSuffix(strings.TrimSpace(input), "*")))
+	sector := compact == "GIR0" || len(compact) > 4 || (len(raw) == 2 && len(raw[1]) == 1 && raw[1][0] >= '0' && raw[1][0] <= '9')
+	if sector {
+		return len(compact) + 2
+	}
+	return len(compact) + 3
+}
+
 func parse(v url.Values) (query, error) {
 	q := query{Dataset: strings.TrimSpace(v.Get("dataset")), Kind: v.Get("kind"), Surname: Normalize(v.Get("surname")), First: Normalize(v.Get("first_name")), Organisation: Normalize(v.Get("organisation")), Postcode: strings.TrimSuffix(Postcode(v.Get("postcode")), "*"), Match: v.Get("match"), Near: Postcode(v.Get("near")), Limit: 50, Cursor: v.Get("cursor")}
 	if q.Near != "" {
-		if !regexp.MustCompile(`^[A-Z0-9]{5,8}$`).MatchString(q.Near) {
-			return q, fmt.Errorf("enter a full centre postcode for nearby search")
+		if !postcodeSearch.MatchString(q.Near) {
+			return q, fmt.Errorf("enter a centre postcode, district (WS13) or sector (WS13 7)")
 		}
+		q.NearLength = postcodeFullLength(v.Get("near"), q.Near)
 		q.Radius = 8047
 		if v.Has("radius_m") {
 			n, err := strconv.Atoi(v.Get("radius_m"))
@@ -172,14 +187,8 @@ func parse(v url.Values) (query, error) {
 	if q.Postcode != "" && !postcodeSearch.MatchString(q.Postcode) {
 		return q, fmt.Errorf("enter a postcode, district (WS13) or sector (WS13 7)")
 	}
-	if q.Postcode != "" && !fullPostcodeSearch.MatchString(q.Postcode) {
-		raw := strings.Fields(strings.ToUpper(strings.TrimSuffix(strings.TrimSpace(v.Get("postcode")), "*")))
-		sector := q.Postcode == "GIR0" || len(q.Postcode) > 4 || (len(raw) == 2 && len(raw[1]) == 1 && raw[1][0] >= '0' && raw[1][0] <= '9')
-		q.PostcodeLength = len(q.Postcode) + 3
-		if sector {
-			q.PostcodeLength = len(q.Postcode) + 2
-		}
-	}
+	q.PostcodeLength = postcodeFullLength(v.Get("postcode"), q.Postcode)
+
 	if q.Kind == "" {
 		q.Kind = "person"
 	}

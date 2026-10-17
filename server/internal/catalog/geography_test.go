@@ -17,15 +17,29 @@ import (
 )
 
 func TestNearbyParse(t *testing.T) {
-	for _, raw := range []string{"dataset=all&near=AA1+1AA", "dataset=all&kind=business&near=AA11AA&radius_m=1000"} {
+	for _, raw := range []string{"dataset=all&near=WS13", "dataset=all&near=WS13+7", "dataset=all&near=AA1+1AA", "dataset=all&kind=business&near=AA11AA&radius_m=1000"} {
 		if _, err := parse(mustValues(raw)); err != nil {
 			t.Fatal(err)
 		}
 	}
-	for _, raw := range []string{"dataset=all&near=WS13", "dataset=all&near=AA11AA&radius_m=0", "dataset=all&near=AA11AA&radius_m=50001", "dataset=all&near=AA11AA&radius_m=NaN", "dataset=all&surname=Smith&radius_m=1000"} {
+	for _, raw := range []string{"dataset=all&near=???", "dataset=all&near=AA11AA&radius_m=0", "dataset=all&near=AA11AA&radius_m=50001", "dataset=all&near=AA11AA&radius_m=NaN", "dataset=all&surname=Smith&radius_m=1000"} {
 		if _, err := parse(mustValues(raw)); err == nil {
 			t.Fatal("accepted invalid radius search", raw)
 		}
+	}
+	for _, tc := range []struct {
+		input  string
+		length int
+	}{{"W11", 6}, {"W1+1", 5}, {"WS13", 7}, {"WS13+7", 7}, {"WS137SW", 0}} {
+		q, err := parse(mustValues("dataset=all&near=" + tc.input))
+		if err != nil || q.NearLength != tc.length {
+			t.Fatalf("centre boundary %s: %+v %v", tc.input, q, err)
+		}
+	}
+	district, _ := parse(mustValues("dataset=all&near=W11"))
+	sector, _ := parse(mustValues("dataset=all&near=W1+1"))
+	if district.fingerprint() == sector.fingerprint() {
+		t.Fatal("ambiguous centres share cursor")
 	}
 	p := unitPosition(51, -1)
 	length := math.Sqrt(p[0]*p[0] + p[1]*p[1] + p[2]*p[2])
@@ -111,6 +125,32 @@ func testGeography(t *testing.T, db *pgxpool.Pool) {
 		Next      string           `json:"next_cursor"`
 		Geography *GeographySearch `json:"geography"`
 	}
+	// Distinct district/sector centres, current-point preference, and retired fallback.
+	if _, err = db.Exec(ctx, `INSERT INTO postcode_locations(release,postcode,introduced,terminated,country,quality,latitude,longitude) VALUES
+ ('2026-08','W11AA','198001','','E92000001',1,51,-1),
+ ('2026-08','W11AB','198001','','E92000001',1,51.002,-1),
+ ('2026-08','W11AC','198001','200001','E92000001',8,53,-1),
+ ('2026-08','W110AA','198001','','E92000001',1,52,-1)`); err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		input, kind string
+		lat         float64
+		count       int
+		retired     bool
+	}{
+		{"W11", "district", 52, 1, false}, {"W1+1", "sector", 51.001, 2, false},
+		{"BB1", "district", 51.001, 1, true}, {"AA1+1", "sector", 51, 1, false},
+	} {
+		if err = json.Unmarshal(fetch("/api/search?dataset=invented&near="+tc.input, 200), &response); err != nil {
+			t.Fatal(err)
+		}
+		g := response.Geography
+		if g == nil || g.CentreType != tc.kind || g.CentrePostcodes != tc.count || math.Abs(g.Latitude-tc.lat) > 1e-9 || g.CentreRetiredOnly != tc.retired {
+			t.Fatalf("partial centre %s: %+v", tc.input, g)
+		}
+	}
+	fetch("/api/search?dataset=invented&near=ZZ99", 400)
 	seen := map[string]bool{}
 	cursor := ""
 	for pages := 0; ; pages++ {

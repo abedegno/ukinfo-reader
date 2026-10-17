@@ -93,7 +93,7 @@ The project's MIT licence does not relicense the reference data.
 
 ## Search, accuracy and pagination
 
-Expand **Search near a postcode**, enter a full centre postcode, and select a radius.
+Expand **Search near a postcode**, enter a centre postcode, district (`WS13`) or sector (`WS13 7`), and select a radius.
 A name is optional. The UI offers 1/2/5/10/25 miles; the API accepts 50–50,000 integer
 metres. Existing name, business, edition and postcode filters can be combined with it.
 
@@ -149,3 +149,16 @@ remain. Large/cold circles cost more than cached or exact searches; failures are
 never silently incomplete pages. Validate actual hosting capacity before deployment.
 
 See [reference and radius checks](research/onspd-nearby.md) for the measured limits.
+
+### District and sector centres
+
+A partial nearby centre uses the mean latitude/longitude of usable, current
+postcode points in that district or sector. Each postcode has equal weight; this
+is not a population centroid or an area boundary. If no current usable points
+remain, retired points are used and the response labels that fallback. The radius
+is measured from the resulting centre, not from the district/sector boundary.
+Use the ordinary Postcode filter to search inside a district or sector instead.
+Spacing distinguishes `W11` (district) from `W1 1` (sector), including in pagination
+and cached lookups. Nearby responses expose `centre_type`, `centre_postcodes` and
+`centre_retired_only`; centre `quality` is 0 for an aggregate rather than an ONSPD
+quality code. Source records still require their own complete displayed postcode.

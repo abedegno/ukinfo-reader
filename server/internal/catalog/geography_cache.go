@@ -8,9 +8,9 @@ import (
 // Cache only postcode coordinates/term IDs, never directory records or names.
 // Releases are immutable; new catalogue imports invalidate links through generation.
 type geographyKey struct {
-	release, near string
-	radius        int
-	generation    int16
+	release, near      string
+	radius, nearLength int
+	generation         int16
 }
 type geographyEntry struct {
 	ready  chan struct{}
