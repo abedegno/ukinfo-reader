@@ -9,7 +9,12 @@ const path = require("node:path");
       "Only native macOS and Linux development bundles are supported.",
     );
   const runtime = path.resolve(__dirname, "../build/desktop");
-  for (const name of ["ukinfo-server", "pg/bin/postgres", "pg/bin/initdb"]) {
+  for (const name of [
+    "ukinfo-server",
+    "ukinfo-import",
+    "pg/bin/postgres",
+    "pg/bin/initdb",
+  ]) {
     if (!fs.existsSync(path.join(runtime, name)))
       throw new Error(
         `Missing staged runtime: ${name}. See docs/search-app.md.`,

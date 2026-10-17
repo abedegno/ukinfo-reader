@@ -11,7 +11,8 @@
     "test": "node --test *.test.cjs",
     "test:ui": "playwright test",
     "pack": "node package.cjs",
-    "test:electron": "node tests/electron.cjs"
+    "test:electron": "node tests/electron.cjs",
+    "test:import": "node tests/import-desktop.cjs"
   },
   "devDependencies": {
     "electron": "44.9.0",

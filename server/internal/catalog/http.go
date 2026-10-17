@@ -15,14 +15,22 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/klauspost/compress/zstd"
 )
 
 type API struct {
-	DB    *pgxpool.Pool
-	slots chan struct{}
+	DB      *pgxpool.Pool
+	slots   chan struct{}
+	decoder *zstd.Decoder
 }
 
-func NewAPI(db *pgxpool.Pool) *API { return &API{DB: db, slots: make(chan struct{}, 32)} }
+func NewAPI(db *pgxpool.Pool) *API {
+	decoder, err := zstd.NewReader(nil, zstd.WithDecoderConcurrency(1), zstd.WithDecoderMaxMemory(16<<20))
+	if err != nil {
+		panic(err)
+	}
+	return &API{DB: db, slots: make(chan struct{}, 32), decoder: decoder}
+}
 func respond(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
@@ -45,6 +53,7 @@ func (a *API) Handler() http.Handler {
 	})
 	mux.HandleFunc("GET /api/datasets", a.datasets)
 	mux.HandleFunc("GET /api/search", a.search)
+	mux.HandleFunc("GET /api/export", func(w http.ResponseWriter, r *http.Request) { a.searchPage(w, r, true) })
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
 		select {
@@ -94,10 +103,11 @@ type query struct {
 	Cursor                                                string
 }
 type cursor struct {
-	Query string `json:"q"`
-	Name  string `json:"n"`
-	First string `json:"f"`
-	ID    int64  `json:"i"`
+	Query   string `json:"q"`
+	Name    int32  `json:"n"`
+	First   int32  `json:"f"`
+	ID      int32  `json:"i"`
+	Dataset int16  `json:"d"`
 }
 type result struct {
 	ID       int64           `json:"id"`
@@ -147,6 +157,9 @@ func (q query) fingerprint() string {
 }
 
 func (a *API) search(w http.ResponseWriter, r *http.Request) {
+	a.searchPage(w, r, false)
+}
+func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 	q, err := parse(r.URL.Query())
 	if err != nil {
 		fail(w, 400, err.Error())
@@ -163,67 +176,174 @@ func (a *API) search(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	args := []any{dataset}
-	// A validated literal lets PostgreSQL use the partial index even with a generic plan.
-	conditions := []string{"dataset_id=$1", "kind='" + q.Kind + "'"}
-	add := func(column, value string) {
-		if value != "" {
-			args = append(args, value)
+	kind := int16(0)
+	if q.Kind == "business" {
+		kind = 1
+	}
+	requested := []string{}
+	for _, key := range []string{q.Surname, q.First, q.Organisation, q.Postcode} {
+		if key != "" {
+			requested = append(requested, key)
+		}
+	}
+	terms := map[string]int32{}
+	termRows, err := a.DB.Query(ctx, "SELECT key,id FROM terms WHERE key=ANY($1::text[])", requested)
+	if err != nil {
+		fail(w, 503, "Search vocabulary unavailable")
+		return
+	}
+	for termRows.Next() {
+		var key string
+		var id int32
+		if err = termRows.Scan(&key, &id); err != nil {
+			termRows.Close()
+			fail(w, 503, "Search vocabulary unavailable")
+			return
+		}
+		terms[key] = id
+	}
+	err = termRows.Err()
+	termRows.Close()
+	if err != nil {
+		fail(w, 503, "Search vocabulary unavailable")
+		return
+	}
+	args := []any{dataset, kind}
+	conditions := []string{"dataset_id=$1", "kind=$2"}
+	missing := false
+	add := func(column, key string) {
+		if key != "" {
+			id, ok := terms[key]
+			if !ok {
+				missing = true
+			}
+			args = append(args, id)
 			conditions = append(conditions, fmt.Sprintf("%s=$%d", column, len(args)))
 		}
 	}
-	add("surname", q.Surname)
-	add("first_name", q.First)
-	add("organisation", q.Organisation)
-	add("postcode", q.Postcode)
-	// Exact searches preserve short surnames and avoid unbounded wildcard scans.
-	sortName, sortFirst := "surname", "first_name"
-	if q.Kind == "business" {
-		sortName = "organisation"
-		sortFirst = "''::text COLLATE \"C\""
-	}
+	add("name_id", q.Surname)
+	add("first_id", q.First)
+	add("name_id", q.Organisation)
+	add("postcode_id", q.Postcode)
 	if q.Cursor != "" {
 		b, e := base64.RawURLEncoding.DecodeString(q.Cursor)
 		var c cursor
-		if e != nil || json.Unmarshal(b, &c) != nil || c.Query != q.fingerprint() || c.ID < 1 {
+		if e != nil || json.Unmarshal(b, &c) != nil || c.Query != q.fingerprint() || c.Dataset != dataset || c.ID < 1 || c.Name < 0 || c.First < 0 {
 			fail(w, 400, "Cursor does not match this search")
 			return
 		}
 		args = append(args, c.Name, c.First, c.ID)
-		conditions = append(conditions, fmt.Sprintf("(%s,%s,id)>($%d,$%d,$%d)", sortName, sortFirst, len(args)-2, len(args)-1, len(args)))
+		conditions = append(conditions, fmt.Sprintf("(name_id,first_id,id)>($%d,$%d,$%d)", len(args)-2, len(args)-1, len(args)))
 	}
-	args = append(args, q.Limit+1)
-	sql := fmt.Sprintf("SELECT id,source_id,record,%s,%s FROM entries WHERE %s ORDER BY %s,%s,id LIMIT $%d", sortName, sortFirst, strings.Join(conditions, " AND "), sortName, sortFirst, len(args))
-	rows, err := a.DB.Query(ctx, sql, args...)
-	if err != nil {
-		fail(w, 503, "Search unavailable or timed out; narrow the search")
-		return
-	}
-	defer rows.Close()
-	items := []result{}
+	ids := []int32{}
 	next := ""
 	var last cursor
-	for rows.Next() {
-		var item result
-		var name, first string
-		if err = rows.Scan(&item.ID, &item.SourceID, &item.Record, &name, &first); err != nil {
-			fail(w, 503, "Search unavailable")
+	if !missing {
+		args = append(args, q.Limit+1)
+		sql := fmt.Sprintf("SELECT id,name_id,first_id FROM entries WHERE %s ORDER BY name_id,first_id,id LIMIT $%d", strings.Join(conditions, " AND "), len(args))
+		rows, e := a.DB.Query(ctx, sql, args...)
+		if e != nil {
+			fail(w, 503, "Search unavailable or timed out; narrow the search")
 			return
 		}
-		if len(items) == q.Limit {
-			b, _ := json.Marshal(last)
-			next = base64.RawURLEncoding.EncodeToString(b)
-			break
+		for rows.Next() {
+			var id, name, first int32
+			if err = rows.Scan(&id, &name, &first); err != nil {
+				rows.Close()
+				fail(w, 503, "Search unavailable")
+				return
+			}
+			if len(ids) == q.Limit {
+				b, _ := json.Marshal(last)
+				next = base64.RawURLEncoding.EncodeToString(b)
+				break
+			}
+			ids = append(ids, id)
+			last = cursor{Query: q.fingerprint(), Name: name, First: first, ID: id, Dataset: dataset}
 		}
-		items = append(items, item)
-		last = cursor{Query: q.fingerprint(), Name: name, First: first, ID: item.ID}
+		err = rows.Err()
+		rows.Close()
+		if err != nil {
+			fail(w, 503, "Search timed out; narrow the search")
+			return
+		}
 	}
-	if rows.Err() != nil {
-		fail(w, 503, "Search timed out; narrow the search")
+	items, e := a.loadRecords(ctx, dataset, ids)
+	if e != nil {
+		fail(w, 503, "Source records unavailable; catalogue needs verification")
+		return
+	}
+	if export {
+		w.Header().Set("Content-Type", "application/x-ndjson")
+		w.Header().Set("Content-Disposition", `attachment; filename="ukinfo-page.jsonl"`)
+		encoder := json.NewEncoder(w)
+		for _, item := range items {
+			if err := encoder.Encode(struct {
+				Dataset  string          `json:"dataset"`
+				SourceID string          `json:"source_id"`
+				Record   json.RawMessage `json:"record"`
+			}{q.Dataset, item.SourceID, item.Record}); err != nil {
+				return
+			}
+		}
 		return
 	}
 	respond(w, 200, struct {
 		Items []result `json:"items"`
 		Next  string   `json:"next_cursor"`
 	}{items, next})
+}
+
+func (a *API) loadRecords(ctx context.Context, dataset int16, ids []int32) ([]result, error) {
+	resultRows := make([]result, 0, len(ids))
+	if len(ids) == 0 {
+		return resultRows, nil
+	}
+	groups := map[int32][]int32{}
+	blockIDs := []int32{}
+	for _, id := range ids {
+		block := (id - 1) / blockRows
+		if _, ok := groups[block]; !ok {
+			blockIDs = append(blockIDs, block)
+		}
+		groups[block] = append(groups[block], id)
+	}
+	rows, e := a.DB.Query(ctx, "SELECT id,payload FROM record_blocks WHERE dataset_id=$1 AND id=ANY($2::integer[])", dataset, blockIDs)
+	if e != nil {
+		return nil, e
+	}
+	defer rows.Close()
+	found := make(map[int32]storedRecord, len(ids))
+	for rows.Next() {
+		if e = ctx.Err(); e != nil {
+			return nil, e
+		}
+		var block int32
+		var compressed []byte
+		if e = rows.Scan(&block, &compressed); e != nil {
+			return nil, e
+		}
+		raw, err := unpackBlock(a.decoder, compressed)
+		if err != nil {
+			return nil, err
+		}
+		for _, id := range groups[block] {
+			r, err := recordAt(raw, int((id-1)%blockRows))
+			if err != nil {
+				return nil, err
+			}
+			found[id] = r
+		}
+	}
+	if e = rows.Err(); e != nil {
+		return nil, e
+	}
+	for _, id := range ids {
+		r, ok := found[id]
+		if !ok {
+			return nil, fmt.Errorf("missing source record block")
+		}
+		resultRows = append(resultRows, result{ID: int64(id), SourceID: r.SourceID, Record: r.Record})
+	}
+	return resultRows, nil
 }

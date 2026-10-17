@@ -5,14 +5,17 @@ The terminal frame lets the receiver reject a truncated or failed decoder pipeli
 """
 
 import argparse
+import hashlib
 import itertools
 import json
+import struct
 import sys
 
 from . import __version__
 from .reader import Database
 
 COUNTS = {
+    "synthetic-demo": 126,
     "se-pcf78-1998-01": 27_983_545,
     "se4-pcf94-1999-04": 46_355_850,
     "se2004-pcp218-2004-07": 63_373_974,
@@ -44,7 +47,7 @@ def emit(db, directory, output, limit=None):
     write(
         dict(
             type="manifest",
-            protocol=1,
+            protocol=2,
             dataset=dataset,
             edition=db.edition.id,
             title=db.edition.title,
@@ -54,27 +57,66 @@ def emit(db, directory, output, limit=None):
             expected=limit or COUNTS[db.edition.id],
         )
     )
+    digest = hashlib.sha256()
     count = 0
     stream = records(db)
     if limit:
         stream = itertools.islice(stream, limit)
     for count, row in enumerate(stream, 1):
-        write(dict(type="record", source_id=source_id(row), record=row))
+        identity = source_id(row)
+        raw = json.dumps(row, ensure_ascii=True, separators=(",", ":"))
+        identity_bytes = identity.encode("utf-8")
+        raw_bytes = raw.encode("utf-8")
+        digest.update(struct.pack("<HI", len(identity_bytes), len(raw_bytes)))
+        digest.update(identity_bytes)
+        digest.update(raw_bytes)
+        output.write(
+            '{"type":"record","source_id":' + json.dumps(identity) + ',"record":' + raw + "}\n"
+        )
     expected = limit or COUNTS[db.edition.id]
     if count != expected:
         raise ValueError(f"Decoded {count:,} entries; expected {expected:,}; import rejected")
-    write(dict(type="end", count=count))
+    # Recheck the source after decoding so an ordinary concurrent change fails closed.
+    if db.edition.verify(directory) != hashes:
+        raise ValueError("Source files changed while decoding; import rejected")
+    write(dict(type="end", count=count, sha256=digest.hexdigest()))
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--data", required=True)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--data")
+    source.add_argument("--demo", action="store_true", help="use invented demo entries")
+    parser.add_argument(
+        "--identify", action="store_true", help="identify and verify without exporting"
+    )
     parser.add_argument("--limit", type=int, help="explicitly import a labelled partial sample")
     args = parser.parse_args()
     if args.limit is not None and args.limit < 1:
         parser.error("--limit must be positive")
-    with Database(args.data) as db:
-        emit(db, args.data, sys.stdout, args.limit)
+
+    def run(db):
+        if args.identify:
+            print(
+                json.dumps(
+                    dict(
+                        edition=db.edition.id,
+                        title=db.edition.title,
+                        entries=COUNTS[db.edition.id],
+                        sha256=db.edition.verify(args.data),
+                    )
+                )
+            )
+        else:
+            emit(db, args.data, sys.stdout, args.limit)
+
+    if args.demo:
+        from .demo import database
+
+        run(database())
+    else:
+        with Database(args.data) as db:
+            run(db)
 
 
 if __name__ == "__main__":

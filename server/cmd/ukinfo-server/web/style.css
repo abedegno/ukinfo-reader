@@ -363,3 +363,60 @@ dt {
     margin-top: 15px;
   }
 }
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.header-actions button,
+.import-actions button,
+#import-cancel {
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: white;
+  padding: 9px 12px;
+  font-size: 12px;
+  color: var(--ink);
+}
+.import-intro {
+  font-size: 13px;
+  color: var(--muted);
+}
+.import-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 22px 0;
+}
+#import-selected {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+#import-title {
+  font:
+    400 20px Georgia,
+    serif;
+}
+#import-progress {
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+  margin-top: 18px;
+}
+#import-progress progress {
+  width: 100%;
+  accent-color: var(--accent);
+  height: 10px;
+}
+#import-stage,
+#import-message {
+  font-size: 12px;
+  line-height: 1.6;
+}
+#import-message {
+  color: var(--muted);
+}
+@media (max-width: 600px) {
+  .header-actions .badge {
+    display: none;
+  }
+}

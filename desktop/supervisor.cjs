@@ -38,6 +38,7 @@ async function startServer(
     clearTimeout(timer);
   };
   try {
+    let control = null;
     const address = await new Promise((resolve, reject) => {
       let text = "";
       const timer = setTimeout(
@@ -69,6 +70,20 @@ async function startServer(
             url.pathname !== "/"
           )
             throw new Error("Invalid local server address.");
+          if (data.control_url || data.control_token) {
+            const c = new URL(data.control_url);
+            if (
+              c.protocol !== "http:" ||
+              c.hostname !== "127.0.0.1" ||
+              !c.port ||
+              c.pathname !== "/" ||
+              c.username ||
+              c.password ||
+              !/^[a-f0-9]{64}$/.test(data.control_token)
+            )
+              throw new Error("Invalid desktop control capability.");
+            control = { url: c.origin, token: data.control_token };
+          }
           done(null, url.origin);
         } catch (error) {
           done(error);
@@ -81,7 +96,7 @@ async function startServer(
     if (!response.ok) throw new Error("Archive database is unavailable.");
     if (exited)
       throw new Error("Archive server stopped before the window opened.");
-    return { address, stop, child, exit };
+    return { address, stop, child, exit, control };
   } catch (error) {
     // spawn errors do not emit exit; avoid waiting on a process that never existed.
     if (child.pid) await stop();

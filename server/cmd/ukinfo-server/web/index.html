@@ -9,8 +9,11 @@
   </head>
   <body>
     <header>
-      <a class="brand" href="/">UK–Info <span>ARCHIVE</span></a
-      ><span class="badge">Historical directory</span>
+      <a class="brand" href="/">UK–Info <span>ARCHIVE</span></a>
+      <div class="header-actions">
+        <button id="import-open" type="button" hidden>Add edition +</button
+        ><span class="badge">Historical directory</span>
+      </div>
     </header>
     <main>
       <section class="intro">
@@ -105,6 +108,47 @@
         >
       </footer>
     </main>
+    <dialog id="import-dialog">
+      <div class="dialog-heading">
+        <h2>Add an edition</h2>
+        <button id="import-close" aria-label="Close import">✕</button>
+      </div>
+      <p class="import-intro">
+        Choose a folder containing extracted UK-Info database files. The app
+        identifies the edition and checks its source fingerprints.
+      </p>
+      <div class="import-actions">
+        <button id="import-choose" type="button">Choose source folder…</button
+        ><button id="import-demo" type="button">Try invented demo</button>
+      </div>
+      <section id="import-selected" hidden>
+        <h3 id="import-title"></h3>
+        <p id="import-description" class="note"></p>
+        <label for="import-scope">Import size</label
+        ><select id="import-scope">
+          <option value="10000">Sample: first 10,000 entries</option>
+          <option value="full">Complete edition</option>
+        </select>
+        <p class="note">
+          Complete editions can take tens of minutes and require several
+          gigabytes of free disk space. Samples follow source order; a small
+          2005 sample may contain no businesses.
+        </p>
+        <button class="primary" id="import-start" type="button">
+          Import edition
+        </button>
+      </section>
+      <section id="import-progress" hidden>
+        <progress
+          id="import-bar"
+          max="100"
+          aria-label="Import progress"
+        ></progress>
+        <p id="import-stage"></p>
+        <button id="import-cancel" type="button">Cancel import</button>
+      </section>
+      <p id="import-message" role="status" aria-live="polite"></p>
+    </dialog>
     <dialog id="details">
       <div class="dialog-heading">
         <h2>Original source record</h2>

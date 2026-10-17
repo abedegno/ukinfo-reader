@@ -163,50 +163,195 @@ $("next").addEventListener("click", () => {
   params.set("cursor", next);
   search(params);
 });
-$("export").addEventListener("click", () => {
-  // Export just the bounded page, losslessly, with provenance on each entry.
-  const text =
-    page
-      .map((item) =>
-        JSON.stringify({
-          dataset: lastQuery.get("dataset"),
-          source_id: item.source_id,
-          record: item.record,
-        }),
-      )
-      .join("\n") + "\n";
-  const url = URL.createObjectURL(
-    new Blob([text], { type: "application/x-ndjson" }),
-  );
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "ukinfo-page.jsonl";
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+$("export").addEventListener("click", async () => {
+  $("export").disabled = true;
+  try {
+    // Preserve raw source JSON bytes; browser number parsing can round large integers.
+    const response = await fetch(`/api/export?${lastQuery}`);
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Export unavailable.");
+    }
+    const url = URL.createObjectURL(await response.blob());
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "ukinfo-page.jsonl";
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (error) {
+    $("status").textContent = error.message;
+  } finally {
+    $("export").disabled = page.length === 0;
+  }
 });
+
+async function refreshDatasets(preferred) {
+  datasets = await api("/api/datasets");
+  form.elements.dataset.replaceChildren(
+    ...datasets.map((d) => {
+      const option = element(
+        "option",
+        `${d.manifest.title}${d.manifest.sample ? " [SAMPLE]" : ""}`,
+      );
+      option.value = d.key;
+      return option;
+    }),
+  );
+  if (preferred && datasets.some((d) => d.key === preferred))
+    form.elements.dataset.value = preferred;
+  $("coverage").textContent =
+    `${datasets.length} imported edition${datasets.length === 1 ? "" : "s"}`;
+  $("submit").disabled = datasets.length === 0;
+  if (!datasets.length)
+    $("status").textContent = window.ukinfoDesktop
+      ? "Add an edition or try the invented demo to begin."
+      : "No editions imported yet. Follow the catalogue import guide to add your local disc data.";
+  editionNote();
+}
 (async () => {
   try {
-    datasets = await api("/api/datasets");
-    form.elements.dataset.replaceChildren(
-      ...datasets.map((d) => {
-        const option = element(
-          "option",
-          `${d.manifest.title}${d.manifest.sample ? " [SAMPLE]" : ""}`,
-        );
-        option.value = d.key;
-        return option;
-      }),
-    );
-    $("coverage").textContent =
-      `${datasets.length} imported edition${datasets.length === 1 ? "" : "s"}`;
-    $("submit").disabled = datasets.length === 0;
-    if (!datasets.length)
-      $("status").textContent =
-        "No editions imported yet. Follow the catalogue import guide to add your local disc data.";
-    editionNote();
+    await refreshDatasets();
   } catch (error) {
     $("coverage").textContent = "Connection unavailable";
     $("status").textContent = error.message;
     $("submit").disabled = true;
   }
 })();
+
+if (window.ukinfoDesktop) {
+  const bridge = window.ukinfoDesktop;
+  let selected = null,
+    running = false;
+  const phaseNames = {
+    "checking source": "Checking source files…",
+    loading: "Importing entries",
+    "checking identities": "Checking entry identities",
+    "building indexes": "Preparing search",
+    publishing: "Finishing import",
+    complete: "Ready to search",
+    canceled: "Import canceled",
+    failed: "Import failed",
+  };
+  const busy = (value) => {
+    running = value;
+    for (const id of [
+      "import-choose",
+      "import-demo",
+      "import-scope",
+      "import-start",
+    ])
+      $(id).disabled = value;
+    $("import-cancel").disabled = !value;
+  };
+  const choose = async (demo) => {
+    try {
+      busy(true);
+      $("import-message").textContent = demo
+        ? "Preparing invented entries…"
+        : "Checking the selected edition…";
+      const source = await (demo ? bridge.demoSource() : bridge.chooseSource());
+      if (!source) {
+        $("import-message").textContent = "";
+        return;
+      }
+      selected = source;
+      $("import-selected").hidden = false;
+      $("import-title").textContent = source.title;
+      $("import-description").textContent =
+        `${source.entries.toLocaleString()} entries · ${source.label}`;
+      $("import-scope").value = demo ? "full" : "10000";
+      $("import-scope").disabled = demo;
+      $("import-message").textContent = demo
+        ? "This demo contains invented people and a business. Search for Example or Aster Archive Supplies."
+        : "Source fingerprints match a supported edition.";
+    } catch (error) {
+      $("import-message").textContent = error.message;
+    } finally {
+      busy(false);
+      if (selected?.edition === "synthetic-demo")
+        $("import-scope").disabled = true;
+    }
+  };
+  $("import-open").addEventListener("click", () =>
+    $("import-dialog").showModal(),
+  );
+  $("import-close").addEventListener("click", () => $("import-dialog").close());
+  $("import-choose").addEventListener("click", () => choose(false));
+  $("import-demo").addEventListener("click", () => choose(true));
+  bridge.onProgress((state) => {
+    const p = state.progress || {};
+    if (!running) return;
+    $("import-stage").textContent =
+      `${phaseNames[p.phase] || p.phase || "Importing…"}${p.total ? ` · ${p.done.toLocaleString()} / ${p.total.toLocaleString()}` : ""}`;
+    if (p.total)
+      $("import-bar").value = Math.min(100, (p.done / p.total) * 100);
+    else $("import-bar").removeAttribute("value");
+    $("import-open").textContent = p.total
+      ? `Importing ${Math.floor((p.done / p.total) * 100)}%`
+      : "Importing…";
+  });
+  $("import-start").addEventListener("click", async () => {
+    if (!selected || running) return;
+    const limit =
+      $("import-scope").value === "full"
+        ? null
+        : Number($("import-scope").value);
+    const key = selected.edition + (limit ? `:sample:${limit}` : "");
+    if (datasets.some((d) => d.key === key)) {
+      $("import-message").textContent =
+        "That edition is already imported. Choose it in the search panel.";
+      return;
+    }
+    busy(true);
+    $("import-progress").hidden = false;
+    $("import-bar").removeAttribute("value");
+    $("import-stage").textContent = "Checking source files…";
+    $("import-message").textContent =
+      "You can close this panel and keep searching imported editions.";
+    try {
+      await bridge.importSource(selected.selection, limit);
+      await refreshDatasets(key);
+      reset();
+      $("import-stage").textContent = "Ready to search";
+      $("import-bar").value = 100;
+      $("import-message").textContent = "Edition imported successfully.";
+    } catch (error) {
+      // Cancellation can arrive after commit. Reconcile with the catalogue
+      // rather than claiming that a completed import was rolled back.
+      try {
+        await refreshDatasets(key);
+      } catch {
+        /* Preserve the original error. */
+      }
+      if (datasets.some((d) => d.key === key)) {
+        $("import-message").textContent =
+          "The edition finished importing and is available to search.";
+        $("import-stage").textContent = "Ready to search";
+        $("import-bar").value = 100;
+      } else {
+        $("import-message").textContent = error.message;
+        $("import-stage").textContent = "Import stopped";
+      }
+    } finally {
+      busy(false);
+      $("import-open").textContent = "Add edition +";
+      if (selected?.edition === "synthetic-demo")
+        $("import-scope").disabled = true;
+    }
+  });
+  $("import-cancel").addEventListener("click", async () => {
+    $("import-cancel").disabled = true;
+    $("import-stage").textContent = "Canceling import…";
+    try {
+      await bridge.cancelImport();
+    } catch (error) {
+      $("import-message").textContent = error.message;
+    }
+  });
+  bridge
+    .capabilities()
+    .then((c) => {
+      $("import-open").hidden = !c.canImport;
+    })
+    .catch(() => {});
+}

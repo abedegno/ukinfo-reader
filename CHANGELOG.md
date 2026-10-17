@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Replace the preview JSONB catalogue with schema 2: integer search projections and
+  checksummed Zstandard record blocks. Add full-catalogue verification, size statistics
+  and a read-only schema-1 repacker into a separate destination.
+- Add protocol-2 source-stream checksums and source fingerprint checks after decoding.
+- Add desktop folder/demo ingestion with a bundled decoder, progress, cancellation and
+  a 5 GiB disk reserve. Add bounded raw NDJSON downloads preserving large integers.
+- Import the complete 51,350,897-entry 2005 edition and measure full-field pilot storage
+  and HTTP throughput; document the compact layout's saturated-throughput tradeoff.
+
 - Add a Go/PostgreSQL search catalogue, verified Python streaming ingestion, edition-aware
   web UI and an Electron desktop development shell with a local PostgreSQL supervisor.
 - Preserve original source fields/warnings, reject incomplete imports, paginate duplicate

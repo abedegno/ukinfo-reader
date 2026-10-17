@@ -1,0 +1,175 @@
+{
+  "sample": {
+    "rows": 2000000,
+    "strata": {
+      "res_base": 1713996,
+      "res_update": 52254,
+      "bus_base": 193500,
+      "bus_update": 40250
+    },
+    "seconds": 36.76480554198497,
+    "seed": 1989,
+    "payload_sha256": "1460e77101dc0244872955b1eb2b2223813c1ec7af9487a318554686d7499891",
+    "method": "Seeded byte-region clusters across residential/business base/update streams; unique occurrence IDs; full source JSON fields. Layout pilot, not an unbiased population sample."
+  },
+  "wide_sizes": {
+    "database_bytes": 2832201407,
+    "table_bytes": 2347868160,
+    "index_bytes": 476168192,
+    "rows": 2000000
+  },
+  "compact_sizes": {
+    "schema": 2,
+    "postgres": "PostgreSQL 18.6 on aarch64-unknown-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+    "database_bytes": 593024703,
+    "terms": 1007296,
+    "term_bytes": 105332736,
+    "datasets": [
+      {
+        "key": "se2005-stratified-2m",
+        "entries": 2000000,
+        "stats": {
+          "blocks": 15625,
+          "seconds": 50.384624917,
+          "load_seconds": 48.528140959,
+          "index_seconds": 1.7264326250000002,
+          "payload_sha256": "1460e77101dc0244872955b1eb2b2223813c1ec7af9487a318554686d7499891",
+          "raw_record_bytes": 1611049917,
+          "compressed_block_bytes": 136038415,
+          "identity_validation_seconds": 0.125507875
+        },
+        "projection_heap_bytes": 129695744,
+        "projection_index_bytes": 189153280,
+        "record_block_bytes": 160669696
+      }
+    ]
+  },
+  "verification": {
+    "dataset": "se2005-stratified-2m",
+    "entries": 2000000,
+    "blocks": 15625,
+    "payload_sha256": "1460e77101dc0244872955b1eb2b2223813c1ec7af9487a318554686d7499891",
+    "seconds": 20.828956875,
+    "projection_checked": true,
+    "source_digest_matched": true
+  },
+  "http_correctness": {
+    "cases": 210,
+    "validated_responses": 420,
+    "mismatches": 0,
+    "seconds": 0.868749041999763,
+    "method": "Counts, cursor presence, occurrence IDs and every source field checked against the JSONB import of the identical independently checksummed source stream. Returned filter values checked separately. Different valid sort orders are allowed."
+  },
+  "wide_http": {
+    "cases": 210,
+    "closed_loop": {
+      "1": {
+        "requests": 32939,
+        "errors": 0,
+        "median_ms": 0.22575,
+        "p95_ms": 0.678458,
+        "p99_ms": 0.809375,
+        "max_ms": 4.366708,
+        "wall_seconds": 10.00059438,
+        "requests_per_second": 3293.704228808048
+      },
+      "32": {
+        "requests": 83851,
+        "errors": 0,
+        "median_ms": 2.028542,
+        "p95_ms": 5.99275,
+        "p99_ms": 40.814667,
+        "max_ms": 46.884958,
+        "wall_seconds": 10.002155796,
+        "requests_per_second": 8383.292733105915
+      },
+      "8": {
+        "requests": 84139,
+        "errors": 0,
+        "median_ms": 0.3795,
+        "p95_ms": 2.079917,
+        "p99_ms": 6.180667,
+        "max_ms": 42.530584,
+        "wall_seconds": 10.00177813,
+        "requests_per_second": 8412.404165178177
+      }
+    },
+    "notes": [
+      "Every response body is hash-checked against previously validated private cases.",
+      "HTTP transfer and body hashing are timed; client JSON parsing is excluded.",
+      "Scheduled-arrival latency includes scheduling and queue delay.",
+      "This report alone does not establish production capacity; document corpus, hardware, quotas and warm/cold conditions separately."
+    ],
+    "scheduled_arrivals": {
+      "load_generator_drops": 0,
+      "rate_per_second": 100,
+      "scheduled_requests": 3000,
+      "stats": {
+        "requests": 3000,
+        "errors": 0,
+        "median_ms": 2.788551,
+        "p95_ms": 4.743591,
+        "p99_ms": 5.678011,
+        "max_ms": 22.136209,
+        "wall_seconds": 29.992911722,
+        "requests_per_second": 100.02363317728435
+      }
+    }
+  },
+  "compact_http": {
+    "cases": 210,
+    "closed_loop": {
+      "1": {
+        "requests": 17228,
+        "errors": 0,
+        "median_ms": 0.399375,
+        "p95_ms": 1.98125,
+        "p99_ms": 2.210375,
+        "max_ms": 12.987708,
+        "wall_seconds": 10.000523463,
+        "requests_per_second": 1722.7098225148177
+      },
+      "32": {
+        "requests": 30054,
+        "errors": 0,
+        "median_ms": 4.732084,
+        "p95_ms": 37.524083,
+        "p99_ms": 55.015291,
+        "max_ms": 68.123375,
+        "wall_seconds": 10.033407213,
+        "requests_per_second": 2995.393226047866
+      },
+      "8": {
+        "requests": 30240,
+        "errors": 0,
+        "median_ms": 1.039292,
+        "p95_ms": 14.569375,
+        "p99_ms": 22.136708,
+        "max_ms": 211.672125,
+        "wall_seconds": 10.003778296,
+        "requests_per_second": 3022.8578748183004
+      }
+    },
+    "notes": [
+      "Every response body is hash-checked against previously validated private cases.",
+      "HTTP transfer and body hashing are timed; client JSON parsing is excluded.",
+      "Scheduled-arrival latency includes scheduling and queue delay.",
+      "This report alone does not establish production capacity; document corpus, hardware, quotas and warm/cold conditions separately."
+    ],
+    "scheduled_arrivals": {
+      "load_generator_drops": 0,
+      "rate_per_second": 100,
+      "scheduled_requests": 3000,
+      "stats": {
+        "requests": 3000,
+        "errors": 0,
+        "median_ms": 3.253425,
+        "p95_ms": 5.496632,
+        "p99_ms": 7.41426,
+        "max_ms": 27.30284,
+        "wall_seconds": 29.992840264,
+        "requests_per_second": 100.02387148378405
+      }
+    }
+  }
+}

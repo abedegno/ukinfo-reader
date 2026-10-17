@@ -8,7 +8,9 @@ test("real Go/PG search, duplicate pagination, original fields and page export",
   await page
     .getByLabel("Edition", { exact: true })
     .selectOption("synthetic-demo");
-  await expect(page.locator("#edition-note")).toContainText("PARTIAL SAMPLE");
+  await expect(page.locator("#edition-note")).toContainText(
+    "126 imported entries",
+  );
   await page.getByLabel("Surname", { exact: true }).fill("Example");
   await page.getByRole("button", { name: "Search archive" }).click();
   await expect(page.locator("article")).toHaveCount(50);
@@ -69,4 +71,26 @@ test("business search and narrow mobile layout", async ({ page }) => {
     path: "test-results/search-mobile.png",
     fullPage: true,
   });
+});
+
+test("partial source imports are explicitly labelled", async ({ page }) => {
+  await page.route("**/api/datasets", (route) =>
+    route.fulfill({
+      json: [
+        {
+          key: "invented:sample:2",
+          manifest: {
+            title: "Invented partial fixture",
+            edition: "invented",
+            sample: true,
+          },
+          entries: 2,
+        },
+      ],
+    }),
+  );
+  await page.goto("/");
+  await expect(page.locator("#edition-note")).toContainText("PARTIAL SAMPLE");
+  await expect(page.locator("#dataset")).toContainText("[SAMPLE]");
+  await expect(page.locator("#import-open")).toBeHidden();
 });

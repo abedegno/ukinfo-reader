@@ -5,11 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -101,11 +104,33 @@ func TestPostgresIntegration(t *testing.T) {
 		strings.Replace(fixture("wrong-count", true), `"count":5`, `"count":4`, 1),
 		strings.Replace(fixture("duplicate", true), `"source_id":"b"`, `"source_id":"a"`, 1),
 		fixture("extra", true) + "{}\n",
+		strings.Replace(fixture("missing-sha", true), `"protocol":1`, `"protocol":2`, 1),
+		strings.Replace(strings.Replace(fixture("bad-sha", true), `"protocol":1`, `"protocol":2`, 1), `"count":5`, `"count":5,"sha256":"`+strings.Repeat("0", 64)+`"`, 1),
 	} {
 		if _, e := Import(ctx, db, strings.NewReader(input)); e == nil {
 			t.Fatal("invalid stream accepted")
 		}
 	}
+	if err = db.QueryRow(ctx, "SELECT count(*) FROM datasets").Scan(&count); err != nil || count != 1 {
+		t.Fatal("failed import left a visible dataset", count, err)
+	}
+	verified, err := Verify(ctx, db, "invented", nil)
+	if err != nil || verified.Entries != 5 || !verified.ProjectionChecked {
+		t.Fatal("full verification", verified, err)
+	}
+	// A correct row count alone must not conceal a damaged search projection.
+	if _, err = db.Exec(ctx, "UPDATE entries SET name_id=0 WHERE id=1"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = Verify(ctx, db, "invented", nil); err == nil {
+		t.Fatal("projection corruption went undetected")
+	}
+	if _, err = db.Exec(ctx, "UPDATE entries SET name_id=(SELECT id FROM terms WHERE key='li') WHERE id=1"); err != nil {
+		t.Fatal(err)
+	}
+	testDesktopAdmin(t, db)
+	testMultipleBlocksAndBatches(t, db)
+	testLegacyRepack(t, db)
 	handler := NewAPI(db).Handler()
 	get := func(path string, status int) map[string]json.RawMessage {
 		t.Helper()
@@ -168,5 +193,209 @@ func TestPostgresIntegration(t *testing.T) {
 	handler.ServeHTTP(w, httptest.NewRequest("GET", "/api/datasets", nil))
 	if !strings.Contains(w.Body.String(), `"entries":5`) || strings.Contains(w.Body.String(), "broken") {
 		t.Fatal("catalogue", w.Body.String())
+	}
+}
+
+func testDesktopAdmin(t *testing.T, db *pgxpool.Pool) {
+	t.Helper()
+	admin := &Admin{DB: db, Token: strings.Repeat("a", 64)}
+	server := httptest.NewUnstartedServer(admin.Handler())
+	admin.Host = server.Listener.Addr().String()
+	server.Start()
+	defer server.Close()
+	defer admin.Cancel()
+	request := func(method, path string, body io.Reader, token, origin, host string) *http.Response {
+		t.Helper()
+		r, e := http.NewRequest(method, server.URL+path, body)
+		if e != nil {
+			t.Fatal(e)
+		}
+		if token != "" {
+			r.Header.Set("Authorization", "Bearer "+token)
+		}
+		if origin != "" {
+			r.Header.Set("Origin", origin)
+		}
+		if host != "" {
+			r.Host = host
+		}
+		if method == "POST" && path == "/import" {
+			r.Header.Set("Content-Type", "application/x-ndjson")
+		}
+		response, e := server.Client().Do(r)
+		if e != nil {
+			t.Fatal(e)
+		}
+		return response
+	}
+	for _, c := range []struct{ token, origin, host string }{{"", "", ""}, {"wrong", "", ""}, {admin.Token, "https://other.invalid", ""}, {admin.Token, "", "other.invalid"}} {
+		response := request("GET", "/progress", nil, c.token, c.origin, c.host)
+		_ = response.Body.Close()
+		if response.StatusCode != 403 {
+			t.Fatal("desktop capability bypass", response.StatusCode)
+		}
+	}
+	reader, writer := io.Pipe()
+	finished := make(chan error, 1)
+	req, _ := http.NewRequest("POST", server.URL+"/import", reader)
+	req.Header.Set("Authorization", "Bearer "+admin.Token)
+	req.Header.Set("Content-Type", "application/x-ndjson")
+	go func() {
+		response, e := server.Client().Do(req)
+		if e == nil {
+			_ = response.Body.Close()
+			if response.StatusCode != 422 {
+				e = fmt.Errorf("canceled import status %d", response.StatusCode)
+			}
+		}
+		finished <- e
+	}()
+	go func() { _, _ = io.WriteString(writer, fixture("canceled-admin", false)) }()
+	deadline := time.Now().Add(3 * time.Second)
+	for {
+		admin.mu.Lock()
+		running := admin.state.Running
+		admin.mu.Unlock()
+		if running {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("admin import did not start")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	response := request("POST", "/cancel", nil, admin.Token, "", "")
+	_ = response.Body.Close()
+	if response.StatusCode != 202 {
+		t.Fatal("cancel status", response.StatusCode)
+	}
+	_ = writer.Close()
+	select {
+	case e := <-finished:
+		if e != nil {
+			t.Fatal(e)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("cancel did not interrupt a stalled producer")
+	}
+	var count int
+	if e := db.QueryRow(context.Background(), "SELECT count(*) FROM datasets WHERE key='canceled-admin'").Scan(&count); e != nil || count != 0 {
+		t.Fatal("canceled import published", count, e)
+	}
+}
+
+func testMultipleBlocksAndBatches(t *testing.T, db *pgxpool.Pool) {
+	t.Helper()
+	ctx := context.Background()
+	var input bytes.Buffer
+	encoder := json.NewEncoder(&input)
+	count := importBatchRows + 1
+	_ = encoder.Encode(Manifest{Type: "manifest", Protocol: 1, Dataset: "multiple-batches", Edition: "invented", Title: "Invented boundary fixture", SHA256: map[string]string{"fixture": "invented"}, Expected: int64(count)})
+	for i := 1; i <= count; i++ {
+		sid := fmt.Sprintf("invented:%d", i)
+		_ = encoder.Encode(frame{Type: "record", SourceID: sid, Record: json.RawMessage(`{"surname":"Li","firstName":"Same","postcode":"ZZ1 1ZZ","large_integer":9007199254740993}`)})
+	}
+	_ = encoder.Encode(frame{Type: "end", Count: int64(count)})
+	if n, e := Import(ctx, db, &input); e != nil || n != int64(count) {
+		t.Fatal("multi-batch import", n, e)
+	}
+	var dataset int16
+	if e := db.QueryRow(ctx, "SELECT id FROM datasets WHERE key='multiple-batches'").Scan(&dataset); e != nil {
+		t.Fatal(e)
+	}
+	api := NewAPI(db)
+	ids := []int32{1, blockRows, blockRows + 1, importBatchRows, importBatchRows + 1}
+	results, e := api.loadRecords(ctx, dataset, ids)
+	if e != nil {
+		t.Fatal(e)
+	}
+	for i, r := range results {
+		if r.SourceID != fmt.Sprintf("invented:%d", ids[i]) || !strings.Contains(string(r.Record), "9007199254740993") {
+			t.Fatal("block/batch boundary or numeric precision", r.SourceID)
+		}
+	}
+	w := httptest.NewRecorder()
+	api.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/export?dataset=multiple-batches&surname=Li&limit=1", nil))
+	if w.Code != 200 || w.Header().Get("Content-Type") != "application/x-ndjson" || !strings.Contains(w.Body.String(), "9007199254740993") || strings.Count(w.Body.String(), "\n") != 1 {
+		t.Fatal("bounded export lost source precision", w.Code, w.Body.String())
+	}
+	if v, e := Verify(ctx, db, "multiple-batches", nil); e != nil || v.Entries != int64(count) {
+		t.Fatal("multi-batch verification", v, e)
+	}
+}
+
+// An old catalogue is copied through a read-only pool into new partitions. The
+// legacy manifest, source IDs, nulls and warning values must survive the move.
+func testLegacyRepack(t *testing.T, destination *pgxpool.Pool) {
+	t.Helper()
+	ctx := context.Background()
+	schema := fmt.Sprintf("ukinfo_legacy_test_%d", os.Getpid())
+	quoted := pgx.Identifier{schema}.Sanitize()
+	if _, e := destination.Exec(ctx, "CREATE SCHEMA "+quoted); e != nil {
+		t.Fatal(e)
+	}
+	defer destination.Exec(ctx, "DROP SCHEMA "+quoted+" CASCADE")
+	cfg := destination.Config().Copy()
+	cfg.ConnConfig.RuntimeParams["search_path"] = schema
+	source, e := pgxpool.NewWithConfig(ctx, cfg)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer source.Close()
+	_, e = source.Exec(ctx, `CREATE TABLE catalog_schema(version integer); INSERT INTO catalog_schema VALUES(1);
+ CREATE TABLE datasets(id integer,key text,manifest jsonb,entries bigint);
+ CREATE TABLE entries(id integer,dataset_id integer,source_id text,record jsonb);`)
+	if e != nil {
+		t.Fatal(e)
+	}
+	lines := strings.Split(strings.TrimSpace(fixture("legacy-copy", true)), "\n")
+	if _, e = source.Exec(ctx, "INSERT INTO datasets VALUES(1,'legacy-copy',$1,5)", lines[0]); e != nil {
+		t.Fatal(e)
+	}
+	for i, line := range lines[1 : len(lines)-1] {
+		var f frame
+		if e = json.Unmarshal([]byte(line), &f); e != nil {
+			t.Fatal(e)
+		}
+		if _, e = source.Exec(ctx, "INSERT INTO entries VALUES($1,1,$2,$3)", i+1, f.SourceID, f.Record); e != nil {
+			t.Fatal(e)
+		}
+	}
+	cfg = source.Config().Copy()
+	cfg.ConnConfig.RuntimeParams["default_transaction_read_only"] = "on"
+	readonly, e := pgxpool.NewWithConfig(ctx, cfg)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer readonly.Close()
+	if e = Migrate(ctx, source); e == nil {
+		t.Fatal("schema-1 migration should require a separate destination")
+	}
+	if e = RepackV1(ctx, destination, readonly, ImportOptions{}); e != nil {
+		t.Fatal(e)
+	}
+	if report, e := Verify(ctx, destination, "legacy-copy", nil); e != nil || report.Entries != 5 {
+		t.Fatal(report, e)
+	}
+	w := httptest.NewRecorder()
+	NewAPI(destination).Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/search?dataset=legacy-copy&surname=Li&first_name=Ann", nil))
+	if w.Code != 200 || !strings.Contains(w.Body.String(), `"source_warning":"invented_warning"`) || !strings.Contains(w.Body.String(), `"building":null`) {
+		t.Fatal("legacy fields lost", w.Code, w.Body.String())
+	}
+	var count int
+	if e = source.QueryRow(ctx, "SELECT count(*) FROM entries").Scan(&count); e != nil || count != 5 {
+		t.Fatal("legacy source changed", count, e)
+	}
+}
+
+func TestDesktopDiskPreflight(t *testing.T) {
+	admin := &Admin{Token: strings.Repeat("d", 64), Host: "127.0.0.1", CheckResources: func() error { return ErrDiskHeadroom }}
+	req := httptest.NewRequest("POST", "http://127.0.0.1/import", strings.NewReader("not read"))
+	req.Header.Set("Authorization", "Bearer "+admin.Token)
+	req.Header.Set("Content-Type", "application/x-ndjson")
+	w := httptest.NewRecorder()
+	admin.Handler().ServeHTTP(w, req)
+	if w.Code != 507 || admin.state.Running {
+		t.Fatal("disk guard admitted import", w.Code)
 	}
 }

@@ -1,7 +1,9 @@
 """Interchange provenance and failure semantics; all records here are invented."""
 
+import hashlib
 import io
 import json
+import struct
 import unittest
 from types import SimpleNamespace
 
@@ -28,7 +30,17 @@ class SearchExportTests(unittest.TestCase):
         self.assertTrue(frames[0]["sample"])
         self.assertIsNone(frames[1]["record"]["building"])
         self.assertEqual(frames[2]["source_id"], "business:update:8")
-        self.assertEqual(frames[-1], {"type": "end", "count": 2})
+        self.assertEqual(frames[-1]["type"], "end")
+        self.assertEqual(frames[-1]["count"], 2)
+        digest = hashlib.sha256()
+        for line in output.getvalue().splitlines()[1:-1]:
+            source = json.loads(line)["source_id"].encode()
+            # Hash the wire JSON bytes, independently of the producer helper.
+            raw = line.split('"record":', 1)[1][:-1].encode("ascii")
+            digest.update(struct.pack("<HI", len(source), len(raw)))
+            digest.update(source)
+            digest.update(raw)
+        self.assertEqual(frames[-1]["sha256"], digest.hexdigest())
 
     def test_short_stream_has_no_terminal_frame(self):
         output = io.StringIO()
@@ -51,3 +63,17 @@ class SearchExportTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "hash"):
             emit(db, "unused", output, limit=1)
         self.assertEqual(output.getvalue(), "")
+
+    def test_source_change_prevents_terminal_frame(self):
+        db = FakeDB()
+        calls = []
+
+        def verify(_):
+            calls.append(True)
+            return {"fixture": "before" if len(calls) == 1 else "changed"}
+
+        db.edition = SimpleNamespace(id="invented", title="Synthetic", verify=verify)
+        output = io.StringIO()
+        with self.assertRaises(ValueError):
+            emit(db, "unused", output, limit=2)
+        self.assertNotIn('"type":"end"', output.getvalue())
