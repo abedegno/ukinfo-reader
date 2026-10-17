@@ -65,3 +65,10 @@ string references and joins between record levels.
 The new code and documentation use the MIT license. By contributing, you agree that your
 contribution can be distributed under that license. The original software and data retain
 their own rights. Be respectful and keep technical disagreement focused on evidence.
+
+## Search application
+
+See [the application guide](docs/search-app.md#verification) for Go/PostgreSQL integration,
+desktop lifecycle and browser test commands. Use invented fixtures for committed tests and
+screenshots. Keep imports, PostgreSQL clusters, bundles and record-level test output ignored.
+The hosted and desktop builds share the same SQL, API and embedded UI.

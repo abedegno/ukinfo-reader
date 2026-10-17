@@ -1,0 +1,7 @@
+**
+!server/
+!server/**
+!deploy/
+!deploy/Dockerfile
+server/**/test-results/
+server/ukinfo-server

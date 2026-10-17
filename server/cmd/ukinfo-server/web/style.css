@@ -1,0 +1,365 @@
+:root {
+  color-scheme: light;
+  --ink: #21332e;
+  --muted: #65756f;
+  --paper: #f6f5ef;
+  --line: #dce2d9;
+  --accent: #286b50;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+button,
+input,
+select {
+  font: inherit;
+}
+button,
+a,
+input,
+select {
+  outline-offset: 4px;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+header {
+  max-width: 1280px;
+  margin: auto;
+  padding: 28px 48px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.brand {
+  text-decoration: none;
+  color: var(--ink);
+  font:
+    700 26px Georgia,
+    serif;
+  letter-spacing: -1px;
+}
+.brand span {
+  font: 500 10px system-ui;
+  letter-spacing: 3px;
+  margin-left: 14px;
+}
+.badge {
+  border: 1px solid #cad6c9;
+  border-radius: 24px;
+  padding: 7px 12px;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+}
+main {
+  max-width: 1280px;
+  margin: auto;
+  padding: 54px 48px 24px;
+}
+.intro {
+  max-width: 680px;
+}
+.eyebrow {
+  font-size: 10px;
+  letter-spacing: 2.4px;
+  color: var(--accent);
+  font-weight: 700;
+}
+h1 {
+  font:
+    400 clamp(38px, 5vw, 66px)/1.06 Georgia,
+    serif;
+  letter-spacing: -2px;
+  margin: 22px 0;
+}
+p {
+  line-height: 1.6;
+}
+.intro > p:last-child {
+  max-width: 500px;
+  font-size: 15px;
+  color: var(--muted);
+}
+.workspace {
+  display: grid;
+  grid-template-columns: 390px minmax(0, 1fr);
+  gap: 36px;
+  margin-top: 42px;
+  align-items: start;
+}
+form {
+  padding: 24px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 6px 24px #21332e04;
+}
+.form-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+#coverage {
+  font-size: 10px;
+  color: var(--muted);
+  text-align: right;
+}
+label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 14px 0;
+}
+label span {
+  font-weight: 400;
+  color: var(--muted);
+}
+input,
+select {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 11px;
+  background: white;
+  color: var(--ink);
+  min-width: 0;
+}
+select {
+  font-size: 12px;
+}
+.tabs {
+  display: flex;
+  padding: 4px;
+  background: var(--paper);
+  border-radius: 7px;
+  margin: 22px 0;
+}
+.tabs button {
+  flex: 1;
+  padding: 10px;
+  border: 0;
+  background: transparent;
+  border-radius: 5px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.tabs button[aria-pressed="true"] {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 1px 4px #21332e14;
+}
+.fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.fields[hidden] {
+  display: none;
+}
+.bottom-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+}
+.bottom-fields label {
+  flex: 1;
+  min-width: 110px;
+}
+.primary {
+  background: var(--accent);
+  color: white;
+  border: 0;
+  border-radius: 5px;
+  padding: 12px 15px;
+  margin: 14px 0;
+  font-size: 12px;
+  display: flex;
+  gap: 22px;
+}
+.note {
+  color: var(--muted);
+  font-size: 11px;
+  margin: 10px 0 0;
+}
+.results-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0 18px;
+  border-bottom: 1px solid var(--line);
+}
+.results-heading button,
+#next {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 8px 10px;
+  font-size: 11px;
+  color: var(--ink);
+}
+#status {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 8px 0;
+}
+article {
+  border-top: 1px solid var(--line);
+  padding: 18px 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+article h3 {
+  margin: 0 0 7px;
+  font-size: 16px;
+  font-family: Georgia, serif;
+  font-weight: 400;
+}
+article p {
+  font-size: 12px;
+  margin: 3px 0;
+  color: var(--muted);
+}
+article button {
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 12px;
+  align-self: start;
+  padding: 4px;
+}
+.warning {
+  color: #92601c !important;
+}
+.tag {
+  font-size: 9px;
+  padding: 3px 6px;
+  background: #e9eee6;
+  border-radius: 3px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: 8px;
+}
+.postcode {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--ink);
+}
+footer {
+  display: flex;
+  gap: 42px;
+  justify-content: space-between;
+  border-top: 1px solid var(--line);
+  margin-top: 64px;
+  padding-top: 18px;
+  color: var(--muted);
+  font-size: 10px;
+}
+footer p {
+  max-width: 650px;
+  margin: 0;
+}
+footer a {
+  white-space: nowrap;
+  color: var(--accent);
+}
+dialog {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  width: min(700px, 92vw);
+  max-height: 85vh;
+  padding: 24px;
+  color: var(--ink);
+  box-shadow: 0 20px 100px #0003;
+}
+dialog::backdrop {
+  background: #21332e77;
+}
+.dialog-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.dialog-heading button {
+  border: 0;
+  background: transparent;
+  padding: 8px;
+}
+#provenance {
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+dl {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) 2fr;
+  font-size: 12px;
+  gap: 0;
+}
+dt,
+dd {
+  margin: 0;
+  border-top: 1px solid var(--line);
+  padding: 9px 0;
+  overflow-wrap: anywhere;
+}
+dt {
+  color: var(--muted);
+}
+[hidden] {
+  display: none !important;
+}
+@media (max-width: 850px) {
+  header {
+    padding: 22px;
+  }
+  main {
+    padding: 32px 22px;
+  }
+  .workspace {
+    grid-template-columns: 1fr;
+    gap: 26px;
+  }
+  .intro h1 br {
+    display: none;
+  }
+  .intro > p:last-child {
+    max-width: 650px;
+  }
+  footer {
+    display: block;
+  }
+  footer a {
+    display: inline-block;
+    margin-top: 15px;
+  }
+}

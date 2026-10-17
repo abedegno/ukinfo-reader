@@ -22,6 +22,14 @@ def main():
         ".jsonl",
         ".sqlite",
         ".db",
+        ".parquet",
+        ".duckdb",
+        ".pgdump",
+        ".dump",
+        ".tar",
+        ".gz",
+        ".dmg",
+        ".appimage",
     }
     errors = []
     for name in filter(None, paths):

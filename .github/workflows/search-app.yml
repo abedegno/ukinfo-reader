@@ -1,0 +1,66 @@
+name: Search application
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18.6-alpine
+        env:
+          POSTGRES_USER: ukinfo
+          POSTGRES_PASSWORD: ci-only
+          POSTGRES_DB: ukinfo
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd 'pg_isready -U ukinfo -d ukinfo'
+          --health-interval 2s --health-timeout 2s --health-retries 30
+    env:
+      DATABASE_URL: postgres://ukinfo:ci-only@127.0.0.1:5432/ukinfo?sslmode=disable
+      UKINFO_TEST_DATABASE_URL: postgres://ukinfo:ci-only@127.0.0.1:5432/ukinfo?sslmode=disable
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version: "1.26.4"
+          cache-dependency-path: server/go.sum
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+      - name: Go tests and vet
+        working-directory: server
+        run: |
+          test -z "$(gofmt -l .)"
+          go vet ./...
+          go test -race ./...
+          go build -o ../build/desktop/ukinfo-server ./cmd/ukinfo-server
+      - name: Native PostgreSQL lifecycle (Linux)
+        working-directory: server
+        run: |
+          CGO_ENABLED=0 go test -c -o ../build/desktop-lifecycle-linux ./internal/desktop
+          docker run --rm --user postgres --env UKINFO_TEST_PG_BIN=/usr/local/bin \
+            --volume "$GITHUB_WORKSPACE/build/desktop-lifecycle-linux:/tmp/lifecycle:ro" \
+            postgres:18.6-alpine /tmp/lifecycle -test.v
+      - name: Desktop supervisor tests
+        working-directory: desktop
+        run: |
+          npm ci
+          npm test
+          npm audit --omit=dev
+          npx playwright install --with-deps chromium
+      - name: Browser integration with real Go/PostgreSQL and invented data
+        run: |
+          build/desktop/ukinfo-server migrate
+          python3 tools/search_demo.py | build/desktop/ukinfo-server import
+          build/desktop/ukinfo-server serve --listen 127.0.0.1:8080 > /tmp/ukinfo-app.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in $(seq 1 50); do
+            if curl --fail --silent http://127.0.0.1:8080/api/health; then break; fi
+            sleep 0.2
+          done
+          cd desktop
+          npm run test:ui

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>UK-Info • Archive search</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/">UK–Info <span>ARCHIVE</span></a
+      ><span class="badge">Historical directory</span>
+    </header>
+    <main>
+      <section class="intro">
+        <p class="eyebrow">THE DIRECTORY, REOPENED</p>
+        <h1>A name. A place.<br />A piece of history.</h1>
+        <p>
+          Search preserved UK-Info directory editions. Explore people and
+          businesses as they were recorded on the original discs.
+        </p>
+      </section>
+      <section class="workspace" aria-label="Archive search">
+        <form id="search">
+          <div class="form-heading">
+            <h2>Search the archive</h2>
+            <span id="coverage">Connecting…</span>
+          </div>
+          <label for="dataset">Edition</label
+          ><select name="dataset" id="dataset" required></select>
+          <p id="edition-note" class="note"></p>
+          <div class="tabs" role="group" aria-label="Directory type">
+            <button type="button" id="people" aria-pressed="true">People</button
+            ><button type="button" id="business" aria-pressed="false">
+              Businesses
+            </button>
+          </div>
+          <div id="person-fields" class="fields">
+            <label
+              >Surname<input
+                name="surname"
+                autocomplete="off"
+                placeholder="e.g. Smith"
+                maxlength="128" /></label
+            ><label
+              >First name <span>(optional)</span
+              ><input
+                name="first_name"
+                autocomplete="off"
+                placeholder="e.g. John"
+                maxlength="128"
+            /></label>
+          </div>
+          <label id="business-field" hidden
+            >Business name<input
+              name="organisation"
+              autocomplete="off"
+              placeholder="Exact organisation name"
+              maxlength="256"
+          /></label>
+          <div class="bottom-fields">
+            <label
+              >Postcode <span>(optional)</span
+              ><input
+                name="postcode"
+                autocomplete="off"
+                placeholder="e.g. AB10 1AA"
+                maxlength="12" /></label
+            ><button class="primary" id="submit" type="submit">
+              Search archive <span aria-hidden="true">↗</span>
+            </button>
+          </div>
+          <p class="note">
+            Names match exactly, ignoring case and extra spaces. A surname or
+            postcode is required for people; a business name or postcode for
+            businesses.
+          </p>
+        </form>
+        <section class="results" aria-labelledby="results-title">
+          <div class="results-heading">
+            <h2 id="results-title">Your discoveries</h2>
+            <button id="export" type="button" disabled>
+              Export this page ↓
+            </button>
+          </div>
+          <p id="status" role="status" aria-live="polite">
+            Choose an edition and enter a name or postcode to begin.
+          </p>
+          <div id="items"></div>
+          <button id="next" type="button" hidden>Next page →</button>
+        </section>
+      </section>
+      <footer>
+        <p>
+          Source entries are separate occurrences, not distinct people. Shared
+          addresses do not establish family relationships. Edition dates refer
+          to the cover disc, not a verified electoral roll date.
+        </p>
+        <a
+          href="https://github.com/abedegno/ukinfo-reader"
+          target="_blank"
+          rel="noreferrer"
+          >About the project ↗</a
+        >
+      </footer>
+    </main>
+    <dialog id="details">
+      <div class="dialog-heading">
+        <h2>Original source record</h2>
+        <button id="close-details" aria-label="Close details">✕</button>
+      </div>
+      <p id="provenance"></p>
+      <dl id="record-fields"></dl>
+    </dialog>
+  </body>
+</html>

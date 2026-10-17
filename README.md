@@ -24,6 +24,15 @@ Other editions, Standard and Pro releases require separate identification and va
 This repository contains original reader code, format documentation and synthetic tests.
 The disc image, original software, database and exported directory records are excluded.
 
+## Web and desktop search (development preview)
+
+A Go + PostgreSQL search service, shared web UI and Electron desktop shell are now
+available. The Python reader provides verified streaming ingestion. Edition selection,
+people/business search, source-record details and page exports are implemented.
+[Setup, current limits and portable app instructions →](docs/search-app.md)
+
+![Search application showing invented demo records](docs/screenshots/search-preview.png)
+
 ## Quick start
 
 Requires **Python 3.10+** on macOS, Linux or Windows. The reader has no third-party runtime

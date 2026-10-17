@@ -1,0 +1,42 @@
+# Development baseline. Put a TLS reverse proxy and rate limiter in front for hosting.
+services:
+  db:
+    image: postgres:18.6-alpine
+    environment:
+      POSTGRES_USER: ukinfo
+      POSTGRES_DB: ukinfo
+      POSTGRES_PASSWORD: ${UKINFO_DB_PASSWORD:?Set UKINFO_DB_PASSWORD}
+      POSTGRES_INITDB_ARGS: --locale=C --encoding=UTF8
+    volumes:
+      - catalogue:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U ukinfo -d ukinfo"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    restart: unless-stopped
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    environment:
+      DATABASE_URL: postgres://ukinfo:${UKINFO_DB_PASSWORD:?Set UKINFO_DB_PASSWORD}@db:5432/ukinfo?sslmode=disable
+    command:
+      [
+        serve,
+        --listen,
+        "0.0.0.0:8080",
+        --public-origin,
+        "${UKINFO_PUBLIC_ORIGIN:-http://localhost:8080}",
+      ]
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+volumes:
+  catalogue:

@@ -1,0 +1,632 @@
+{
+  "date": "2026-10-17",
+  "reader_commit": "587c2d1b9e66f515d5fd391eca798816e5097799",
+  "muesli_review": {
+    "local_commit": "a1b7657002fa475355913a81f21ad149f3c449f5",
+    "source": "Local checkout inspected read-only, alongside public GitHub README.",
+    "files": [
+      "go.mod",
+      "internal/config/config.go",
+      "internal/embedded/postgres.go",
+      "src/main/serverSupervisor.ts",
+      "src/main/resourcePaths.ts",
+      "electron-builder.yml",
+      "scripts/assemble-desktop-resources.sh",
+      "docs/EMBEDDED-POSTGRES-BUNDLE.md"
+    ],
+    "findings": [
+      "Go/pgx backend with externally configured PostgreSQL for hosting.",
+      "Embedded mode starts and supervises a real local PostgreSQL instance.",
+      "Packaged Electron resources supply pinned PostgreSQL binaries.",
+      "Local code has credential persistence, directory ownership locking, startup recovery and shutdown handling.",
+      "The inspected desktop assembly script explicitly wires darwin-arm64 and linux-x64; Windows packaging was not verified.",
+      "The inspected embedded configuration targets PostgreSQL 17; this spike used PostgreSQL 18.6. Major-version alignment and upgrade handling require an explicit decision."
+    ]
+  },
+  "edition_occurrences": {
+    "se-pcf78-1998-01": 27983545,
+    "se4-pcf94-1999-04": 46355850,
+    "se2004-pcp218-2004-07": 63373974,
+    "se2005-pcf175-2005-06": 51350897
+  },
+  "total_occurrences": 189064266,
+  "required_source_file_bytes": 2507836653,
+  "sample": {
+    "edition": "se2005-pcf175-2005-06",
+    "rows": 2000000,
+    "columns": [
+      "id",
+      "source_id",
+      "entry_type",
+      "surname",
+      "first_name",
+      "organisation",
+      "postcode",
+      "sector",
+      "houseno",
+      "building",
+      "street",
+      "town",
+      "county",
+      "phone"
+    ],
+    "strata": {
+      "res_base": 1713996,
+      "res_update": 52254,
+      "bus_base": 193500,
+      "bus_update": 40250
+    },
+    "seconds": 27.934688000008464,
+    "csv_bytes": 214339149,
+    "method": "Seeded byte-region cluster sample, with target stream weights proportional to live entry counts; duplicate occurrence IDs are excluded. This is a search-layout experiment, not an unbiased statistical sample or full-edition capacity test."
+  },
+  "preparation": {
+    "versions": {
+      "sqlite": "3.53.4",
+      "duckdb": "1.5.6",
+      "psycopg": "3.3.6",
+      "postgres": "PostgreSQL 18.6 on aarch64-unknown-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit"
+    },
+    "rows": 2000000,
+    "csv_bytes": 214339149,
+    "build": {
+      "sqlite": {
+        "load_seconds": 3.909638375014765,
+        "total_seconds": 8.608083958009956,
+        "bytes": 428056576
+      },
+      "parquet_surname": {
+        "bytes": 55663337
+      },
+      "parquet_postcode": {
+        "bytes": 42753761
+      },
+      "parquet_total": {
+        "load_seconds": 2.322784625022905,
+        "total_seconds": 7.537006832979387,
+        "bytes": 200505280
+      },
+      "postgres": {
+        "load_seconds": 6.7335743340081535,
+        "total_seconds": 12.586415249999845,
+        "bytes": 671326208,
+        "table_bytes": 279822336,
+        "index_bytes": 391503872
+      },
+      "parquet_organisation": {
+        "bytes": 50594360
+      },
+      "parquet_identity": {
+        "bytes": 51493822
+      }
+    },
+    "surname_dictionary": {
+      "rows": 43056,
+      "total_bytes": 6381568,
+      "trigram_index_bytes": 3072000
+    }
+  },
+  "database_diagnostic": {
+    "rows": 2000000,
+    "versions": {
+      "sqlite": "3.46.1",
+      "duckdb": "1.5.6",
+      "psycopg": "3.3.6"
+    },
+    "environment": {
+      "platform": "Linux-7.0.12-linuxkit-aarch64-with-glibc2.41",
+      "cpu_limit": 2,
+      "memory_limit_bytes": 1073741824,
+      "postgres_separate_container_cpu_limit": 2,
+      "postgres_separate_container_memory_limit_bytes": 1073741824
+    },
+    "engines": {
+      "sqlite": {
+        "warm_queries": {
+          "surname_only": {
+            "samples": 90,
+            "median_ms": 0.029416499984336042,
+            "p95_ms": 0.060666999956993095,
+            "max_ms": 0.07062500003485184
+          },
+          "record_detail": {
+            "samples": 12,
+            "median_ms": 0.00483349998603444,
+            "p95_ms": 0.00508300001911266,
+            "max_ms": 0.00508300001911266
+          },
+          "surname_prefix": {
+            "samples": 90,
+            "median_ms": 0.04885449999392222,
+            "p95_ms": 0.057040999990931596,
+            "max_ms": 0.07437499999696229
+          },
+          "postcode_exact": {
+            "samples": 90,
+            "median_ms": 0.024604499998304163,
+            "p95_ms": 0.05095799997434369,
+            "max_ms": 0.06012500000451837
+          },
+          "postcode_surname": {
+            "samples": 90,
+            "median_ms": 0.015041500006418573,
+            "p95_ms": 0.032125000018368155,
+            "max_ms": 0.036375000036059646
+          },
+          "organisation_exact": {
+            "samples": 90,
+            "median_ms": 0.024520499977143118,
+            "p95_ms": 0.048083000024234934,
+            "max_ms": 0.05283300004066405
+          },
+          "sector_surname": {
+            "samples": 90,
+            "median_ms": 0.030916499980548906,
+            "p95_ms": 0.05345900001429982,
+            "max_ms": 0.061625000000731234
+          },
+          "person_exact": {
+            "samples": 90,
+            "median_ms": 0.028645500009361058,
+            "p95_ms": 0.06058299999267547,
+            "max_ms": 0.06658300003437034
+          },
+          "person_missing": {
+            "samples": 3,
+            "median_ms": 0.003959000025588466,
+            "p95_ms": 0.003999999989900971,
+            "max_ms": 0.003999999989900971
+          }
+        },
+        "concurrency": {
+          "1": {
+            "samples": 645,
+            "median_ms": 0.041459000044596905,
+            "p95_ms": 0.10962499999322972,
+            "max_ms": 0.3825830000323549,
+            "wall_seconds": 0.0299567910000178,
+            "queries_per_second": 21531.011115296584,
+            "errors": 0
+          },
+          "8": {
+            "samples": 645,
+            "median_ms": 5.3276670000173,
+            "p95_ms": 51.986415999977,
+            "max_ms": 60.6966249999914,
+            "wall_seconds": 1.505396750999978,
+            "queries_per_second": 428.45847752198944,
+            "errors": 0
+          },
+          "32": {
+            "samples": 645,
+            "median_ms": 26.167625000027783,
+            "p95_ms": 244.28679200002534,
+            "max_ms": 277.0549159999973,
+            "wall_seconds": 1.979000333999977,
+            "queries_per_second": 325.9221279141065,
+            "errors": 0
+          }
+        },
+        "county_aggregation": {
+          "samples": 3,
+          "median_ms": 440.62829200004217,
+          "p95_ms": 2367.978418000007,
+          "max_ms": 2367.978418000007
+        },
+        "result_mismatches": 0
+      },
+      "postgres": {
+        "warm_queries": {
+          "surname_only": {
+            "samples": 90,
+            "median_ms": 0.09785399998918365,
+            "p95_ms": 0.1285000000166292,
+            "max_ms": 0.14916599997150115
+          },
+          "record_detail": {
+            "samples": 12,
+            "median_ms": 0.07568750001496483,
+            "p95_ms": 0.09441700001389108,
+            "max_ms": 0.09441700001389108
+          },
+          "surname_prefix": {
+            "samples": 90,
+            "median_ms": 0.09314550001704447,
+            "p95_ms": 0.10587499997427585,
+            "max_ms": 0.11187499995912731
+          },
+          "postcode_exact": {
+            "samples": 90,
+            "median_ms": 0.06512500002031629,
+            "p95_ms": 0.09666599999036407,
+            "max_ms": 0.10549999996101178
+          },
+          "postcode_surname": {
+            "samples": 90,
+            "median_ms": 0.06214550001004682,
+            "p95_ms": 0.08479100000613471,
+            "max_ms": 0.08920799996303685
+          },
+          "organisation_exact": {
+            "samples": 90,
+            "median_ms": 0.0666040000112389,
+            "p95_ms": 0.0957920000246304,
+            "max_ms": 0.09920900004090072
+          },
+          "sector_surname": {
+            "samples": 90,
+            "median_ms": 0.06991650002419192,
+            "p95_ms": 0.09858300001042153,
+            "max_ms": 0.09991700000000492
+          },
+          "person_exact": {
+            "samples": 90,
+            "median_ms": 0.0740625000048567,
+            "p95_ms": 0.11058299998012444,
+            "max_ms": 0.12354099999356549
+          },
+          "person_missing": {
+            "samples": 3,
+            "median_ms": 0.06758400002127019,
+            "p95_ms": 0.0719170000138547,
+            "max_ms": 0.0719170000138547
+          }
+        },
+        "concurrency": {
+          "1": {
+            "samples": 645,
+            "median_ms": 0.09029200003851656,
+            "p95_ms": 0.14216599998917445,
+            "max_ms": 1.4035830000125316,
+            "wall_seconds": 0.06362641600003371,
+            "queries_per_second": 10137.29894828051,
+            "errors": 0
+          },
+          "8": {
+            "samples": 645,
+            "median_ms": 0.8703749999767751,
+            "p95_ms": 2.0122079999964626,
+            "max_ms": 3.6667910000005577,
+            "wall_seconds": 0.08667629199999283,
+            "queries_per_second": 7441.4812299544765,
+            "errors": 0
+          },
+          "32": {
+            "samples": 645,
+            "median_ms": 3.155749999962154,
+            "p95_ms": 7.419959000003473,
+            "max_ms": 12.736874999973224,
+            "wall_seconds": 0.10251062500003627,
+            "queries_per_second": 6292.030704132101,
+            "errors": 0
+          }
+        },
+        "county_aggregation": {
+          "samples": 3,
+          "median_ms": 191.503124999997,
+          "p95_ms": 209.31766699999343,
+          "max_ms": 209.31766699999343
+        },
+        "result_mismatches": 0
+      },
+      "parquet": {
+        "warm_queries": {
+          "surname_only": {
+            "samples": 90,
+            "median_ms": 3.9073334999955023,
+            "p95_ms": 5.030500000032134,
+            "max_ms": 6.462457999987237
+          },
+          "record_detail": {
+            "samples": 12,
+            "median_ms": 3.3942914999727236,
+            "p95_ms": 3.6522500000160107,
+            "max_ms": 3.6522500000160107
+          },
+          "surname_prefix": {
+            "samples": 90,
+            "median_ms": 4.238646000032986,
+            "p95_ms": 4.93237500000987,
+            "max_ms": 6.815582999990966
+          },
+          "postcode_exact": {
+            "samples": 90,
+            "median_ms": 3.990499999986241,
+            "p95_ms": 5.011333000027207,
+            "max_ms": 5.700124999975742
+          },
+          "postcode_surname": {
+            "samples": 90,
+            "median_ms": 4.306146000004674,
+            "p95_ms": 5.736624999997275,
+            "max_ms": 15.011958999991748
+          },
+          "organisation_exact": {
+            "samples": 90,
+            "median_ms": 4.250874999996768,
+            "p95_ms": 4.890208000006169,
+            "max_ms": 6.582958999956645
+          },
+          "sector_surname": {
+            "samples": 90,
+            "median_ms": 4.056145500015873,
+            "p95_ms": 4.8307079999858615,
+            "max_ms": 7.04620800001976
+          },
+          "person_exact": {
+            "samples": 90,
+            "median_ms": 3.9082499999949505,
+            "p95_ms": 4.871999999977561,
+            "max_ms": 5.608083000026909
+          },
+          "person_missing": {
+            "samples": 3,
+            "median_ms": 3.6113749999913125,
+            "p95_ms": 3.6931249999838656,
+            "max_ms": 3.6931249999838656
+          }
+        },
+        "concurrency": {
+          "1": {
+            "samples": 645,
+            "median_ms": 4.01291600002196,
+            "p95_ms": 4.748082999981307,
+            "max_ms": 5.917999999951462,
+            "wall_seconds": 2.570159418000003,
+            "queries_per_second": 250.95719568318205,
+            "errors": 0
+          },
+          "8": {
+            "samples": 645,
+            "median_ms": 7.194959000003109,
+            "p95_ms": 86.00275000003421,
+            "max_ms": 90.96954200003893,
+            "wall_seconds": 2.2326472519999925,
+            "queries_per_second": 288.8947187793382,
+            "errors": 0
+          },
+          "32": {
+            "samples": 645,
+            "median_ms": 90.06729200001473,
+            "p95_ms": 398.2416669999793,
+            "max_ms": 801.8402920000085,
+            "wall_seconds": 2.7071442509999883,
+            "queries_per_second": 238.25845252307641,
+            "errors": 0
+          }
+        },
+        "county_aggregation": {
+          "samples": 3,
+          "median_ms": 8.499749999998585,
+          "p95_ms": 51.10487600001079,
+          "max_ms": 51.10487600001079
+        },
+        "result_mismatches": 0
+      }
+    },
+    "limitations": [
+      "Two-million-row byte-region cluster sample from the 2005 edition, not the complete dataset.",
+      "Warm local Docker runs, no public-network latency or cold-cache capacity claims.",
+      "Flat fourteen-column prototype omits full production provenance payload and fuzzy address search.",
+      "PostgreSQL has a separate database container and TCP hop; SQLite and DuckDB are embedded in the client container. Absolute engine rankings are not a controlled equal-total-resource comparison.",
+      "Each engine/client container is capped at two CPUs and 1 GiB; DuckDB memory limit 512 MiB and two threads.",
+      "Closed-loop concurrent readers; bounded pool/arrival-rate behaviour is measured separately by the Go HTTP spike.",
+      "Parquet uses four full sorted copies and query routing to the most favourable copy; file sizes include all four."
+    ]
+  },
+  "http_postgres": {
+    "arrival_100_per_second": {
+      "load_generator_drops": 0,
+      "scheduled_requests": 500,
+      "stats": {
+        "requests": 500,
+        "errors": 0,
+        "median_ms": 2.452085,
+        "p95_ms": 4.501084,
+        "p99_ms": 7.603084,
+        "max_ms": 44.998294,
+        "wall_seconds": 4.991937878,
+        "requests_per_second": 100.16150285113784
+      }
+    },
+    "backend_cpu_limit": 2,
+    "backend_memory_bytes": 1073741824,
+    "cases": 210,
+    "closed_loop": {
+      "1": {
+        "requests": 29156,
+        "errors": 0,
+        "median_ms": 0.170417,
+        "p95_ms": 0.241542,
+        "p99_ms": 0.318458,
+        "max_ms": 4.432709,
+        "wall_seconds": 5.00004846,
+        "requests_per_second": 5831.143484557348
+      },
+      "32": {
+        "requests": 92331,
+        "errors": 0,
+        "median_ms": 0.887583,
+        "p95_ms": 1.713666,
+        "p99_ms": 42.835792,
+        "max_ms": 58.850333,
+        "wall_seconds": 5.001147669,
+        "requests_per_second": 18461.962355625055
+      },
+      "8": {
+        "requests": 91430,
+        "errors": 0,
+        "median_ms": 0.223708,
+        "p95_ms": 0.520125,
+        "p99_ms": 0.871584,
+        "max_ms": 53.569041,
+        "wall_seconds": 5.000535919,
+        "requests_per_second": 18284.040247086967
+      }
+    },
+    "host": "ukinfo-architecture-pg",
+    "notes": [
+      "Go HTTP client and backend run in separate two-CPU/1-GiB containers on the same machine.",
+      "PostgreSQL and Go API share one backend container; SQLite and Go API share the other.",
+      "Warm two-million-row sample; this is not an internet or full-dataset capacity result.",
+      "Every response body is checked against a previously field-validated reference hash.",
+      "HTTP transfer, body-hash validation and database connection-pool waits are included; the load generator does not parse response JSON."
+    ],
+    "pool_size": 8
+  },
+  "http_sqlite": {
+    "arrival_100_per_second": {
+      "load_generator_drops": 0,
+      "scheduled_requests": 500,
+      "stats": {
+        "requests": 500,
+        "errors": 0,
+        "median_ms": 2.3375,
+        "p95_ms": 4.134752,
+        "p99_ms": 4.552294,
+        "max_ms": 4.898375,
+        "wall_seconds": 4.993612711,
+        "requests_per_second": 100.12790917857787
+      }
+    },
+    "backend_cpu_limit": 2,
+    "backend_memory_bytes": 1073741824,
+    "cases": 210,
+    "closed_loop": {
+      "1": {
+        "requests": 39154,
+        "errors": 0,
+        "median_ms": 0.133375,
+        "p95_ms": 0.190667,
+        "p99_ms": 0.274584,
+        "max_ms": 2.925166,
+        "wall_seconds": 5.000103502,
+        "requests_per_second": 7830.637902663159
+      },
+      "32": {
+        "requests": 161546,
+        "errors": 0,
+        "median_ms": 0.748125,
+        "p95_ms": 2.445833,
+        "p99_ms": 6.786041,
+        "max_ms": 23.1095,
+        "wall_seconds": 5.001861628,
+        "requests_per_second": 32297.174934964034
+      },
+      "8": {
+        "requests": 161133,
+        "errors": 0,
+        "median_ms": 0.197708,
+        "p95_ms": 0.537208,
+        "p99_ms": 1.304458,
+        "max_ms": 7.349125,
+        "wall_seconds": 5.001199961,
+        "requests_per_second": 32218.867723053634
+      }
+    },
+    "host": "ukinfo-architecture-sqlite",
+    "notes": [
+      "Go HTTP client and backend run in separate two-CPU/1-GiB containers on the same machine.",
+      "PostgreSQL and Go API share one backend container; SQLite and Go API share the other.",
+      "Warm two-million-row sample; this is not an internet or full-dataset capacity result.",
+      "Every response body is checked against a previously field-validated reference hash.",
+      "HTTP transfer, body-hash validation and database connection-pool waits are included; the load generator does not parse response JSON."
+    ],
+    "pool_size": 8
+  },
+  "http_correctness": {
+    "query_cases": 210,
+    "engines": 2,
+    "field_comparisons": "Every returned field compared with the SQLite SQL reference",
+    "result_mismatches": 0
+  },
+  "fuzzy_candidates": {
+    "dictionary_rows": 43056,
+    "trigram_index_bytes": 3072000,
+    "cases": 90,
+    "median_ms": 3.542874997947365,
+    "p95_ms": 4.4148340239189565,
+    "min_candidates": 1,
+    "max_candidates": 20,
+    "plan_nodes": [
+      "Limit",
+      "Index Scan"
+    ],
+    "limitations": [
+      "Candidate-name generation only; does not include fetching and ranking matching occurrences.",
+      "Warm sample dictionary, not the complete multi-edition dictionary."
+    ]
+  },
+  "data_pack": {
+    "bytes": 53387970,
+    "dump_seconds": 3.6056530839996412,
+    "restore_seconds": 6.092688624979928,
+    "restored_rows": 2000000,
+    "aggregate_identity_check_passed": true,
+    "limitations": [
+      "Logical custom-format dump restored into a fresh database on the same PostgreSQL version and architecture.",
+      "This does not test native macOS/Windows packaging, first-launch time, or cross-version upgrades.",
+      "Dump/restore runs used the two-CPU/1-GiB PostgreSQL container."
+    ],
+    "all_column_aggregate_hash_check_passed": true,
+    "hash_check_method": "Count and sum of PostgreSQL hashtextextended(row(e.*)::text,0) over all rows/columns, same engine/version; non-cryptographic aggregate check.",
+    "hash_check_seconds": 2.336885374999838
+  },
+  "limitations": [
+    "This is a short engineering spike, not a production capacity certification.",
+    "Two million unique occurrences from the 2005 edition: about 3.9% of that edition and 1.1% of all currently supported occurrences.",
+    "The sample uses seeded byte-region clusters and excludes duplicate occurrence IDs. It is not an unbiased population sample.",
+    "The prototype has fourteen flattened columns. It omits the full production provenance/warning payload and several source fields; production storage must be measured again.",
+    "HTTP tests repeatedly exercised 210 common/rare exact and prefix query cases, limited to 50 rows, with warm caches. Broad unseen-key, cold-cache, deep-pagination and full multi-edition behaviour were not measured.",
+    "Each closed-loop level lasted five seconds; scheduled-arrival tests sent 500 requests at 100 requests/second. These timings are too short to establish long-running capacity or operational stability.",
+    "HTTP service and load generator used separate containers. Each backend was limited to two CPU quotas and 1 GiB memory; this is a Docker Desktop ARM64 test, not a target-VPS hardware test.",
+    "Both Go services used eight database connections and a 64-request admission cap. Tests reached 32 simultaneous callers; overload beyond that cap was not exercised.",
+    "The load generator validates response bytes against field-checked reference hashes. Its HTTP measurements include transport, body validation and pool waits, while excluding client JSON parsing.",
+    "DuckDB/Parquet was tested through its Python SQL interface, rather than the Go HTTP endpoint. Its timings cannot be directly ranked against Go HTTP timings.",
+    "The raw Python multithreaded SQLite measurements differed substantially from the common-Go HTTP measurements. Their cause was not isolated; use the Go HTTP test for application comparisons.",
+    "Parquet had four full Zstandard-compressed sorted copies, with routing to the favourable copy for each query. The storage total includes all four.",
+    "The surname trigram experiment measures candidate-name generation only. Fetching/ranking matching occurrences and full fuzzy-address queries were not benchmarked.",
+    "SQLite and Parquet preparation ran on the uncapped native host. PostgreSQL preparation and data-pack dump/restore ran in the capped database container, with a native-host preparation client.",
+    "Data-pack restore was tested on the same PostgreSQL version/architecture. Native desktop startup, Windows distribution, relocation and major-version upgrade paths remain untested.",
+    "Rust was not benchmarked; this spike provides no evidence that a Rust rewrite would improve the service."
+  ],
+  "recommendation": {
+    "initial_implementation": "Go + PostgreSQL for both hosted and embedded desktop modes, following the existing Muesli architecture. A shared Electron/React UI can use the same HTTP contract.",
+    "reason": "Both SQL engines performed well in the tested read workload. PostgreSQL allows a shared schema/query/migration path and reuses an existing desktop operational pattern; performance does not compel separate desktop storage.",
+    "parquet": "Useful for columnar analysis/export if required. The measured PostgreSQL logical pack also provides a compact bootstrap path, so Parquet is optional for the initial serving implementation.",
+    "python": "Keep the validated Python reader as the source importer/reference. Porting four binary decoders is not a prerequisite for a Go serving backend.",
+    "schema": "Build an edition-aware occurrence model, preserve raw display/provenance/warnings, and measure a lean indexed search projection with separate detail/address/name dictionaries. Trigram candidate generation can use unique names instead of indexing every occurrence.",
+    "next_gate": "Complete one full-edition production schema/index build and a sustained cold/warm load test on the intended VPS; test native desktop first-launch import, offline restart, relocation and crash cleanup."
+  },
+  "go_service_dependencies": {
+    "compiler": "go1.26.9",
+    "pgx": "v5.10.0",
+    "go_sqlite3": "v1.14.52"
+  },
+  "docker_images": [
+    {
+      "tags": [
+        "postgres:18-alpine"
+      ],
+      "digests": [
+        "postgres@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873"
+      ]
+    },
+    {
+      "tags": [
+        "python:3.13-slim"
+      ],
+      "digests": [
+        "python@sha256:70729b46c69b4f1e97c4822c1af3df53a1476cf5ddc6c087c0c10bc3a5678c2f"
+      ]
+    },
+    {
+      "tags": [
+        "golang:1.26-alpine"
+      ],
+      "digests": [
+        "golang@sha256:3082400e369fa24d5fc60bca20edab3f6d604e0c5a690ec66b295eff4dd87ade"
+      ]
+    }
+  ]
+}

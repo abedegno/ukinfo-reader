@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Add a Go/PostgreSQL search catalogue, verified Python streaming ingestion, edition-aware
+  web UI and an Electron desktop development shell with a local PostgreSQL supervisor.
+- Preserve original source fields/warnings, reject incomplete imports, paginate duplicate
+  names safely, and bound API queries and page exports.
+- Add Compose deployment, synthetic demo data, integration/browser tests and application docs.
+- Record the data-free storage spike and its limitations.
+
+
 ## 0.5.0
 
 - Include V10.5 SE businesses in normal search and JSON Lines/CSV export.

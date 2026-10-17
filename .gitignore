@@ -33,3 +33,19 @@ htmlcov/
 *.code-workspace
 .DS_Store
 .env
+
+# Search services, desktop bundles and imported packs
+node_modules/
+playwright-report/
+test-results/
+*.parquet
+*.duckdb*
+*.pgdump
+*.dump
+*.tar
+*.tar.gz
+*.dmg
+*.AppImage
+*.log
+/ukinfo-server
+/server/ukinfo-server
