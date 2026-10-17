@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-17",
+  "limit": 50,
+  "pages_per_case": 5,
+  "cases": [
+    {
+      "label": "broad surname Sm",
+      "pages": 5,
+      "occurrences": 250,
+      "milliseconds": [
+        60.64,
+        17.52,
+        33.44,
+        28.74,
+        26.05
+      ],
+      "duplicates": 0,
+      "filter_mismatches": 0,
+      "more": true
+    },
+    {
+      "label": "broad surname Jo",
+      "pages": 5,
+      "occurrences": 250,
+      "milliseconds": [
+        66.35,
+        53.95,
+        71.67,
+        55.69,
+        68.5
+      ],
+      "duplicates": 0,
+      "filter_mismatches": 0,
+      "more": true
+    },
+    {
+      "label": "surname with broad first initial",
+      "pages": 5,
+      "occurrences": 250,
+      "milliseconds": [
+        233.13,
+        157.77,
+        177.75,
+        245.42,
+        211.75
+      ],
+      "duplicates": 0,
+      "filter_mismatches": 0,
+      "more": true
+    },
+    {
+      "label": "broad business name",
+      "pages": 5,
+      "occurrences": 250,
+      "milliseconds": [
+        46.29,
+        39.45,
+        43.89,
+        39.13,
+        53.87
+      ],
+      "duplicates": 0,
+      "filter_mismatches": 0,
+      "more": true
+    }
+  ]
+}

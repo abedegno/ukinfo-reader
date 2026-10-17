@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Remove the broad-prefix vocabulary rejection: keep large expansions inside PostgreSQL
+  and page through all matching occurrences with the existing cursors.
+
 - Add all-edition searches, bounded trailing name wildcards, Starts with matching and
   postcode district/sector searches with distinct district/sector boundaries.
 - Add edition badges, readable record sections and place types, copyable addresses and

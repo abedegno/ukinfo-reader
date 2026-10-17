@@ -210,9 +210,12 @@ and follow PostgreSQL recovery procedures. Preserve the password file with its c
   `W11` is the district, `W1 1` is a sector. Matching checks the length of the full code,
   so `WS1` does not include `WS13`. Displayed partial source values can match a district
   when equal to that district; raw full postcodes never replace partial displayed codes.
-- A prefix expands to at most 8,192 vocabulary terms. Broader prefixes return an explicit
-  error asking for a longer prefix, never silently truncated results. The existing C-collated
-  vocabulary B-tree and integer entry indexes are used; no catalogue rebuild is required.
+- Prefix searches have no vocabulary-count rejection. Small expansions use bound integer
+  arrays; broad expansions stay inside PostgreSQL in a shared materialized CTE. All matching
+  terms participate before indexed per-edition candidates and the next result page are
+  selected. The 8,192-term threshold chooses an execution path, not a result limit. Existing
+  query timeouts, admission limits and 100-result maximum page size still apply. The existing
+  C-collated vocabulary B-tree and integer entry indexes are used; no rebuild is required.
 - `dataset=all` searches imported editions together. Samples are excluded when a complete
   import with the same manifest edition exists; samples remain individually selectable.
   Results identify their originating `dataset`. This is occurrence search, not person identity matching.

@@ -25,8 +25,11 @@ are in [search-polish-results.json](search-polish-results.json).
 A further 60 closed-loop requests cycling these six cases with four concurrent callers
 completed without HTTP errors: nearest-rank p95 **35.35 ms**. This short check does not
 measure sustained throughput, cold reads, high-cardinality worst cases or public hosting.
-A broader two-character surname prefix exceeded the 8,192 vocabulary expansion limit
-and correctly returned a request-to-narrow error rather than incomplete results.
+The initial implementation rejected a broader two-character surname prefix at an
+8,192-term vocabulary expansion limit. That restriction was subsequently removed:
+broad expansions now stay inside PostgreSQL and feed the same result cursors. See
+[broad-prefix pagination checks](broad-prefix-pagination.md). The table above records
+the original polish measurements, before that follow-up.
 
 An initial district query took about 262 ms. Ordering postcode-prefix results by the
 existing `(dataset, kind, postcode, name, first, ordinal)` index removed the need to sort

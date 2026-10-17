@@ -248,6 +248,7 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 	args := []any{datasetIDs, kind}
 	conditions := []string{"dataset_id=ANY($1::smallint[])", "kind=$2"}
 	missing := false
+	termCTEs := []string{}
 	for _, filter := range []struct {
 		column, key string
 		postcode    bool
@@ -291,8 +292,18 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 			return
 		}
 		if len(ids) > 8192 {
-			fail(w, 400, "Too many matching terms; enter a longer name or postcode prefix")
-			return
+			// Small expansions use bound integer arrays. Broad expansions stay in
+			// PostgreSQL and are shared by all edition branches, without truncation.
+			args = append(args, key, key+"\U0010ffff")
+			predicate := fmt.Sprintf("key >= $%d AND key < $%d", len(args)-1, len(args))
+			if filter.postcode {
+				args = append(args, q.PostcodeLength)
+				predicate += fmt.Sprintf(" AND (length(key)=$%d OR key=$%d)", len(args), len(args)-2)
+			}
+			name := fmt.Sprintf("matching_terms_%d", len(termCTEs))
+			termCTEs = append(termCTEs, fmt.Sprintf("%s AS MATERIALIZED (SELECT array_agg(id) AS ids FROM terms WHERE %s)", name, predicate))
+			conditions = append(conditions, fmt.Sprintf("%s=ANY((SELECT ids FROM %s)::integer[])", filter.column, name))
+			continue
 		}
 		if len(ids) == 0 {
 			missing = true
@@ -334,6 +345,9 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 			branches = append(branches, fmt.Sprintf("(SELECT dataset_id,id,name_id,first_id,postcode_id FROM entries WHERE %s AND dataset_id=$%d ORDER BY %s LIMIT $%d)", strings.Join(conditions, " AND "), len(args), order, limitArg))
 		}
 		sql := fmt.Sprintf("SELECT * FROM (%s) candidates ORDER BY %s LIMIT $%d", strings.Join(branches, " UNION ALL "), order, limitArg)
+		if len(termCTEs) > 0 {
+			sql = "WITH " + strings.Join(termCTEs, ", ") + " " + sql
+		}
 		rows, e := a.DB.Query(ctx, sql, args...)
 		if e != nil {
 			fail(w, 503, "Search unavailable or timed out; narrow the search")

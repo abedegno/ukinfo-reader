@@ -536,6 +536,48 @@ func testExpandedSearch(t *testing.T, db *pgxpool.Pool) {
 			t.Fatalf("%s: got %d want %d", tc.query, len(rows), tc.count)
 		}
 	}
+	// More than 8,192 shared-vocabulary terms need not correspond to listings
+	// of the requested type. Matching entries must not be lost behind that noise.
+	if _, err := db.Exec(context.Background(), `INSERT INTO terms(key) SELECT prefix || lpad(i::text,5,'0') FROM unnest(ARRAY['paaa','jaaa']) prefix CROSS JOIN generate_series(1,8300) i ON CONFLICT DO NOTHING`); err != nil {
+		t.Fatal(err)
+	}
+	var broadInput bytes.Buffer
+	broadEncoder := json.NewEncoder(&broadInput)
+	_ = broadEncoder.Encode(Manifest{Type: "manifest", Protocol: 1, Dataset: "broad-prefix", Edition: "broad-fixture", Title: "Broad invented fixture", SHA256: map[string]string{"invented": "not-a-real-source"}, Expected: 130})
+	for i := 0; i < 130; i++ {
+		_ = broadEncoder.Encode(map[string]any{"type": "record", "source_id": fmt.Sprint(i), "record": map[string]any{"surname": fmt.Sprintf("Pagingprefix%03d", i), "firstName": "June", "postcode": "ZZ1 1ZZ"}})
+	}
+	_ = broadEncoder.Encode(map[string]any{"type": "end", "count": 130})
+	if _, err := Import(context.Background(), db, &broadInput); err != nil {
+		t.Fatal(err)
+	}
+	broadSeen := map[string]bool{}
+	broadCursor := ""
+	for pages := 0; ; pages++ {
+		if pages > 10 {
+			t.Fatal("broad-prefix pagination did not terminate")
+		}
+		rows, next := fetch("dataset=all&surname=Pa*&limit=17&cursor=" + broadCursor)
+		for _, row := range rows {
+			if row.Dataset != "broad-prefix" || broadSeen[row.SourceID] {
+				t.Fatal("unexpected or duplicate broad-prefix occurrence", row.Dataset, row.SourceID)
+			}
+			broadSeen[row.SourceID] = true
+		}
+		if next == "" {
+			break
+		}
+		broadCursor = next
+	}
+	if len(broadSeen) != 130 {
+		t.Fatal("broad-prefix pagination lost records", len(broadSeen))
+	}
+	if rows, _ := fetch("dataset=all&surname=Paaa*"); len(rows) != 0 {
+		t.Fatal("unused vocabulary terms matched entries")
+	}
+	if rows, _ := fetch("dataset=prefix-one&surname=Quincetest&first_name=J*"); len(rows) != 5 {
+		t.Fatal("broad first-name prefix lost records", len(rows))
+	}
 	firstEditions, _ := fetch("dataset=all&surname=Quincetest&limit=2")
 	if len(firstEditions) != 2 || firstEditions[0].Dataset == firstEditions[1].Dataset {
 		t.Fatal("first page did not interleave editions", firstEditions)
