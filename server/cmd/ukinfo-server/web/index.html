@@ -80,10 +80,39 @@
               Search archive <span aria-hidden="true">↗</span>
             </button>
           </div>
+          <details id="nearby-controls" class="nearby-controls">
+            <summary>Search near a postcode</summary>
+            <p id="geography-capability" class="note">
+              Checking postcode locations…
+            </p>
+            <div class="fields">
+              <label
+                >Centre postcode<input
+                  name="near"
+                  id="near"
+                  placeholder="e.g. WS13 7SW"
+                  maxlength="12"
+                  disabled /></label
+              ><label
+                >Within<select name="radius_m" id="radius" disabled>
+                  <option value="1609">1 mile</option>
+                  <option value="3219">2 miles</option>
+                  <option value="8047" selected>5 miles</option>
+                  <option value="16093">10 miles</option>
+                  <option value="40234">25 miles</option>
+                </select></label
+              >
+            </div>
+            <p class="note">
+              Uses approximate postcode positions. Northern Ireland and
+              incomplete source postcodes are excluded. You can search an area
+              without entering a name.
+            </p>
+          </details>
           <p class="note">
             Names ignore case and extra spaces. Use Starts with or a trailing *
             (Smi*) for name prefixes. Postcodes accept districts, sectors and
-            full codes. Enter a name or postcode to begin.
+            full codes. Enter a name, postcode or nearby area to begin.
           </p>
         </form>
         <section class="results" aria-labelledby="results-title">
@@ -96,6 +125,7 @@
           <p id="status" role="status" aria-live="polite">
             Choose an edition and enter a name or postcode to begin.
           </p>
+          <p id="geography-note" class="note" hidden></p>
           <div class="result-options">
             <label
               >Export format<select id="export-format">
@@ -139,6 +169,7 @@
           </nav>
         </section>
       </section>
+      <p id="geography-attribution" class="note" hidden></p>
       <footer>
         <p>
           Source entries are separate occurrences, not distinct people. Shared

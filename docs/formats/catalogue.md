@@ -78,3 +78,12 @@ destination with `repack-v1` or re-import source media; see [migration](../searc
 The repacker preserves original field values, not JSONB's discarded original lexical
 whitespace/key order. Repacked source manifests remain unchanged. Old cursor tokens are
 incompatible with schema 2; clients must restart pagination.
+
+## Optional postcode reference
+
+`geography_releases`, `geography_active` and release-partitioned `postcode_locations`
+provide separate ONSPD enrichment. Latitude/longitude generate unit-sphere `cube`
+points with a GiST index. Edition occurrences and original JSON blocks are unchanged;
+matching uses the existing displayed-postcode term IDs. Release/hash, positional
+quality and termination dates stay attached to geographic responses/exports.
+See [the reference contract and importer](../geography.md).

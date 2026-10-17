@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add a hash-pinned ONSPD importer, versioned Great Britain postcode reference, spatial
+  index and offline nearby search with distance/quality/source provenance.
+- Add nearby-area form controls, enriched page/record exports, bounded shared postcode
+  caching and postcode-batched radius-only paging without rebuilding source occurrences.
+
 - Remove the broad-prefix vocabulary rejection: keep large expansions inside PostgreSQL
   and page through all matching occurrences with the existing cursors.
 

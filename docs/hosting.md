@@ -3,6 +3,8 @@
 Checked **17 October 2026**. This is a shortlist and provisional budget.
 The complete 2005 catalogue measured **11.79 GiB**; all four supported editions together
 measured **38.26 GiB** (189,064,266 source occurrences).
+The optional [ONSPD nearby-search reference](geography.md) adds about **840 MiB**
+for postcode coordinates and indexes, plus import/WAL headroom.
 The [local full-corpus measurements](research/compact-catalogue.md) tested the Go API and
 PostgreSQL together under a 2-CPU/1-GiB container cap. A CPU quota on an M4 Pro does not
 reproduce an inexpensive VPS's cores or disk performance. Benchmark the chosen host.

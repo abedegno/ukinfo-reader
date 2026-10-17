@@ -28,7 +28,8 @@ The disc image, original software, database and exported directory records are e
 
 A Go + PostgreSQL search service, shared web UI and Electron desktop shell are now
 available. The Python reader provides verified streaming ingestion. Edition selection,
-people/business search across editions, partial postcodes and name prefixes, readable
+people/business search across editions, partial postcodes and name prefixes, optional
+ONSPD nearby search, readable
 record details, lossless page exports and a desktop import dialog are implemented. All four supported editions have been imported and
 verified: **189,064,266 source occurrences in a 38.26 GiB PostgreSQL catalogue**.
 See the [complete-edition measurements](docs/research/compact-catalogue.md#all-four-complete-editions).

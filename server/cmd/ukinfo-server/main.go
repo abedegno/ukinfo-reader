@@ -49,12 +49,16 @@ func run() error {
 	desktopControl := flags.Bool("desktop-control", false, "enable capability-protected desktop ingestion on a separate loopback port")
 	legacyData := flags.String("source-data-dir", "", "repack-v1: app-managed schema-1 source directory; it remains unchanged")
 	datasetKey := flags.String("dataset", "", "dataset key for verify")
+	onspd := flags.String("onspd-zip", "", "import-onspd: local official ZIP (no extraction)")
+	geoRelease := flags.String("release", catalog.ONSPDRelease, "ONSPD release YYYY-MM")
+	geoSHA := flags.String("sha256", catalog.ONSPDSHA256, "expected ONSPD ZIP SHA-256")
+	geoURL := flags.String("source-url", catalog.ONSPDURL, "official ONSPD source URL")
 	parent := flags.Bool("parent-stdin", false, "desktop: shut down when parent closes stdin")
 	if err := flags.Parse(os.Args[1:]); err != nil {
 		return err
 	}
-	if command != "serve" && command != "migrate" && command != "import" && command != "verify" && command != "repack-v1" && command != "stats" {
-		return fmt.Errorf("command must be serve, migrate, import, verify, stats or repack-v1")
+	if command != "serve" && command != "migrate" && command != "import" && command != "verify" && command != "repack-v1" && command != "stats" && command != "import-onspd" {
+		return fmt.Errorf("command must be serve, migrate, import, verify, stats, repack-v1 or import-onspd")
 	}
 	if *desktopControl {
 		host, _, e := net.SplitHostPort(*listen)
@@ -101,13 +105,34 @@ func run() error {
 		return fmt.Errorf("database configuration failed")
 	}
 	defer db.Close()
-	if command == "migrate" || *data != "" {
+	if command == "migrate" || command == "import-onspd" || *data != "" {
 		if err = catalog.Migrate(ctx, db); err != nil {
 			return err
 		}
 		if command == "migrate" {
 			return nil
 		}
+	}
+	if command == "import-onspd" {
+		if *onspd == "" {
+			return fmt.Errorf("import-onspd requires --onspd-zip")
+		}
+		report, e := catalog.ImportGeography(ctx, db, *onspd, catalog.GeographyImportOptions{Release: *geoRelease, SHA256: *geoSHA, SourceURL: *geoURL, CheckResources: func() error {
+			for _, path := range []string{*onspd, os.TempDir()} {
+				free, err := desktop.AvailableBytes(path)
+				if err != nil {
+					return err
+				}
+				if free < 5<<30 {
+					return catalog.ErrDiskHeadroom
+				}
+			}
+			return nil
+		}, Progress: func(p catalog.Progress) { log.Printf("%s: %d", p.Phase, p.Done) }})
+		if e != nil {
+			return e
+		}
+		return json.NewEncoder(os.Stdout).Encode(report)
 	}
 	var lastLog time.Time
 	progress := func(p catalog.Progress) {

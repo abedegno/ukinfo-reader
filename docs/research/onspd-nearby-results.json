@@ -1,0 +1,142 @@
+{
+  "date": "2026-10-17",
+  "limit": 50,
+  "reference": {
+    "release": "2026-08",
+    "source_url": "https://www.arcgis.com/sharing/rest/content/items/9e5a92a3cfb14dc7ad43d6ea7a7b8c7f/data",
+    "sha256": "ab51f1e82bd5beeb1089c3732ea6e11d62eb5693d619e2c4f4dd8c4baaa69293",
+    "scope": "GB",
+    "entries": 2652624,
+    "located": 2573343,
+    "excluded_ni": 63293,
+    "excluded_other": 13173,
+    "imported_at": "2026-10-17T18:57:12.349624+01:00"
+  },
+  "storage": {
+    "entries": 2652624,
+    "usable": 2573343,
+    "unexpected_country": 0,
+    "heap_bytes": 350814208,
+    "index_bytes": 529842176,
+    "total_bytes": 880787456,
+    "min_latitude": 49.891969,
+    "max_latitude": 60.800714,
+    "min_longitude": -7.65349,
+    "max_longitude": 1.762773
+  },
+  "cases": [
+    {
+      "label": "Lichfield area",
+      "pages": 5,
+      "occurrences": 250,
+      "milliseconds": [
+        157.94,
+        56.85,
+        35.52,
+        36.92,
+        34.42
+      ],
+      "max_distance_m": 7248.1,
+      "duplicates": 0,
+      "filter_mismatches": 0,
+      "more": true
+    },
+    {
+      "label": "Lichfield surname",
+      "pages": 5,
+      "occurrences": 250,
+      "milliseconds": [
+        40.8,
+        51.17,
+        52.11,
+        65.87,
+        48.05
+      ],
+      "max_distance_m": 8033.64,
+      "duplicates": 0,
+      "filter_mismatches": 0,
+      "more": true
+    },
+    {
+      "label": "London 25-mile area",
+      "pages": 5,
+      "occurrences": 250,
+      "milliseconds": [
+        1929.86,
+        53.66,
+        56.17,
+        49.12,
+        51.04
+      ],
+      "max_distance_m": 10100.04,
+      "duplicates": 0,
+      "filter_mismatches": 0,
+      "more": true
+    },
+    {
+      "label": "Edinburgh businesses",
+      "pages": 5,
+      "occurrences": 250,
+      "milliseconds": [
+        86.78,
+        29.51,
+        25.4,
+        31.01,
+        24.37
+      ],
+      "max_distance_m": 7548.88,
+      "duplicates": 0,
+      "filter_mismatches": 0,
+      "more": true
+    },
+    {
+      "label": "London surname prefix",
+      "pages": 5,
+      "occurrences": 250,
+      "milliseconds": [
+        356.32,
+        137.06,
+        75.65,
+        66.37,
+        68.36
+      ],
+      "max_distance_m": 7994.9,
+      "duplicates": 0,
+      "filter_mismatches": 0,
+      "more": true
+    }
+  ],
+  "concurrent_cached": {
+    "callers": 4,
+    "requests": 12,
+    "milliseconds": [
+      41.5,
+      55.73,
+      63.48,
+      63.66,
+      30.71,
+      31.15,
+      37.41,
+      36.65,
+      38.31,
+      30.94,
+      37.23,
+      36.96
+    ],
+    "errors": 0,
+    "rows_per_response": [
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50
+    ]
+  }
+}

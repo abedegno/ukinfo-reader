@@ -5,10 +5,12 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -19,9 +21,11 @@ import (
 )
 
 type API struct {
-	DB      *pgxpool.Pool
-	slots   chan struct{}
-	decoder *zstd.Decoder
+	DB             *pgxpool.Pool
+	slots          chan struct{}
+	decoder        *zstd.Decoder
+	geographyCache *geographyCache
+	geographySlots chan struct{}
 }
 
 func NewAPI(db *pgxpool.Pool) *API {
@@ -29,7 +33,7 @@ func NewAPI(db *pgxpool.Pool) *API {
 	if err != nil {
 		panic(err)
 	}
-	return &API{DB: db, slots: make(chan struct{}, 32), decoder: decoder}
+	return &API{DB: db, slots: make(chan struct{}, 32), decoder: decoder, geographyCache: newGeographyCache(), geographySlots: make(chan struct{}, 2)}
 }
 func respond(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -52,6 +56,7 @@ func (a *API) Handler() http.Handler {
 		respond(w, 200, map[string]string{"status": "ok"})
 	})
 	mux.HandleFunc("GET /api/datasets", a.datasets)
+	mux.HandleFunc("GET /api/geography", a.geography)
 	mux.HandleFunc("GET /api/search", a.search)
 	mux.HandleFunc("GET /api/export", func(w http.ResponseWriter, r *http.Request) { a.searchPage(w, r, true) })
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -99,6 +104,9 @@ func (a *API) datasets(w http.ResponseWriter, r *http.Request) {
 
 type query struct {
 	Dataset, Kind, Surname, First, Organisation, Postcode string
+	Near                                                  string `json:",omitempty"`
+	GeoRelease                                            string `json:",omitempty"`
+	Radius                                                int    `json:",omitempty"`
 	Match                                                 string
 	PostcodeLength                                        int
 	Limit                                                 int
@@ -113,10 +121,13 @@ type cursor struct {
 	Dataset  int16  `json:"d"`
 }
 type result struct {
-	Dataset  string          `json:"dataset"`
-	ID       int64           `json:"id"`
-	SourceID string          `json:"source_id"`
-	Record   json.RawMessage `json:"record"`
+	Dataset            string          `json:"dataset"`
+	ID                 int64           `json:"id"`
+	SourceID           string          `json:"source_id"`
+	Record             json.RawMessage `json:"record"`
+	Distance           *float64        `json:"distance_m,omitempty"`
+	LocationQuality    int16           `json:"location_quality,omitempty"`
+	LocationTerminated string          `json:"location_terminated,omitempty"`
 }
 
 var postcodeSearch = regexp.MustCompile(`^(?:[A-Z]{1,2}[0-9][A-Z0-9]?(?:[0-9](?:[A-Z]{2})?)?|GIR(?:0(?:AA)?)?)$`)
@@ -124,7 +135,22 @@ var postcodeSearch = regexp.MustCompile(`^(?:[A-Z]{1,2}[0-9][A-Z0-9]?(?:[0-9](?:
 var fullPostcodeSearch = regexp.MustCompile(`^(?:[A-Z]{1,2}[0-9][A-Z0-9]?[0-9][A-Z]{2}|GIR0AA)$`)
 
 func parse(v url.Values) (query, error) {
-	q := query{Dataset: strings.TrimSpace(v.Get("dataset")), Kind: v.Get("kind"), Surname: Normalize(v.Get("surname")), First: Normalize(v.Get("first_name")), Organisation: Normalize(v.Get("organisation")), Postcode: strings.TrimSuffix(Postcode(v.Get("postcode")), "*"), Match: v.Get("match"), Limit: 50, Cursor: v.Get("cursor")}
+	q := query{Dataset: strings.TrimSpace(v.Get("dataset")), Kind: v.Get("kind"), Surname: Normalize(v.Get("surname")), First: Normalize(v.Get("first_name")), Organisation: Normalize(v.Get("organisation")), Postcode: strings.TrimSuffix(Postcode(v.Get("postcode")), "*"), Match: v.Get("match"), Near: Postcode(v.Get("near")), Limit: 50, Cursor: v.Get("cursor")}
+	if q.Near != "" {
+		if !regexp.MustCompile(`^[A-Z0-9]{5,8}$`).MatchString(q.Near) {
+			return q, fmt.Errorf("enter a full centre postcode for nearby search")
+		}
+		q.Radius = 8047
+		if v.Has("radius_m") {
+			n, err := strconv.Atoi(v.Get("radius_m"))
+			if err != nil || n < 50 || n > 50000 {
+				return q, fmt.Errorf("radius_m must be 50–50000 metres")
+			}
+			q.Radius = n
+		}
+	} else if v.Has("radius_m") {
+		return q, fmt.Errorf("radius requires a centre postcode")
+	}
 	if q.Match == "" {
 		q.Match = "exact"
 	}
@@ -163,13 +189,13 @@ func parse(v url.Values) (query, error) {
 	if q.Dataset == "" {
 		return q, fmt.Errorf("choose an imported edition")
 	}
-	if q.Kind == "person" && (q.Organisation != "" || (q.Surname == "" && q.Postcode == "")) {
+	if q.Kind == "person" && (q.Organisation != "" || (q.Surname == "" && q.Postcode == "" && q.Near == "")) {
 		return q, fmt.Errorf("enter a surname or postcode for a people search")
 	}
-	if q.Kind == "business" && (q.Surname != "" || q.First != "" || (q.Organisation == "" && q.Postcode == "")) {
+	if q.Kind == "business" && (q.Surname != "" || q.First != "" || (q.Organisation == "" && q.Postcode == "" && q.Near == "")) {
 		return q, fmt.Errorf("enter a business name or postcode")
 	}
-	for _, s := range []string{q.Dataset, q.Surname, q.First, q.Organisation, q.Postcode} {
+	for _, s := range []string{q.Dataset, q.Surname, q.First, q.Organisation, q.Postcode, q.Near} {
 		if len(s) > 256 || strings.ContainsRune(s, 0) {
 			return q, fmt.Errorf("search field too long or invalid")
 		}
@@ -202,7 +228,11 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 		fail(w, 400, err.Error())
 		return
 	}
-	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	timeout := 2 * time.Second
+	if q.Near != "" {
+		timeout = 5 * time.Second
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), timeout)
 	defer cancel()
 	datasetKeys := map[int16]string{}
 	datasetIDs := []int16{}
@@ -248,6 +278,33 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 	args := []any{datasetIDs, kind}
 	conditions := []string{"dataset_id=ANY($1::smallint[])", "kind=$2"}
 	missing := false
+	var geography *GeographySearch
+	var nearbyIDs []int32
+	radiusArg := 0
+	areaOnly := q.Near != "" && q.Surname == "" && q.First == "" && q.Organisation == "" && q.Postcode == ""
+	distances := map[int32]postcodeDistance{}
+	if q.Near != "" {
+		distances, geography, err = a.nearby(ctx, &q)
+		if err != nil {
+			status := 503
+			var geoErr *geographyError
+			if errors.As(err, &geoErr) {
+				status = geoErr.Status
+			}
+			fail(w, status, err.Error())
+			return
+		}
+		nearbyIDs = make([]int32, 0, len(distances))
+		for id := range distances {
+			nearbyIDs = append(nearbyIDs, id)
+		}
+		args = append(args, nearbyIDs)
+		radiusArg = len(args) - 1
+		conditions = append(conditions, fmt.Sprintf("postcode_id=ANY($%d::integer[])", len(args)))
+		if len(nearbyIDs) == 0 {
+			missing = true
+		}
+	}
 	termCTEs := []string{}
 	for _, filter := range []struct {
 		column, key string
@@ -311,8 +368,9 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 		args = append(args, ids)
 		conditions = append(conditions, fmt.Sprintf("%s=ANY($%d::integer[])", filter.column, len(args)))
 	}
+	afterPostcode := int32(0)
 	order := "name_id,first_id,id,dataset_id"
-	if q.PostcodeLength > 0 {
+	if q.PostcodeLength > 0 || q.Near != "" {
 		order = "postcode_id,name_id,first_id,id,dataset_id"
 	}
 	if q.Cursor != "" {
@@ -322,7 +380,8 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 			fail(w, 400, "Cursor does not match this search")
 			return
 		}
-		if q.PostcodeLength > 0 {
+		afterPostcode = c.Postcode
+		if q.PostcodeLength > 0 || q.Near != "" {
 			args = append(args, c.Postcode, c.Name, c.First, c.ID, c.Dataset)
 			conditions = append(conditions, fmt.Sprintf("(postcode_id,name_id,first_id,id,dataset_id)>($%d,$%d,$%d,$%d,$%d)", len(args)-4, len(args)-3, len(args)-2, len(args)-1, len(args)))
 		} else {
@@ -330,12 +389,32 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 			conditions = append(conditions, fmt.Sprintf("(name_id,first_id,id,dataset_id)>($%d,$%d,$%d,$%d)", len(args)-3, len(args)-2, len(args)-1, len(args)))
 		}
 	}
+	if areaOnly {
+		sort.Slice(nearbyIDs, func(i, j int) bool { return nearbyIDs[i] < nearbyIDs[j] })
+		nearbyIDs = nearbyIDs[sort.Search(len(nearbyIDs), func(i int) bool { return nearbyIDs[i] >= afterPostcode }):]
+		if len(nearbyIDs) == 0 {
+			missing = true
+		}
+	}
 	ids := []int32{}
 	recordDatasets := []int16{}
+	recordPostcodes := []int32{}
 	next := ""
 	var last cursor
-	if !missing {
-		args = append(args, q.Limit+1)
+	// Radius-only searches traverse postcode-ID batches in the same order as
+	// their keyset cursor. Later batches cannot precede this page's candidates.
+	for batchStart := 0; !missing; {
+		queryArgs := append([]any(nil), args...)
+		if areaOnly {
+			end := min(batchStart+512, len(nearbyIDs))
+			if batchStart >= end {
+				break
+			}
+			queryArgs[radiusArg] = nearbyIDs[batchStart:end]
+			batchStart = end
+		}
+		args := queryArgs
+		args = append(args, q.Limit-len(ids)+1)
 		limitArg := len(args)
 		branches := []string{}
 		// Each edition contributes at most limit+1 candidates. A global top-N is
@@ -368,6 +447,7 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 			}
 			ids = append(ids, id)
 			recordDatasets = append(recordDatasets, dataset)
+			recordPostcodes = append(recordPostcodes, postcode)
 			last = cursor{Query: q.fingerprint(), Name: name, First: first, ID: id, Dataset: dataset, Postcode: postcode}
 		}
 		err = rows.Err()
@@ -375,6 +455,9 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 		if err != nil {
 			fail(w, 503, "Search timed out; narrow the search")
 			return
+		}
+		if next != "" || !areaOnly || batchStart >= len(nearbyIDs) {
+			break
 		}
 	}
 	// Batch source blocks by edition, then restore the interleaved search order.
@@ -400,7 +483,14 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 	}
 	items := make([]result, 0, len(ids))
 	for i, id := range ids {
-		items = append(items, foundRecords[recordKey{recordDatasets[i], id}])
+		item := foundRecords[recordKey{recordDatasets[i], id}]
+		if q.Near != "" {
+			location := distances[recordPostcodes[i]]
+			item.Distance = &location.Distance
+			item.LocationQuality = location.Quality
+			item.LocationTerminated = location.Terminated
+		}
+		items = append(items, item)
 	}
 	if export {
 		w.Header().Set("Content-Type", "application/x-ndjson")
@@ -408,19 +498,24 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 		encoder := json.NewEncoder(w)
 		for _, item := range items {
 			if err := encoder.Encode(struct {
-				Dataset  string          `json:"dataset"`
-				SourceID string          `json:"source_id"`
-				Record   json.RawMessage `json:"record"`
-			}{item.Dataset, item.SourceID, item.Record}); err != nil {
+				Dataset            string           `json:"dataset"`
+				SourceID           string           `json:"source_id"`
+				Record             json.RawMessage  `json:"record"`
+				Distance           *float64         `json:"distance_m,omitempty"`
+				LocationQuality    int16            `json:"location_quality,omitempty"`
+				LocationTerminated string           `json:"location_terminated,omitempty"`
+				Geography          *GeographySearch `json:"geography,omitempty"`
+			}{item.Dataset, item.SourceID, item.Record, item.Distance, item.LocationQuality, item.LocationTerminated, geography}); err != nil {
 				return
 			}
 		}
 		return
 	}
 	respond(w, 200, struct {
-		Items []result `json:"items"`
-		Next  string   `json:"next_cursor"`
-	}{items, next})
+		Items     []result         `json:"items"`
+		Next      string           `json:"next_cursor"`
+		Geography *GeographySearch `json:"geography,omitempty"`
+	}{items, next, geography})
 }
 
 func (a *API) loadRecords(ctx context.Context, dataset int16, ids []int32) ([]result, error) {

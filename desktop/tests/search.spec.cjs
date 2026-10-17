@@ -115,7 +115,7 @@ test("prefix search, postcode district, page sizes and bookmark restoration", as
     .getByLabel("Edition", { exact: true })
     .selectOption("synthetic-demo");
   await page.getByLabel("Surname", { exact: true }).fill("Exam*");
-  await page.getByLabel("Postcode", { exact: false }).fill("ZZ1");
+  await page.locator('[name="postcode"]').fill("ZZ1");
   await page.locator("#page-size").selectOption("25");
   await page.getByRole("button", { name: "Search archive" }).click();
   await expect(page.locator("article")).toHaveCount(25);
@@ -228,5 +228,79 @@ test("conservative page grouping retains editions and excludes incomplete addres
   );
   await expect(page.locator("#record-fields")).toContainText(
     "Source entry two",
+  );
+});
+
+test("nearby area searches preserve radius, distances and coordinate provenance", async ({
+  page,
+}) => {
+  const reference = { release: "2026-08", scope: "GB", entries: 1, located: 1 };
+  await page.route("**/api/geography", (route) =>
+    route.fulfill({ json: { available: true, reference } }),
+  );
+  await page.route("**/api/search?*", (route) => {
+    const params = new URL(route.request().url()).searchParams;
+    expect(params.get("near")).toBe("ZZ1 1ZZ");
+    expect(params.get("radius_m")).toBe("3219");
+    expect(params.has("surname")).toBe(false);
+    return route.fulfill({
+      json: {
+        items: [
+          {
+            dataset: "synthetic-demo",
+            source_id: "nearby-fixture",
+            record: {
+              entry_type: "electoral",
+              surname: "Example",
+              firstName: "June",
+              houseno: "12",
+              street: "Invented Street",
+              postcode: "ZZ1 1ZZ",
+            },
+            distance_m: 321.9,
+            location_quality: 8,
+            location_terminated: "200102",
+          },
+        ],
+        next_cursor: "",
+        geography: {
+          reference,
+          near: "ZZ11ZZ",
+          radius_m: 3219,
+          terminated: "",
+        },
+      },
+    });
+  });
+  await page.goto("/");
+  await page.getByText("Search near a postcode", { exact: true }).click();
+  await expect(page.locator("#near")).toBeEnabled();
+  await page.getByLabel("Centre postcode", { exact: true }).fill("ZZ1 1ZZ");
+  await page.locator("#radius").selectOption("3219");
+  await page.getByRole("button", { name: "Search archive" }).click();
+  await expect(page.locator("article")).toHaveCount(1);
+  await expect(page.locator("article")).toContainText("0.20 miles");
+  await expect(page.locator("#geography-note")).toContainText("ONSPD 2026-08");
+  await expect(page.locator("#geography-note")).toContainText(
+    "not distance order",
+  );
+  await page
+    .locator("article")
+    .getByRole("button", { name: "View record" })
+    .click();
+  await expect(page.locator("#record-fields")).toContainText(
+    "Location estimate",
+  );
+  await expect(page.locator("#record-fields")).toContainText(
+    "Last known position of a retired postcode",
+  );
+  await page.getByRole("button", { name: "Close details" }).click();
+  await page.reload();
+  await expect(page.locator("#nearby-controls")).toHaveAttribute("open", "");
+  await expect(page.locator("#near")).toHaveValue("ZZ1 1ZZ");
+  await expect(page.locator("#radius")).toHaveValue("3219");
+  await expect(page.locator("article")).toHaveCount(1);
+  await expect(page.locator("#geography-attribution")).toContainText(
+    "Royal Mail",
   );
 });

@@ -8,6 +8,7 @@ let kind = "person",
   pageHistory = [],
   generation = 0;
 let datasets = [];
+let searchGeography = null;
 async function api(path) {
   const response = await fetch(path, { credentials: "same-origin" });
   const data = await response.json();
@@ -27,6 +28,8 @@ function reset() {
   pageHistory = [];
   next = "";
   lastQuery = null;
+  searchGeography = null;
+  $("geography-note").hidden = true;
   $("items").replaceChildren();
   $("next").hidden = true;
   $("previous").hidden = true;
@@ -157,6 +160,21 @@ let selectedRecord = null;
 function citation(item) {
   return `${recordName(item.record) || "Unnamed listing"}. ${editionTitle(item)}. Source entry ${item.source_id}. UK-Info Archive. Cover-disc date; underlying listing date unverified.`;
 }
+function locationQuality(value) {
+  return (
+    {
+      1: "Representative address near the postcode mean",
+      2: "Representative position determined visually",
+      3: "Approximate position, within 50 metres",
+      4: "Mean position of the postcode's addresses",
+      5: "Estimated from surrounding postcodes",
+      8: "Last known position of a retired postcode",
+    }[value] || "Coordinate quality not recorded"
+  );
+}
+function distanceText(value) {
+  return `Approximately ${(value / 1609.344).toFixed(2)} miles`;
+}
 function details(item, occurrences = [item]) {
   selectedRecord = item;
   $("record-title").textContent = recordName(item.record) || "Record details";
@@ -199,6 +217,13 @@ function details(item, occurrences = [item]) {
       }[r.place_type],
     ],
   ]);
+  if (item.distance_m != null && searchGeography)
+    section("Location estimate", [
+      ["Distance from centre", distanceText(item.distance_m)],
+      ["Coordinate source", `ONSPD ${searchGeography.reference.release}`],
+      ["Position quality", locationQuality(item.location_quality)],
+      ["Postcode retired", item.location_terminated || ""],
+    ]);
   fields.push(element("h3", "Sources"));
   for (const occurrence of occurrences) {
     fields.push(element("p", citation(occurrence), "note"));
@@ -314,6 +339,10 @@ $("export-record").addEventListener("click", async () => {
 });
 $("close-details").addEventListener("click", () => $("details").close());
 function render() {
+  $("geography-note").hidden = !searchGeography;
+  if (searchGeography)
+    $("geography-note").textContent =
+      `Within ${(searchGeography.radius_m / 1609.344).toFixed(1)} miles of ${searchGeography.near} · ONSPD ${searchGeography.reference.release} · approximate postcode positions. Results use catalogue order, not distance order.${searchGeography.terminated ? " The centre postcode is retired." : ""}`;
   $("items").replaceChildren();
   const groups = new Map();
   for (const item of page) {
@@ -368,6 +397,14 @@ function render() {
       );
     if (r.postcode) text.append(element("p", r.postcode, "postcode"));
     if (r.phone) text.append(element("p", `Telephone · ${r.phone}`));
+    if (item.distance_m != null)
+      text.append(
+        element(
+          "p",
+          distanceText(item.distance_m) + " from the centre postcode",
+          "distance",
+        ),
+      );
     for (const note of warnings(r)) text.append(element("p", note, "warning"));
     const button = element("button", "View record ↗");
     button.type = "button";
@@ -404,6 +441,7 @@ async function search(params, trail = [], updateURL = true) {
     lastQuery = new URLSearchParams(params);
     pageHistory = trail;
     page = data.items;
+    searchGeography = data.geography || null;
     next = data.next_cursor;
     render();
     if (updateURL) $("results-title").scrollIntoView({ block: "start" });
@@ -430,6 +468,10 @@ form.addEventListener("submit", (event) => {
     : ["organisation", "postcode"]) {
     const value = form.elements[name].value.trim();
     if (value) params.set(name, value);
+  }
+  if (form.elements.near.value.trim()) {
+    params.set("near", form.elements.near.value.trim());
+    params.set("radius_m", form.elements.radius_m.value);
   }
   search(params);
 });
@@ -478,6 +520,9 @@ $("export").addEventListener("click", async () => {
           "Edition",
           "Source entry",
           "Citation",
+          "Approximate distance (miles)",
+          "Coordinate source",
+          "Position quality",
         ],
         ...rows.map((item) => [
           recordName(item.record),
@@ -488,6 +533,11 @@ $("export").addEventListener("click", async () => {
           editionTitle(item),
           item.source_id,
           citation(item),
+          item.distance_m == null
+            ? ""
+            : (item.distance_m / 1609.344).toFixed(3),
+          item.geography ? `ONSPD ${item.geography.reference.release}` : "",
+          item.location_quality ? locationQuality(item.location_quality) : "",
         ]),
       ];
       downloadBlob(
@@ -543,6 +593,23 @@ async function refreshDatasets(preferred) {
 (async () => {
   try {
     await refreshDatasets();
+    try {
+      const geo = await api("/api/geography");
+      $("near").disabled = !geo.available;
+      $("radius").disabled = !geo.available;
+      $("geography-capability").textContent = geo.available
+        ? `ONSPD ${geo.reference.release} · Great Britain · current and retired postcodes`
+        : "Postcode locations have not been added to this catalogue yet.";
+      if (geo.available) {
+        $("geography-attribution").hidden = false;
+        const year = geo.reference.release.slice(0, 4);
+        $("geography-attribution").textContent =
+          `Contains OS data © Crown copyright and database right ${year}. Contains Royal Mail data © Royal Mail copyright and database right ${year}. Source: Office for National Statistics licensed under the Open Government Licence v3.0.`;
+      }
+    } catch {
+      $("geography-capability").textContent =
+        "Postcode locations are currently unavailable.";
+    }
     restoreURL();
   } catch (error) {
     $("coverage").textContent = "Connection unavailable";
@@ -562,11 +629,14 @@ function restoreURL() {
   if (
     !params.has("surname") &&
     !params.has("organisation") &&
-    !params.has("postcode")
+    !params.has("postcode") &&
+    !params.has("near")
   ) {
     reset();
     return;
   }
+  form.reset();
+  $("nearby-controls").open = params.has("near");
   showKind(params.get("kind") === "business" ? "business" : "person");
   for (const name of [
     "dataset",
@@ -575,6 +645,8 @@ function restoreURL() {
     "organisation",
     "postcode",
     "match",
+    "near",
+    "radius_m",
   ])
     if (params.has(name)) form.elements[name].value = params.get(name);
   $("page-size").value = params.get("limit") || "50";

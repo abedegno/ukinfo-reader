@@ -213,6 +213,7 @@ func TestPostgresIntegration(t *testing.T) {
 		t.Fatal("catalogue", w.Body.String())
 	}
 	testExpandedSearch(t, db)
+	testGeography(t, db)
 }
 
 func testDesktopAdmin(t *testing.T, db *pgxpool.Pool) {

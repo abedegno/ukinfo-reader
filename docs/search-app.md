@@ -5,7 +5,8 @@ that same service with an app-managed local PostgreSQL process. The original Pyt
 reader remains the verified decoder and importer: searches do not run Python.
 
 Development preview. Hosted capacity still needs testing on the intended server.
-Exact and prefix name searches, postcode district/sector searches, all-edition searches,
+Exact and prefix name searches, postcode district/sector searches, optional nearby
+searches, all-edition searches,
 keyset pagination, readable record details, page-local identical-listing grouping,
 source comparison, copyable citations and current-page JSONL/CSV exports are implemented.
 Catalogue-wide deduplication, alphabetical sorting, contains/fuzzy matching, stable direct
@@ -103,13 +104,13 @@ build/desktop/ukinfo-server serve --listen 127.0.0.1:8080
 
 Use TLS for non-loopback database connections. Do not expose the PostgreSQL port to the
 internet. Migrations/imports need an owner connection; hosting should give the serving
-process a separate role with SELECT only on `datasets`, `entries`, `terms`, `record_blocks` and `catalog_schema`:
+process a separate role with SELECT only on the catalogue and optional geography tables:
 
 ```sql
 CREATE ROLE ukinfo_search LOGIN; -- set its password separately, outside shell history
 GRANT CONNECT ON DATABASE ukinfo TO ukinfo_search;
 GRANT USAGE ON SCHEMA public TO ukinfo_search;
-GRANT SELECT ON datasets, entries, terms, record_blocks, catalog_schema TO ukinfo_search;
+GRANT SELECT ON datasets, entries, terms, record_blocks, catalog_schema, geography_releases, geography_active, postcode_locations TO ukinfo_search;
 ALTER ROLE ukinfo_search SET default_transaction_read_only = on;
 ```
 
@@ -119,7 +120,10 @@ limits, backups and monitoring. Set `--public-origin https://your-domain` (or
 `UKINFO_PUBLIC_ORIGIN` in Compose). The app rejects unexpected Host/Origin headers.
 There is no built-in user authentication or per-IP quota. The HTTP service admits up to
 32 concurrent API requests, uses at most eight database connections, times queries out
-after two seconds and returns at most 100 entries. These bounds protect one process;
+after two seconds for ordinary searches and five seconds for nearby requests, and returns
+at most 100 entries. At most two uncached spatial lookups run per process; their SQL
+deadline is four seconds. Main entry SQL retains its two-second server deadline.
+These bounds protect one process;
 they are not a substitute for admission control at your public edge. Additional API
 replicas each add their own pool: size PostgreSQL and any connection proxy accordingly.
 No search terms or directory records are written to application request logs.
@@ -219,14 +223,19 @@ and follow PostgreSQL recovery procedures. Preserve the password file with its c
 - `dataset=all` searches imported editions together. Samples are excluded when a complete
   import with the same manifest edition exists; samples remain individually selectable.
   Results identify their originating `dataset`. This is occurrence search, not person identity matching.
-- People require surname or postcode; businesses require organisation or postcode.
+- People require surname, postcode or nearby centre; businesses require organisation,
+  postcode or nearby centre. `near=WS137SW&radius_m=8047` selects an approximate
+  five-mile circle. `radius_m` accepts integer metres from 50 to 50,000; defaults to 8,047.
+  Nearby responses include `geography` provenance and per-item `distance_m`,
+  `location_quality` and optional `location_terminated`. `/api/geography` reports availability.
+  Distances use a spherical Earth model; see [accuracy and exclusions](geography.md).
 - `limit=1..100` (default 50). Reply: `{items:[{dataset,id,source_id,record}],next_cursor:"..."}`.
   Repeat the original filters with `cursor=...`. Cursors are opaque and bound to normalized
   filters, postcode precision and the edition selection; no exact-total query or offset scan.
 - Ordering uses internal name/first-name codes and import ordinal, with dataset IDs
   breaking ties so editions interleave rather than exhausting one edition first. Each edition
   contributes at most `limit+1` indexed candidates before the global page is selected.
-  Postcode-prefix searches order by postcode code before name codes to use the existing
+  Postcode-prefix and nearby searches order by postcode code before name codes to use the existing
   postcode index efficiently. This order is stable, **not alphabetical or chronological**.
   Old-version cursors may be invalid after upgrading. Edition labels use cover-disc dates,
   not verified electoral-roll dates.
@@ -238,10 +247,22 @@ and follow PostgreSQL recovery procedures. Preserve the password file with its c
 - Import ordinals are stable only within a dataset; source identity is edition plus
   source ID (SE4 additionally qualifies entry IDs with the source segment).
 
+## Postcode locations and nearby search
+
+The optional [ONSPD reference](geography.md) adds radius searches using current and
+retired Great Britain postcode points. Import it once with an owner connection; it is
+not bundled with desktop binaries. No re-import of the source editions is needed.
+Nearby search then runs locally/offline. The pinned August 2026 reference uses about
+840 MiB in PostgreSQL. Northern Ireland has separate licensing and is excluded.
+
 ## Using the interface
 
 The edition selector defaults to **All editions**. Choose exact names or **Starts with**,
 then enter a name or postcode. The result cards show their edition and directory type.
+Expand **Search near a postcode**
+to enter a full centre postcode and a 1/2/5/10/25-mile radius; a name is optional. Nearby
+results show approximate postcode-point distances, use catalogue order rather than
+nearest-first order, and exclude incomplete/unlocated and non-geographic postcodes.
 Page sizes are 25/50/100 with controls above and below results. Search URLs preserve filters,
 page size and the current cursor; browser Back/Forward restores searches. A directly opened
 page URL cannot reconstruct the app's earlier page history; use browser history or start
@@ -251,6 +272,7 @@ that search again. Search terms are visible in bookmarked URLs and browser histo
 plain-language data-quality notes. Known place codes are translated (for example `T` is
 Town); undecoded fields/codes remain available in **Show original source fields**.
 Offsets and raw references are kept there rather than presented as the record's identity.
+
 ![Readable record view using invented demo data](screenshots/record-preview.png)
 
 Copy addresses/citations, export the selected original record, or export the current page

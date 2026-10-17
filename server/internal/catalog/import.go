@@ -50,6 +50,9 @@ func Migrate(ctx context.Context, db *pgxpool.Pool) error {
 			return fmt.Errorf("catalogue schema %d differs from %d; use a separate database and repack-v1 or re-import (existing data is unchanged)", version, SchemaVersion)
 		}
 	}
+	if e = migrateGeography(ctx, tx); e != nil {
+		return e
+	}
 	if _, e = tx.Exec(ctx, schema); e != nil {
 		return e
 	}

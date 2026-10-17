@@ -26,3 +26,9 @@ exception text. The project source license does not replace these notices. See
 `pyproject.toml` for the pinned build tool and the build environment for exact Python
 and library versions. A distributor must collect and review all applicable runtime
 notices before shipping binaries; local development staging is not a release audit.
+
+Optional ONS Postcode Directory reference data is not included in these binaries.
+Great Britain data is used under the applicable Open Government Licence with OS,
+Royal Mail and ONS attribution shown in the application after import. The original
+UK-wide archive also contains Northern Ireland data under separate terms; the current
+importer excludes that data and the Crown dependencies. See docs/geography.md.

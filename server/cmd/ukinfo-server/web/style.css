@@ -514,3 +514,27 @@ dt {
 #next-top {
   margin-left: auto;
 }
+
+.nearby-controls {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  margin-top: 12px;
+}
+.nearby-controls summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+.distance {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+#geography-note {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+}
+#geography-attribution {
+  margin-top: 28px;
+}
