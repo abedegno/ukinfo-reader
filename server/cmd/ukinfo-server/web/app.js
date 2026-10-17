@@ -5,6 +5,7 @@ let kind = "person",
   next = "",
   lastQuery = null,
   page = [],
+  pageHistory = [],
   generation = 0;
 let datasets = [];
 async function api(path) {
@@ -23,10 +24,12 @@ function element(tag, text, className) {
 function reset() {
   generation++;
   page = [];
+  pageHistory = [];
   next = "";
   lastQuery = null;
   $("items").replaceChildren();
   $("next").hidden = true;
+  $("previous").hidden = true;
   $("export").disabled = true;
   $("submit").disabled = datasets.length === 0;
   $("status").textContent = "Enter a name or postcode to search this edition.";
@@ -117,21 +120,24 @@ function render() {
     $("items").append(card);
   }
   $("next").hidden = !next;
+  $("previous").hidden = pageHistory.length === 0;
   $("export").disabled = page.length === 0;
   $("status").textContent = page.length
-    ? `${page.length} source entries on this page.${next ? " More results available." : " End of results."}`
+    ? `Page ${pageHistory.length + 1} · ${page.length} source entries on this page.${next ? " More results available." : " End of results."}`
     : "No matching entries. Check the edition, exact spelling or postcode. A partial sample covers only its imported entries.";
 }
-async function search(params) {
+async function search(params, trail = []) {
   const id = ++generation;
   $("submit").disabled = true;
   $("next").hidden = true;
+  $("previous").hidden = true;
   $("export").disabled = true;
   $("status").textContent = "Searching the archive…";
   try {
     const data = await api(`/api/search?${params}`);
     if (id !== generation) return;
     lastQuery = new URLSearchParams(params);
+    pageHistory = trail;
     page = data.items;
     next = data.next_cursor;
     render();
@@ -161,7 +167,14 @@ form.addEventListener("submit", (event) => {
 $("next").addEventListener("click", () => {
   const params = new URLSearchParams(lastQuery);
   params.set("cursor", next);
-  search(params);
+  search(params, [...pageHistory, new URLSearchParams(lastQuery)]);
+});
+$("previous").addEventListener("click", () => {
+  if (pageHistory.length)
+    search(
+      new URLSearchParams(pageHistory[pageHistory.length - 1]),
+      pageHistory.slice(0, -1),
+    );
 });
 $("export").addEventListener("click", async () => {
   $("export").disabled = true;

@@ -17,6 +17,7 @@
   names safely, and bound API queries and page exports.
 - Add Compose deployment, synthetic demo data, integration/browser tests and application docs.
 - Record the data-free storage spike and its limitations.
+- Add backward keyset page navigation and a dated free/low-cost hosting shortlist.
 
 
 ## 0.5.0

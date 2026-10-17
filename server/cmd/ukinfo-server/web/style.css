@@ -217,7 +217,7 @@ select {
   border-bottom: 1px solid var(--line);
 }
 .results-heading button,
-#next {
+.pagination button {
   background: transparent;
   border: 1px solid var(--line);
   border-radius: 5px;
@@ -419,4 +419,13 @@ dt {
   .header-actions .badge {
     display: none;
   }
+}
+
+.pagination {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+#next {
+  margin-left: auto;
 }

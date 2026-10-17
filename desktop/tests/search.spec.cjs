@@ -41,8 +41,19 @@ test("real Go/PG search, duplicate pagination, original fields and page export",
   await expect(page.locator("article").first()).toContainText(
     "Person 050 Example",
   );
+  await page.getByRole("button", { name: "Previous page" }).click();
+  await expect(page.locator("article").first()).toContainText(
+    "Person 000 Example",
+  );
+  await expect(page.locator("#previous")).toBeHidden();
+  await page.getByRole("button", { name: "Next page" }).click();
+  await expect(page.locator("article").first()).toContainText(
+    "Person 050 Example",
+  );
   await page.getByRole("button", { name: "Next page" }).click();
   await expect(page.locator("article")).toHaveCount(25);
+  await expect(page.locator("#status")).toContainText("Page 3");
+  await expect(page.locator("#previous")).toBeVisible();
   await expect(page.locator("#next")).toBeHidden();
   await page.screenshot({
     path: "test-results/search-desktop.png",

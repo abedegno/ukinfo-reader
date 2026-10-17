@@ -6,7 +6,7 @@ reader remains the verified decoder and importer: searches do not run Python.
 
 This is the first working vertical slice, not a production hosting capacity claim.
 Exact surname, first name, business name and postcode searches, keyset pagination,
-source details and lossless **current-page** JSONL export are implemented. Fuzzy search,
+source details, forward/backward page navigation and lossless **current-page** JSONL export are implemented. Fuzzy search,
 sector search, cross-edition matching, background bulk exports,
 resumable ingestion, automatic database upgrades and signed installers are not yet implemented.
 
@@ -119,6 +119,8 @@ after two seconds and returns at most 100 entries. These bounds protect one proc
 they are not a substitute for admission control at your public edge. Additional API
 replicas each add their own pool: size PostgreSQL and any connection proxy accordingly.
 No search terms or directory records are written to application request logs.
+
+See the [dated hosting shortlist and sizing gate](hosting.md) before selecting a server.
 
 ## Desktop and portable data
 
