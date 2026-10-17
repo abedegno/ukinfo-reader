@@ -78,6 +78,47 @@
                 maxlength="12"
             /></label>
           </div>
+          <details id="address-controls" class="nearby-controls">
+            <summary>Search by street, town or county</summary>
+            <p id="address-capability" class="note">
+              Checking address coverage…
+            </p>
+            <label
+              >Street<input
+                name="street"
+                placeholder="e.g. High Street"
+                maxlength="256"
+                disabled
+            /></label>
+            <label
+              >Village / locality<input
+                name="locality"
+                placeholder="e.g. Shenstone"
+                maxlength="256"
+                disabled
+            /></label>
+            <div class="fields">
+              <label
+                >Town / city<input
+                  name="town"
+                  placeholder="e.g. Lichfield"
+                  maxlength="256"
+                  disabled
+              /></label>
+              <label
+                >County<input
+                  name="county"
+                  placeholder="e.g. Staffordshire"
+                  maxlength="256"
+                  disabled
+              /></label>
+            </div>
+            <p class="note">
+              Search without a name, or combine address and name filters.
+              Address fields match exact text; add a trailing * for a prefix.
+              Uses places as recorded on the disc.
+            </p>
+          </details>
           <details id="nearby-controls" class="nearby-controls">
             <summary>Search near a postcode</summary>
             <p id="geography-capability" class="note">
@@ -114,7 +155,7 @@
           <p class="note">
             Names ignore case and extra spaces. Use Starts with or a trailing *
             (Smi*) for name prefixes. Postcodes accept districts, sectors and
-            full codes. Enter a name, postcode or nearby area to begin.
+            full codes. Enter a name, address, postcode or nearby area to begin.
           </p>
         </form>
         <section class="results" aria-labelledby="results-title">

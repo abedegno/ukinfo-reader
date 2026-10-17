@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -57,6 +58,7 @@ func (a *API) Handler() http.Handler {
 	})
 	mux.HandleFunc("GET /api/datasets", a.datasets)
 	mux.HandleFunc("GET /api/geography", a.geography)
+	mux.HandleFunc("GET /api/addresses", a.addresses)
 	mux.HandleFunc("GET /api/search", a.search)
 	mux.HandleFunc("GET /api/export", func(w http.ResponseWriter, r *http.Request) { a.searchPage(w, r, true) })
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -104,6 +106,10 @@ func (a *API) datasets(w http.ResponseWriter, r *http.Request) {
 
 type query struct {
 	Dataset, Kind, Surname, First, Organisation, Postcode string
+	Street                                                string `json:",omitempty"`
+	Locality                                              string `json:",omitempty"`
+	Town                                                  string `json:",omitempty"`
+	County                                                string `json:",omitempty"`
 	Near                                                  string `json:",omitempty"`
 	NearLength                                            int    `json:",omitempty"`
 	GeoRelease                                            string `json:",omitempty"`
@@ -149,7 +155,16 @@ func postcodeFullLength(input, compact string) int {
 }
 
 func parse(v url.Values) (query, error) {
-	q := query{Dataset: strings.TrimSpace(v.Get("dataset")), Kind: v.Get("kind"), Surname: Normalize(v.Get("surname")), First: Normalize(v.Get("first_name")), Organisation: Normalize(v.Get("organisation")), Postcode: strings.TrimSuffix(Postcode(v.Get("postcode")), "*"), Match: v.Get("match"), Near: Postcode(v.Get("near")), Limit: 50, Cursor: v.Get("cursor")}
+	q := query{Street: Normalize(v.Get("street")), Locality: Normalize(v.Get("locality")), Town: Normalize(v.Get("town")), County: Normalize(v.Get("county")), Dataset: strings.TrimSpace(v.Get("dataset")), Kind: v.Get("kind"), Surname: Normalize(v.Get("surname")), First: Normalize(v.Get("first_name")), Organisation: Normalize(v.Get("organisation")), Postcode: strings.TrimSuffix(Postcode(v.Get("postcode")), "*"), Match: v.Get("match"), Near: Postcode(v.Get("near")), Limit: 50, Cursor: v.Get("cursor")}
+	for _, value := range []string{q.Street, q.Locality, q.Town, q.County} {
+		if value == "" {
+			continue
+		}
+		base := strings.TrimSuffix(value, "*")
+		if strings.ContainsAny(base, "*?%") || (strings.HasSuffix(value, "*") && utf8.RuneCountInString(base) < 2) {
+			return q, fmt.Errorf("address fields accept exact text or at least two characters followed by a single trailing *")
+		}
+	}
 	if q.Near != "" {
 		if !postcodeSearch.MatchString(q.Near) {
 			return q, fmt.Errorf("enter a centre postcode, district (WS13) or sector (WS13 7)")
@@ -198,13 +213,13 @@ func parse(v url.Values) (query, error) {
 	if q.Dataset == "" {
 		return q, fmt.Errorf("choose an imported edition")
 	}
-	if q.Kind == "person" && (q.Organisation != "" || (q.Surname == "" && q.Postcode == "" && q.Near == "")) {
-		return q, fmt.Errorf("enter a surname or postcode for a people search")
+	if q.Kind == "person" && (q.Organisation != "" || (q.Surname == "" && q.Postcode == "" && q.Near == "" && !q.hasAddress())) {
+		return q, fmt.Errorf("enter a surname, address or postcode for a people search")
 	}
-	if q.Kind == "business" && (q.Surname != "" || q.First != "" || (q.Organisation == "" && q.Postcode == "" && q.Near == "")) {
-		return q, fmt.Errorf("enter a business name or postcode")
+	if q.Kind == "business" && (q.Surname != "" || q.First != "" || (q.Organisation == "" && q.Postcode == "" && q.Near == "" && !q.hasAddress())) {
+		return q, fmt.Errorf("enter a business name, address or postcode")
 	}
-	for _, s := range []string{q.Dataset, q.Surname, q.First, q.Organisation, q.Postcode, q.Near} {
+	for _, s := range []string{q.Dataset, q.Surname, q.First, q.Organisation, q.Postcode, q.Near, q.Street, q.Locality, q.Town, q.County} {
 		if len(s) > 256 || strings.ContainsRune(s, 0) {
 			return q, fmt.Errorf("search field too long or invalid")
 		}
@@ -280,6 +295,14 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 		fail(w, 404, "Edition not imported")
 		return
 	}
+	if q.hasAddress() {
+		var indexed int
+		err = a.DB.QueryRow(ctx, "SELECT count(*) FROM address_indexes i JOIN datasets d ON d.id=i.dataset_id AND d.entries=i.entries WHERE i.dataset_id=ANY($1::smallint[]) AND i.version=1", datasetIDs).Scan(&indexed)
+		if err != nil || indexed != len(datasetIDs) {
+			fail(w, 503, "Address search needs a complete address index for every selected edition")
+			return
+		}
+	}
 	kind := int16(0)
 	if q.Kind == "business" {
 		kind = 1
@@ -290,7 +313,7 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 	var geography *GeographySearch
 	var nearbyIDs []int32
 	radiusArg := 0
-	areaOnly := q.Near != "" && q.Surname == "" && q.First == "" && q.Organisation == "" && q.Postcode == ""
+	areaOnly := q.Near != "" && q.Surname == "" && q.First == "" && q.Organisation == "" && q.Postcode == "" && !q.hasAddress()
 	distances := map[int32]postcodeDistance{}
 	if q.Near != "" {
 		distances, geography, err = a.nearby(ctx, &q)
@@ -382,6 +405,10 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 	if q.PostcodeLength > 0 || q.Near != "" {
 		order = "postcode_id,name_id,first_id,id,dataset_id"
 	}
+	if q.hasAddress() {
+		order = "id,dataset_id"
+	}
+	afterID := int32(0)
 	if q.Cursor != "" {
 		b, e := base64.RawURLEncoding.DecodeString(q.Cursor)
 		var c cursor
@@ -390,7 +417,11 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 			return
 		}
 		afterPostcode = c.Postcode
-		if q.PostcodeLength > 0 || q.Near != "" {
+		afterID = c.ID
+		if q.hasAddress() {
+			args = append(args, c.ID, c.Dataset)
+			conditions = append(conditions, fmt.Sprintf("(id,dataset_id)>($%d,$%d)", len(args)-1, len(args)))
+		} else if q.PostcodeLength > 0 || q.Near != "" {
 			args = append(args, c.Postcode, c.Name, c.First, c.ID, c.Dataset)
 			conditions = append(conditions, fmt.Sprintf("(postcode_id,name_id,first_id,id,dataset_id)>($%d,$%d,$%d,$%d,$%d)", len(args)-4, len(args)-3, len(args)-2, len(args)-1, len(args)))
 		} else {
@@ -430,14 +461,46 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 		// then exact without sorting every matching occurrence in the catalogue.
 		for _, dataset := range datasetIDs {
 			args = append(args, dataset)
-			branches = append(branches, fmt.Sprintf("(SELECT dataset_id,id,name_id,first_id,postcode_id FROM entries WHERE %s AND dataset_id=$%d ORDER BY %s LIMIT $%d)", strings.Join(conditions, " AND "), len(args), order, limitArg))
+			datasetArg := len(args)
+			if q.hasAddress() {
+				predicate := addressPredicate(q, &args)
+				args = append(args, afterID)
+				afterArg := len(args)
+				addressIDs := fmt.Sprintf(`SELECT candidate FROM address_members m JOIN address_locations l ON l.id=m.location_id
+      CROSS JOIN LATERAL unnest(m.ids) candidate WHERE m.dataset_id=$%d AND %s
+      AND m.ids[cardinality(m.ids)] >= $%d AND candidate >= $%d`, datasetArg, predicate, afterArg, afterArg)
+				// Each occurrence belongs to exactly one location tuple: no DISTINCT/hash
+				// aggregation is necessary. Preserve candidate ID order before looking up
+				// source projections so LIMIT stops the indexed probes after a page.
+				if q.Surname == "" && q.First == "" && q.Organisation == "" && q.Postcode == "" && q.Near == "" {
+					branches = append(branches, fmt.Sprintf(`(SELECT e.* FROM (%s ORDER BY candidate) address_ids
+      CROSS JOIN LATERAL (SELECT dataset_id,id,name_id,first_id,postcode_id FROM entries
+       WHERE %s AND dataset_id=$%d AND id=address_ids.candidate OFFSET 0) e
+      ORDER BY address_ids.candidate LIMIT $%d)`, addressIDs, strings.Join(conditions, " AND "), datasetArg, limitArg))
+				} else {
+					name := fmt.Sprintf("address_source_%d", dataset)
+					// Keep source candidates index-only. Fetching postcode/projection heaps
+					// for every national name match defeats selective address intersection.
+					termCTEs = append(termCTEs, fmt.Sprintf(`%s AS MATERIALIZED (SELECT id FROM entries WHERE %s AND dataset_id=$%d)`, name, strings.Join(conditions, " AND "), datasetArg))
+					branches = append(branches, fmt.Sprintf(`(SELECT e.* FROM
+      (SELECT id FROM %s WHERE id IN (%s) ORDER BY id LIMIT $%d) chosen
+      CROSS JOIN LATERAL (SELECT dataset_id,id,name_id,first_id,postcode_id FROM entries WHERE dataset_id=$%d AND id=chosen.id OFFSET 0) e
+      ORDER BY chosen.id)`, name, addressIDs, limitArg, datasetArg))
+				}
+
+			} else {
+				branches = append(branches, fmt.Sprintf("(SELECT dataset_id,id,name_id,first_id,postcode_id FROM entries WHERE %s AND dataset_id=$%d ORDER BY %s LIMIT $%d)", strings.Join(conditions, " AND "), datasetArg, order, limitArg))
+			}
+
 		}
+
 		sql := fmt.Sprintf("SELECT * FROM (%s) candidates ORDER BY %s LIMIT $%d", strings.Join(branches, " UNION ALL "), order, limitArg)
 		if len(termCTEs) > 0 {
 			sql = "WITH " + strings.Join(termCTEs, ", ") + " " + sql
 		}
 		rows, e := a.DB.Query(ctx, sql, args...)
 		if e != nil {
+			log.Printf("Search query failed: %v", e)
 			fail(w, 503, "Search unavailable or timed out; narrow the search")
 			return
 		}

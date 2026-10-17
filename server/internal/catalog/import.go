@@ -56,6 +56,9 @@ func Migrate(ctx context.Context, db *pgxpool.Pool) error {
 	if _, e = tx.Exec(ctx, schema); e != nil {
 		return e
 	}
+	if _, e = tx.Exec(ctx, addressSchema); e != nil {
+		return e
+	}
 	return tx.Commit(ctx)
 }
 
@@ -87,7 +90,13 @@ type Progress struct {
 	Done  int64  `json:"done"`
 	Total int64  `json:"total"`
 }
-type ImportOptions struct{ Progress func(Progress) }
+type ImportOptions struct {
+	Progress func(Progress)
+	// IndexAddresses builds the optional index after source ingestion commits.
+	// Failure returns the committed count and an error; source records remain.
+	IndexAddresses bool
+	CheckResources func() error
+}
 type projected struct {
 	id                    int32
 	kind                  int16
@@ -343,6 +352,11 @@ func ImportWithOptions(ctx context.Context, db *pgxpool.Pool, input io.Reader, o
 	// Parent partition statistics need a manual refresh; autovacuum ignores empty parents.
 	if _, e = db.Exec(ctx, "ANALYZE terms; ANALYZE entries"); e != nil {
 		log.Print("Import committed, but ANALYZE failed; run ANALYZE terms; ANALYZE entries")
+	}
+	if options.IndexAddresses {
+		if _, e = IndexAddresses(ctx, db, m.Dataset, AddressIndexOptions{Progress: options.Progress, CheckResources: options.CheckResources}); e != nil {
+			return count, fmt.Errorf("source edition imported, but address index is not ready: %w", e)
+		}
 	}
 	notify("complete")
 	return count, nil

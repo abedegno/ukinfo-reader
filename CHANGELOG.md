@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add optional street, locality, town/city and county indexes, address-only and combined
+  searches, edition coverage, cursor paging and a guarded rollback-only index pilot.
+
 - Move the search button below all location controls and support nearby district/sector
   centres, with explicit centre provenance and current/retired postcode selection.
 

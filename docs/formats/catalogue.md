@@ -87,3 +87,21 @@ points with a GiST index. Edition occurrences and original JSON blocks are uncha
 matching uses the existing displayed-postcode term IDs. Release/hash, positional
 quality and termination dates stay attached to geographic responses/exports.
 See [the reference contract and importer](../geography.md).
+
+## Optional address index
+
+`address_locations` shares normalized displayed street/locality/town/county tuples
+across editions. `address_members` stores a sorted integer occurrence-ID array for
+each `(dataset_id, location_id)`. `address_indexes` publishes only count-checked,
+complete edition indexes. The normal CLI/desktop import builds this after the source
+commit; an index failure retains the source and can be retried separately.
+
+Address-only queries order candidate IDs before indexed source lookup so the page
+limit stops projection probes. Combined queries intersect address postings with
+index-only source candidate IDs before fetching page records. An address-filtered
+cursor orders by occurrence ID then dataset ID and includes every address predicate
+in its fingerprint. It never truncates matching streets or filters only the current
+page. See [address provisioning and matching](../address-search.md).
+
+`stats` reports cumulative `address_bytes` separately from source projections/blocks.
+Temporary staging, sorts, WAL and backups remain additional storage.

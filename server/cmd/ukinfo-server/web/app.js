@@ -9,6 +9,8 @@ let kind = "person",
   generation = 0;
 let datasets = [];
 let searchGeography = null;
+let addressCoverage = new Set();
+const addressFields = ["street", "locality", "town", "county"];
 async function api(path) {
   const response = await fetch(path, { credentials: "same-origin" });
   const data = await response.json();
@@ -37,9 +39,41 @@ function reset() {
   $("next-top").hidden = true;
   $("export").disabled = true;
   $("submit").disabled = datasets.length === 0;
-  $("status").textContent = "Enter a name or postcode to search this edition.";
+  $("status").textContent =
+    "Enter a name, address or postcode to search this edition.";
+}
+function addressNote() {
+  const selection = form.elements.dataset.value;
+  const selected =
+    selection === "all"
+      ? datasets.filter(
+          (d) =>
+            !d.manifest.sample ||
+            !datasets.some(
+              (other) =>
+                other.manifest.edition === d.manifest.edition &&
+                !other.manifest.sample,
+            ),
+        )
+      : datasets.filter((d) => d.key === selection);
+  const missing = selected.filter((d) => !addressCoverage.has(d.key));
+  const available = selected.length > 0 && missing.length === 0;
+  for (const name of addressFields) form.elements[name].disabled = !available;
+  $("address-capability").textContent = available
+    ? "Street, locality, town and county searches are ready for the selected editions."
+    : "Address search is not ready for every selected edition. Choose an indexed edition or add its address index.";
+}
+async function refreshAddresses() {
+  try {
+    const data = await api("/api/addresses");
+    addressCoverage = new Set((data.datasets || []).map((d) => d.dataset));
+  } catch {
+    addressCoverage = new Set();
+  }
+  addressNote();
 }
 function editionNote() {
+  addressNote();
   if (form.elements.dataset.value === "all") {
     $("edition-note").textContent =
       "Search all imported editions. Samples are excluded when their complete edition is available. " +
@@ -469,6 +503,11 @@ form.addEventListener("submit", (event) => {
     const value = form.elements[name].value.trim();
     if (value) params.set(name, value);
   }
+  for (const name of addressFields) {
+    const input = form.elements[name];
+    if (!input.disabled && input.value.trim())
+      params.set(name, input.value.trim());
+  }
   if (form.elements.near.value.trim()) {
     params.set("near", form.elements.near.value.trim());
     params.set("radius_m", form.elements.radius_m.value);
@@ -593,6 +632,7 @@ async function refreshDatasets(preferred) {
 (async () => {
   try {
     await refreshDatasets();
+    await refreshAddresses();
     try {
       const geo = await api("/api/geography");
       $("near").disabled = !geo.available;
@@ -630,13 +670,15 @@ function restoreURL() {
     !params.has("surname") &&
     !params.has("organisation") &&
     !params.has("postcode") &&
-    !params.has("near")
+    !params.has("near") &&
+    !addressFields.some((name) => params.has(name))
   ) {
     reset();
     return;
   }
   form.reset();
   $("nearby-controls").open = params.has("near");
+  $("address-controls").open = addressFields.some((name) => params.has(name));
   showKind(params.get("kind") === "business" ? "business" : "person");
   for (const name of [
     "dataset",
@@ -647,6 +689,7 @@ function restoreURL() {
     "match",
     "near",
     "radius_m",
+    ...addressFields,
   ])
     if (params.has(name)) form.elements[name].value = params.get(name);
   $("page-size").value = params.get("limit") || "50";
@@ -664,6 +707,8 @@ if (window.ukinfoDesktop) {
     loading: "Importing entries",
     "checking identities": "Checking entry identities",
     "building indexes": "Preparing search",
+    "indexing addresses": "Indexing addresses…",
+    "grouping address postings": "Preparing address search…",
     publishing: "Finishing import",
     complete: "Ready to search",
     canceled: "Import canceled",
@@ -748,6 +793,7 @@ if (window.ukinfoDesktop) {
     try {
       await bridge.importSource(selected.selection, limit);
       await refreshDatasets(key);
+      await refreshAddresses();
       reset();
       $("import-stage").textContent = "Ready to search";
       $("import-bar").value = 100;
@@ -757,6 +803,7 @@ if (window.ukinfoDesktop) {
       // rather than claiming that a completed import was rolled back.
       try {
         await refreshDatasets(key);
+        await refreshAddresses();
       } catch {
         /* Preserve the original error. */
       }

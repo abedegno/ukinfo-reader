@@ -110,7 +110,7 @@ process a separate role with SELECT only on the catalogue and optional geography
 CREATE ROLE ukinfo_search LOGIN; -- set its password separately, outside shell history
 GRANT CONNECT ON DATABASE ukinfo TO ukinfo_search;
 GRANT USAGE ON SCHEMA public TO ukinfo_search;
-GRANT SELECT ON datasets, entries, terms, record_blocks, catalog_schema, geography_releases, geography_active, postcode_locations TO ukinfo_search;
+GRANT SELECT ON datasets, entries, terms, record_blocks, catalog_schema, geography_releases, geography_active, postcode_locations, address_locations, address_members, address_indexes TO ukinfo_search;
 ALTER ROLE ukinfo_search SET default_transaction_read_only = on;
 ```
 
@@ -388,3 +388,8 @@ the original record. Its output contains aggregate counts only. Protocol-2 sourc
 have an independently computed decoder digest; legacy repacks only have the imported
 stream digest. Verification establishes preservation, not that historical source values
 are factually correct. `stats` reports relation sizes and import timings without records.
+
+## Address searches
+
+See [address search](address-search.md) for street, village/locality, town/city and
+county matching, optional index provisioning, coverage and storage requirements.

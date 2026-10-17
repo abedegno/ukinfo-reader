@@ -193,3 +193,6 @@ The new code and documentation are available under the [MIT license](LICENSE).
 That license grants no rights to the original UK-Info software or directory data.
 UK-Info and PC Format names identify the historical product and magazine; this project is
 independent of their publishers.
+
+Street, locality, town/city and county search is available through an optional
+[additive address index](docs/address-search.md), including on existing catalogues.

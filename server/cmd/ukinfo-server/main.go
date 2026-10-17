@@ -48,7 +48,8 @@ func run() error {
 	binaries := flags.String("pg-bin", "", "desktop: directory containing PostgreSQL 18 initdb and postgres")
 	desktopControl := flags.Bool("desktop-control", false, "enable capability-protected desktop ingestion on a separate loopback port")
 	legacyData := flags.String("source-data-dir", "", "repack-v1: app-managed schema-1 source directory; it remains unchanged")
-	datasetKey := flags.String("dataset", "", "dataset key for verify")
+	addressBlocks := flags.Int("address-blocks", 0, "index-addresses: rollback-only pilot with this many evenly spaced source blocks per edition; zero builds the full index")
+	datasetKey := flags.String("dataset", "", "dataset key for verify or index-addresses")
 	onspd := flags.String("onspd-zip", "", "import-onspd: local official ZIP (no extraction)")
 	geoRelease := flags.String("release", catalog.ONSPDRelease, "ONSPD release YYYY-MM")
 	geoSHA := flags.String("sha256", catalog.ONSPDSHA256, "expected ONSPD ZIP SHA-256")
@@ -57,8 +58,8 @@ func run() error {
 	if err := flags.Parse(os.Args[1:]); err != nil {
 		return err
 	}
-	if command != "serve" && command != "migrate" && command != "import" && command != "verify" && command != "repack-v1" && command != "stats" && command != "import-onspd" {
-		return fmt.Errorf("command must be serve, migrate, import, verify, stats, repack-v1 or import-onspd")
+	if command != "serve" && command != "migrate" && command != "import" && command != "verify" && command != "repack-v1" && command != "stats" && command != "import-onspd" && command != "index-addresses" {
+		return fmt.Errorf("command must be serve, migrate, import, verify, stats, repack-v1, import-onspd or index-addresses")
 	}
 	if *desktopControl {
 		host, _, e := net.SplitHostPort(*listen)
@@ -105,7 +106,7 @@ func run() error {
 		return fmt.Errorf("database configuration failed")
 	}
 	defer db.Close()
-	if command == "migrate" || command == "import-onspd" || *data != "" {
+	if command == "migrate" || command == "import-onspd" || command == "index-addresses" || *data != "" {
 		if err = catalog.Migrate(ctx, db); err != nil {
 			return err
 		}
@@ -135,19 +136,41 @@ func run() error {
 		return json.NewEncoder(os.Stdout).Encode(report)
 	}
 	var lastLog time.Time
+	var lastPhase string
 	progress := func(p catalog.Progress) {
-		if p.Phase != "loading" || time.Since(lastLog) > 5*time.Second {
+		if p.Phase != lastPhase || time.Since(lastLog) > 5*time.Second {
 			log.Printf("%s: %d / %d", p.Phase, p.Done, p.Total)
 			lastLog = time.Now()
+			lastPhase = p.Phase
 		}
 	}
+	checkAddressResources := func() error {
+		free, e := desktop.AvailableBytes(os.TempDir())
+		if e != nil {
+			return e
+		}
+		if free < 5<<30 {
+			return catalog.ErrDiskHeadroom
+		}
+		return nil
+	}
 	if command == "import" {
-		n, e := catalog.ImportWithOptions(ctx, db, os.Stdin, catalog.ImportOptions{Progress: progress})
+		n, e := catalog.ImportWithOptions(ctx, db, os.Stdin, catalog.ImportOptions{Progress: progress, IndexAddresses: true, CheckResources: checkAddressResources})
 		if e != nil {
 			return e
 		}
 		fmt.Fprintf(os.Stderr, "Imported %d entries\n", n)
 		return nil
+	}
+	if command == "index-addresses" {
+		if *datasetKey == "" {
+			return fmt.Errorf("index-addresses requires --dataset")
+		}
+		report, e := catalog.IndexAddresses(ctx, db, *datasetKey, catalog.AddressIndexOptions{SampleBlocks: *addressBlocks, Progress: progress, CheckResources: checkAddressResources})
+		if e != nil {
+			return e
+		}
+		return json.NewEncoder(os.Stdout).Encode(report)
 	}
 	if command == "stats" {
 		raw, e := catalog.Statistics(ctx, db)

@@ -312,3 +312,85 @@ test("nearby area searches preserve radius, distances and coordinate provenance"
     "Royal Mail",
   );
 });
+
+test("address-only searches preserve fields, paging, bookmarks and edition coverage", async ({
+  page,
+}) => {
+  await page.route("**/api/datasets", (route) =>
+    route.fulfill({
+      json: [
+        {
+          key: "synthetic-demo",
+          manifest: { edition: "invented", title: "Invented demo" },
+          entries: 126,
+        },
+        {
+          key: "unindexed-demo",
+          manifest: { edition: "unindexed", title: "Unindexed demo" },
+          entries: 10,
+        },
+      ],
+    }),
+  );
+  await page.route("**/api/addresses", (route) =>
+    route.fulfill({
+      json: {
+        available: true,
+        datasets: [{ dataset: "synthetic-demo", entries: 126, locations: 1 }],
+      },
+    }),
+  );
+  await page.route("**/api/search?*", (route) => {
+    const params = new URL(route.request().url()).searchParams;
+    expect(params.get("street")).toBe("Invented*");
+    expect(params.get("town")).toBe("Example Town");
+    expect(params.get("county")).toBe("Old County");
+    expect(params.has("surname")).toBe(false);
+    return route.fulfill({
+      json: {
+        items: [
+          {
+            dataset: "synthetic-demo",
+            source_id: params.has("cursor") ? "address-2" : "address-1",
+            record: {
+              surname: "Example",
+              firstName: params.has("cursor") ? "Second" : "First",
+              street: "Invented Street",
+              town: "Example Town",
+              county: "Old County",
+              postcode: "ZZ1 1ZZ",
+            },
+          },
+        ],
+        next_cursor: params.has("cursor") ? "" : "address-next",
+      },
+    });
+  });
+  await page.goto("/");
+  await page
+    .getByText("Search by street, town or county", { exact: true })
+    .click();
+  await expect(page.locator('[name="street"]')).toBeDisabled();
+  await page
+    .getByLabel("Edition", { exact: true })
+    .selectOption("synthetic-demo");
+  await expect(page.locator('[name="street"]')).toBeEnabled();
+  await page.getByLabel("Street", { exact: true }).fill("Invented*");
+  await page.getByLabel("Town / city", { exact: true }).fill("Example Town");
+  await page.getByLabel("County", { exact: true }).fill("Old County");
+  await page.getByRole("button", { name: "Search archive" }).click();
+  await expect(page.locator("article")).toContainText("First Example");
+  await page.getByRole("button", { name: "Next page" }).click();
+  await expect(page.locator("article")).toContainText("Second Example");
+  await page.reload();
+  await expect(page.locator("#address-controls")).toHaveAttribute("open", "");
+  await expect(page.locator('[name="street"]')).toHaveValue("Invented*");
+  await expect(page.locator('[name="town"]')).toHaveValue("Example Town");
+  await expect(page.locator("article")).toContainText("Second Example");
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+});

@@ -112,7 +112,7 @@ func (a *Admin) importStream(w http.ResponseWriter, r *http.Request) {
 	a.state = ImportState{Running: true, Progress: Progress{Phase: "checking source"}}
 	a.cancel = cancel
 	a.mu.Unlock()
-	options := ImportOptions{Progress: func(p Progress) { a.mu.Lock(); a.state.Progress = p; a.mu.Unlock() }}
+	options := ImportOptions{IndexAddresses: true, Progress: func(p Progress) { a.mu.Lock(); a.state.Progress = p; a.mu.Unlock() }}
 	count, err := ImportWithOptions(ctx, a.DB, r.Body, options)
 	a.mu.Lock()
 	a.state.Running = false

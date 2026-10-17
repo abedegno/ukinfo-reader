@@ -85,6 +85,24 @@ const assert = require("node:assert/strict");
     assert.equal(exported.length, 50);
     assert.equal(exported[0].dataset, "synthetic-demo");
     assert.equal(exported[0].record.building, null);
+    await window.getByLabel("Surname", { exact: true }).fill("");
+    await window
+      .getByText("Search by street, town or county", { exact: true })
+      .click();
+    assert.equal(
+      await window.getByLabel("Street", { exact: true }).isEnabled(),
+      true,
+    );
+    await window.getByLabel("Street", { exact: true }).fill("Invented Street");
+    await window
+      .getByLabel("Town / city", { exact: true })
+      .fill("Fictional Town");
+    await window.getByRole("button", { name: "Search archive" }).click();
+    await window.locator("article").first().waitFor();
+    assert.equal(await window.locator("article").count(), 50);
+    await window.getByRole("button", { name: "Next page" }).click();
+    await window.locator("#status").filter({ hasText: "Page 2" }).waitFor();
+    assert.equal(await window.locator("article").count(), 50);
     await app.evaluate(({ shell }) => {
       shell.openExternal = async (url) => {
         globalThis.ukinfoOpenedURL = url;
@@ -159,7 +177,7 @@ const assert = require("node:assert/strict");
       false,
     );
     console.log(
-      "Desktop GUI demo import/search/export/navigation/shutdown passed" +
+      "Desktop GUI demo import/name/address search/paging/export/navigation/shutdown passed" +
         (process.env.UKINFO_TEST_REAL_SOURCE
           ? "; real source cancellation rolled back."
           : "."),
