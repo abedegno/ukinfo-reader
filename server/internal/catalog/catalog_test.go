@@ -132,6 +132,7 @@ func TestPostgresIntegration(t *testing.T) {
 	testDesktopAdmin(t, db)
 	testMultipleBlocksAndBatches(t, db)
 	testLegacyRepack(t, db)
+	testTermReuseDoesNotAllocateIdentity(t, db)
 	handler := NewAPI(db).Handler()
 	get := func(path string, status int) map[string]json.RawMessage {
 		t.Helper()
@@ -437,5 +438,37 @@ func TestDesktopDiskGuardInterruptsProducer(t *testing.T) {
 	admin.mu.Unlock()
 	if running {
 		t.Fatal("disk guard left import active")
+	}
+}
+
+func testTermReuseDoesNotAllocateIdentity(t *testing.T, db *pgxpool.Pool) {
+	t.Helper()
+	ctx := context.Background()
+	tx, e := db.Begin(ctx)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer tx.Rollback(ctx)
+	cache := newTermCache(1)
+	first, e := cache.resolve(ctx, tx, []string{"invented-vocabulary-a"})
+	if e != nil {
+		t.Fatal(e)
+	}
+	if _, e = cache.resolve(ctx, tx, []string{"invented-vocabulary-b"}); e != nil {
+		t.Fatal(e)
+	}
+	var before, after int64
+	if e = tx.QueryRow(ctx, "SELECT last_value FROM terms_id_seq").Scan(&before); e != nil {
+		t.Fatal(e)
+	}
+	again, e := cache.resolve(ctx, tx, []string{"invented-vocabulary-a"})
+	if e != nil {
+		t.Fatal(e)
+	}
+	if e = tx.QueryRow(ctx, "SELECT last_value FROM terms_id_seq").Scan(&after); e != nil {
+		t.Fatal(e)
+	}
+	if before != after || again["invented-vocabulary-a"] != first["invented-vocabulary-a"] {
+		t.Fatal("cache eviction wasted or changed a vocabulary identity", before, after)
 	}
 }

@@ -2,6 +2,7 @@ package catalog
 
 import (
 	"context"
+	"errors"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -49,23 +50,55 @@ func (c *termCache) resolve(ctx context.Context, tx pgx.Tx, keys []string) (map[
 	if len(missing) == 0 {
 		return result, nil
 	}
-	// No no-op UPDATE: repeated terms must not generate dead tuples or needless WAL.
-	if _, e := tx.Exec(ctx, "INSERT INTO terms(key) SELECT unnest($1::text[]) ON CONFLICT(key) DO NOTHING", missing); e != nil {
+	consume := func(rows pgx.Rows, err error) error {
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var key string
+			var id int32
+			if err = rows.Scan(&key, &id); err != nil {
+				return err
+			}
+			result[key] = id
+			c.put(key, id)
+		}
+		return rows.Err()
+	}
+	lookup := func(keys []string) error {
+		return consume(tx.Query(ctx, "SELECT key,id FROM terms WHERE key=ANY($1::text[])", keys))
+	}
+	if e := lookup(missing); e != nil {
 		return nil, e
 	}
-	rows, e := tx.Query(ctx, "SELECT key,id FROM terms WHERE key=ANY($1::text[])", missing)
-	if e != nil {
-		return nil, e
+	unresolved := func(keys []string) []string {
+		remaining := []string{}
+		for _, key := range keys {
+			if _, ok := result[key]; !ok {
+				remaining = append(remaining, key)
+			}
+		}
+		return remaining
 	}
-	defer rows.Close()
-	for rows.Next() {
-		var key string
-		var id int32
-		if e = rows.Scan(&key, &id); e != nil {
+	fresh := unresolved(missing)
+	if len(fresh) > 0 {
+		// Check existing terms before INSERT: ON CONFLICT still consumes sequence
+		// values. A bounded cache miss must not spend another identity for a term
+		// already present from an earlier batch or edition. No no-op UPDATE/WAL.
+		if e := consume(tx.Query(ctx, "INSERT INTO terms(key) SELECT unnest($1::text[]) ON CONFLICT(key) DO NOTHING RETURNING key,id", fresh)); e != nil {
 			return nil, e
 		}
-		result[key] = id
-		c.put(key, id)
+		// The import advisory lock serializes normal writers. Resolve a conflict
+		// from a separate manual writer safely under READ COMMITTED as well.
+		if remaining := unresolved(fresh); len(remaining) > 0 {
+			if e := lookup(remaining); e != nil {
+				return nil, e
+			}
+			if len(unresolved(remaining)) > 0 {
+				return nil, errors.New("unresolved search vocabulary")
+			}
+		}
 	}
-	return result, rows.Err()
+	return result, nil
 }

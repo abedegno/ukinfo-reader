@@ -18,6 +18,8 @@
 - Add Compose deployment, synthetic demo data, integration/browser tests and application docs.
 - Record the data-free storage spike and its limitations.
 - Add backward keyset page navigation and a dated free/low-cost hosting shortlist.
+- Reuse vocabulary identities after cache eviction without consuming additional sequence
+  values, preserving capacity across repeated imports and later editions.
 
 
 ## 0.5.0
