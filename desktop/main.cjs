@@ -1,5 +1,5 @@
 "use strict";
-const { app, BrowserWindow, dialog, ipcMain } = require("electron");
+const { app, BrowserWindow, dialog, ipcMain, shell } = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
 const { startServer } = require("./supervisor.cjs");
@@ -82,7 +82,11 @@ if (!app.requestSingleInstanceLock()) {
           devTools: !app.isPackaged,
         },
       });
-      window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+      window.webContents.setWindowOpenHandler(({ url }) => {
+        if (url === "https://github.com/abedegno/ukinfo-reader")
+          shell.openExternal(url).catch(() => {});
+        return { action: "deny" };
+      });
       window.webContents.on("will-navigate", (event, target) => {
         if (new URL(target).origin !== server.address) event.preventDefault();
       });

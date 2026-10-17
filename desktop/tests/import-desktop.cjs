@@ -58,6 +58,49 @@ const assert = require("node:assert/strict");
     await window.getByRole("button", { name: "Search archive" }).click();
     await window.locator("article").first().waitFor();
     assert.equal(await window.locator("article").count(), 50);
+    const exportPath = path.join(directory, "invented-page.jsonl");
+    await app.evaluate(({ session }, target) => {
+      globalThis.ukinfoDownload = new Promise((resolve, reject) => {
+        const timer = setTimeout(
+          () => reject(new Error("Desktop export timed out")),
+          10000,
+        );
+        session.defaultSession.once("will-download", (_event, item) => {
+          item.setSavePath(target);
+          item.once("done", (_done, state) => {
+            clearTimeout(timer);
+            if (state === "completed") resolve();
+            else reject(new Error(`Desktop export ${state}`));
+          });
+        });
+      });
+    }, exportPath);
+    await window.getByRole("button", { name: "Export this page" }).click();
+    await app.evaluate(() => globalThis.ukinfoDownload);
+    const exported = fs
+      .readFileSync(exportPath, "utf8")
+      .trim()
+      .split("\n")
+      .map(JSON.parse);
+    assert.equal(exported.length, 50);
+    assert.equal(exported[0].dataset, "synthetic-demo");
+    assert.equal(exported[0].record.building, null);
+    await app.evaluate(({ shell }) => {
+      shell.openExternal = async (url) => {
+        globalThis.ukinfoOpenedURL = url;
+      };
+    });
+    await window.getByRole("link", { name: "About the project" }).click();
+    assert.equal(
+      await app.evaluate(() => globalThis.ukinfoOpenedURL),
+      "https://github.com/abedegno/ukinfo-reader",
+    );
+    await window.evaluate(() => window.open("https://untrusted.invalid/"));
+    assert.equal(app.windows().length, 1);
+    assert.equal(
+      await app.evaluate(() => globalThis.ukinfoOpenedURL),
+      "https://github.com/abedegno/ukinfo-reader",
+    );
     await fs.promises.mkdir(path.join(root, "desktop/test-results"), {
       recursive: true,
     });
@@ -116,7 +159,7 @@ const assert = require("node:assert/strict");
       false,
     );
     console.log(
-      "Desktop GUI demo import/search/shutdown passed" +
+      "Desktop GUI demo import/search/export/navigation/shutdown passed" +
         (process.env.UKINFO_TEST_REAL_SOURCE
           ? "; real source cancellation rolled back."
           : "."),

@@ -248,6 +248,8 @@ and records the latency/throughput tradeoff.
 - Hash-verified first-N source imports passed: 10,000 entries from 2005, and 1,000 each
   from 1998, 1999 and 2004. All 51,350,897 entries and search projections in the complete
   2005 import were verified against the independent source-stream checksum.
+- Native Electron page downloads preserved the invented source records and nulls; the
+  trusted project link opens externally while untrusted popup targets remain blocked.
 - The new desktop wizard passed bundled-decoder demo ingestion and cancellation of a
   real 2005 import; canceled data was not published.
 - Full-corpus warm HTTP checks at 100/s and 300/s completed 24,000 scheduled requests
