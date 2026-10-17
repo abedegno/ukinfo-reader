@@ -4,9 +4,10 @@ A shared Go service serves the web UI and searches PostgreSQL 18. Electron launc
 that same service with an app-managed local PostgreSQL process. The original Python
 reader remains the verified decoder and importer: searches do not run Python.
 
-This is the first working vertical slice, not a production hosting capacity claim.
+Development preview. Hosted capacity still needs testing on the intended server.
 Exact surname, first name, business name and postcode searches, keyset pagination,
-source details, forward/backward page navigation and lossless **current-page** JSONL export are implemented. Fuzzy search,
+source details, forward/backward page navigation and lossless **current-page** JSONL
+export are implemented. Fuzzy search,
 sector search, cross-edition matching, background bulk exports,
 resumable ingestion, automatic database upgrades and signed installers are not yet implemented.
 
@@ -15,7 +16,9 @@ resumable ingestion, automatic database upgrades and signed installers are not y
 - Go 1.25+ (tested with 1.26.4), PostgreSQL **18**, Python 3.10+ for importing discs.
 - Node 22.12+ and npm for desktop development/browser tests, not hosted serving.
 - All four [verified release profiles](editions.md) can be imported. Each import is
-  searched separately. Modern entries retain their electoral/telephone/business types.
+  searched separately. All **189,064,266** occurrences in the complete supported sources
+  have passed PostgreSQL record/projection verification. Modern entries retain their
+  electoral/telephone/business types.
 - Business searching covers the validated **2005 V10.5 SE** business stream, including
   updates/deletions already applied by the reader. The supplied **2004 SE** disc has no
   business listings. Early-edition business-related source fields remain visible as
@@ -217,7 +220,7 @@ and follow PostgreSQL recovery procedures. Preserve the password file with its c
 python -m unittest discover -s tests -v
 cd server
 go test -race ./...
-UKINFO_TEST_DATABASE_URL='postgres://...' go test -race ./internal/catalog -v
+UKINFO_TEST_DATABASE_URL='postgres://...' go test -race -count=1 ./internal/catalog -v
 UKINFO_TEST_PG_BIN=/path/to/native/pg18/bin go test -race ./internal/desktop -v
 cd ../desktop
 npm ci
@@ -246,8 +249,9 @@ and records the latency/throughput tradeoff.
 - The native macOS Electron development app **and packaged bundle** passed fresh-cluster
   import, search and owned PostgreSQL shutdown checks using invented entries.
 - Hash-verified first-N source imports passed: 10,000 entries from 2005, and 1,000 each
-  from 1998, 1999 and 2004. All 51,350,897 entries and search projections in the complete
-  2005 import were verified against the independent source-stream checksum.
+  from 1998, 1999 and 2004. All four complete editions were then imported and every
+  record/index projection checked: 27,983,545 (1998), 46,355,850 (1999), 63,373,974
+  (2004) and 51,350,897 (2005). The combined catalogue occupies 38.26 GiB.
 - Native Electron page downloads preserved the invented source records and nulls; the
   trusted project link opens externally while untrusted popup targets remain blocked.
 - The new desktop wizard passed bundled-decoder demo ingestion and cancellation of a
@@ -255,6 +259,8 @@ and records the latency/throughput tradeoff.
 - Full-corpus warm HTTP checks at 100/s and 300/s completed 24,000 scheduled requests
   with zero errors/drops under a shared 2-CPU/1-GiB PostgreSQL/API cap. These are local,
   short repeated-key tests on a Mac host; see the [report](research/compact-catalogue.md).
+- An additional mixed-edition 100/s check with all complete sources present passed
+  6,000 scheduled requests: p95 8.86 ms, zero errors/drops, under the same container cap.
 - Runtime and bundle binaries remain local/ignored; there is no signed release download.
 
 For the native end-to-end smoke test (fresh temporary cluster and synthetic data):

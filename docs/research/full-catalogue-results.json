@@ -172,5 +172,23 @@
         "requests_per_second": 300.00239738415803
       }
     }
+  },
+  "response_sizes": {
+    "cases": 1550,
+    "uncompressed_json": {
+      "total_bytes": 41589984,
+      "mean_bytes": 26832.247741935484,
+      "median_bytes": 40764.5,
+      "p95_bytes": 43527,
+      "max_bytes": 48893
+    },
+    "independent_gzip_level_1": {
+      "total_bytes": 4882145,
+      "mean_bytes": 3149.7709677419357,
+      "median_bytes": 3359.5,
+      "p95_bytes": 5985,
+      "max_bytes": 6914
+    },
+    "method": "One response per previously validated full-2005 case; hashes checked unchanged. Gzip byte sizes are an offline standard-library compression experiment, not a deployed proxy or CPU/latency measurement. HTTP/TLS headers excluded. Uniform case mix is not observed user traffic."
   }
 }

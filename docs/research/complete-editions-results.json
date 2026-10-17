@@ -1,0 +1,244 @@
+{
+  "date": "2026-10-17",
+  "schema": 2,
+  "postgres": "PostgreSQL 18.6 on aarch64-unknown-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+  "full_source_occurrences": 189064266,
+  "whole_catalogue_occurrences": 189077392,
+  "other_catalogue_occurrences": 13126,
+  "database_bytes": 41082222271,
+  "terms": 8474634,
+  "term_bytes": 1025015808,
+  "datasets": [
+    {
+      "key": "se-pcf78-1998-01",
+      "title": "UK-Info Disk SE \u2014 PC Format 78, January 1998",
+      "protocol": 2,
+      "entries": 27983545,
+      "import_stats": {
+        "blocks": 218622,
+        "seconds": 424.985248167,
+        "load_seconds": 396.26173975,
+        "index_seconds": 25.946010542,
+        "payload_sha256": "efc9e2b6bab17b9085478cf44bfc04a76945797c823088a6a03e13b66b567a90",
+        "raw_record_bytes": 11395661953,
+        "compressed_block_bytes": 1197216657,
+        "identity_validation_seconds": 2.739857667
+      },
+      "verification": {
+        "dataset": "se-pcf78-1998-01",
+        "entries": 27983545,
+        "blocks": 218622,
+        "payload_sha256": "efc9e2b6bab17b9085478cf44bfc04a76945797c823088a6a03e13b66b567a90",
+        "seconds": 159.876755292,
+        "projection_checked": true,
+        "source_digest_matched": true,
+        "entry_types": {
+          "directory": 27983545
+        },
+        "entries_with_source_warnings": 450,
+        "entries_without_displayed_postcode": 0
+      },
+      "projection_heap_bytes": 1544544256,
+      "projection_index_bytes": 2646188032,
+      "record_block_bytes": 1432068096
+    },
+    {
+      "key": "se4-pcf94-1999-04",
+      "title": "UK-Info Disk SE 4.0 \u2014 PC Format 94, April 1999",
+      "protocol": 2,
+      "entries": 46355850,
+      "import_stats": {
+        "blocks": 362156,
+        "seconds": 633.756820458,
+        "load_seconds": 581.819516083,
+        "index_seconds": 47.447408292,
+        "payload_sha256": "1ae9d8c43978164273be74a0e7a2ec2597c3d8286f468068793da8832bc6c5d7",
+        "raw_record_bytes": 19445843663,
+        "compressed_block_bytes": 1426484297,
+        "identity_validation_seconds": 4.457643166
+      },
+      "verification": {
+        "dataset": "se4-pcf94-1999-04",
+        "entries": 46355850,
+        "blocks": 362156,
+        "payload_sha256": "1ae9d8c43978164273be74a0e7a2ec2597c3d8286f468068793da8832bc6c5d7",
+        "seconds": 271.715482625,
+        "projection_checked": true,
+        "source_digest_matched": true,
+        "entry_types": {
+          "directory": 46355850
+        },
+        "entries_with_source_warnings": 0,
+        "entries_without_displayed_postcode": 0
+      },
+      "projection_heap_bytes": 2559385600,
+      "projection_index_bytes": 4383375360,
+      "record_block_bytes": 1679458304
+    },
+    {
+      "key": "se2004-pcp218-2004-07",
+      "title": "UK-Info 2004 SE \u2014 PC Plus 218, July 2004",
+      "protocol": 2,
+      "entries": 63373974,
+      "import_stats": {
+        "blocks": 495110,
+        "seconds": 1629.009862375,
+        "load_seconds": 1565.912050833,
+        "index_seconds": 56.767492083,
+        "payload_sha256": "510d6b1c4ee31c6571104a7c566c631d7778c04f8a95191bcd38221f396ffcff",
+        "raw_record_bytes": 51547882739,
+        "compressed_block_bytes": 3903977805,
+        "identity_validation_seconds": 6.217800917
+      },
+      "verification": {
+        "dataset": "se2004-pcp218-2004-07",
+        "entries": 63373974,
+        "blocks": 495110,
+        "payload_sha256": "510d6b1c4ee31c6571104a7c566c631d7778c04f8a95191bcd38221f396ffcff",
+        "seconds": 650.653157209,
+        "projection_checked": true,
+        "source_digest_matched": true,
+        "entry_types": {
+          "electoral": 53936980,
+          "telephone": 9436994
+        },
+        "entries_with_source_warnings": 1535285,
+        "entries_without_displayed_postcode": 0
+      },
+      "projection_heap_bytes": 3498483712,
+      "projection_index_bytes": 5992890368,
+      "record_block_bytes": 4546043904
+    },
+    {
+      "key": "se2005-pcf175-2005-06",
+      "title": "UK-Info Disk V10.5 SE \u2014 PC Format 175, June 2005",
+      "protocol": 2,
+      "entries": 51350897,
+      "import_stats": {
+        "blocks": 401179,
+        "seconds": 1285.594903959,
+        "load_seconds": 1225.92595425,
+        "index_seconds": 54.262830791,
+        "payload_sha256": "7b903685a41b521e3a2ecbe117c43be70d7a170d2c4374b12241076873dcb9b8",
+        "raw_record_bytes": 41362864034,
+        "compressed_block_bytes": 3455082251,
+        "identity_validation_seconds": 4.93961425
+      },
+      "verification": {
+        "dataset": "se2005-pcf175-2005-06",
+        "entries": 51350897,
+        "blocks": 401179,
+        "payload_sha256": "7b903685a41b521e3a2ecbe117c43be70d7a170d2c4374b12241076873dcb9b8",
+        "seconds": 535.245411583,
+        "projection_checked": true,
+        "source_digest_matched": true,
+        "entry_types": {
+          "business": 6152296,
+          "electoral": 32062644,
+          "telephone": 13135957
+        },
+        "entries_with_source_warnings": 149829,
+        "entries_without_displayed_postcode": 11882
+      },
+      "projection_heap_bytes": 2835439616,
+      "projection_index_bytes": 4855791616,
+      "record_block_bytes": 4070539264
+    }
+  ],
+  "vocabulary_allocation_check": {
+    "edition": "se4-pcf94-1999-04",
+    "terms_added": 423700,
+    "sequence_values_used": 423700
+  },
+  "notes": [
+    "All four exact supported source profiles, separately searched. Counts are occurrences, not distinct people, households or businesses.",
+    "The whole database includes four small source samples and the invented demo in addition to the full editions. Shared vocabulary and system metadata are included.",
+    "Import stats seconds run through partition attachment, before commit and post-commit ANALYZE. They include producer waits. Different editions and importer revisions are not a controlled speed comparison.",
+    "Every original record and projection was checked against the independently recorded Python producer stream digest. Verification does not establish that historical source values are factually correct.",
+    "Importers/verifiers ran natively outside the database container CPU limit; PostgreSQL 18.6 ran under a 2-CPU/1-GiB container cap on an M4 Pro host.",
+    "1999 and 1998 used lookup-before-insert vocabulary reuse after the allocator fix. Earlier runs used the initial allocator."
+  ],
+  "mixed_http_correctness": {
+    "cases": 815,
+    "mismatches": 0,
+    "seconds": 39.81036000000313,
+    "method": "Usable queries from 200 modular ordinal positions (stride 1048583) plus five absent cases per full edition; editions interleaved. Deterministic source-position sampling is a test workload, not observed traffic. First-page IDs, count, cursor presence and original-field filters checked against SQL projections, which are independently checked against every decoded source record by the full-catalogue verifier. Private expected body hashes recorded for timed API checks."
+  },
+  "mixed_http_100": {
+    "cases": 815,
+    "closed_loop": {
+      "1": {
+        "requests": 3422,
+        "errors": 0,
+        "median_ms": 2.178042,
+        "p95_ms": 7.550666,
+        "p99_ms": 14.595167,
+        "max_ms": 27.328291,
+        "wall_seconds": 10.000296422,
+        "requests_per_second": 342.18985673982854
+      },
+      "32": {
+        "requests": 6785,
+        "errors": 0,
+        "median_ms": 44.74575,
+        "p95_ms": 74.970541,
+        "p99_ms": 81.242291,
+        "max_ms": 91.868458,
+        "wall_seconds": 10.04866713,
+        "requests_per_second": 675.2139276007644
+      },
+      "8": {
+        "requests": 6825,
+        "errors": 0,
+        "median_ms": 9.197166,
+        "p95_ms": 39.298417,
+        "p99_ms": 48.597458,
+        "max_ms": 63.626334,
+        "wall_seconds": 10.006259379,
+        "requests_per_second": 682.0730646182863
+      }
+    },
+    "notes": [
+      "Every response body is hash-checked against previously validated private cases.",
+      "HTTP transfer and body hashing are timed; client JSON parsing is excluded.",
+      "Scheduled-arrival latency includes scheduling and queue delay.",
+      "This report alone does not establish production capacity; document corpus, hardware, quotas and warm/cold conditions separately."
+    ],
+    "scheduled_arrivals": {
+      "load_generator_drops": 0,
+      "rate_per_second": 100,
+      "scheduled_requests": 6000,
+      "stats": {
+        "requests": 6000,
+        "errors": 0,
+        "median_ms": 3.996586,
+        "p95_ms": 8.861217,
+        "p99_ms": 10.954014,
+        "max_ms": 21.250054,
+        "wall_seconds": 59.997502277,
+        "requests_per_second": 100.00416304496888
+      }
+    }
+  },
+  "mixed_http_case_counts": {
+    "se-pcf78-1998-01": 205,
+    "se4-pcf94-1999-04": 200,
+    "se2004-pcp218-2004-07": 205,
+    "se2005-pcf175-2005-06": 205
+  },
+  "mixed_http_kind_counts": {
+    "person": 795,
+    "business": 20
+  },
+  "mixed_http_environment": {
+    "database_api_cpus": 2,
+    "database_api_memory_bytes": 1073741824,
+    "load_cpus": 2,
+    "load_memory_bytes": 1073741824,
+    "host": "Apple M4 Pro, 14 CPUs, 24 GiB RAM; Docker Desktop Linux ARM64",
+    "api_admission": 32,
+    "database_connections": 8,
+    "sql_deadline_seconds": 2,
+    "notes": "Read-only serving role, local TCP, warmed cases interleaved across all four full editions. Not a VPS, WAN or cold-cache test."
+  }
+}

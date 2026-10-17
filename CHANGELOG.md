@@ -8,7 +8,8 @@
 - Add protocol-2 source-stream checksums and source fingerprint checks after decoding.
 - Add desktop folder/demo ingestion with a bundled decoder, progress, cancellation and
   a 5 GiB disk reserve. Add bounded raw NDJSON downloads preserving large integers.
-- Import the complete 51,350,897-entry 2005 edition and measure full-field pilot storage
+- Import and verify all four complete supported sources (189,064,266 occurrences in
+  38.26 GiB); measure mixed-edition HTTP searches and full-field pilot storage
   and HTTP throughput; document the compact layout's saturated-throughput tradeoff.
 
 - Add a Go/PostgreSQL search catalogue, verified Python streaming ingestion, edition-aware

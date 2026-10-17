@@ -84,8 +84,8 @@ All 51,350,897 records and normalized keys matched. The source contains 149,829 
 with warnings and 11,882 without a displayed postcode; these values remain preserved.
 
 The native bundled decoder also identified and fingerprinted all four supported editions.
-The compact catalogue's complete-edition preservation check currently covers **2005**;
-1998, 1999 and 2004 have sample ingestion coverage, not whole-edition PostgreSQL imports.
+All four complete supported editions have now passed preservation checks; see the
+[combined results below](#all-four-complete-editions).
 
 ### Full-corpus HTTP workload
 
@@ -119,16 +119,71 @@ This is still a short, repeated-key local test. It includes transfer and respons
 hashing but excludes browser JSON parsing, WAN latency, TLS, user authentication and
 public edge quotas. It does not establish cold-cache or multi-edition capacity.
 
+## All four complete editions
+
+Whole-edition ingestion and preservation verification also completed for 1998, 1999
+and 2004. All **189,064,266 source occurrences** are present and separately searchable.
+The final observed database occupies **38.26 GiB**, including shared vocabulary,
+system metadata, 13,000 earlier sample occurrences and 126 invented demo entries.
+It contains 8,474,634 shared vocabulary terms. WAL, source files, runtimes, temporary
+sorts and backups are additional. No second full restore copy was created.
+
+| Exact release profile | Complete occurrences | Partition relations, GiB | Full verification, seconds |
+|---|---:|---:|---:|
+| 1998 SE / PC Format 78 | 27,983,545 | 5.24 | 159.88 |
+| 1999 SE 4.0 / PC Format 94 | 46,355,850 | 8.03 | 271.72 |
+| 2004 SE / PC Plus 218 | 63,373,974 | 13.07 | 650.65 |
+| 2005 V10.5 SE / PC Format 175 | 51,350,897 | 10.95 | 535.25 |
+
+Partition relations include projection heap/indexes and record-block relations; shared
+vocabulary and system relations are accounted for in the whole database total. Every
+record byte stream and normalized search projection matched the independently recorded
+Python producer digest. The 1998/1999 sources retain their original generic directory
+classification. Modern 2004 counts are 53,936,980 electoral and 9,436,994 telephone
+occurrences; 2005 additionally includes 6,152,296 business occurrences. These counts
+are not distinct people or households. Source warnings and unresolved values remain
+preserved; fidelity verification does not establish historical factual correctness.
+
+The 1999/1998 ingestions used the later vocabulary allocator fix. On the complete
+1999 import, 423,700 new terms used exactly 423,700 sequence values; evicted existing
+terms did not allocate IDs again. Import timing differences across editions therefore
+reflect both different data and different implementation revisions.
+
+### Mixed-edition HTTP check
+
+With all four complete sources present, **815 validated cases** were interleaved across
+editions: 205 for 1998, 200 for 1999, 205 for 2004 and 205 for 2005. Query filters came
+from 200 deterministic ordinal positions per source, using
+`1 + ((i * 1048583) % source_count)`, plus five absent cases per source. Five 1999 seed
+positions had an empty chosen name filter and were skipped. The resulting workload
+contains 795 people and 20 business queries, rotating exact names, name-plus-first-name
+and postcodes. This is a test workload, not an unbiased population or observed-user mix.
+Counts, IDs, pagination and original-field filters matched SQL projections; the full
+source verifier independently checked those projections against every original record.
+
+The same shared **2-CPU/1-GiB database/API** and separate **2-CPU/1-GiB load** caps were
+used. All cases were warmed before timing. At **100 scheduled requests/s for 60 seconds**,
+all **6,000 requests** succeeded: median **4.00 ms**, p95 **8.86 ms**, p99 **10.95 ms**,
+maximum **21.25 ms**, with **zero errors or generator drops**. The ten-second 32-caller
+stage observed approximately 675 requests/s. All timed bodies were hash-checked.
+Local TCP, warmed repeated keys and a shared Mac host remain material limits; public
+VPS, WAN/TLS, cold-cache, long-duration and recovery capacity remain unmeasured.
+
+[Complete-edition aggregate results](complete-editions-results.json) contain counts,
+sizes, source-stream digests, import/verification timings, query-mix counts and all HTTP
+percentiles. They contain no source records or query values.
+
 ## Hosting implications
 
-This establishes that the complete edition fits comfortably in a modest persistent
+This establishes that the supported sources fit in a modest persistent
 PostgreSQL volume; it does not establish a safe VPS size or public request limit. A free
 static host can serve frontend assets, but cannot remove database storage, RAM and backup
-costs. Plan paid persistent storage for the database and retain the same API on desktop.
+costs. Choose an eligible free VM or budget for persistent VPS storage; see the
+[dated hosting shortlist](../hosting.md). Retain the same API on desktop.
 Keep PostgreSQL private; use a read-only serving role, TLS, edge quotas and bounded API
 admission. More API processes each add connections and decompression work.
 
 The next capacity gate is a test on the intended host with cold and warm caches,
 longer sustained arrival rates, slow queries and recovery measurements.
-Provider pricing and final hosting selection remain open. Do not treat short local
+Provider options and prices are documented in the dated shortlist; final selection remains open. Do not treat short local
 requests-per-second numbers as internet capacity or an availability guarantee.
