@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -397,5 +398,44 @@ func TestDesktopDiskPreflight(t *testing.T) {
 	admin.Handler().ServeHTTP(w, req)
 	if w.Code != 507 || admin.state.Running {
 		t.Fatal("disk guard admitted import", w.Code)
+	}
+}
+
+// A disk guard must interrupt a producer stalled before its first complete frame;
+// canceling SQL alone cannot unblock an HTTP request-body read.
+func TestDesktopDiskGuardInterruptsProducer(t *testing.T) {
+	var checks atomic.Int32
+	admin := &Admin{Token: strings.Repeat("e", 64), CheckResources: func() error {
+		if checks.Add(1) > 1 {
+			return ErrDiskHeadroom
+		}
+		return nil
+	}}
+	server := httptest.NewUnstartedServer(admin.Handler())
+	admin.Host = server.Listener.Addr().String()
+	server.Start()
+	defer server.Close()
+	reader, writer := io.Pipe()
+	defer reader.Close()
+	defer writer.Close()
+	req, _ := http.NewRequest("POST", server.URL+"/import", reader)
+	req.Header.Set("Authorization", "Bearer "+admin.Token)
+	req.Header.Set("Content-Type", "application/x-ndjson")
+	go func() { _, _ = io.WriteString(writer, " ") }()
+	client := server.Client()
+	client.Timeout = 5 * time.Second
+	response, e := client.Do(req)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != 507 {
+		t.Fatal("disk guard did not interrupt upload", response.StatusCode)
+	}
+	admin.mu.Lock()
+	running := admin.state.Running
+	admin.mu.Unlock()
+	if running {
+		t.Fatal("disk guard left import active")
 	}
 }

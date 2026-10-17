@@ -132,7 +132,7 @@ function beginImport(command, directory, limit, control, onProgress, log) {
       return data;
     } catch (error) {
       if (abort.signal.aborted)
-        throw new Error("Import canceled; the dataset was not published.");
+        throw new Error("Import canceled. Refresh the catalogue to check whether it finished.");
       throw error;
     } finally {
       clearInterval(timer);

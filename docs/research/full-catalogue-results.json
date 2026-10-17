@@ -1,0 +1,176 @@
+{
+  "storage": {
+    "schema": 2,
+    "postgres": "PostgreSQL 18.6 on aarch64-unknown-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+    "database_bytes": 12657317567,
+    "terms": 7095491,
+    "term_bytes": 889241600,
+    "datasets": [
+      {
+        "key": "se2005-pcf175-2005-06",
+        "entries": 51350897,
+        "stats": {
+          "blocks": 401179,
+          "seconds": 1285.594903959,
+          "load_seconds": 1225.92595425,
+          "index_seconds": 54.262830791,
+          "payload_sha256": "7b903685a41b521e3a2ecbe117c43be70d7a170d2c4374b12241076873dcb9b8",
+          "raw_record_bytes": 41362864034,
+          "compressed_block_bytes": 3455082251,
+          "identity_validation_seconds": 4.93961425
+        },
+        "projection_heap_bytes": 2834718720,
+        "projection_index_bytes": 4855791616,
+        "record_block_bytes": 4069384192
+      }
+    ]
+  },
+  "verification": {
+    "dataset": "se2005-pcf175-2005-06",
+    "entries": 51350897,
+    "blocks": 401179,
+    "payload_sha256": "7b903685a41b521e3a2ecbe117c43be70d7a170d2c4374b12241076873dcb9b8",
+    "seconds": 535.245411583,
+    "projection_checked": true,
+    "source_digest_matched": true,
+    "entry_types": {
+      "business": 6152296,
+      "electoral": 32062644,
+      "telephone": 13135957
+    },
+    "entries_with_source_warnings": 149829,
+    "entries_without_displayed_postcode": 11882
+  },
+  "http_correctness": {
+    "cases": 1550,
+    "mismatches": 0,
+    "seconds": 76.44259979200433,
+    "method": "Deterministic modular ordinal spread across the full edition plus common and absent keys. First-page IDs, count, cursor presence and original-field filters checked against SQL projections, which are independently checked against every decoded source record by the full-catalogue verifier. Private expected body hashes recorded for timed API checks."
+  },
+  "environment": {
+    "database_api_cpus": 2,
+    "database_api_memory_bytes": 1073741824,
+    "load_cpus": 2,
+    "load_memory_bytes": 1073741824,
+    "platform": "macOS ARM64 host with Docker Desktop Linux ARM64 containers",
+    "api_admission": 32,
+    "api_database_connections": 8,
+    "sql_deadline_seconds": 2,
+    "scope": "Complete 2005 edition, warmed varied keys; local transport. No external VPS/network or cold OS cache claim.",
+    "host_cpu": "Apple M4 Pro",
+    "host_cpus": 14,
+    "host_memory_bytes": 25769803776
+  },
+  "http_100": {
+    "cases": 1550,
+    "closed_loop": {
+      "1": {
+        "requests": 2364,
+        "errors": 0,
+        "median_ms": 3.240083,
+        "p95_ms": 10.711292,
+        "p99_ms": 13.411833,
+        "max_ms": 29.295083,
+        "wall_seconds": 10.00099263,
+        "requests_per_second": 236.37653655585183
+      },
+      "32": {
+        "requests": 7063,
+        "errors": 0,
+        "median_ms": 43.141083,
+        "p95_ms": 72.431959,
+        "p99_ms": 80.074166,
+        "max_ms": 89.293417,
+        "wall_seconds": 10.035314505,
+        "requests_per_second": 703.8145138830405
+      },
+      "8": {
+        "requests": 6653,
+        "errors": 0,
+        "median_ms": 9.887084,
+        "p95_ms": 35.533458,
+        "p99_ms": 45.132333,
+        "max_ms": 83.432959,
+        "wall_seconds": 10.004928379,
+        "requests_per_second": 664.9722764597113
+      }
+    },
+    "notes": [
+      "Every response body is hash-checked against previously validated private cases.",
+      "HTTP transfer and body hashing are timed; client JSON parsing is excluded.",
+      "Scheduled-arrival latency includes scheduling and queue delay.",
+      "This report alone does not establish production capacity; document corpus, hardware, quotas and warm/cold conditions separately."
+    ],
+    "scheduled_arrivals": {
+      "load_generator_drops": 0,
+      "rate_per_second": 100,
+      "scheduled_requests": 6000,
+      "stats": {
+        "requests": 6000,
+        "errors": 0,
+        "median_ms": 4.022465,
+        "p95_ms": 8.782919,
+        "p99_ms": 11.574354,
+        "max_ms": 25.597267,
+        "wall_seconds": 59.992189152,
+        "requests_per_second": 100.01301977492471
+      }
+    }
+  },
+  "http_300": {
+    "cases": 1550,
+    "closed_loop": {
+      "1": {
+        "requests": 3808,
+        "errors": 0,
+        "median_ms": 2.432583,
+        "p95_ms": 5.698375,
+        "p99_ms": 7.470833,
+        "max_ms": 14.255375,
+        "wall_seconds": 10.001292547,
+        "requests_per_second": 380.75078617135864
+      },
+      "32": {
+        "requests": 7173,
+        "errors": 0,
+        "median_ms": 42.847875,
+        "p95_ms": 71.176375,
+        "p99_ms": 77.448042,
+        "max_ms": 91.457708,
+        "wall_seconds": 10.049111629,
+        "requests_per_second": 713.7944392318184
+      },
+      "8": {
+        "requests": 7344,
+        "errors": 0,
+        "median_ms": 9.159792,
+        "p95_ms": 30.975417,
+        "p99_ms": 42.1585,
+        "max_ms": 60.452375,
+        "wall_seconds": 10.009312087,
+        "requests_per_second": 733.7167565729435
+      }
+    },
+    "notes": [
+      "Every response body is hash-checked against previously validated private cases.",
+      "HTTP transfer and body hashing are timed; client JSON parsing is excluded.",
+      "Scheduled-arrival latency includes scheduling and queue delay.",
+      "This report alone does not establish production capacity; document corpus, hardware, quotas and warm/cold conditions separately."
+    ],
+    "scheduled_arrivals": {
+      "load_generator_drops": 0,
+      "rate_per_second": 300,
+      "scheduled_requests": 18000,
+      "stats": {
+        "requests": 18000,
+        "errors": 0,
+        "median_ms": 3.016729,
+        "p95_ms": 7.019338,
+        "p99_ms": 10.282891,
+        "max_ms": 78.887507,
+        "wall_seconds": 59.999520527,
+        "requests_per_second": 300.00239738415803
+      }
+    }
+  }
+}

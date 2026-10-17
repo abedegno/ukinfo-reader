@@ -69,12 +69,16 @@ def main():
         producer.stdout.close()
         while consumer.poll() is None:
             if shutil.disk_usage(args.watch_filesystem).free < minimum:
-                raise RuntimeError("local disk headroom reached; canceling and rolling back import")
+                raise RuntimeError(
+                    "local disk headroom reached; canceling import; check catalogue status before retrying"
+                )
             if producer.poll() not in (None, 0):
                 raise RuntimeError("source decoder failed; canceling import")
             time.sleep(1)
         if consumer.returncode or producer.wait():
-            raise RuntimeError("import failed; dataset was not published")
+            raise RuntimeError(
+                "import did not finish cleanly; check catalogue status before retrying"
+            )
     finally:
         stop(producer)
         if consumer is not None:
@@ -85,5 +89,7 @@ if __name__ == "__main__":
     try:
         main()
     except (KeyboardInterrupt, RuntimeError) as exc:
-        print(str(exc) or "Import canceled", file=sys.stderr)
+        print(
+            str(exc) or "Import canceled; check catalogue status before retrying", file=sys.stderr
+        )
         raise SystemExit(1) from None

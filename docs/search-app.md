@@ -239,9 +239,13 @@ and records the latency/throughput tradeoff.
 - The native macOS Electron development app **and packaged bundle** passed fresh-cluster
   import, search and owned PostgreSQL shutdown checks using invented entries.
 - Hash-verified first-N source imports passed: 10,000 entries from 2005, and 1,000 each
-  from 1998, 1999 and 2004. The complete 2005 import contains 51,350,897 entries.
+  from 1998, 1999 and 2004. All 51,350,897 entries and search projections in the complete
+  2005 import were verified against the independent source-stream checksum.
 - The new desktop wizard passed bundled-decoder demo ingestion and cancellation of a
   real 2005 import; canceled data was not published.
+- Full-corpus warm HTTP checks at 100/s and 300/s completed 24,000 scheduled requests
+  with zero errors/drops under a shared 2-CPU/1-GiB PostgreSQL/API cap. These are local,
+  short repeated-key tests on a Mac host; see the [report](research/compact-catalogue.md).
 - Runtime and bundle binaries remain local/ignored; there is no signed release download.
 
 For the native end-to-end smoke test (fresh temporary cluster and synthetic data):

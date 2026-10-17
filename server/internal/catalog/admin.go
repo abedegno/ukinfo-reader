@@ -132,9 +132,9 @@ func (a *Admin) importStream(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		_ = controller.SetReadDeadline(time.Now())
 		if errors.Is(err, ErrDiskHeadroom) {
-			fail(w, 507, "Not enough free disk space. The current edition was not published.")
+			fail(w, 507, "Not enough free disk space. Import stopped; check the catalogue before retrying.")
 		} else {
-			fail(w, 422, "Import failed; the dataset was not published")
+			fail(w, 422, "Import stopped; check the catalogue before retrying")
 		}
 		return
 	}
