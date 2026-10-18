@@ -10,6 +10,7 @@
     <script src="/research.js" defer></script>
     <script src="/maps.js" defer></script>
     <script src="/postcode-setup.js" defer></script>
+    <script src="/catalogue.js" defer></script>
   </head>
   <body>
     <header>
@@ -17,6 +18,7 @@
       <div class="header-actions">
         <button id="research-open" type="button">Research lists</button>
         <button id="saved-link-open" type="button">Open saved link</button>
+        <button id="catalogue-open" type="button" hidden>Manage archive</button>
         <button id="postcode-setup-open" type="button" hidden>
           Postcode setup
         </button>
@@ -299,6 +301,78 @@
         >
       </footer>
     </main>
+    <dialog id="catalogue-dialog" aria-labelledby="catalogue-heading">
+      <div class="dialog-heading">
+        <h2 id="catalogue-heading">Your archive</h2>
+        <button id="catalogue-close" aria-label="Close archive management">
+          ✕
+        </button>
+      </div>
+      <p>
+        Manage the editions stored on this computer. Disc dates identify
+        distributions; they do not establish when someone lived at an address.
+      </p>
+      <dl id="catalogue-storage" class="catalogue-storage"></dl>
+      <p class="note">
+        Edition sizes include their dedicated record and search tables. Shared
+        dictionaries serve multiple editions and remain available for reuse
+        after removal. Database size excludes source discs, temporary
+        preparation files, application files and backups.
+      </p>
+      <section id="catalogue-continue" hidden>
+        <h3>Continue setup</h3>
+        <p id="catalogue-continue-label"></p>
+        <button id="catalogue-resume" type="button">
+          Recheck previous source…
+        </button>
+      </section>
+      <p id="catalogue-empty" hidden>
+        Your archive has no imported editions yet.
+      </p>
+      <div id="catalogue-editions"></div>
+      <div class="catalogue-actions">
+        <button id="catalogue-add" type="button">Add another edition…</button>
+      </div>
+      <section class="catalogue-section">
+        <h3>Postcode locations</h3>
+        <p id="catalogue-geo-status"></p>
+        <button id="catalogue-geography" type="button">
+          Open postcode setup
+        </button>
+      </section>
+      <details class="catalogue-section">
+        <summary>Back up or move your archive</summary>
+        <p>
+          Export research lists as JSON to back up saved records and notes. Keep
+          copies of your original media and ONSPD ZIP so you can rebuild the
+          searchable catalogue.
+        </p>
+        <button id="catalogue-backup-notes" type="button">
+          Open research lists
+        </button>
+        <p>
+          For a complete local backup, quit the app and wait for its database to
+          stop before copying the entire app data directory. Restore into a
+          separate directory with the same app version, operating system and CPU
+          architecture. Never copy a running PostgreSQL directory.
+        </p>
+        <button id="catalogue-show-folder" type="button">
+          Show app data folder
+        </button>
+        <p class="note">
+          Removing an edition preserves research snapshots and notes. Saved
+          source links are unavailable while that edition is absent. Reimporting
+          the same verified edition may make them available again.
+        </p>
+      </details>
+      <div class="catalogue-actions">
+        <button id="catalogue-refresh" type="button">Refresh status</button
+        ><button id="catalogue-cancel" type="button" hidden>
+          Cancel operation
+        </button>
+      </div>
+      <p id="catalogue-message" role="status" aria-live="polite"></p>
+    </dialog>
     <dialog id="postcode-setup-dialog" aria-labelledby="postcode-setup-heading">
       <div class="dialog-heading">
         <h2 id="postcode-setup-heading">Add postcode locations</h2>
@@ -399,6 +473,9 @@
         </p>
       </details>
       <div class="import-actions">
+        <button id="import-resume" type="button" hidden>
+          Recheck previous source…
+        </button>
         <button id="import-media" type="button">Choose ISO or 7z…</button>
         <button id="import-choose" type="button">Choose source folder…</button
         ><button id="import-demo" type="button">Try invented demo</button>

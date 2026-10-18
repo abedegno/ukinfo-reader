@@ -113,6 +113,9 @@ if (!app.requestSingleInstanceLock()) {
         (_contents, _permission, callback) => callback(false),
       );
       importer = installImporter({
+        directory: app.getPath("userData"),
+        ownsCatalogue: !process.env.UKINFO_DESKTOP_DATABASE_URL,
+        shell,
         ipcMain,
         dialog,
         getWindow: () => window,

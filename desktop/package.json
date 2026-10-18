@@ -1,6 +1,6 @@
 {
   "name": "ukinfo-archive-desktop",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Portable search interface for locally imported UK-Info archives",
   "author": "ukinfo-reader contributors",
@@ -15,8 +15,9 @@
     "test:import": "node tests/import-desktop.cjs"
   },
   "devDependencies": {
-    "electron": "44.9.0",
+    "@electron/osx-sign": "2.6.0",
+    "@electron/packager": "20.3.0",
     "@playwright/test": "1.64.1",
-    "@electron/packager": "20.3.0"
+    "electron": "44.9.0"
   }
 }

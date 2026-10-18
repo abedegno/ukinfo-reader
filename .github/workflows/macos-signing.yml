@@ -1,0 +1,83 @@
+name: Signed macOS candidates
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing desktop-v tag to build and sign
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  sign:
+    environment: desktop-signing
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {runner: macos-15, platform: darwin-arm64}
+          - {runner: macos-15-intel, platform: darwin-x64}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {ref: 'refs/tags/${{ inputs.tag }}'}
+      - name: Verify immutable release source
+        env: {RELEASE_TAG: '${{ inputs.tag }}'}
+        run: |
+          python3 -c 'import json,os,re; tag=os.environ["RELEASE_TAG"]; assert re.fullmatch(r"desktop-v[0-9]+\.[0-9]+\.[0-9]+",tag); assert tag == "desktop-v"+json.load(open("desktop/package.json"))["version"]'
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with: {go-version: '1.26.4', cache-dependency-path: server/go.sum}
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with: {python-version: '3.14.7'}
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with: {node-version: '22', cache: npm, cache-dependency-path: desktop/package-lock.json}
+      - name: Prepare temporary signing keychain
+        env:
+          MAC_CERT_P12_BASE64: '${{ secrets.MAC_CERT_P12_BASE64 }}'
+          MAC_CERT_PASSWORD: '${{ secrets.MAC_CERT_PASSWORD }}'
+          MAC_CODESIGN_IDENTITY: '${{ secrets.MAC_CODESIGN_IDENTITY }}'
+          APPLE_ID: '${{ secrets.APPLE_ID }}'
+          APPLE_TEAM_ID: '${{ secrets.APPLE_TEAM_ID }}'
+          APPLE_APP_PASSWORD: '${{ secrets.APPLE_APP_PASSWORD }}'
+        run: python tools/macos_signing.py prepare
+      - uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25
+        id: pg-cache
+        with:
+          path: '${{ runner.temp }}/pg-runtime'
+          key: native-pg-${{ matrix.platform }}-${{ matrix.runner }}-${{ hashFiles('tools/build_postgres_runtime.py') }}
+      - name: Build native PostgreSQL if cache is absent
+        if: steps.pg-cache.outputs.cache-hit != 'true'
+        run: python tools/build_postgres_runtime.py --output "$RUNNER_TEMP/pg-runtime"
+      - name: Stage signed decoder and native runtimes
+        run: |
+          python -m pip install -e '.[desktop]'
+          python tools/stage_desktop.py --postgres "$RUNNER_TEMP/pg-runtime"
+          python tools/check_media_runtime.py build/desktop/ukinfo-import
+      - name: Package, sign and test the application
+        working-directory: desktop
+        env:
+          UKINFO_PG_BIN: '${{ github.workspace }}/build/desktop/pg/bin'
+          UKINFO_TEST_APP: '${{ github.workspace }}/dist/desktop/UK-Info Archive-${{ matrix.platform }}/UK-Info Archive.app/Contents/MacOS/UK-Info Archive'
+        run: |
+          npm ci
+          npm test
+          npm audit --omit=dev
+          npx playwright install chromium
+          node build-icon.cjs
+          npm run pack
+          npm run test:import
+      - name: Notarize and staple
+        env: {PLATFORM: '${{ matrix.platform }}'}
+        run: python tools/macos_signing.py notarize "dist/desktop/UK-Info Archive-$PLATFORM/UK-Info Archive.app"
+      - name: Archive notarized candidate and checksums
+        run: python tools/package_desktop_release.py
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: signed-desktop-${{ matrix.platform }}
+          path: dist/releases/*
+          if-no-files-found: error
+          retention-days: 7
+      - name: Remove signing credentials
+        if: always()
+        run: python tools/macos_signing.py cleanup

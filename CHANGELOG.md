@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Add native archive inventory, edition/storage/completeness details, safe confirmed
+  removal, sample-to-full actions and recovery of interrupted address indexing.
+- Persist original setup sources for verified restart after interruption and add
+  backup guidance with a native data-folder action.
+- Prepare an opt-in Developer ID/notarization workflow with temporary credential
+  handling, signed embedded Python libraries and gated candidate artifacts.
+- Desktop preview version 0.3.0.
+
 - Add desktop postcode-reference setup with a native ZIP chooser, pinned ONSPD
   verification, progress/cancellation and immediate nearby/map availability.
 - Add direct ISO/7z preparation, including modern InstallShield tables, fixed output

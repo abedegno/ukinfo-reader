@@ -101,3 +101,10 @@ and MD5 source notices and source URL/hash are retained under `cabinet-notices`.
 The standalone decoder includes pinned pycdlib/py7zr readers and their wheel/native
 supplier notices. The runtime is self-contained; end users need no 7-Zip, unshield,
 Python or compiler installation. See [desktop setup](desktop-setup.md).
+
+## Signed candidates
+
+The manual **Signed macOS candidates** workflow is separate from ordinary preview
+builds. It requires Apple credentials in the `desktop-signing` environment and
+produces reviewed artifacts without publishing. See [macOS signing](macos-signing.md)
+for secrets, entitlement scope, embedded-decoder signing and validation limits.

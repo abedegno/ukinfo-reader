@@ -44,6 +44,8 @@ const path = require("node:path");
       /^\/playwright\.config\.cjs$/,
       /^\/package\.cjs$/,
       /^\/build-icon\.cjs$/,
+      /^\/signing\.cjs$/,
+      /^\/entitlements(?:\/|$)/,
     ],
     afterCopy: [
       async ({ buildPath }) => {
@@ -67,7 +69,13 @@ const path = require("node:path");
     ],
   });
   for (const destination of destinations) {
-    if (process.platform === "darwin")
+    if (process.platform === "darwin" && process.env.UKINFO_CODESIGN_IDENTITY) {
+      await require("./signing.cjs").signForDistribution(
+        path.join(destination, "UK-Info Archive.app"),
+        process.env.UKINFO_CODESIGN_IDENTITY,
+        process.env.UKINFO_CODESIGN_KEYCHAIN,
+      );
+    } else if (process.platform === "darwin")
       require("node:child_process").execFileSync(
         "codesign",
         [

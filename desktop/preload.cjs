@@ -4,6 +4,17 @@ contextBridge.exposeInMainWorld("ukinfoDesktop", {
   researchRead: () => ipcRenderer.invoke("ukinfo:research-read"),
   researchWrite: (value, revision) =>
     ipcRenderer.invoke("ukinfo:research-write", { value, revision }),
+  showArchiveFolder: () => ipcRenderer.invoke("ukinfo:show-archive-folder"),
+  catalogue: () => ipcRenderer.invoke("ukinfo:catalogue"),
+  manageDataset: (selection, action) =>
+    ipcRenderer.invoke("ukinfo:manage-dataset", { selection, action }),
+  onCatalogueProgress: (callback) => {
+    const listener = (_event, state) => callback(state);
+    ipcRenderer.on("ukinfo:catalogue-progress", listener);
+    return () =>
+      ipcRenderer.removeListener("ukinfo:catalogue-progress", listener);
+  },
+  resumeSetup: () => ipcRenderer.invoke("ukinfo:resume-setup"),
   capabilities: () => ipcRenderer.invoke("ukinfo:capabilities"),
   geographySource: () => ipcRenderer.invoke("ukinfo:geography-source"),
   chooseGeography: () => ipcRenderer.invoke("ukinfo:choose-geography"),

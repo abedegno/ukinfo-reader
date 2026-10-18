@@ -7,6 +7,7 @@ CPython borrowed-code notice text is fetched from the official versioned source.
 
 import argparse
 import importlib.metadata
+import os
 import shutil
 import subprocess
 import sys
@@ -127,6 +128,16 @@ def main():
             sys.executable,
             "-m",
             "PyInstaller",
+            *(
+                [
+                    "--codesign-identity",
+                    os.environ["UKINFO_CODESIGN_IDENTITY"],
+                    "--osx-entitlements-file",
+                    str(root / "desktop/entitlements/native.plist"),
+                ]
+                if sys.platform == "darwin" and os.environ.get("UKINFO_CODESIGN_IDENTITY")
+                else []
+            ),
             "--noconfirm",
             "--onefile",
             "--name",

@@ -785,6 +785,20 @@ async function refreshDatasets(preferred) {
   catalogueLoaded = true;
   window.dispatchEvent(new Event("ukinfo-catalogue-ready"));
 }
+window.addEventListener("ukinfo-catalogue-changed", async () => {
+  try {
+    await refreshDatasets();
+    await refreshAddresses();
+    reset();
+    for (const id of ["details", "address-details"])
+      if ($(id).open) $(id).close();
+    $("status").textContent = datasets.length
+      ? "Catalogue updated. Start a new search."
+      : "Add an edition or try the invented demo to begin.";
+  } catch (error) {
+    $("status").textContent = error.message;
+  }
+});
 const viewFields = [
   "view",
   "record_dataset",
@@ -1165,6 +1179,7 @@ if (window.ukinfoDesktop) {
     });
   }
   function welcome() {
+    if (catalogueLoaded && datasets.length) setupDismissed = true;
     if (!canImport || !catalogueLoaded || datasets.length || setupDismissed)
       return;
     $("import-heading").textContent = "Set up your archive";
@@ -1182,7 +1197,8 @@ if (window.ukinfoDesktop) {
     form.elements.surname.focus();
   });
   let selected = null,
-    running = false;
+    running = false,
+    desiredEdition = null;
   const phaseNames = {
     "checking source": "Checking source files…",
     "reading disc directory": "Finding the supported database…",
@@ -1203,6 +1219,7 @@ if (window.ukinfoDesktop) {
     for (const id of [
       "import-choose",
       "import-media",
+      "import-resume",
       "import-demo",
       "import-scope",
       "import-start",
@@ -1210,7 +1227,7 @@ if (window.ukinfoDesktop) {
       $(id).disabled = value;
     $("import-cancel").disabled = !value;
   };
-  const choose = async (demo, media = false) => {
+  const choose = async (demo, media = false, resume = false) => {
     try {
       busy(true);
       $("import-progress").hidden = !media;
@@ -1219,15 +1236,21 @@ if (window.ukinfoDesktop) {
       $("import-message").textContent = demo
         ? "Preparing invented entries…"
         : "Checking the selected edition…";
-      const source = await (demo
-        ? bridge.demoSource()
-        : media
-          ? bridge.chooseMedia()
-          : bridge.chooseSource());
+      const source = await (resume
+        ? bridge.resumeSetup()
+        : demo
+          ? bridge.demoSource()
+          : media
+            ? bridge.chooseMedia()
+            : bridge.chooseSource());
       if (!source) {
         $("import-message").textContent = "";
         return;
       }
+      if (desiredEdition && source.edition !== desiredEdition.edition)
+        throw new Error(
+          `Choose the source for ${desiredEdition.title}. This disc is a different edition.`,
+        );
       selected = source;
       importStep(2);
       $("import-search").hidden = true;
@@ -1235,7 +1258,12 @@ if (window.ukinfoDesktop) {
       $("import-title").textContent = source.title;
       $("import-description").textContent =
         `${source.entries.toLocaleString()} entries · ${source.label}`;
-      $("import-scope").value = demo ? "full" : "10000";
+      $("import-scope").value =
+        source.edition === "synthetic-demo" ||
+        desiredEdition?.full ||
+        (resume && source.limit === null)
+          ? "full"
+          : "10000";
       $("import-scope").disabled = demo;
       $("import-message").textContent = demo
         ? "This demo contains invented people and a business. Search for Example or Aster Archive Supplies."
@@ -1252,11 +1280,29 @@ if (window.ukinfoDesktop) {
         $("import-scope").disabled = true;
     }
   };
-  $("import-open").addEventListener("click", () =>
-    $("import-dialog").showModal(),
-  );
+  window.addEventListener("ukinfo-import-request", (event) => {
+    if (running) {
+      $("import-dialog").showModal();
+      return;
+    }
+    desiredEdition = event.detail?.full ? event.detail : null;
+    $("import-heading").textContent = desiredEdition
+      ? "Add the complete edition"
+      : "Add an edition";
+    $("import-message").textContent = desiredEdition
+      ? `Choose ${desiredEdition.title}. Your sample stays available until you choose to remove it.`
+      : "";
+    $("import-dialog").showModal();
+    if (event.detail?.resume || event.detail?.previous)
+      choose(false, true, true);
+  });
+  $("import-open").addEventListener("click", () => {
+    if (!running) desiredEdition = null;
+    $("import-dialog").showModal();
+  });
   $("import-close").addEventListener("click", () => $("import-dialog").close());
   $("import-choose").addEventListener("click", () => choose(false));
+  $("import-resume").addEventListener("click", () => choose(false, true, true));
   $("import-media").addEventListener("click", () => choose(false, true));
   $("import-demo").addEventListener("click", () => choose(true));
   bridge.onProgress((state) => {
@@ -1344,6 +1390,21 @@ if (window.ukinfoDesktop) {
       $("import-open").hidden = !c.canImport;
       canImport = c.canImport;
       welcome();
+      if (bridge.catalogue)
+        bridge
+          .catalogue()
+          .then((report) => {
+            const previous = report.setup;
+            const key = previous
+              ? previous.edition +
+                (previous.limit ? `:sample:${previous.limit}` : "")
+              : "";
+            $("import-resume").hidden =
+              !previous ||
+              previous.status === "complete" ||
+              report.datasets.some((d) => d.key === key);
+          })
+          .catch(() => {});
     })
     .catch(() => {});
 }

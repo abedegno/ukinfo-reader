@@ -85,3 +85,10 @@ reference activation. Native packaged-app tests reject a wrong ZIP and retain ex
 search/list behavior. Optional local end-to-end checks accept `UKINFO_TEST_ONSPD`
 (the pinned ZIP) and `UKINFO_TEST_MEDIA` (a supported ISO/7z) when running
 `npm --prefix desktop run test:import`; the latter imports a 10,000-entry sample.
+
+## Manage, recover or back up
+
+Open **Manage archive** for edition storage/status, sample-to-full actions, confirmed
+removal and interrupted-setup recovery. See [catalogue management](catalogue-management.md).
+For release maintainers, [macOS signing](macos-signing.md) describes the optional
+credential-backed candidate workflow; ordinary previews remain ad-hoc signed.

@@ -211,3 +211,7 @@ The desktop app can prepare a supported ISO or 7z directly, verify its edition a
 import a sample or complete catalogue. **Postcode setup** adds the optional official
 ONSPD ZIP for nearby search and maps. See [desktop setup](docs/desktop-setup.md) for
 supported discs, temporary space requirements and cancellation.
+
+**Manage archive** shows storage/completeness, upgrades samples, restarts interrupted
+setup and safely removes imports while preserving research notes. See
+[catalogue management](docs/catalogue-management.md) and [macOS release signing](docs/macos-signing.md).

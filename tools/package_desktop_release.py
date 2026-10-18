@@ -38,7 +38,7 @@ def main():
             ".parquet",
         }:
             raise RuntimeError(f"Source/data artifact in release bundle: {file.name}")
-        if file.name in {"PG_VERSION", "research-lists.json", "password"}:
+        if file.name in {"PG_VERSION", "research-lists.json", "setup-state.json", "password"}:
             raise RuntimeError("User data must not be packaged")
     args.output.mkdir(parents=True, exist_ok=True)
     label = f"ukinfo-archive-{version}-{system}-{arch}"
@@ -63,6 +63,16 @@ def main():
         with tarfile.open(archive, "w:gz") as target:
             target.add(bundle, arcname=bundle.name)
         runtime = bundle / "resources/runtime"
+    signing = "unsigned"
+    if system == "darwin":
+        result = subprocess.run(
+            ["codesign", "-dv", "--verbose=4", str(app)], capture_output=True, text=True, check=True
+        )
+        if "Authority=Developer ID Application:" in result.stderr:
+            subprocess.run(["xcrun", "stapler", "validate", str(app)], check=True)
+            signing = "Developer ID, notarized and stapled"
+        else:
+            signing = "ad-hoc, not notarized"
     manifest = {
         "version": version,
         "commit": subprocess.check_output(
@@ -78,7 +88,7 @@ def main():
         "postgresql": json.loads((runtime / "pg/BUILD.json").read_text()),
         "cabinet": json.loads((runtime / "cabinet-notices/BUILD.json").read_text()),
         "media_readers": {"pycdlib": "1.22.0", "py7zr": "1.1.4"},
-        "signing": "ad-hoc, not notarized" if system == "darwin" else "unsigned",
+        "signing": signing,
         "catalogue_included": False,
         "onspd_included": False,
         "archive": archive.name,

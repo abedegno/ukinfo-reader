@@ -288,14 +288,12 @@ const assert = require("node:assert/strict");
         fetch("/api/map?postcode=WS137SW").then((r) => r.json()),
       );
       assert.equal(map.points.length, 1);
-      await window
-        .locator("#postcode-setup-dialog")
-        .screenshot({
-          path: path.join(
-            root,
-            "desktop/test-results/desktop-postcode-setup.png",
-          ),
-        });
+      await window.locator("#postcode-setup-dialog").screenshot({
+        path: path.join(
+          root,
+          "desktop/test-results/desktop-postcode-setup.png",
+        ),
+      });
     }
     await window.locator("#postcode-setup-close").click();
     if (process.env.UKINFO_TEST_MEDIA) {
@@ -389,12 +387,109 @@ const assert = require("node:assert/strict");
     await reopened
       .locator("#research-entries textarea")
       .fill("Saved across desktop restarts.");
+    await reopened.locator("#research-dialog").evaluate((node) => node.close());
+    await reopened.locator("#catalogue-open").click();
+    await reopened
+      .locator(".catalogue-edition")
+      .filter({ hasText: "Synthetic demo" })
+      .waitFor();
+    await reopened.locator("#catalogue-dialog").screenshot({
+      path: path.join(root, "desktop/test-results/desktop-catalogue.png"),
+    });
+    await app.evaluate(({ dialog }) => {
+      dialog.showMessageBox = async () => ({ response: 0 });
+    });
+    const demoCard = reopened
+      .locator(".catalogue-edition")
+      .filter({ hasText: "Synthetic demo" });
+    await demoCard
+      .getByRole("button", { name: "Remove edition…", exact: true })
+      .click();
+    await reopened
+      .locator("#catalogue-message")
+      .filter({ hasText: "Edition kept" })
+      .waitFor();
+    await app.evaluate(({ dialog }) => {
+      dialog.showMessageBox = async () => ({ response: 1 });
+    });
+    await demoCard
+      .getByRole("button", { name: "Remove edition…", exact: true })
+      .click();
+    await reopened
+      .locator("#catalogue-message")
+      .filter({ hasText: "Research lists and notes are preserved" })
+      .waitFor();
+    assert.equal(
+      await reopened
+        .locator(".catalogue-edition")
+        .filter({ hasText: "Synthetic demo" })
+        .count(),
+      0,
+    );
+    const preserved = JSON.parse(
+      fs.readFileSync(path.join(directory, "research-lists.json"), "utf8"),
+    );
+    assert.equal(
+      preserved.lists[0].entries[0].note,
+      "Saved across desktop restarts.",
+    );
+    const setup = await reopened.evaluate(() =>
+      window.ukinfoDesktop.catalogue(),
+    );
+    if (!process.env.UKINFO_TEST_MEDIA && !process.env.UKINFO_TEST_REAL_SOURCE)
+      assert.equal(setup.setup.kind, "demo");
+    assert.equal("path" in setup.setup, false);
+    await reopened.locator("#catalogue-close").click();
     await app.close();
     app = null;
     assert.equal(
       fs.existsSync(path.join(directory, "catalogue/pg18/postmaster.pid")),
       false,
     );
+    // Simulate a process interruption after removal, then verify that the next
+    // launch rechecks the retained original source instead of losing setup.
+    if (
+      !process.env.UKINFO_TEST_MEDIA &&
+      !process.env.UKINFO_TEST_REAL_SOURCE
+    ) {
+      const setupPath = path.join(directory, "setup-state.json");
+      const previousSetup = JSON.parse(fs.readFileSync(setupPath, "utf8"));
+      fs.writeFileSync(
+        setupPath,
+        JSON.stringify({ ...previousSetup, status: "running" }),
+      );
+      app = await electron.launch({
+        ...(process.env.UKINFO_TEST_APP
+          ? { executablePath: process.env.UKINFO_TEST_APP, args: [] }
+          : { args: [path.join(root, "desktop/main.cjs")] }),
+        env,
+        timeout: 60000,
+      });
+      const resumed = await app.firstWindow();
+      await resumed.locator("#import-dialog[open]").waitFor();
+      await resumed.locator("#import-resume").click();
+      await resumed
+        .locator("#import-title")
+        .filter({ hasText: "Synthetic demo" })
+        .waitFor();
+      await resumed.locator("#import-start").click();
+      await resumed
+        .locator("#import-message")
+        .filter({ hasText: "Edition imported successfully" })
+        .waitFor({ timeout: 60000 });
+      assert.equal(
+        JSON.parse(
+          fs.readFileSync(path.join(directory, "research-lists.json"), "utf8"),
+        ).lists[0].entries[0].note,
+        "Saved across desktop restarts.",
+      );
+      await app.close();
+      app = null;
+      assert.equal(
+        fs.existsSync(path.join(directory, "catalogue/pg18/postmaster.pid")),
+        false,
+      );
+    }
     console.log(
       "Desktop wizard/import/search/export/lists/relaunch/navigation/shutdown passed" +
         (process.env.UKINFO_TEST_REAL_SOURCE

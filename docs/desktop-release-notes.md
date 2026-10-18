@@ -2,7 +2,8 @@
 
 A local archive search app with a guided first-launch importer, people/business and
 address searches, edition comparison, research lists with notes/citations, and optional
-approximate postcode maps.
+approximate postcode maps. **Manage archive** shows edition/storage status, helps
+finish interrupted setup and removes chosen imports while preserving research notes.
 
 ## Choose a download
 
