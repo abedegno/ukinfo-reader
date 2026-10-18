@@ -28,11 +28,20 @@ See [address search](../address-search.md). It shares normalized location tuples
 sorted occurrence-ID postings rather than adding text columns to 189 million existing
 rows. Displayed source fields alone supply the index; source blocks remain lossless.
 
-Premises are deliberately outside the initial location tuple. A street/location match
-must not be presented as a household, a person match, or evidence of residence across
-missing years. Address pages need a separately validated premises key including house,
-building and subbuilding distinctions. Edition dates remain cover-disc dates rather
-than verified listing/event dates.
+The second item is now implemented through [address exploration](../address-exploration.md):
+an independently checked premises key preserves house, building and flat distinctions,
+with paged people/business listings and edition-scope comparison. It uses the existing
+postcode projection and source blocks without another full-catalogue index. See the
+[validation results and limits](premises-exploration.md).
+
+A street/location match must not be presented as a household, a person match, or evidence
+of residence across missing years. Edition dates remain cover-disc dates rather than
+verified listing/event dates. Whole-search deduplication in item 3 remains separate
+future work; current grouping is page-local and address pages retain source occurrences.
+
+Guarded record/address links and reopening saved links are also implemented. These
+references depend on matching dataset keys and ingestion order; globally durable source
+identifiers, saved research lists and map exploration remain future work.
 
 Later query expansion should be explicit and explain its matches. Broad searches must
 retain complete pagination. Result counts and sorts need full-corpus benchmarks before
