@@ -169,7 +169,7 @@
             item.updated = new Date().toISOString();
           }, "Note saved locally.")
         ) {
-          drafts.delete(entry.id);
+          if (drafts.get(entry.id) === value) drafts.delete(entry.id);
           render();
         }
       });
@@ -200,7 +200,10 @@
         }
         if (
           await action((next) => {
-            const list = next.lists.find((l) => l.id === selected);
+            const list = next.lists.find((l) =>
+              l.entries.some((e) => e.id === entry.id),
+            );
+            if (!list) throw new Error("Entry no longer exists.");
             list.entries = list.entries.filter((e) => e.id !== entry.id);
           }, "Entry removed.")
         ) {
@@ -284,13 +287,15 @@
     const name = $("research-name").value.trim();
     if (!name) return;
     const id = uuid();
+    const targetList = selected,
+      mode = nameMode;
     if (
       await action((next) => {
-        if (nameMode === "new") next.lists.push({ id, name, entries: [] });
-        else next.lists.find((l) => l.id === selected).name = name;
+        if (mode === "new") next.lists.push({ id, name, entries: [] });
+        else next.lists.find((l) => l.id === targetList).name = name;
       }, "List saved.")
     ) {
-      if (nameMode === "new") selected = id;
+      if (mode === "new") selected = id;
       $("research-name-form").hidden = true;
       render();
     }
@@ -525,8 +530,9 @@
         "Research lists changed in another tab. Reload lists before saving; unsaved drafts are retained.",
       );
   });
+  window.hasUnsavedResearch = () => drafts.size > 0;
   window.addEventListener("beforeunload", (event) => {
-    if (drafts.size) {
+    if (drafts.size && !native) {
       event.preventDefault();
       event.returnValue = "";
     }

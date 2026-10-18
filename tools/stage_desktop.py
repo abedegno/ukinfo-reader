@@ -1,7 +1,8 @@
 """Stage a host-native Go server and an operator-supplied PostgreSQL 18 runtime.
 
 The PostgreSQL directory must include bin, lib, share and its redistribution notices.
-No binaries or archives are downloaded; use a trusted, patched native distribution.
+No executables are downloaded; use a trusted, patched native distribution. Matching
+CPython borrowed-code notice text is fetched from the official versioned source.
 """
 
 import argparse
@@ -11,6 +12,8 @@ import subprocess
 import sys
 import sysconfig
 from pathlib import Path
+
+from desktop_notices import dependency_notices
 
 
 def stage_notices(root, output, python_license=None):
@@ -129,6 +132,7 @@ def main():
         check=True,
     )
     stage_notices(root, output, args.python_license)
+    dependency_notices(root, output / "notices")
     if (output / "pg").exists():
         shutil.rmtree(output / "pg")
     shutil.copytree(pg, output / "pg", symlinks=False)

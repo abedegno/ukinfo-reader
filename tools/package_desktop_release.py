@@ -70,6 +70,8 @@ def main():
         ).strip(),
         "platform": system,
         "architecture": arch,
+        "python": platform.python_version(),
+        "go": subprocess.check_output(["go", "version"], text=True).strip(),
         "electron": json.loads((root / "desktop/package.json").read_text())["devDependencies"][
             "electron"
         ],

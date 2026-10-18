@@ -13,6 +13,8 @@ For matching main-branch pushes, pull requests, manual dispatches and `desktop-v
    native runtime and `cube`, retain source notices, fix library relocation paths, and
    check executables after moving the installation prefix.
 2. Build the Go service and standalone PyInstaller decoder; collect runtime notices.
+   External decoder libraries retain supplier notices from the build's Homebrew/Debian
+   packages, recorded in a separate dependency manifest; missing notices fail staging.
 3. Check native PostgreSQL lifecycle, desktop unit tests and dependency audit.
 4. Generate the native icon from the repository SVG, package Electron, and apply an
    ad-hoc integrity signature on macOS.
@@ -72,6 +74,8 @@ readline, LDAP and other external libraries: the supervisor uses private loopbac
 connections, and the Go client implements PostgreSQL transport. `BUILD.json` records
 actual configure options and the source URL/hash. Source dependencies must be reviewed
 when updating PostgreSQL; the script does not fetch an unpinned "latest" release.
+CI caches the native runtime by architecture, runner and builder-script hash. All
+restored runtimes still pass lifecycle and packaged-app checks before release.
 
 ## Signing and platform limits
 

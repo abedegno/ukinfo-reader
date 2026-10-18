@@ -8,6 +8,11 @@ available through the pinned `server/go.mod`/`go.sum` dependencies; pgx is MIT l
 gofrs/flock is BSD-3-Clause licensed, and klauspost/compress includes BSD-3-Clause
 and dependency notices in its module distribution. Build dependencies are recorded in package-lock.json.
 
+Staging also collects supplier notices for the standalone decoder's actual external
+native libraries from its PyInstaller analysis. `runtime/notices/native-dependencies.json`
+records the library/supplier names and retained notice files; missing supplier notices
+fail staging. CPython's own library/extensions retain the Python distribution notice.
+
 PostgreSQL is distributed under the PostgreSQL License. Native binary distributions
 also bundle libraries with their own notices. The operator-supplied PostgreSQL runtime
 and all of its required notices must accompany any binary bundle you redistribute.

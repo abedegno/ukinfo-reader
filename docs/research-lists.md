@@ -44,6 +44,8 @@ second confirmation. Deleting a list also deletes its saved notes.
   and survives app restarts. A main-process-only bridge validates writes, serializes
   revisions and atomically replaces the file with private permissions. Invalid files
   are preserved and block writes until repaired/restored; they are never reset silently.
+  Quitting with unsaved note drafts offers **Keep editing** before the local database
+  is stopped; discarding the drafts requires choosing that action explicitly.
 
 Use **Export all lists (JSON)** for a backup or transfer between web/desktop installations.
 **Import a research backup** previews its list/entry counts, then **Add imported lists**

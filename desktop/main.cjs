@@ -13,6 +13,7 @@ if (process.env.UKINFO_DATA_DIR)
 let server,
   window,
   importer,
+  quitPending = false,
   quitting = false;
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -83,6 +84,12 @@ if (!app.requestSingleInstanceLock()) {
           devTools: !app.isPackaged,
         },
       });
+      window.on("close", (event) => {
+        if (!quitting) {
+          event.preventDefault();
+          app.quit();
+        }
+      });
       window.webContents.setUserAgent(
         window.webContents.getUserAgent() +
           " UKInfoArchive/" +
@@ -130,11 +137,39 @@ if (!app.requestSingleInstanceLock()) {
   app.on("before-quit", (event) => {
     if (server && !quitting) {
       event.preventDefault();
-      quitting = true;
+      if (quitPending) return;
+      quitPending = true;
       (async () => {
+        if (window && !window.isDestroyed()) {
+          const dirty = await window.webContents
+            .executeJavaScript(
+              "Boolean(window.hasUnsavedResearch && window.hasUnsavedResearch())",
+            )
+            .catch(() => false);
+          if (dirty) {
+            const choice = await dialog.showMessageBox(window, {
+              type: "question",
+              buttons: ["Keep editing", "Discard unsaved notes and quit"],
+              defaultId: 0,
+              cancelId: 0,
+              message: "Unsaved research notes",
+              detail:
+                "Save your notes in Research lists before quitting to keep these edits.",
+            });
+            if (choice.response !== 1) {
+              quitPending = false;
+              return;
+            }
+          }
+        }
+        quitting = true;
         if (importer) await importer.cancel();
         await server.stop();
-      })().finally(() => app.quit());
+        app.quit();
+      })().catch((error) => {
+        quitPending = false;
+        dialog.showErrorBox("Unable to close the archive", error.message);
+      });
     }
   });
 }

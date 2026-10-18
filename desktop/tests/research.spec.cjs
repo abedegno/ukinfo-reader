@@ -194,3 +194,59 @@ test("another tab cannot silently overwrite a note draft", async ({
     .locator("#research-entries textarea")
     .fill("Saved second-tab note");
 });
+
+test("edits made during a pending note save remain unsaved drafts", async ({
+  page,
+}) => {
+  await openRecord(page);
+  await saveRecord(page, "Pending note test", "Original");
+  await page
+    .getByRole("button", { name: "Close details", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Research lists", exact: true })
+    .click();
+  await page.evaluate(() => {
+    const original = navigator.locks.request.bind(navigator.locks);
+    navigator.locks.request = (name, callback) =>
+      original(name, async () => {
+        await new Promise((resolve) => (window.releaseResearchWrite = resolve));
+        return callback();
+      });
+  });
+  await page.locator("#research-entries textarea").fill("First save");
+  await page.getByRole("button", { name: "Save note", exact: true }).click();
+  await expect
+    .poll(() => page.evaluate(() => typeof window.releaseResearchWrite))
+    .toBe("function");
+  await page.locator("#research-entries textarea").fill("Later draft");
+  await page.evaluate(() => window.releaseResearchWrite());
+  await expect(page.locator("#research-status")).toHaveText(
+    "Note saved locally.",
+  );
+  await expect(page.locator("#research-entries textarea")).toHaveValue(
+    "Later draft",
+  );
+  await expect(
+    page.getByRole("button", { name: "Save note", exact: true }),
+  ).toBeEnabled();
+  await page.locator("#research-entries textarea").fill("First save");
+});
+
+test("unavailable browser locking reports a save error without writing lists", async ({
+  page,
+}) => {
+  await openRecord(page);
+  await page.evaluate(() =>
+    Object.defineProperty(navigator, "locks", { value: undefined }),
+  );
+  await page.getByRole("button", { name: "Save to list", exact: true }).click();
+  await page.locator("#research-new-name").fill("Unsupported browser test");
+  await page.getByRole("button", { name: "Save entry", exact: true }).click();
+  await expect(page.locator("#research-save-status")).toContainText(
+    "Web Locks support",
+  );
+  expect(
+    await page.evaluate(() => localStorage.getItem("ukinfo.research.v1")),
+  ).toBeNull();
+});

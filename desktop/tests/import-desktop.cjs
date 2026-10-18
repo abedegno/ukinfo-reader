@@ -44,11 +44,9 @@ const assert = require("node:assert/strict");
     await fs.promises.mkdir(path.join(root, "desktop/test-results"), {
       recursive: true,
     });
-    await window
-      .locator("#import-dialog")
-      .screenshot({
-        path: path.join(root, "desktop/test-results/desktop-first-launch.png"),
-      });
+    await window.locator("#import-dialog").screenshot({
+      path: path.join(root, "desktop/test-results/desktop-first-launch.png"),
+    });
     assert.match(
       await window.locator("#import-heading").innerText(),
       /Set up your archive/,
@@ -299,6 +297,32 @@ const assert = require("node:assert/strict");
       .locator("#record-title")
       .filter({ hasText: "Person 000" })
       .waitFor();
+    await reopened
+      .getByRole("button", { name: "Close details", exact: true })
+      .click();
+    await reopened
+      .getByRole("button", { name: "Research lists", exact: true })
+      .click();
+    await reopened
+      .locator("#research-entries textarea")
+      .fill("Unsaved quit check");
+    await app.evaluate(({ app, dialog }) => {
+      dialog.showMessageBox = async () => ({ response: 0 });
+      app.quit();
+    });
+    await reopened.waitForTimeout(250);
+    assert.equal(
+      await reopened.evaluate(() => fetch("/api/health").then((r) => r.ok)),
+      true,
+      "cancelling quit keeps the server alive",
+    );
+    assert.equal(
+      await reopened.locator("#research-entries textarea").inputValue(),
+      "Unsaved quit check",
+    );
+    await reopened
+      .locator("#research-entries textarea")
+      .fill("Saved across desktop restarts.");
     await app.close();
     app = null;
     assert.equal(
