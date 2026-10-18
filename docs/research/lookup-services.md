@@ -41,7 +41,10 @@ future work; current grouping is page-local and address pages retain source occu
 
 Guarded record/address links and reopening saved links are also implemented. These
 references depend on matching dataset keys and ingestion order; globally durable source
-identifiers, saved research lists and map exploration remain future work.
+identifiers remain future work. [Research lists](../research-lists.md) now retain notes,
+citations and saved snapshots, with local JSON/CSV export and native restart persistence.
+[Optional maps](../maps.md) plot current-page/selected saved postcode positions and
+label nearby radius centres; background tiles load only when requested.
 
 Item 4 now includes [house/building/flat and given-name refinements](../search-refinements.md),
 middle initials, removable filter chips and explicit zero-result broadening actions.

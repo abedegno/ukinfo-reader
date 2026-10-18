@@ -16,7 +16,11 @@ it does not reconstruct missing notices for that native distribution or grant
 redistribution rights. Staging also collects available Go-module, Go, CPython and
 PyInstaller notices into `runtime/notices`; review bundled shared libraries separately.
 
-These development bundles are unsigned and are not published as project releases.
+These development preview bundles are not Developer ID signed or notarized.
+Automated desktop preview packages use the source-built PostgreSQL runtime described
+in docs/desktop-releases.md and include its COPYRIGHT, source notices and BUILD.json.
+Leaflet 1.9.4 is BSD-2-Clause licensed; its complete license is embedded with the web
+assets as leaflet-LICENSE.txt. Leaflet's published JS/CSS hashes are verified in CI.
 The MIT license does not apply to original UK-Info source databases or proprietary media.
 
 The standalone decoder bundles CPython and its standard library. Retain the Python

@@ -1,0 +1,86 @@
+# Desktop builds and releases
+
+The **Desktop packages** GitHub Actions workflow builds native Apple Silicon macOS,
+Intel macOS and Linux x86-64 packages. The matrix uses `macos-15`, `macos-15-intel` and
+`ubuntu-22.04`; there is no cross-compiled PostgreSQL or Python runtime. Windows local
+PostgreSQL supervision remains unsupported. The Python reader's Windows CI is separate.
+
+## Gates and artifacts
+
+For matching main-branch pushes, pull requests, manual dispatches and `desktop-v*` tags:
+
+1. Download official PostgreSQL 18.6 source, verify its pinned SHA-256, build a minimal
+   native runtime and `cube`, retain source notices, fix library relocation paths, and
+   check executables after moving the installation prefix.
+2. Build the Go service and standalone PyInstaller decoder; collect runtime notices.
+3. Check native PostgreSQL lifecycle, desktop unit tests and dependency audit.
+4. Generate the native icon from the repository SVG, package Electron, and apply an
+   ad-hoc integrity signature on macOS.
+5. Launch the **packaged** app: complete the empty-catalogue wizard, import invented
+   data, search/export, save a research note, close/relaunch, reopen its guarded source,
+   and verify the owned PostgreSQL child shuts down.
+6. Reject obvious source/user-data artifacts, create ZIP/tar.gz archives, SHA-256 files
+   and per-platform build manifests. Upload non-PR artifacts for 3 days. Published release assets are retained separately.
+
+Only a successful three-platform tag build creates/updates a **draft prerelease**.
+The release job verifies all archive checksums, versions and commits before uploading.
+It has narrowly scoped contents-write/actions-read permissions; build jobs are read-only.
+Published releases are not overwritten on a rerun. Artifact checksums establish integrity,
+not a signed publisher identity or bit-for-bit reproducibility of toolchains.
+
+The separate **Tests** and **Search application** workflows retain Python correctness,
+Go race/vet, API/PostgreSQL and browser regression coverage, including list validation,
+conflicting writes, map precision and source-free fixtures.
+
+## Cut a preview
+
+1. Set `desktop/package.json` and its lockfile root version together.
+2. Merge reviewed code and verify all CI workflows, including native packages.
+3. Tag that commit `desktop-vVERSION` and push the tag. A mismatched package version fails.
+4. Inspect the resulting draft, platform packages, checksums and manifests. Publish the
+   draft explicitly when ready; no branch push publishes a release automatically.
+
+No auto-updater is installed. Replace the application bundle to update; keep the user
+profile/data directory. Back up research JSON and the catalogue before moving data or
+planning a schema migration. Physical PostgreSQL clusters are OS/architecture/version
+specific and are not a portable interchange format.
+
+## Native local build
+
+Requires a C compiler/GNU make, Bison/Flex, Python, Go and Node. Linux also needs
+`patchelf`, Xvfb and Electron system libraries (the workflow lists packages).
+
+```sh
+python tools/build_postgres_runtime.py --output private/native-pg
+python -m pip install -e '.[desktop]'
+python tools/stage_desktop.py --postgres private/native-pg
+cd desktop
+npm ci
+npx playwright install chromium
+node build-icon.cjs
+npm run pack
+UKINFO_PG_BIN="$PWD/../build/desktop/pg/bin" \
+  UKINFO_TEST_APP='/absolute/path/to/packaged/app/executable' npm run test:import
+cd ..
+python tools/package_desktop_release.py
+```
+
+The runtime builder will not replace an existing output directory. It checks for a
+5 GiB free-space reserve before building, uses temporary source/build files and removes
+them afterwards. Runtime builds deliberately omit optional ICU, SSL, compression,
+readline, LDAP and other external libraries: the supervisor uses private loopback SCRAM
+connections, and the Go client implements PostgreSQL transport. `BUILD.json` records
+actual configure options and the source URL/hash. Source dependencies must be reviewed
+when updating PostgreSQL; the script does not fetch an unpinned "latest" release.
+
+## Signing and platform limits
+
+Current packages are unsigned previews (macOS ad-hoc signed, not notarized). A production
+macOS release needs a Developer ID identity, entitlement review and notarization with
+the account's credentials. Those credentials are not present in the repository and no
+signing bypass is built into the app. Linux archives target the CI baseline, not every
+Linux distribution. Test hardware/OS compatibility before broad distribution.
+
+Primary references: [GitHub runner architectures](https://docs.github.com/en/actions/reference/runners/github-hosted-runners),
+[PostgreSQL native build/relocation guidance](https://www.postgresql.org/docs/18/install-make.html),
+and [Apple's opening guidance](https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac).

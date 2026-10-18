@@ -1,0 +1,107 @@
+name: Desktop packages
+on:
+  push:
+    branches: [main]
+    tags: ['desktop-v*']
+    paths: ['desktop/**', 'server/**', 'src/**', 'tools/**', 'pyproject.toml', '.github/workflows/desktop.yml']
+  pull_request:
+    paths: ['desktop/**', 'server/**', 'src/**', 'tools/**', 'pyproject.toml', '.github/workflows/desktop.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+jobs:
+  build:
+    name: ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {runner: macos-15, platform: darwin-arm64}
+          - {runner: macos-15-intel, platform: darwin-x64}
+          - {runner: ubuntu-22.04, platform: linux-x64}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with: {go-version: '1.26.4', cache-dependency-path: server/go.sum}
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with: {node-version: '22', cache: npm, cache-dependency-path: desktop/package-lock.json}
+      - name: Verify tag version
+        if: startsWith(github.ref, 'refs/tags/')
+        env: {RELEASE_TAG: '${{ github.ref_name }}'}
+        run: python -c 'import json,os; assert os.environ["RELEASE_TAG"] == "desktop-v" + json.load(open("desktop/package.json"))["version"]'
+      - name: Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential bison flex patchelf xvfb libgtk-3-0 libnss3 libasound2 libgbm1
+      - name: Build pinned native PostgreSQL with cube
+        run: python tools/build_postgres_runtime.py --output "$RUNNER_TEMP/pg-runtime"
+      - name: Stage Go and standalone decoder with notices
+        run: |
+          python -m pip install -e '.[desktop]'
+          python tools/stage_desktop.py --postgres "$RUNNER_TEMP/pg-runtime"
+      - name: Verify native PostgreSQL lifecycle
+        working-directory: server
+        env: {UKINFO_TEST_PG_BIN: '${{ runner.temp }}/pg-runtime/bin'}
+        run: go test -count=1 ./internal/desktop
+      - name: Install and test desktop shell
+        working-directory: desktop
+        run: |
+          npm ci
+          npm test
+          npm audit --omit=dev
+          npx playwright install --with-deps chromium
+          node build-icon.cjs
+          npm run pack
+      - name: Packaged app onboarding/import/search/lists/shutdown (macOS)
+        if: runner.os == 'macOS'
+        working-directory: desktop
+        env:
+          UKINFO_PG_BIN: '${{ github.workspace }}/build/desktop/pg/bin'
+          UKINFO_TEST_APP: '${{ github.workspace }}/dist/desktop/UK-Info Archive-${{ matrix.platform }}/UK-Info Archive.app/Contents/MacOS/UK-Info Archive'
+        run: npm run test:import
+      - name: Packaged app onboarding/import/search/lists/shutdown (Linux)
+        if: runner.os == 'Linux'
+        working-directory: desktop
+        env:
+          UKINFO_PG_BIN: '${{ github.workspace }}/build/desktop/pg/bin'
+          UKINFO_TEST_APP: '${{ github.workspace }}/dist/desktop/UK-Info Archive-linux-x64/UK-Info Archive'
+        run: xvfb-run -a npm run test:import
+      - name: Create source-free archive, checksums and provenance
+        run: python tools/package_desktop_release.py
+      - if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: desktop-${{ matrix.platform }}
+          path: dist/releases/*
+          if-no-files-found: error
+          retention-days: 3
+  release:
+    if: startsWith(github.ref, 'refs/tags/desktop-v')
+    needs: build
+    runs-on: ubuntu-22.04
+    permissions: {contents: write, actions: read}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Download tested packages and create draft prerelease
+        env:
+          GH_TOKEN: '${{ github.token }}'
+          RELEASE_TAG: '${{ github.ref_name }}'
+          RELEASE_RUN: '${{ github.run_id }}'
+        run: |
+          gh run download "$RELEASE_RUN" --pattern 'desktop-*' --dir release-assets
+          python tools/verify_desktop_release.py release-assets --tag "$RELEASE_TAG" --commit "$GITHUB_SHA"
+          if gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft > /tmp/release-draft; then
+            test "$(cat /tmp/release-draft)" = true
+            gh release edit "$RELEASE_TAG" --draft --prerelease --notes-file docs/desktop-release-notes.md
+          else
+            gh release create "$RELEASE_TAG" --draft --prerelease --title "UK-Info Archive ${RELEASE_TAG#desktop-v} (preview)" --notes-file docs/desktop-release-notes.md
+          fi
+          find release-assets -type f -exec gh release upload "$RELEASE_TAG" '{}' --clobber \;

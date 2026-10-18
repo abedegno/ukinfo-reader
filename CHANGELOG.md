@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Add named local research lists, notes/citations, saved-snapshot comparison, safe
+  JSON backup/import and CSV export, with native persistence across server-port changes.
+- Add optional postcode maps for current results, records and saved entries, labelled
+  nearby radius/centres, local ONSPD lookup and opt-in attributed street-map backgrounds.
+- Add guided first-launch import, a native app icon, official-source PostgreSQL runtime
+  builds and three-platform package CI with checksums, manifests and draft prereleases.
+
 - Add house/building/flat refinements, independent first-name modes, middle initials,
   active-filter removal and zero-result actions. Preserve complete sparse-match paging
   and use postcode-leading ordering for exact-postcode searches.

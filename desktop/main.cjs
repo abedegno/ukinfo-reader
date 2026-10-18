@@ -4,6 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { startServer } = require("./supervisor.cjs");
 const { installImporter } = require("./import-ui.cjs");
+const { installResearch } = require("./research-store.cjs");
 
 // An explicit data directory makes an unpacked build portable, including imports.
 // Run only one app against a given directory; PostgreSQL owns its physical cluster.
@@ -82,9 +83,19 @@ if (!app.requestSingleInstanceLock()) {
           devTools: !app.isPackaged,
         },
       });
+      window.webContents.setUserAgent(
+        window.webContents.getUserAgent() +
+          " UKInfoArchive/" +
+          app.getVersion() +
+          " (+https://github.com/abedegno/ukinfo-reader)",
+      );
+      const externalLinks = new Set([
+        "https://github.com/abedegno/ukinfo-reader",
+        "https://www.openstreetmap.org/copyright",
+        "https://www.openstreetmap.org/fixthemap",
+      ]);
       window.webContents.setWindowOpenHandler(({ url }) => {
-        if (url === "https://github.com/abedegno/ukinfo-reader")
-          shell.openExternal(url).catch(() => {});
+        if (externalLinks.has(url)) shell.openExternal(url).catch(() => {});
         return { action: "deny" };
       });
       window.webContents.on("will-navigate", (event, target) => {
@@ -101,6 +112,12 @@ if (!app.requestSingleInstanceLock()) {
         runtime,
         isPackaged: app.isPackaged,
         log: (text) => log.write(text),
+      });
+      installResearch({
+        ipcMain,
+        getWindow: () => window,
+        origin: server.address,
+        directory: app.getPath("userData"),
       });
       await window.loadURL(server.address);
       window.show();

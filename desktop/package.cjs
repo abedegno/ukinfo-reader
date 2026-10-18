@@ -28,6 +28,11 @@ const path = require("node:path");
     platform: process.platform,
     arch: process.arch,
     overwrite: true,
+    icon: path.join(
+      runtime,
+      process.platform === "darwin" ? "app-icon.icns" : "app-icon.png",
+    ),
+    appCategoryType: "public.app-category.reference",
     electronVersion: require("./package.json").devDependencies.electron,
     asar: true,
     prune: true,
@@ -36,9 +41,17 @@ const path = require("node:path");
       /\.(?:test|spec)\.cjs$/,
       /^\/playwright\.config\.cjs$/,
       /^\/package\.cjs$/,
+      /^\/build-icon\.cjs$/,
     ],
     afterCopy: [
       async ({ buildPath }) => {
+        await fs.promises.copyFile(
+          path.resolve(
+            __dirname,
+            "../server/cmd/ukinfo-server/web/research-model.js",
+          ),
+          path.join(buildPath, "research-model.js"),
+        );
         await fs.promises.cp(
           runtime,
           path.join(path.dirname(buildPath), "runtime"),
@@ -51,7 +64,21 @@ const path = require("node:path");
       },
     ],
   });
-  for (const destination of destinations) console.log(destination);
+  for (const destination of destinations) {
+    if (process.platform === "darwin")
+      require("node:child_process").execFileSync(
+        "codesign",
+        [
+          "--force",
+          "--deep",
+          "--sign",
+          "-",
+          path.join(destination, "UK-Info Archive.app"),
+        ],
+        { stdio: "inherit" },
+      );
+    console.log(destination);
+  }
 })().catch((error) => {
   console.error(error.message);
   process.exitCode = 1;

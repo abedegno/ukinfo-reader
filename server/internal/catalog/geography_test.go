@@ -120,6 +120,19 @@ func testGeography(t *testing.T, db *pgxpool.Pool) {
 	if !bytes.Contains(fetch("/api/geography", 200), []byte(`"available":true`)) {
 		t.Fatal("missing reference capability")
 	}
+	var mapped struct {
+		Points    []mapPoint `json:"points"`
+		Unlocated int        `json:"unlocated"`
+	}
+	if err := json.Unmarshal(fetch("/api/map?postcode=AA1+1AA&postcode=AA11AA&postcode=BB11BB&postcode=DD11DD&postcode=BT11AA&postcode=XX11XX", 200), &mapped); err != nil || len(mapped.Points) != 2 || mapped.Unlocated != 3 {
+		t.Fatal("map points", mapped, err)
+	}
+	if mapped.Points[0].Latitude != 51 || mapped.Points[1].Terminated != "200102" {
+		t.Fatal("map provenance", mapped)
+	}
+	fetch("/api/map", 400)
+	fetch("/api/map?postcode=AA1", 400)
+	fetch("/api/map?"+strings.Repeat("postcode=AA11AA&", 101), 400)
 	var response struct {
 		Items     []result         `json:"items"`
 		Next      string           `json:"next_cursor"`

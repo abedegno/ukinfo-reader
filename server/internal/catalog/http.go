@@ -60,6 +60,7 @@ func (a *API) Handler() http.Handler {
 	})
 	mux.HandleFunc("GET /api/datasets", a.datasets)
 	mux.HandleFunc("GET /api/geography", a.geography)
+	mux.HandleFunc("GET /api/map", a.mapLocations)
 	mux.HandleFunc("GET /api/addresses", a.addresses)
 	mux.HandleFunc("GET /api/record", a.record)
 	mux.HandleFunc("GET /api/address", a.address)

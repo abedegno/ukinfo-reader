@@ -15,6 +15,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"strings"
@@ -235,8 +236,29 @@ func run() error {
 	if *origin != "" {
 		allowedOrigin = strings.TrimRight(*origin, "/")
 	}
+	tileURL := os.Getenv("UKINFO_MAP_TILES_URL")
+	if tileURL == "" {
+		tileURL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+	}
+	tileOrigin := ""
+	if tileURL != "none" {
+		parsed, e := url.Parse(tileURL)
+		if e != nil || parsed.Scheme != "https" || parsed.Host == "" || parsed.User != nil || !strings.Contains(tileURL, "{z}") || !strings.Contains(tileURL, "{x}") || !strings.Contains(tileURL, "{y}") {
+			return errors.New("UKINFO_MAP_TILES_URL needs an HTTPS {z}/{x}/{y} template, or none")
+		}
+		tileOrigin = parsed.Scheme + "://" + parsed.Host
+	}
+	tileAttribution := os.Getenv("UKINFO_MAP_ATTRIBUTION")
+	if tileAttribution == "" {
+		tileAttribution = "© OpenStreetMap contributors"
+	}
 	ui, _ := fs.Sub(assets, "web")
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /api/map-config", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Cache-Control", "no-store")
+		_ = json.NewEncoder(w).Encode(map[string]any{"tiles_url": tileURL, "attribution": tileAttribution})
+	})
 	mux.Handle("/api/", catalog.NewAPI(db).Handler())
 	mux.Handle("/", http.FileServer(http.FS(ui)))
 	secure := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -249,7 +271,7 @@ func run() error {
 			http.Error(w, "Invalid origin", http.StatusForbidden)
 			return
 		}
-		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: "+tileOrigin+"; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Referrer-Policy", "no-referrer")
 		mux.ServeHTTP(w, r)

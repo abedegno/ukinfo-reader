@@ -40,7 +40,19 @@ const assert = require("node:assert/strict");
     );
     assert.equal(capabilities.canImport, true);
     assert.equal("token" in capabilities, false);
-    await window.getByRole("button", { name: "Add edition" }).click();
+    await window.locator("#import-dialog[open]").waitFor();
+    await fs.promises.mkdir(path.join(root, "desktop/test-results"), {
+      recursive: true,
+    });
+    await window
+      .locator("#import-dialog")
+      .screenshot({
+        path: path.join(root, "desktop/test-results/desktop-first-launch.png"),
+      });
+    assert.match(
+      await window.locator("#import-heading").innerText(),
+      /Set up your archive/,
+    );
     await window.getByRole("button", { name: "Try invented demo" }).click();
     await window
       .locator("#import-title")
@@ -53,7 +65,9 @@ const assert = require("node:assert/strict");
       .locator("#import-message")
       .filter({ hasText: "Edition imported successfully" })
       .waitFor({ timeout: 60000 });
-    await window.getByRole("button", { name: "Close import" }).click();
+    await window
+      .getByRole("button", { name: "Start searching", exact: true })
+      .click();
     await window.getByLabel("Surname", { exact: true }).fill("Example");
     await window.getByRole("button", { name: "Search archive" }).click();
     await window.locator("article").first().waitFor();
@@ -136,7 +150,10 @@ const assert = require("node:assert/strict");
       .filter({ hasText: "1 source entries" })
       .waitFor();
     assert.equal(await window.locator("#items article").count(), 1);
-    assert.match(await window.locator("#items article").innerText(), /Person 011/);
+    assert.match(
+      await window.locator("#items article").innerText(),
+      /Person 011/,
+    );
     await window
       .getByRole("button", { name: "Open saved link", exact: true })
       .click();
@@ -151,6 +168,22 @@ const assert = require("node:assert/strict");
     await window
       .locator("#record-title")
       .filter({ hasText: "Person 000 Example" })
+      .waitFor();
+    await window
+      .getByRole("button", { name: "Save to list", exact: true })
+      .click();
+    await window
+      .locator("#research-new-name")
+      .fill("Invented desktop research");
+    await window
+      .locator("#research-save-note")
+      .fill("Saved across desktop restarts.");
+    await window
+      .getByRole("button", { name: "Save entry", exact: true })
+      .click();
+    await window
+      .locator("#record-feedback")
+      .filter({ hasText: "Saved to research list" })
       .waitFor();
     await window
       .getByRole("button", { name: "Close details", exact: true })
@@ -228,8 +261,52 @@ const assert = require("node:assert/strict");
       fs.existsSync(path.join(directory, "catalogue/pg18/postmaster.pid")),
       false,
     );
+    const saved = JSON.parse(
+      fs.readFileSync(path.join(directory, "research-lists.json"), "utf8"),
+    );
+    assert.equal(
+      saved.lists[0].entries[0].note,
+      "Saved across desktop restarts.",
+    );
+    app = await electron.launch({
+      ...(process.env.UKINFO_TEST_APP
+        ? { executablePath: process.env.UKINFO_TEST_APP, args: [] }
+        : { args: [path.join(root, "desktop/main.cjs")] }),
+      env,
+      timeout: 60000,
+    });
+    const reopened = await app.firstWindow();
+    await reopened
+      .locator('#dataset option[value="synthetic-demo"]')
+      .waitFor({ state: "attached" });
+    assert.equal(
+      await reopened.locator("#import-dialog").evaluate((node) => node.open),
+      false,
+      "existing catalogues do not show the first-run wizard",
+    );
+    await reopened
+      .getByRole("button", { name: "Research lists", exact: true })
+      .click();
+    await reopened.locator("#research-entries textarea").waitFor();
+    assert.equal(
+      await reopened.locator("#research-entries textarea").inputValue(),
+      "Saved across desktop restarts.",
+    );
+    await reopened
+      .getByRole("button", { name: "Open source", exact: true })
+      .click();
+    await reopened
+      .locator("#record-title")
+      .filter({ hasText: "Person 000" })
+      .waitFor();
+    await app.close();
+    app = null;
+    assert.equal(
+      fs.existsSync(path.join(directory, "catalogue/pg18/postmaster.pid")),
+      false,
+    );
     console.log(
-      "Desktop GUI demo import/name/address search/paging/export/navigation/shutdown passed" +
+      "Desktop wizard/import/search/export/lists/relaunch/navigation/shutdown passed" +
         (process.env.UKINFO_TEST_REAL_SOURCE
           ? "; real source cancellation rolled back."
           : "."),

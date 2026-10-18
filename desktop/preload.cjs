@@ -1,6 +1,9 @@
 "use strict";
 const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("ukinfoDesktop", {
+  researchRead: () => ipcRenderer.invoke("ukinfo:research-read"),
+  researchWrite: (value, revision) =>
+    ipcRenderer.invoke("ukinfo:research-write", { value, revision }),
   capabilities: () => ipcRenderer.invoke("ukinfo:capabilities"),
   chooseSource: () => ipcRenderer.invoke("ukinfo:choose-source"),
   demoSource: () => ipcRenderer.invoke("ukinfo:demo"),

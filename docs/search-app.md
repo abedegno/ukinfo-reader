@@ -13,6 +13,10 @@ source comparison, copyable citations and current-page JSONL/CSV exports are imp
 people/businesses, edition-scope comparison, saved-link opening and page exports.
 [Search refinements](search-refinements.md) add house/building/flat fields, independent
 given-name matching, middle initials, removable filters and zero-result actions.
+[Local research lists](research-lists.md), snapshot comparison and [optional postcode
+maps](maps.md) are available in the web interface and desktop app. The desktop opens a
+guided importer for an empty catalogue; [native package/release CI](desktop-releases.md)
+tests the wizard, imports and list persistence across restarts.
 Catalogue-wide deduplication, alphabetical sorting, contains/fuzzy matching, background bulk exports, resumable ingestion, automatic database
 upgrades and signed installers are not yet implemented.
 
@@ -160,7 +164,8 @@ library notices from the native distribution too.
 It includes Electron, the Go binary, a standalone Python decoder and the staged
 PostgreSQL runtime; **no catalogue**. End users do not need Python installed.
 Only native macOS/Linux bundles are supported at present. Windows local process supervision,
-signing/notarization and release installer testing remain future work. PostgreSQL/runtime
+signing/notarization and installer-specific testing remain future work. Native packaged
+archives are checked through [desktop release CI](desktop-releases.md). PostgreSQL/runtime
 redistribution notices must accompany any bundle you distribute; the project's MIT license
 does not relicense those dependencies or the original data.
 

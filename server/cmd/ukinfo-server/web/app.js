@@ -8,6 +8,7 @@ let kind = "person",
   pageHistory = [],
   generation = 0;
 let datasets = [];
+let catalogueLoaded = false;
 let searchGeography = null;
 let addressCoverage = new Set();
 const locationFields = ["street", "locality", "town", "county"];
@@ -781,6 +782,8 @@ async function refreshDatasets(preferred) {
       ? "Add an edition or try the invented demo to begin."
       : "No editions imported yet. Follow the catalogue import guide to add your local disc data.";
   editionNote();
+  catalogueLoaded = true;
+  window.dispatchEvent(new Event("ukinfo-catalogue-ready"));
 }
 const viewFields = [
   "view",
@@ -840,6 +843,7 @@ function closeView() {
 async function recordActions(item, metadata) {
   const generation = ++recordActionGeneration;
   $("copy-record-link").disabled = !hasRecordID(item);
+  $("save-record").disabled = !hasRecordID(item) || !item.source_id;
   $("explore-address").disabled = true;
   $("record-address-note").textContent = "";
   if (!hasRecordID(item)) return;
@@ -1143,6 +1147,32 @@ window.addEventListener("popstate", restoreURL);
 
 if (window.ukinfoDesktop) {
   const bridge = window.ukinfoDesktop;
+  let setupDismissed = false,
+    canImport = false;
+  function importStep(step) {
+    [...$("import-steps").children].forEach((node, index) => {
+      node.classList.toggle("done", index < step - 1);
+      if (index === step - 1) node.setAttribute("aria-current", "step");
+      else node.removeAttribute("aria-current");
+    });
+  }
+  function welcome() {
+    if (!canImport || !catalogueLoaded || datasets.length || setupDismissed)
+      return;
+    $("import-heading").textContent = "Set up your archive";
+    $("import-welcome").hidden = false;
+    if (!$("import-dialog").open) $("import-dialog").showModal();
+  }
+  window.addEventListener("ukinfo-catalogue-ready", welcome);
+  $("import-dialog").addEventListener("close", () => {
+    setupDismissed = true;
+  });
+  $("import-search").addEventListener("click", () => {
+    $("import-dialog").close();
+    if (selected?.edition === "synthetic-demo")
+      form.elements.surname.value = "Example";
+    form.elements.surname.focus();
+  });
   let selected = null,
     running = false;
   const phaseNames = {
@@ -1180,6 +1210,8 @@ if (window.ukinfoDesktop) {
         return;
       }
       selected = source;
+      importStep(2);
+      $("import-search").hidden = true;
       $("import-selected").hidden = false;
       $("import-title").textContent = source.title;
       $("import-description").textContent =
@@ -1228,6 +1260,8 @@ if (window.ukinfoDesktop) {
       return;
     }
     busy(true);
+    importStep(3);
+    $("import-search").hidden = true;
     $("import-progress").hidden = false;
     $("import-bar").removeAttribute("value");
     $("import-stage").textContent = "Checking source files…";
@@ -1241,6 +1275,8 @@ if (window.ukinfoDesktop) {
       $("import-stage").textContent = "Ready to search";
       $("import-bar").value = 100;
       $("import-message").textContent = "Edition imported successfully.";
+      importStep(4);
+      $("import-search").hidden = false;
     } catch (error) {
       // Cancellation can arrive after commit. Reconcile with the catalogue
       // rather than claiming that a completed import was rolled back.
@@ -1254,10 +1290,13 @@ if (window.ukinfoDesktop) {
         $("import-message").textContent =
           "The edition finished importing and is available to search.";
         $("import-stage").textContent = "Ready to search";
+        importStep(4);
+        $("import-search").hidden = false;
         $("import-bar").value = 100;
       } else {
         $("import-message").textContent = error.message;
         $("import-stage").textContent = "Import stopped";
+        importStep(2);
       }
     } finally {
       busy(false);
@@ -1279,6 +1318,8 @@ if (window.ukinfoDesktop) {
     .capabilities()
     .then((c) => {
       $("import-open").hidden = !c.canImport;
+      canImport = c.canImport;
+      welcome();
     })
     .catch(() => {});
 }

@@ -33,6 +33,7 @@ jobs:
       - name: Go tests and vet
         working-directory: server
         run: |
+          python3 ../tools/check_web_assets.py
           test -z "$(gofmt -l .)"
           go vet ./...
           go test -race -count=1 ./...
