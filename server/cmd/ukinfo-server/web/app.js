@@ -69,6 +69,8 @@ function reset() {
   pageHistory = [];
   next = "";
   lastQuery = null;
+  $("about-search").hidden = true;
+  $("edit-search").hidden = true;
   searchGeography = null;
   $("geography-note").hidden = true;
   $("items").replaceChildren();
@@ -84,26 +86,86 @@ function reset() {
   $("status").textContent =
     "Enter a name, address or postcode to search this edition.";
 }
+function selectedDatasets(selection) {
+  return selection === "all"
+    ? datasets.filter(
+        (d) =>
+          !d.manifest.sample ||
+          !datasets.some(
+            (other) =>
+              other.manifest.edition === d.manifest.edition &&
+              !other.manifest.sample,
+          ),
+      )
+    : datasets.filter((d) => d.key === selection);
+}
 function addressNote() {
-  const selection = form.elements.dataset.value;
-  const selected =
-    selection === "all"
-      ? datasets.filter(
-          (d) =>
-            !d.manifest.sample ||
-            !datasets.some(
-              (other) =>
-                other.manifest.edition === d.manifest.edition &&
-                !other.manifest.sample,
-            ),
-        )
-      : datasets.filter((d) => d.key === selection);
+  const selected = selectedDatasets(form.elements.dataset.value);
   const missing = selected.filter((d) => !addressCoverage.has(d.key));
   const available = selected.length > 0 && missing.length === 0;
   for (const name of locationFields) form.elements[name].disabled = !available;
   $("address-capability").textContent = available
     ? "Street, locality, town and county searches are ready for the selected editions."
     : "Address search is not ready for every selected edition. Choose an indexed edition or add its address index.";
+}
+function explainSearch(params, count, more) {
+  const chosen = selectedDatasets(params.get("dataset"));
+  const content = $("search-explanation");
+  content.replaceChildren();
+  content.append(
+    element(
+      "p",
+      `${chosen.length} imported sources searched for ${params.get("kind") === "business" ? "businesses" : "people"}. All-edition searches omit a sample when its complete edition is imported.`,
+    ),
+  );
+  const sources = element("ul", "");
+  for (const dataset of chosen)
+    sources.append(
+      element(
+        "li",
+        `${dataset.manifest.title}: ${dataset.entries.toLocaleString()} imported entries · ${dataset.manifest.sample ? "PARTIAL SAMPLE" : "complete import"} · ${addressCoverage.has(dataset.key) ? "address index ready" : "address index unavailable"}${dataset.manifest.edition.includes("2004") ? " · no business listings on this disc" : ""}`,
+      ),
+    );
+  content.append(sources);
+  const rules = element("ul", "");
+  const rule = (message) => rules.append(element("li", message));
+  if (params.has("surname") || params.has("organisation"))
+    rule(
+      `Name matching: ${params.get("match") === "prefix" ? "starts with" : "exact"}; a trailing * explicitly requests starts with. Case is ignored.`,
+    );
+  if (params.has("first_name"))
+    rule(
+      `Given names: ${params.get("first_match") === "given" ? "first name may be followed by other given names" : params.get("first_match") === "prefix" || (!params.has("first_match") && params.get("match") === "prefix") ? "starts with" : "exact"}.`,
+    );
+  if (locationFields.some((name) => params.has(name)))
+    rule(
+      "Street, locality, town and county use the separate source fields. A trailing * matches the beginning; fields must all match.",
+    );
+  if (params.has("postcode"))
+    rule(
+      "Postcode matching ignores spaces and case and accepts a full postcode, sector or district prefix.",
+    );
+  if (params.has("near"))
+    rule(
+      "Nearby uses approximate Great Britain postcode positions. Districts and sectors use a centre point, not an area boundary. Listings without eligible coordinates are excluded. This is not an exact property location.",
+    );
+  rule(
+    "Results use catalogue order. Grouping combines identical listings only on the current page; it does not establish that listings are the same person.",
+  );
+  rule(
+    "Edition labels identify source publications. They do not establish dates of residence, moves or relationships.",
+  );
+  if (!count)
+    rule(
+      "No matches means no entries matched these rules in the imported sources. It does not establish that a person or business was absent from an area; samples and missing source fields can limit coverage.",
+    );
+  else
+    rule(
+      `${count}${more ? "+" : ""} entries found on this page. Page counts are not unique-person counts or a count of every match.`,
+    );
+  content.append(rules);
+  $("about-search").hidden = false;
+  return sources.textContent;
 }
 async function refreshAddresses() {
   try {
@@ -649,12 +711,24 @@ async function search(params, trail = [], updateURL = true) {
   try {
     const data = await api(`/api/search?${params}`);
     if (id !== generation) return;
+    $("edit-search").hidden = false;
     lastQuery = new URLSearchParams(params);
     pageHistory = trail;
     page = data.items;
     searchGeography = data.geography || null;
     next = data.next_cursor;
     render();
+    const coverage = explainSearch(params, page.length, Boolean(next));
+    window.dispatchEvent(
+      new CustomEvent("ukinfo-search-complete", {
+        detail: {
+          params: params.toString(),
+          count: page.length,
+          more: Boolean(next),
+          coverage,
+        },
+      }),
+    );
     if (!page.length) renderSuggestions(params);
     if (updateURL) $("results-title").scrollIntoView({ block: "start" });
   } catch (error) {
@@ -1472,3 +1546,22 @@ if (window.ukinfoDesktop) {
     })
     .catch(() => {});
 }
+
+$("edit-search").addEventListener("click", () => {
+  form.scrollIntoView({ block: "start", behavior: "instant" });
+  form.elements[kind === "business" ? "organisation" : "surname"].focus({
+    preventScroll: true,
+  });
+});
+$("clear-search").addEventListener("click", () => {
+  const dataset = form.elements.dataset.value;
+  form.reset();
+  form.elements.dataset.value = dataset;
+  savedPostcodeConstraint = "";
+  showKind(kind);
+  updatePostcodeMode();
+  const url = new URL(location.href);
+  url.search = "";
+  history.pushState(null, "", url);
+  form.elements[kind === "business" ? "organisation" : "surname"].focus();
+});

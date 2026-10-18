@@ -970,3 +970,94 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
+/* Readable research controls and touch targets at all supported widths. */
+label,
+select,
+.primary,
+.tabs button,
+#status,
+.results-heading button,
+.pagination button {
+  font-size: 14px;
+}
+.note,
+.source-badges,
+.filter-chips button {
+  font-size: 13px;
+  line-height: 1.5;
+}
+.tag {
+  font-size: 11px;
+}
+button {
+  min-height: 36px;
+}
+input[type="checkbox"],
+input[type="radio"] {
+  min-height: 20px;
+}
+.results-heading {
+  flex-wrap: wrap;
+}
+.results-heading h2 {
+  flex: 1 0 100%;
+}
+#clear-search,
+#workbench-dialog button {
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 8px 12px;
+  color: var(--ink);
+  background: white;
+}
+#workbench-dialog {
+  width: min(900px, 94vw);
+}
+#workbench-save-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+}
+#workbench-save-form label {
+  flex: 1;
+  min-width: 180px;
+}
+#workbench-save-form button {
+  margin-bottom: 14px;
+}
+#workbench-dialog .check {
+  font-size: 14px;
+}
+#about-search {
+  margin: 12px 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+#about-search li {
+  margin: 8px 0;
+  overflow-wrap: anywhere;
+}
+#workspace-feedback:empty {
+  display: none;
+}
+@media (max-width: 600px) {
+  button {
+    min-height: 44px;
+  }
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+  article {
+    flex-wrap: wrap;
+  }
+  article > div {
+    min-width: 0;
+    max-width: 100%;
+  }
+  #items article > button {
+    width: 100%;
+  }
+}

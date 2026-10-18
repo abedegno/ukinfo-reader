@@ -88,6 +88,20 @@ const fs = require("node:fs/promises"),
         { id: "backup-list", name: "Invented backup research", entries: [] },
       ];
       await window.ukinfoDesktop.researchWrite(next, next.revision - 1);
+      const workspace = await window.ukinfoDesktop.workbenchRead();
+      workspace.revision++;
+      workspace.searches = [
+        {
+          id: "backup-search",
+          name: "Invented backup query",
+          query: { dataset: "synthetic-demo", surname: "Example" },
+          created: new Date().toISOString(),
+        },
+      ];
+      await window.ukinfoDesktop.workbenchWrite(
+        workspace,
+        workspace.revision - 1,
+      );
     });
     const before = await fs.readFile(
       path.join(directory, "research-lists.json"),
@@ -131,6 +145,11 @@ const fs = require("node:fs/promises"),
       (await window.evaluate(() => window.ukinfoDesktop.researchRead()))
         .lists[0].name,
       "Invented backup research",
+    );
+    assert.equal(
+      (await window.evaluate(() => window.ukinfoDesktop.workbenchRead()))
+        .searches[0].name,
+      "Invented backup query",
     );
     const catalogue = await window.evaluate(() =>
       window.ukinfoDesktop.catalogue(),

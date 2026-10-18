@@ -1,6 +1,9 @@
 "use strict";
 const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("ukinfoDesktop", {
+  workbenchRead: () => ipcRenderer.invoke("ukinfo:workbench-read"),
+  workbenchWrite: (value, revision) =>
+    ipcRenderer.invoke("ukinfo:workbench-write", { value, revision }),
   researchRead: () => ipcRenderer.invoke("ukinfo:research-read"),
   researchWrite: (value, revision) =>
     ipcRenderer.invoke("ukinfo:research-write", { value, revision }),

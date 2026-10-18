@@ -73,3 +73,15 @@ Browser checks cover changing postcode scope, unavailable/activated geography, o
 combined-filter links, first-name matching compatibility, address-only searches,
 paging, filter removal, delayed initialization and 1240/768/390/320px layouts. Native
 packaged-app tests continue to exercise onboarding, searching and address refinements.
+
+## Explaining and revisiting results
+
+**About this search** names the selected imported sources, sample/full status, entry
+counts and address-index availability. It explains the actual name/postcode/location
+rules, coordinate limitations and why zero matches do not establish absence. Edition
+labels identify publications, not dates of residence. Research history records this
+scope alongside the submitted criteria. **Edit search** returns keyboard focus to the
+form; **Clear search fields** retains the selected edition and directory type. Text
+and action sizes have been increased, and mobile record actions span the card width.
+These checks improve the existing interface; they are not a complete WCAG audit or
+substitute for the review's proposed user study.

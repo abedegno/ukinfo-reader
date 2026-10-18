@@ -72,13 +72,12 @@ const path = require("node:path");
             ),
           }),
         );
-        await fs.promises.copyFile(
-          path.resolve(
-            __dirname,
-            "../server/cmd/ukinfo-server/web/research-model.js",
-          ),
-          path.join(buildPath, "research-model.js"),
-        );
+        for (const name of ["research-model.js", "workbench-model.js"]) {
+          await fs.promises.copyFile(
+            path.resolve(__dirname, "../server/cmd/ukinfo-server/web", name),
+            path.join(buildPath, name),
+          );
+        }
         await fs.promises.cp(
           runtime,
           path.join(path.dirname(buildPath), "runtime"),

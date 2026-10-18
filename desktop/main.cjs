@@ -286,17 +286,26 @@ if (!app.requestSingleInstanceLock()) {
           if (dirty) {
             const choice = await dialog.showMessageBox(window, {
               type: "question",
-              buttons: ["Keep editing", "Discard unsaved notes and quit"],
+              buttons: [
+                "Keep editing",
+                "Keep drafts and quit",
+                "Discard unsaved notes and quit",
+              ],
               defaultId: 0,
               cancelId: 0,
               message: "Unsaved research notes",
               detail:
-                "Save your notes in Research lists before quitting to keep these edits.",
+                "Keep drafts for recovery next time, or discard them and retain only saved notes.",
             });
-            if (choice.response !== 1) {
+            if (choice.response === 0) {
               quitPending = false;
               return;
             }
+            await window.webContents.executeJavaScript(
+              choice.response === 2
+                ? "window.discardResearchDrafts()"
+                : "window.flushResearchDrafts()",
+            );
           }
         }
         quitting = true;

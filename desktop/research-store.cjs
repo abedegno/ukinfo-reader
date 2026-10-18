@@ -1,9 +1,13 @@
 "use strict";
 const fs = require("node:fs/promises");
 const path = require("node:path");
-const model = require("./research-model.cjs");
-function createResearchStore(directory) {
-  const filename = path.join(directory, "research-lists.json");
+function createResearchStore(directory, options = {}) {
+  const model = options.model || require("./research-model.cjs");
+  const filename = path.join(
+    directory,
+    options.filename || "research-lists.json",
+  );
+  const label = options.label || "Research lists";
   let queue = Promise.resolve();
   async function read() {
     try {
@@ -14,7 +18,7 @@ function createResearchStore(directory) {
     } catch (error) {
       if (error.code === "ENOENT") return model.empty();
       throw new Error(
-        "Research lists could not be read. The existing file has been preserved; restore a JSON backup or inspect research-lists.json.",
+        `${label} could not be read. The existing file has been preserved; restore a private backup or inspect ${path.basename(filename)}.`,
       );
     }
   }
@@ -26,7 +30,7 @@ function createResearchStore(directory) {
         const current = await read();
         if (current.revision !== expected || next.revision !== expected + 1)
           throw new Error(
-            "Research lists changed in another window. Reload lists before saving.",
+            `${label} changed in another window. Reload before saving.`,
           );
         await fs.mkdir(directory, { recursive: true, mode: 0o700 });
         const temporary = filename + ".tmp";
@@ -50,7 +54,14 @@ function createResearchStore(directory) {
   };
 }
 function installResearch({ ipcMain, getWindow, origin, directory }) {
-  const store = createResearchStore(directory);
+  const stores = {
+    research: createResearchStore(directory),
+    workbench: createResearchStore(directory, {
+      model: require("./workbench-model.cjs"),
+      filename: "workbench.json",
+      label: "Research workspace",
+    }),
+  };
   function trusted(event) {
     const window = getWindow();
     if (
@@ -62,13 +73,18 @@ function installResearch({ ipcMain, getWindow, origin, directory }) {
     )
       throw new Error("Archive window required.");
   }
-  ipcMain.handle("ukinfo:research-read", (event) => {
-    trusted(event);
-    return store.read();
-  });
-  ipcMain.handle("ukinfo:research-write", (event, { value, revision } = {}) => {
-    trusted(event);
-    return store.write(value, revision);
-  });
+  for (const [name, store] of Object.entries(stores)) {
+    ipcMain.handle(`ukinfo:${name}-read`, (event) => {
+      trusted(event);
+      return store.read();
+    });
+    ipcMain.handle(
+      `ukinfo:${name}-write`,
+      (event, { value, revision } = {}) => {
+        trusted(event);
+        return store.write(value, revision);
+      },
+    );
+  }
 }
 module.exports = { createResearchStore, installResearch };

@@ -73,3 +73,33 @@ malformed entries and duplicate IDs are rejected before mutation. Imported links
 stored as reference parameters, not arbitrary navigation URLs. Display uses text nodes,
 not imported HTML. Native IPC accepts only the owning archive window's main frame.
 The collection has no background sync, cloud account or multi-device merge service.
+
+## Recoverable drafts and saved searches
+
+Notes still require **Save note**. While editing a saved entry, a separate local draft
+is written after a short pause. Wait for **Drafts saved for recovery** before relying
+on recovery; storage failures are shown in the research status. Reloading restores
+drafts without changing committed notes. **Discard draft** keeps the saved note.
+When a saved note changed since a recovered draft began, compare both versions before
+saving. Another tab's changed draft is preserved and a conflict is reported; copy
+unsaved edits before reloading to resolve it. The desktop quit dialog offers keeping
+drafts, discarding them, or continuing to edit. The note on a not-yet-saved new entry
+is not a recoverable draft: save the entry before closing that dialog.
+
+**Saved searches** stores query recipes independently of results. Rerunning starts
+from the first page and uses the installed catalogue. Adding/removing editions can
+change results. Page cursors and external URLs are never saved as recipe fields.
+Optional local research history records the last 200 successful first-page searches,
+including zero matches, with source coverage and page counts. It is off by default;
+pausing retains existing history, while **Clear search history** removes it. Errors
+and subsequent pages are not recorded as new research attempts.
+
+Desktop lists use `research-lists.json`; recipes, history and drafts use a separate
+versioned `workbench.json`. Both are private files, included in a full archive backup,
+and excluded from diagnostics. Browser storage is specific to the site's origin.
+Browser clearing/private browsing can lose it. Workspace export includes private
+history and drafts; import previews and adds saved query recipes only, keeping notes,
+drafts and logging settings untouched. Use full desktop backup/restore to preserve
+the complete archive workspace. List JSON version 1 remains compatible with earlier
+versions and continues to export committed notes only. Never attach either export
+to public issues without first removing private content.

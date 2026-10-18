@@ -12,6 +12,100 @@
     drafts = new Map();
   const bridge = window.ukinfoDesktop;
   const native = Boolean(bridge?.researchRead && bridge?.researchWrite);
+  const persistedDrafts = new Map(),
+    draftBases = new Map(),
+    pendingDrafts = new Set();
+  let draftTimer,
+    draftQueue = Promise.resolve(),
+    draftReadError = null;
+  const draftsReady = window.researchWorkspace
+    .read()
+    .then((value) => {
+      for (const draft of value.drafts) {
+        persistedDrafts.set(draft.id, draft);
+        drafts.set(draft.id, draft.note);
+        draftBases.set(draft.id, draft.base);
+      }
+    })
+    .catch((error) => {
+      draftReadError = error;
+    });
+  async function flushDrafts() {
+    clearTimeout(draftTimer);
+    const run = async () => {
+      await draftsReady;
+      if (draftReadError) throw draftReadError;
+      const ids = [...pendingDrafts];
+      if (!ids.length) return;
+      pendingDrafts.clear();
+      const snapshot = new Map(
+        ids.map((id) => [
+          id,
+          drafts.has(id)
+            ? {
+                id,
+                note: drafts.get(id),
+                base: draftBases.get(id) || "",
+                updated: new Date().toISOString(),
+              }
+            : null,
+        ]),
+      );
+      try {
+        await window.researchWorkspace.update((value) => {
+          for (const id of ids) {
+            const current =
+              value.drafts.find((draft) => draft.id === id) || null;
+            if (
+              JSON.stringify(current) !==
+              JSON.stringify(persistedDrafts.get(id) || null)
+            )
+              throw new Error(
+                "A note draft changed in another window. Your edits remain here; copy them before reloading. The other window's draft has been preserved.",
+              );
+          }
+          value.drafts = value.drafts.filter(
+            (draft) => !snapshot.has(draft.id),
+          );
+          for (const draft of snapshot.values())
+            if (draft) value.drafts.push(draft);
+        });
+        for (const [id, value] of snapshot)
+          value ? persistedDrafts.set(id, value) : persistedDrafts.delete(id);
+      } catch (error) {
+        for (const id of ids) pendingDrafts.add(id);
+        throw error;
+      }
+    };
+    const operation = draftQueue.then(run);
+    draftQueue = operation.catch(() => {});
+    return operation;
+  }
+  function draftChanged(id, base) {
+    if (!draftBases.has(id)) draftBases.set(id, base);
+    pendingDrafts.add(id);
+    clearTimeout(draftTimer);
+    draftTimer = setTimeout(() => {
+      flushDrafts()
+        .then(() =>
+          status(
+            "Drafts saved for recovery on this device. Use Save note to commit them.",
+          ),
+        )
+        .catch((error) =>
+          status(`Draft recovery unavailable: ${error.message}`),
+        );
+    }, 300);
+  }
+  window.flushResearchDrafts = flushDrafts;
+  window.discardResearchDrafts = async () => {
+    await draftsReady;
+    for (const id of drafts.keys()) {
+      drafts.delete(id);
+      pendingDrafts.add(id);
+    }
+    await flushDrafts();
+  };
   const byId = (id) => data.lists.find((list) => list.id === id);
   const current = () => byId(selected);
   const uuid = () => crypto.randomUUID();
@@ -24,6 +118,8 @@
         });
   }
   async function load() {
+    await draftsReady;
+    if (draftReadError) throw draftReadError;
     data = model.validate(await storageRead());
     if (!byId(selected)) selected = data.lists[0]?.id || "";
   }
@@ -141,6 +237,26 @@
       textarea.value = drafts.get(entry.id) ?? entry.note;
       textarea.setAttribute("aria-label", `Note for ${entry.summary.title}`);
       noteLabel.append(textarea);
+      if (
+        drafts.has(entry.id) &&
+        draftBases.get(entry.id) !== undefined &&
+        draftBases.get(entry.id) !== entry.note
+      ) {
+        const comparison = element("details", ""),
+          summary = element(
+            "summary",
+            "Saved note changed since this draft began — compare before saving",
+          );
+        comparison.append(
+          summary,
+          element("p", `Current saved note: ${entry.note || "(empty)"}`),
+          element(
+            "p",
+            `Draft started from: ${draftBases.get(entry.id) || "(empty)"}`,
+          ),
+        );
+        body.append(comparison);
+      }
       body.append(noteLabel);
       const actions = element("div", "", "record-actions");
       const noteButton = element(
@@ -152,6 +268,7 @@
       textarea.addEventListener("input", () => {
         if (textarea.value === entry.note) drafts.delete(entry.id);
         else drafts.set(entry.id, textarea.value);
+        draftChanged(entry.id, entry.note);
         noteButton.disabled = !drafts.has(entry.id);
         noteButton.textContent = noteButton.disabled
           ? "Note saved"
@@ -169,8 +286,28 @@
             item.updated = new Date().toISOString();
           }, "Note saved locally.")
         ) {
-          if (drafts.get(entry.id) === value) drafts.delete(entry.id);
+          if (drafts.get(entry.id) === value) {
+            drafts.delete(entry.id);
+            draftChanged(entry.id, value);
+          }
           render();
+        }
+      });
+      const discard = element("button", "Discard draft");
+      discard.type = "button";
+      discard.disabled = !drafts.has(entry.id);
+      textarea.addEventListener("input", () => {
+        discard.disabled = !drafts.has(entry.id);
+      });
+      discard.addEventListener("click", async () => {
+        drafts.delete(entry.id);
+        draftChanged(entry.id, entry.note);
+        try {
+          await flushDrafts();
+          render();
+          status("Draft discarded; saved note retained.");
+        } catch (error) {
+          status(error.message);
         }
       });
       const open = element("button", "Open source");
@@ -208,11 +345,12 @@
           }, "Entry removed.")
         ) {
           drafts.delete(entry.id);
+          draftChanged(entry.id, entry.note);
           checked.delete(entry.id);
           render();
         }
       });
-      actions.append(open, noteButton, remove);
+      actions.append(open, noteButton, discard, remove);
       body.append(actions);
       card.append(body);
       container.append(card);
@@ -230,7 +368,7 @@
       render();
       status(
         drafts.size
-          ? "Unsaved note drafts are retained in this window."
+          ? "Recovered note drafts are shown below. Drafts are stored on this device; use Save note to commit them."
           : `${data.lists.length} research lists stored locally.`,
       );
     } catch (error) {
@@ -317,7 +455,10 @@
         "List deleted.",
       )
     ) {
-      for (const id of ids) drafts.delete(id);
+      for (const id of ids) {
+        drafts.delete(id);
+        draftChanged(id, "");
+      }
       checked.clear();
       $("research-delete-confirm").hidden = true;
     }
