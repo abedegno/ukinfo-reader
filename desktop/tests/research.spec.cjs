@@ -250,3 +250,79 @@ test("unavailable browser locking reports a save error without writing lists", a
     await page.evaluate(() => localStorage.getItem("ukinfo.research.v1")),
   ).toBeNull();
 });
+
+test("near-limit collections export backups that can be imported into an empty profile", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    const entry = {
+      id: "entry",
+      mode: "record",
+      scope: "edition",
+      ref: { dataset: "invented", id: 1, source_id: "invented:0" },
+      summary: {
+        title: "Invented",
+        address: "Invented Street",
+        postcode: "ZZ11ZZ",
+        edition: "Invented edition",
+        listing: "person",
+        phone: "",
+        citation: "Invented citation",
+        warnings: "",
+      },
+      note: "x".repeat(950),
+      created: "2026-10-18T00:00:00.000Z",
+      updated: "2026-10-18T00:00:00.000Z",
+    };
+    const data = window.UKResearch.empty();
+    data.lists = [
+      {
+        id: "list",
+        name: "Invented large list",
+        entries: Array.from({ length: 1400 }, (_, i) => ({
+          ...entry,
+          id: "entry" + i,
+          ref: { ...entry.ref, id: i + 1, source_id: "invented:" + i },
+        })),
+      },
+    ];
+    localStorage.setItem(
+      "ukinfo.research.v1",
+      JSON.stringify(window.UKResearch.validate(data)),
+    );
+  });
+  await page
+    .getByRole("button", { name: "Research lists", exact: true })
+    .click();
+  await expect(page.locator("#research-list")).toContainText("1400");
+  const raw = await downloadText(
+    page,
+    page.getByRole("button", { name: "Export all lists (JSON)", exact: true }),
+  );
+  expect(Buffer.byteLength(raw)).toBeLessThanOrEqual(2 * 1024 * 1024);
+  await page.evaluate(() => localStorage.removeItem("ukinfo.research.v1"));
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Research lists", exact: true })
+    .click();
+  await page.locator("#research-dialog details summary").click();
+  await page
+    .locator("#research-file")
+    .setInputFiles({
+      name: "large-invented-backup.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(raw),
+    });
+  await expect(page.locator("#research-import-preview")).toContainText(
+    "1400 entries",
+  );
+  await page
+    .getByRole("button", { name: "Add imported lists", exact: true })
+    .click();
+  await expect(page.locator("#research-status")).toContainText(
+    "Imported lists added",
+  );
+  await expect(page.locator("#research-list")).toContainText("1400");
+  await expect(page.locator("#research-entries article")).toHaveCount(50);
+});

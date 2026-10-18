@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Keep research JSON backups within the import size limit, including near-limit collections.
+
 - Add named local research lists, notes/citations, saved-snapshot comparison, safe
   JSON backup/import and CSV export, with native persistence across server-port changes.
 - Add optional postcode maps for current results, records and saved entries, labelled

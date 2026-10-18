@@ -326,7 +326,7 @@
     try {
       const stored = model.validate(await storageRead());
       downloadBlob(
-        new Blob([JSON.stringify(stored, null, 2) + "\n"], {
+        new Blob([JSON.stringify(stored)], {
           type: "application/json",
         }),
         "ukinfo-research.json",
