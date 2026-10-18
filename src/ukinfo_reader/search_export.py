@@ -8,6 +8,7 @@ import argparse
 import hashlib
 import itertools
 import json
+import signal
 import struct
 import sys
 
@@ -86,6 +87,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--data")
+    source.add_argument(
+        "--prepare-media", help="extract and verify supported ISO/7z database files"
+    )
+    parser.add_argument("--output-folder", help="new temporary folder for --prepare-media")
     source.add_argument("--demo", action="store_true", help="use invented demo entries")
     parser.add_argument(
         "--identify", action="store_true", help="identify and verify without exporting"
@@ -94,6 +99,22 @@ def main():
     args = parser.parse_args()
     if args.limit is not None and args.limit < 1:
         parser.error("--limit must be positive")
+
+    if args.prepare_media:
+        from .media import prepare
+
+        if not args.output_folder:
+            parser.error("--prepare-media requires --output-folder")
+
+        # Native cancellation must unwind extraction before the owning process
+        # removes its temporary root. SIGKILL remains a final native fallback.
+        def interrupted(signum, frame):
+            raise KeyboardInterrupt("Disc preparation canceled")
+
+        signal.signal(signal.SIGTERM, interrupted)
+        edition = prepare(args.prepare_media, args.output_folder)
+        print(json.dumps(dict(edition=edition.id, title=edition.title, entries=COUNTS[edition.id])))
+        return
 
     def run(db):
         if args.identify:

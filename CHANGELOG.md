@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Add desktop postcode-reference setup with a native ZIP chooser, pinned ONSPD
+  verification, progress/cancellation and immediate nearby/map availability.
+- Add direct ISO/7z preparation, including modern InstallShield tables, fixed output
+  paths, fingerprint checks, temporary-file cleanup and a 5 GiB free-space reserve.
+- Bundle portable media readers and a source-built cabinet helper with notices;
+  desktop preview version 0.2.0.
+
 - Keep research JSON backups within the import size limit, including near-limit collections.
 
 - Add named local research lists, notes/citations, saved-snapshot comparison, safe

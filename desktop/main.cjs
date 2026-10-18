@@ -99,6 +99,7 @@ if (!app.requestSingleInstanceLock()) {
       const externalLinks = new Set([
         "https://github.com/abedegno/ukinfo-reader",
         "https://www.openstreetmap.org/copyright",
+        "https://www.arcgis.com/sharing/rest/content/items/9e5a92a3cfb14dc7ad43d6ea7a7b8c7f/data",
         "https://www.openstreetmap.org/fixthemap",
       ]);
       window.webContents.setWindowOpenHandler(({ url }) => {

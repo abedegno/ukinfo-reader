@@ -74,14 +74,31 @@ func migrateGeography(ctx context.Context, tx pgx.Tx) error {
 }
 
 func fileSHA256(path string) (string, error) {
+	return fileSHA256Context(context.Background(), path)
+}
+
+func fileSHA256Context(ctx context.Context, path string) (string, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return "", err
 	}
 	defer f.Close()
 	h := sha256.New()
-	if _, err = io.Copy(h, f); err != nil {
-		return "", err
+	buffer := make([]byte, 1<<20)
+	for {
+		if err := ctx.Err(); err != nil {
+			return "", err
+		}
+		n, err := f.Read(buffer)
+		if n > 0 {
+			_, _ = h.Write(buffer[:n])
+		}
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return "", err
+		}
 	}
 	return hex.EncodeToString(h.Sum(nil)), nil
 }
@@ -147,7 +164,10 @@ func ImportGeography(ctx context.Context, db *pgxpool.Pool, path string, options
 	if err = check(); err != nil {
 		return report, err
 	}
-	hash, err := fileSHA256(path)
+	if options.Progress != nil {
+		options.Progress(Progress{Phase: "verifying postcode archive"})
+	}
+	hash, err := fileSHA256Context(ctx, path)
 	if err != nil {
 		return report, err
 	}
@@ -218,6 +238,12 @@ func ImportGeography(ctx context.Context, db *pgxpool.Pool, path string, options
 		return report, err
 	}
 	defer tx.Rollback(context.Background())
+	// Ingestion/index creation is bounded by the caller's cancellable context,
+	// not the serving pool's short search-statement deadline. SET LOCAL ensures
+	// ordinary queries keep their deadline when this connection is returned.
+	if _, err = tx.Exec(ctx, "SET LOCAL statement_timeout=0"); err != nil {
+		return report, err
+	}
 	if _, err = tx.Exec(ctx, "SELECT pg_advisory_xact_lock(742918305)"); err != nil {
 		return report, err
 	}
@@ -326,7 +352,10 @@ func ImportGeography(ctx context.Context, db *pgxpool.Pool, path string, options
 	if err = check(); err != nil {
 		return report, err
 	}
-	hash, err = fileSHA256(path)
+	if options.Progress != nil {
+		options.Progress(Progress{Phase: "checking postcode archive", Done: report.Entries})
+	}
+	hash, err = fileSHA256Context(ctx, path)
 	if err != nil {
 		return report, err
 	}

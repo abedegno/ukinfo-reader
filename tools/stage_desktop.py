@@ -13,6 +13,7 @@ import sys
 import sysconfig
 from pathlib import Path
 
+from build_cabinet_runtime import build as build_cabinet
 from desktop_notices import dependency_notices
 
 
@@ -35,7 +36,21 @@ def stage_notices(root, output, python_license=None):
             "Provide --python-license with this Python distribution's full license notice"
         )
     shutil.copy2(python_license, notices / "Python-LICENSE.txt")
-    for name in ("pyinstaller", "altgraph", "macholib"):
+    for name in (
+        "pyinstaller",
+        "altgraph",
+        "macholib",
+        "pycdlib",
+        "py7zr",
+        "texttable",
+        "pycryptodomex",
+        "brotli",
+        "psutil",
+        "pyppmd",
+        "pybcj",
+        "multivolumefile",
+        "inflate64",
+    ):
         try:
             distribution = importlib.metadata.distribution(name)
         except importlib.metadata.PackageNotFoundError:
@@ -120,6 +135,10 @@ def main():
             str(root / "src"),
             "--collect-submodules",
             "ukinfo_reader",
+            "--collect-submodules",
+            "py7zr",
+            "--collect-submodules",
+            "Cryptodome",
             "--distpath",
             str(output),
             "--workpath",
@@ -131,6 +150,7 @@ def main():
         cwd=root,
         check=True,
     )
+    build_cabinet(output)
     stage_notices(root, output, args.python_license)
     dependency_notices(root, output / "notices")
     if (output / "pg").exists():

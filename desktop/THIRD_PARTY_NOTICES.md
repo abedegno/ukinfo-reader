@@ -41,3 +41,11 @@ Great Britain data is used under the applicable Open Government Licence with OS,
 Royal Mail and ONS attribution shown in the application after import. The original
 UK-wide archive also contains Northern Ireland data under separate terms; the current
 importer excludes that data and the Crown dependencies. See docs/geography.md.
+
+Direct media import bundles pycdlib 1.22.0 and py7zr 1.1.4 with their transitive
+wheel suppliers; exact versions/licenses are retained in runtime/notices and the
+native-dependencies manifest. The InstallShield helper uses unshield 1.6.2 (MIT)
+with its bundled MD5 implementation; retain cabinet-notices/unshield-LICENSE,
+md5-source-notices and BUILD.json. It links the OS/distribution zlib; Linux builds
+also retain the distribution's zlib copyright notice. None of these components
+executes original installers or grants rights to redistribute source media.

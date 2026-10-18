@@ -132,7 +132,9 @@ function beginImport(command, directory, limit, control, onProgress, log) {
       return data;
     } catch (error) {
       if (abort.signal.aborted)
-        throw new Error("Import canceled. Refresh the catalogue to check whether it finished.");
+        throw new Error(
+          "Import canceled. Refresh the catalogue to check whether it finished.",
+        );
       throw error;
     } finally {
       clearInterval(timer);
@@ -142,4 +144,140 @@ function beginImport(command, directory, limit, control, onProgress, log) {
   })();
   return { done, cancel };
 }
-module.exports = { importerCommand, identify, beginImport };
+function beginPrepareMedia(command, file, output, onProgress, log) {
+  const child = spawn(
+    command.executable,
+    [...command.args, "--prepare-media", file, "--output-folder", output],
+    {
+      stdio: ["ignore", "pipe", "pipe"],
+      windowsHide: true,
+      detached: process.platform !== "win32",
+      env: {
+        ...process.env,
+        UKINFO_CABINET: path.join(
+          path.dirname(command.executable),
+          "ukinfo-cabinet",
+        ),
+      },
+    },
+  );
+  const kill = (signal) => {
+    try {
+      if (process.platform !== "win32") process.kill(-child.pid, signal);
+      else child.kill(signal);
+    } catch {}
+  };
+  let stdout = "",
+    stderr = "",
+    canceled = false;
+  child.stdout.on("data", (chunk) => {
+    stdout += chunk;
+    if (stdout.length > 1 << 20) kill("SIGKILL");
+  });
+  child.stderr.on("data", (chunk) => {
+    stderr += chunk;
+    const lines = stderr.split("\n");
+    stderr = lines.pop().slice(-65536);
+    for (const line of lines) {
+      if (line.startsWith("UKINFO_PROGRESS ")) {
+        try {
+          onProgress({ running: true, progress: JSON.parse(line.slice(16)) });
+        } catch {}
+      } else log(line + "\n");
+    }
+  });
+  const cancel = () => {
+    canceled = true;
+    kill("SIGTERM");
+    const force = setTimeout(() => kill("SIGKILL"), 3000);
+    force.unref();
+    child.once("exit", () => clearTimeout(force));
+  };
+  const timeout = setTimeout(cancel, 4 * 60 * 60 * 1000);
+  timeout.unref();
+  const done = new Promise((resolve, reject) => {
+    child.once("error", reject);
+    child.once("close", (code) => {
+      if (stderr) log(stderr + "\n");
+      if (canceled) return reject(new Error("Disc preparation canceled."));
+      if (code !== 0)
+        return reject(
+          new Error(
+            "Unable to prepare this disc. Check free space and that it contains a supported edition; see server.log for details.",
+          ),
+        );
+      try {
+        const value = JSON.parse(stdout);
+        if (
+          typeof value.edition !== "string" ||
+          typeof value.title !== "string" ||
+          !Number.isSafeInteger(value.entries)
+        )
+          throw new Error("Invalid disc identification.");
+        resolve(value);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }).finally(() => clearTimeout(timeout));
+  return { done, cancel };
+}
+function beginGeographyImport(file, control, onProgress) {
+  const headers = { Authorization: `Bearer ${control.token}` };
+  const abort = new AbortController();
+  let polling = false;
+  const timer = setInterval(async () => {
+    if (polling) return;
+    polling = true;
+    try {
+      const response = await fetch(`${control.url}/progress`, {
+        headers,
+        signal: AbortSignal.timeout(3000),
+      });
+      if (response.ok) onProgress(await response.json());
+    } catch {
+    } finally {
+      polling = false;
+    }
+  }, 300);
+  const done = (async () => {
+    try {
+      const response = await fetch(`${control.url}/import-geography`, {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ path: file }),
+        signal: abort.signal,
+      });
+      const result = await response.json();
+      if (!response.ok)
+        throw new Error(result.error || "Postcode import failed.");
+      return result;
+    } catch (error) {
+      if (abort.signal.aborted)
+        throw new Error(
+          "Postcode import canceled. Check reference status before retrying.",
+        );
+      throw error;
+    } finally {
+      clearInterval(timer);
+    }
+  })();
+  return {
+    done,
+    cancel() {
+      abort.abort();
+      fetch(`${control.url}/cancel`, {
+        method: "POST",
+        headers,
+        signal: AbortSignal.timeout(3000),
+      }).catch(() => {});
+    },
+  };
+}
+module.exports = {
+  importerCommand,
+  identify,
+  beginImport,
+  beginGeographyImport,
+  beginPrepareMedia,
+};

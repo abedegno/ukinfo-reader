@@ -140,6 +140,12 @@ func ImportWithOptions(ctx context.Context, db *pgxpool.Pool, input io.Reader, o
 		return 0, e
 	}
 	defer tx.Rollback(context.Background())
+	// Ingestion/index creation is bounded by the caller's cancellable context,
+	// not the serving pool's short search-statement deadline. SET LOCAL ensures
+	// ordinary queries keep their deadline when this connection is returned.
+	if _, e = tx.Exec(ctx, "SET LOCAL statement_timeout=0"); e != nil {
+		return 0, e
+	}
 	var locked bool
 	if e = tx.QueryRow(ctx, "SELECT pg_try_advisory_xact_lock(742918304)").Scan(&locked); e != nil {
 		return 0, e

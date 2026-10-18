@@ -9,6 +9,7 @@
     <script src="/app.js" defer></script>
     <script src="/research.js" defer></script>
     <script src="/maps.js" defer></script>
+    <script src="/postcode-setup.js" defer></script>
   </head>
   <body>
     <header>
@@ -16,6 +17,9 @@
       <div class="header-actions">
         <button id="research-open" type="button">Research lists</button>
         <button id="saved-link-open" type="button">Open saved link</button>
+        <button id="postcode-setup-open" type="button" hidden>
+          Postcode setup
+        </button>
         <button id="import-open" type="button" hidden>Add edition +</button
         ><span class="badge">Historical directory</span>
       </div>
@@ -295,6 +299,59 @@
         >
       </footer>
     </main>
+    <dialog id="postcode-setup-dialog" aria-labelledby="postcode-setup-heading">
+      <div class="dialog-heading">
+        <h2 id="postcode-setup-heading">Add postcode locations</h2>
+        <button id="postcode-setup-close" aria-label="Close postcode setup">
+          ✕
+        </button>
+      </div>
+      <p>
+        Enable nearby search and maps with the ONS Postcode Directory. Your
+        reference stays on this computer and works offline; street-map
+        backgrounds are optional.
+      </p>
+      <p id="postcode-reference-status" class="note"></p>
+      <ol class="setup-instructions">
+        <li>
+          Download the supported
+          <a id="postcode-download" target="_blank" rel="noopener noreferrer"
+            >official ONSPD ZIP</a
+          >
+          (<span id="postcode-release">checking release…</span>).
+        </li>
+        <li>
+          Keep the ZIP intact. Choose it below; the app verifies its SHA-256
+          before loading postcodes.
+        </li>
+      </ol>
+      <p class="note">
+        Great Britain coverage, including current and retired postcodes.
+        Locations are approximate postcode points, not house positions. Northern
+        Ireland and Crown dependencies are excluded.
+      </p>
+      <p class="note">
+        Allow several minutes and at least 5 GiB free after import. The ZIP is
+        read directly without extracting CSV files. An existing reference stays
+        available until the new import commits.
+      </p>
+      <div class="import-actions">
+        <button id="postcode-choose" type="button">Choose ONSPD ZIP…</button>
+        <button id="postcode-start" type="button" class="primary" disabled>
+          Import postcode locations
+        </button>
+      </div>
+      <p id="postcode-selected" class="note"></p>
+      <progress
+        id="postcode-progress"
+        aria-label="Postcode import progress"
+        hidden
+      ></progress>
+      <p id="postcode-message" role="status" aria-live="polite"></p>
+      <button id="postcode-cancel" type="button" hidden>
+        Cancel postcode import
+      </button>
+    </dialog>
     <dialog id="import-dialog" aria-labelledby="import-heading">
       <div class="dialog-heading">
         <h2 id="import-heading">Add an edition</h2>
@@ -307,7 +364,7 @@
         <li>4 · Search</li>
       </ol>
       <p class="import-intro">
-        Choose a folder containing extracted UK-Info database files. The app
+        Choose an ISO, 7z cover disc, or extracted database folder. The app
         identifies the edition and checks its source fingerprints.
       </p>
       <div id="import-welcome" hidden>
@@ -325,10 +382,15 @@
       <details class="source-help">
         <summary>Where do I find the source folder?</summary>
         <p>
-          Mount or extract your ISO/DVD or cover-disc archive first, then choose
-          the folder containing the UK-Info database files. The app verifies its
-          supported edition before importing. It does not import an ISO or 7z
-          file directly.
+          Choose ISO or 7z to prepare the required files automatically, or mount
+          or extract the disc yourself and choose its database folder. The app
+          checks the supported edition's fingerprints before importing.
+        </p>
+        <p>
+          A 7z containing an ISO needs temporary room for that image plus
+          database files. At least 5 GiB free is retained. Preparation can be
+          canceled; temporary files are removed when you choose another source
+          or quit.
         </p>
         <p>
           Keep the original files available until import completes. You can
@@ -337,6 +399,7 @@
         </p>
       </details>
       <div class="import-actions">
+        <button id="import-media" type="button">Choose ISO or 7z…</button>
         <button id="import-choose" type="button">Choose source folder…</button
         ><button id="import-demo" type="button">Try invented demo</button>
       </div>

@@ -22,14 +22,15 @@ integrity signature, which is not a trusted publisher identity.
 
 No original UK-Info data, catalogue, ONSPD reference or map tiles are included. The app
 requires no separately installed Python, Go or PostgreSQL. On first launch, choose a
-supported **extracted database folder**, or the invented demo. ISO/7z extraction is not
-performed inside the app. Complete imports need several gigabytes of free space; the
+supported **ISO/7z**, an **extracted database folder**, or the invented demo. The app
+prepares and verifies required database files without running the original installer.
+Choose DVD 2 for PC Format 175 (2005). See [desktop setup](https://github.com/abedegno/ukinfo-reader/blob/main/docs/desktop-setup.md). Complete imports need several gigabytes of free space; the
 importer preserves a 5 GiB local reserve. Existing catalogues are not deleted or upgraded
 in place by installing this app.
 
 Research lists are saved in the app's data directory and survive restarts. Export JSON
 backups before moving machines or changing data directories. Postcode maps require an
-optional separately imported ONSPD reference; online backgrounds are off until selected.
+optional ONSPD reference added through **Postcode setup**; online backgrounds are off until selected.
 
 Each archive has a SHA-256 file and a build manifest recording its exact commit,
 architecture and pinned runtime source. These are development preview packages, not

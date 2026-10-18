@@ -253,6 +253,72 @@ const assert = require("node:assert/strict");
         "canceled source import must not publish a dataset",
       );
     }
+    // The chooser returns an opaque selection; a wrong ZIP reaches the owned
+    // server and fails its pinned hash without changing the current reference.
+    await window.locator("#import-dialog").evaluate((node) => node.close());
+    const wrongZip = path.join(directory, "wrong-reference.zip");
+    fs.writeFileSync(wrongZip, "Invented ZIP fixture");
+    await app.evaluate(({ dialog }, file) => {
+      dialog.showOpenDialog = async () => ({
+        canceled: false,
+        filePaths: [file],
+      });
+    }, wrongZip);
+    await window.locator("#postcode-setup-open").click();
+    await window.locator("#postcode-choose").click();
+    await window.locator("#postcode-start").click();
+    await window
+      .locator("#postcode-message")
+      .filter({ hasText: "SHA-256 mismatch" })
+      .waitFor({ timeout: 30000 });
+    if (process.env.UKINFO_TEST_ONSPD) {
+      await app.evaluate(({ dialog }, file) => {
+        dialog.showOpenDialog = async () => ({
+          canceled: false,
+          filePaths: [file],
+        });
+      }, process.env.UKINFO_TEST_ONSPD);
+      await window.locator("#postcode-choose").click();
+      await window.locator("#postcode-start").click();
+      await window
+        .locator("#postcode-message")
+        .filter({ hasText: "Postcode locations are ready" })
+        .waitFor({ timeout: 240000 });
+      const map = await window.evaluate(() =>
+        fetch("/api/map?postcode=WS137SW").then((r) => r.json()),
+      );
+      assert.equal(map.points.length, 1);
+      await window
+        .locator("#postcode-setup-dialog")
+        .screenshot({
+          path: path.join(
+            root,
+            "desktop/test-results/desktop-postcode-setup.png",
+          ),
+        });
+    }
+    await window.locator("#postcode-setup-close").click();
+    if (process.env.UKINFO_TEST_MEDIA) {
+      await app.evaluate(({ dialog }, file) => {
+        dialog.showOpenDialog = async () => ({
+          canceled: false,
+          filePaths: [file],
+        });
+      }, process.env.UKINFO_TEST_MEDIA);
+      await window.locator("#import-open").click();
+      await window.locator("#import-media").click();
+      await window
+        .locator("#import-message")
+        .filter({ hasText: "Source fingerprints match" })
+        .waitFor({ timeout: 240000 });
+      await window.locator("#import-scope").selectOption("10000");
+      await window.locator("#import-start").click();
+      await window
+        .locator("#import-message")
+        .filter({ hasText: "Edition imported successfully" })
+        .waitFor({ timeout: 120000 });
+      await window.locator("#import-search").click();
+    }
     await app.close();
     app = null;
     assert.equal(

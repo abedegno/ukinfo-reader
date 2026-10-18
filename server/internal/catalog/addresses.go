@@ -137,6 +137,12 @@ func IndexAddresses(ctx context.Context, db *pgxpool.Pool, key string, options A
 		return report, err
 	}
 	defer tx.Rollback(context.Background())
+	// Ingestion/index creation is bounded by the caller's cancellable context,
+	// not the serving pool's short search-statement deadline. SET LOCAL ensures
+	// ordinary queries keep their deadline when this connection is returned.
+	if _, err = tx.Exec(ctx, "SET LOCAL statement_timeout=0"); err != nil {
+		return report, err
+	}
 	var locked bool
 	if err = tx.QueryRow(ctx, "SELECT pg_try_advisory_xact_lock(742918306,hashtext(current_schema()))").Scan(&locked); err != nil {
 		return report, err

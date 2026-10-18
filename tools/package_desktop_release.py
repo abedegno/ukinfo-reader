@@ -76,6 +76,8 @@ def main():
             "electron"
         ],
         "postgresql": json.loads((runtime / "pg/BUILD.json").read_text()),
+        "cabinet": json.loads((runtime / "cabinet-notices/BUILD.json").read_text()),
+        "media_readers": {"pycdlib": "1.22.0", "py7zr": "1.1.4"},
         "signing": "ad-hoc, not notarized" if system == "darwin" else "unsigned",
         "catalogue_included": False,
         "onspd_included": False,

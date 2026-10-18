@@ -204,3 +204,10 @@ The new code and documentation are available under the [MIT license](LICENSE).
 That license grants no rights to the original UK-Info software or directory data.
 UK-Info and PC Format names identify the historical product and magazine; this project is
 independent of their publishers.
+
+### Guided desktop setup
+
+The desktop app can prepare a supported ISO or 7z directly, verify its edition and
+import a sample or complete catalogue. **Postcode setup** adds the optional official
+ONSPD ZIP for nearby search and maps. See [desktop setup](docs/desktop-setup.md) for
+supported discs, temporary space requirements and cancellation.

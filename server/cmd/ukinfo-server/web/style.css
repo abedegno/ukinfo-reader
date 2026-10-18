@@ -384,9 +384,16 @@ dt {
 }
 .import-actions {
   display: flex;
+  align-items: center;
   gap: 12px;
   flex-wrap: wrap;
   margin: 22px 0;
+}
+.import-actions .primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+  margin: 0;
 }
 #import-selected {
   border-top: 1px solid var(--line);

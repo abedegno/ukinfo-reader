@@ -176,8 +176,10 @@ portable, choose an explicit directory on the same machine/OS:
 export UKINFO_DATA_DIR=/absolute/path/to/portable-archive
 ```
 
-In the app, choose **Add edition**, select the extracted source folder, and choose a
-complete edition or a first-10,000 sample. The folder is fingerprinted before import.
+In the app, choose **Add edition**, select an ISO/7z or extracted source folder, and
+choose a complete edition or a first-10,000 sample. Required files are fingerprinted
+before import. **Postcode setup** adds the pinned ONSPD ZIP for maps and nearby search.
+See [desktop setup](desktop-setup.md) for temporary storage and supported containers.
 The progress display supports cancellation, and the import retains a 5 GiB local disk
 reserve. The invented demo can be imported from the same dialog without source media.
 The private import capability stays in Electron main; public web hosting has no import UI.

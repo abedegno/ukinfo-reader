@@ -88,3 +88,16 @@ Linux distribution. Test hardware/OS compatibility before broad distribution.
 Primary references: [GitHub runner architectures](https://docs.github.com/en/actions/reference/runners/github-hosted-runners),
 [PostgreSQL native build/relocation guidance](https://www.postgresql.org/docs/18/install-make.html),
 and [Apple's opening guidance](https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac).
+
+## Disc extraction runtime
+
+Staging builds `ukinfo-cabinet` from unshield 1.6.2's hash-pinned official source
+using `tools/build_cabinet_runtime.py` and the narrow `tools/cabinet.c` wrapper.
+CMake, a C compiler and zlib headers are required (Linux: `cmake zlib1g-dev`). The
+helper statically links libunshield and its MD5 object; only system zlib/libc remain
+dynamic dependencies. macOS adds an ad-hoc integrity signature. Full upstream MIT
+and MD5 source notices and source URL/hash are retained under `cabinet-notices`.
+
+The standalone decoder includes pinned pycdlib/py7zr readers and their wheel/native
+supplier notices. The runtime is self-contained; end users need no 7-Zip, unshield,
+Python or compiler installation. See [desktop setup](desktop-setup.md).

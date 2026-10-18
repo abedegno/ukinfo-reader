@@ -12,6 +12,8 @@ const path = require("node:path");
   for (const name of [
     "ukinfo-server",
     "ukinfo-import",
+    "ukinfo-cabinet",
+    "cabinet-notices/BUILD.json",
     "pg/bin/postgres",
     "pg/bin/initdb",
   ]) {

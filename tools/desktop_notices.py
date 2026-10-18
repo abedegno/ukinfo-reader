@@ -2,6 +2,7 @@
 
 import ast
 import hashlib
+import importlib.metadata
 import json
 import shutil
 import subprocess
@@ -43,6 +44,13 @@ def dependency_notices(root, notices):
             "notices": ["Python-LICENSE.txt", "CPython-stdlib-notices.rst"],
         }
     ]
+    # Wheels can carry their own native extensions and private libraries. Their
+    # supplier is the installed distribution, not the host package manager.
+    wheel_owners = {}
+    for distribution in importlib.metadata.distributions():
+        for item in distribution.files or ():
+            if str(item).endswith((".so", ".dylib", ".pyd")):
+                wheel_owners[Path(distribution.locate_file(item)).resolve()] = distribution
     for source in sorted(set(binaries)):
         # Python's framework/library and its own extension modules are covered by
         # the retained CPython notices. External shared libraries need supplier notices.
@@ -51,6 +59,23 @@ def dependency_notices(root, notices):
             or source.name == "Python"
             or source.name.startswith("libpython")
         ):
+            continue
+        if source in wheel_owners:
+            distribution = wheel_owners[source]
+            label = distribution.metadata["Name"] + "-" + distribution.version
+            retained = []
+            for item in distribution.files or ():
+                if item.name.upper().startswith(("LICENSE", "COPYING", "COPYRIGHT", "NOTICE")):
+                    original = Path(distribution.locate_file(item))
+                    if not original.is_file():
+                        continue
+                    destination = notices / "wheels" / label / str(item).replace("../", "parent/")
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(original, destination)
+                    retained.append(str(destination.relative_to(notices)))
+            if not retained:
+                raise RuntimeError(f"Missing wheel notices for {label}")
+            reports.append({"library": source.name, "supplier": label, "notices": retained})
             continue
         supplier = next((p for p in source.parents if p.parent.parent.name == "Cellar"), None)
         if supplier:

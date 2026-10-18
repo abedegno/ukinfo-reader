@@ -1058,23 +1058,31 @@ $("export-address-page").addEventListener("click", async () => {
   }
 });
 
+async function refreshGeography() {
+  const geo = await api("/api/geography");
+  $("near").disabled = !geo.available;
+  $("radius").disabled = !geo.available;
+  $("geography-capability").textContent = geo.available
+    ? `ONSPD ${geo.reference.release} · Great Britain · current and retired postcodes`
+    : "Postcode locations have not been added to this catalogue yet.";
+  if (geo.available) {
+    $("geography-attribution").hidden = false;
+    const year = geo.reference.release.slice(0, 4);
+    $("geography-attribution").textContent =
+      `Contains OS data © Crown copyright and database right ${year}. Contains Royal Mail data © Royal Mail copyright and database right ${year}. Source: Office for National Statistics licensed under the Open Government Licence v3.0.`;
+  }
+  return geo;
+}
+window.addEventListener("ukinfo-geography-changed", () =>
+  refreshGeography().catch(() => {}),
+);
+
 (async () => {
   try {
     await refreshDatasets();
     await refreshAddresses();
     try {
-      const geo = await api("/api/geography");
-      $("near").disabled = !geo.available;
-      $("radius").disabled = !geo.available;
-      $("geography-capability").textContent = geo.available
-        ? `ONSPD ${geo.reference.release} · Great Britain · current and retired postcodes`
-        : "Postcode locations have not been added to this catalogue yet.";
-      if (geo.available) {
-        $("geography-attribution").hidden = false;
-        const year = geo.reference.release.slice(0, 4);
-        $("geography-attribution").textContent =
-          `Contains OS data © Crown copyright and database right ${year}. Contains Royal Mail data © Royal Mail copyright and database right ${year}. Source: Office for National Statistics licensed under the Open Government Licence v3.0.`;
-      }
+      await refreshGeography();
     } catch {
       $("geography-capability").textContent =
         "Postcode locations are currently unavailable.";
@@ -1177,6 +1185,9 @@ if (window.ukinfoDesktop) {
     running = false;
   const phaseNames = {
     "checking source": "Checking source files…",
+    "reading disc directory": "Finding the supported database…",
+    "extracting disc files": "Preparing temporary disc files…",
+    "verifying disc files": "Verifying source fingerprints…",
     loading: "Importing entries",
     "checking identities": "Checking entry identities",
     "building indexes": "Preparing search",
@@ -1191,6 +1202,7 @@ if (window.ukinfoDesktop) {
     running = value;
     for (const id of [
       "import-choose",
+      "import-media",
       "import-demo",
       "import-scope",
       "import-start",
@@ -1198,13 +1210,20 @@ if (window.ukinfoDesktop) {
       $(id).disabled = value;
     $("import-cancel").disabled = !value;
   };
-  const choose = async (demo) => {
+  const choose = async (demo, media = false) => {
     try {
       busy(true);
+      $("import-progress").hidden = !media;
+      $("import-bar").removeAttribute("value");
+      $("import-stage").textContent = "Preparing disc files…";
       $("import-message").textContent = demo
         ? "Preparing invented entries…"
         : "Checking the selected edition…";
-      const source = await (demo ? bridge.demoSource() : bridge.chooseSource());
+      const source = await (demo
+        ? bridge.demoSource()
+        : media
+          ? bridge.chooseMedia()
+          : bridge.chooseSource());
       if (!source) {
         $("import-message").textContent = "";
         return;
@@ -1222,9 +1241,13 @@ if (window.ukinfoDesktop) {
         ? "This demo contains invented people and a business. Search for Example or Aster Archive Supplies."
         : "Source fingerprints match a supported edition.";
     } catch (error) {
+      selected = null;
+      $("import-selected").hidden = true;
       $("import-message").textContent = error.message;
     } finally {
       busy(false);
+      $("import-open").textContent = "Add edition +";
+      $("import-progress").hidden = true;
       if (selected?.edition === "synthetic-demo")
         $("import-scope").disabled = true;
     }
@@ -1234,6 +1257,7 @@ if (window.ukinfoDesktop) {
   );
   $("import-close").addEventListener("click", () => $("import-dialog").close());
   $("import-choose").addEventListener("click", () => choose(false));
+  $("import-media").addEventListener("click", () => choose(false, true));
   $("import-demo").addEventListener("click", () => choose(true));
   bridge.onProgress((state) => {
     const p = state.progress || {};
