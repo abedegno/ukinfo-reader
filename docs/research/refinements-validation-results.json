@@ -1,0 +1,571 @@
+{
+  "method": "One bounded person anchor per complete edition plus a 2005 business anchor. House/available premises/name refinements compared with exhaustive same-kind full-postcode results, edition/all scopes and page size two. Only aggregate counts and timings retained. Warm local HTTP; not a capacity test.",
+  "cases": [
+    {
+      "edition": "se-pcf78-1998-01",
+      "kind": "person",
+      "scope": "edition",
+      "filters": [
+        "first_match",
+        "first_name",
+        "house"
+      ],
+      "reference_records": 90,
+      "matched_records": 1,
+      "page_ms": [
+        24.78
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se-pcf78-1998-01",
+      "kind": "person",
+      "scope": "edition",
+      "filters": [
+        "house"
+      ],
+      "reference_records": 90,
+      "matched_records": 1,
+      "page_ms": [
+        4.97
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se-pcf78-1998-01",
+      "kind": "person",
+      "scope": "edition",
+      "filters": [
+        "first_match",
+        "first_name"
+      ],
+      "reference_records": 90,
+      "matched_records": 1,
+      "page_ms": [
+        2.64
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se-pcf78-1998-01",
+      "kind": "person",
+      "scope": "edition",
+      "filters": [
+        "first_match",
+        "first_name"
+      ],
+      "reference_records": 90,
+      "matched_records": 1,
+      "page_ms": [
+        9.44
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se-pcf78-1998-01",
+      "kind": "person",
+      "scope": "all",
+      "filters": [
+        "first_match",
+        "first_name",
+        "house"
+      ],
+      "reference_records": 455,
+      "matched_records": 6,
+      "page_ms": [
+        69.16,
+        9.68,
+        7.69
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se-pcf78-1998-01",
+      "kind": "person",
+      "scope": "all",
+      "filters": [
+        "house"
+      ],
+      "reference_records": 455,
+      "matched_records": 6,
+      "page_ms": [
+        6.45,
+        6.93,
+        42.42
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se-pcf78-1998-01",
+      "kind": "person",
+      "scope": "all",
+      "filters": [
+        "first_match",
+        "first_name"
+      ],
+      "reference_records": 455,
+      "matched_records": 2,
+      "page_ms": [
+        30.56
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se-pcf78-1998-01",
+      "kind": "person",
+      "scope": "all",
+      "filters": [
+        "first_match",
+        "first_name"
+      ],
+      "reference_records": 455,
+      "matched_records": 6,
+      "page_ms": [
+        13.47,
+        8.69,
+        7.94
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se2004-pcp218-2004-07",
+      "kind": "person",
+      "scope": "edition",
+      "filters": [
+        "first_match",
+        "first_name",
+        "house",
+        "middle_initial"
+      ],
+      "reference_records": 146,
+      "matched_records": 2,
+      "page_ms": [
+        6.75
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se2004-pcp218-2004-07",
+      "kind": "person",
+      "scope": "edition",
+      "filters": [
+        "house"
+      ],
+      "reference_records": 146,
+      "matched_records": 2,
+      "page_ms": [
+        10.62
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se2004-pcp218-2004-07",
+      "kind": "person",
+      "scope": "edition",
+      "filters": [
+        "first_match",
+        "first_name"
+      ],
+      "reference_records": 146,
+      "matched_records": 2,
+      "page_ms": [
+        2.98
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se2004-pcp218-2004-07",
+      "kind": "person",
+      "scope": "edition",
+      "filters": [
+        "first_match",
+        "first_name"
+      ],
+      "reference_records": 146,
+      "matched_records": 2,
+      "page_ms": [
+        4.07
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se2004-pcp218-2004-07",
+      "kind": "person",
+      "scope": "all",
+      "filters": [
+        "first_match",
+        "first_name",
+        "house",
+        "middle_initial"
+      ],
+      "reference_records": 455,
+      "matched_records": 4,
+      "page_ms": [
+        38.31,
+        9.05
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se2004-pcp218-2004-07",
+      "kind": "person",
+      "scope": "all",
+      "filters": [
+        "house"
+      ],
+      "reference_records": 455,
+      "matched_records": 6,
+      "page_ms": [
+        6.51,
+        6.45,
+        32.14
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se2004-pcp218-2004-07",
+      "kind": "person",
+      "scope": "all",
+      "filters": [
+        "first_match",
+        "first_name"
+      ],
+      "reference_records": 455,
+      "matched_records": 4,
+      "page_ms": [
+        31.15,
+        5.74
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se2004-pcp218-2004-07",
+      "kind": "person",
+      "scope": "all",
+      "filters": [
+        "first_match",
+        "first_name"
+      ],
+      "reference_records": 455,
+      "matched_records": 6,
+      "page_ms": [
+        7.24,
+        8.4,
+        8.14
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se2005-pcf175-2005-06",
+      "kind": "person",
+      "scope": "edition",
+      "filters": [
+        "first_match",
+        "first_name",
+        "house",
+        "middle_initial"
+      ],
+      "reference_records": 113,
+      "matched_records": 2,
+      "page_ms": [
+        3.94
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se2005-pcf175-2005-06",
+      "kind": "person",
+      "scope": "edition",
+      "filters": [
+        "house"
+      ],
+      "reference_records": 113,
+      "matched_records": 2,
+      "page_ms": [
+        8.93
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se2005-pcf175-2005-06",
+      "kind": "person",
+      "scope": "edition",
+      "filters": [
+        "first_match",
+        "first_name"
+      ],
+      "reference_records": 113,
+      "matched_records": 2,
+      "page_ms": [
+        2.4
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se2005-pcf175-2005-06",
+      "kind": "person",
+      "scope": "edition",
+      "filters": [
+        "first_match",
+        "first_name"
+      ],
+      "reference_records": 113,
+      "matched_records": 2,
+      "page_ms": [
+        3.44
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se2005-pcf175-2005-06",
+      "kind": "person",
+      "scope": "all",
+      "filters": [
+        "first_match",
+        "first_name",
+        "house",
+        "middle_initial"
+      ],
+      "reference_records": 455,
+      "matched_records": 4,
+      "page_ms": [
+        5.67,
+        7.93
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se2005-pcf175-2005-06",
+      "kind": "person",
+      "scope": "all",
+      "filters": [
+        "house"
+      ],
+      "reference_records": 455,
+      "matched_records": 6,
+      "page_ms": [
+        8.51,
+        6.68,
+        32.11
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se2005-pcf175-2005-06",
+      "kind": "person",
+      "scope": "all",
+      "filters": [
+        "first_match",
+        "first_name"
+      ],
+      "reference_records": 455,
+      "matched_records": 4,
+      "page_ms": [
+        2.89,
+        3.04
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se2005-pcf175-2005-06",
+      "kind": "person",
+      "scope": "all",
+      "filters": [
+        "first_match",
+        "first_name"
+      ],
+      "reference_records": 455,
+      "matched_records": 6,
+      "page_ms": [
+        4.39,
+        7.61,
+        8.71
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se4-pcf94-1999-04",
+      "kind": "person",
+      "scope": "edition",
+      "filters": [
+        "first_match",
+        "first_name",
+        "house"
+      ],
+      "reference_records": 106,
+      "matched_records": 1,
+      "page_ms": [
+        3.09
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se4-pcf94-1999-04",
+      "kind": "person",
+      "scope": "edition",
+      "filters": [
+        "house"
+      ],
+      "reference_records": 106,
+      "matched_records": 1,
+      "page_ms": [
+        5.87
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se4-pcf94-1999-04",
+      "kind": "person",
+      "scope": "edition",
+      "filters": [
+        "first_match",
+        "first_name"
+      ],
+      "reference_records": 106,
+      "matched_records": 1,
+      "page_ms": [
+        2.31
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se4-pcf94-1999-04",
+      "kind": "person",
+      "scope": "edition",
+      "filters": [
+        "first_match",
+        "first_name"
+      ],
+      "reference_records": 106,
+      "matched_records": 1,
+      "page_ms": [
+        3.4
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se4-pcf94-1999-04",
+      "kind": "person",
+      "scope": "all",
+      "filters": [
+        "first_match",
+        "first_name",
+        "house"
+      ],
+      "reference_records": 455,
+      "matched_records": 6,
+      "page_ms": [
+        9.09,
+        9.58,
+        8.41
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se4-pcf94-1999-04",
+      "kind": "person",
+      "scope": "all",
+      "filters": [
+        "house"
+      ],
+      "reference_records": 455,
+      "matched_records": 6,
+      "page_ms": [
+        6.48,
+        6.7,
+        32.57
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se4-pcf94-1999-04",
+      "kind": "person",
+      "scope": "all",
+      "filters": [
+        "first_match",
+        "first_name"
+      ],
+      "reference_records": 455,
+      "matched_records": 2,
+      "page_ms": [
+        3.07
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se4-pcf94-1999-04",
+      "kind": "person",
+      "scope": "all",
+      "filters": [
+        "first_match",
+        "first_name"
+      ],
+      "reference_records": 455,
+      "matched_records": 6,
+      "page_ms": [
+        4.24,
+        8.04,
+        7.68
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se2005-pcf175-2005-06",
+      "kind": "business",
+      "scope": "edition",
+      "filters": [
+        "house"
+      ],
+      "reference_records": 14,
+      "matched_records": 1,
+      "page_ms": [
+        2.32
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se2005-pcf175-2005-06",
+      "kind": "business",
+      "scope": "edition",
+      "filters": [
+        "house"
+      ],
+      "reference_records": 14,
+      "matched_records": 1,
+      "page_ms": [
+        2.49
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se2005-pcf175-2005-06",
+      "kind": "business",
+      "scope": "all",
+      "filters": [
+        "house"
+      ],
+      "reference_records": 14,
+      "matched_records": 1,
+      "page_ms": [
+        3.08
+      ],
+      "reference_match": true
+    },
+    {
+      "edition": "se2005-pcf175-2005-06",
+      "kind": "business",
+      "scope": "all",
+      "filters": [
+        "house"
+      ],
+      "reference_records": 14,
+      "matched_records": 1,
+      "page_ms": [
+        3.26
+      ],
+      "reference_match": true
+    }
+  ],
+  "date": "2026-10-18",
+  "environment": "PostgreSQL 18.6, Docker cap 2 CPUs / 1 GiB RAM; native macOS ARM64 Go/client outside cap; warm sequential local HTTP."
+}

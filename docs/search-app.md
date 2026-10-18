@@ -11,6 +11,8 @@ keyset pagination, readable record details, page-local identical-listing groupin
 source comparison, copyable citations and current-page JSONL/CSV exports are implemented.
 [Direct record links and exact-address exploration](address-exploration.md) add co-listed
 people/businesses, edition-scope comparison, saved-link opening and page exports.
+[Search refinements](search-refinements.md) add house/building/flat fields, independent
+given-name matching, middle initials, removable filters and zero-result actions.
 Catalogue-wide deduplication, alphabetical sorting, contains/fuzzy matching, background bulk exports, resumable ingestion, automatic database
 upgrades and signed installers are not yet implemented.
 

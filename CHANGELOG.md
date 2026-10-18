@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add house/building/flat refinements, independent first-name modes, middle initials,
+  active-filter removal and zero-result actions. Preserve complete sparse-match paging
+  and use postcode-leading ordering for exact-postcode searches.
+
 - Add guarded direct record links, saved-link reopening, exact-premises address pages,
   people/business co-listings, edition-scope comparison, pagination and raw page exports.
 

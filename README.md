@@ -37,6 +37,8 @@ See the [complete-edition measurements](docs/research/compact-catalogue.md#all-f
 
 Street, locality, town/city and county search is available through an optional
 [additive address index](docs/address-search.md), including on existing catalogues.
+[Refine names and premises](docs/search-refinements.md) with house/building/flat filters,
+given-name modes, middle initials and removable search filters.
 [Explore exact addresses and save record links](docs/address-exploration.md) to compare
 co-listed people/businesses and available edition snapshots.
 

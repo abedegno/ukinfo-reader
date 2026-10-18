@@ -62,6 +62,29 @@
                 maxlength="256"
             /></label>
           </div>
+          <div id="name-refinements" class="fields">
+            <label
+              >First-name matching<select name="first_match">
+                <option value="">Use name matching above</option>
+                <option value="exact">Exact given names</option>
+                <option value="given">Given name (+ others)</option>
+                <option value="prefix">Starts with</option>
+              </select></label
+            >
+            <label
+              >Middle initial <span>(optional)</span
+              ><input
+                name="middle_initial"
+                maxlength="2"
+                placeholder="e.g. A"
+                autocomplete="off"
+            /></label>
+          </div>
+          <p id="name-help" class="note">
+            Given-name matching finds John and John A, but not Johnny. Middle
+            initial checks the second recorded given name or initial. Missing
+            names are not inferred.
+          </p>
           <label id="business-field" hidden
             >Business name<input
               name="organisation"
@@ -80,7 +103,33 @@
             /></label>
           </div>
           <details id="address-controls" class="nearby-controls">
-            <summary>Search by street, town or county</summary>
+            <summary>Search by house, street, town or county</summary>
+            <div class="fields">
+              <label
+                >House number / suffix<input
+                  name="house"
+                  placeholder="e.g. 12A"
+                  maxlength="256"
+              /></label>
+              <label
+                >Building name<input
+                  name="building"
+                  placeholder="e.g. Rose House"
+                  maxlength="256"
+              /></label>
+            </div>
+            <label
+              >Flat / subbuilding<input
+                name="flat"
+                placeholder="e.g. Flat 2"
+                maxlength="256"
+            /></label>
+            <p class="note">
+              Combine house, building or flat with a surname/business name,
+              street, locality, town, county, postcode or nearby area. These
+              fields use displayed source values; a missing flat is not treated
+              as the whole building.
+            </p>
             <p id="address-capability" class="note">
               Checking address coverage…
             </p>
@@ -170,6 +219,19 @@
             Choose an edition and enter a name or postcode to begin.
           </p>
           <p id="geography-note" class="note" hidden></p>
+          <div
+            id="active-filters"
+            class="filter-chips"
+            role="group"
+            aria-label="Active search filters"
+          ></div>
+          <div
+            id="search-suggestions"
+            class="filter-chips"
+            role="group"
+            aria-label="Search suggestions"
+            hidden
+          ></div>
           <div class="result-options">
             <label
               >Export format<select id="export-format">

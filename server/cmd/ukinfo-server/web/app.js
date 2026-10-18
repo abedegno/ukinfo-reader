@@ -10,7 +10,25 @@ let kind = "person",
 let datasets = [];
 let searchGeography = null;
 let addressCoverage = new Set();
-const addressFields = ["street", "locality", "town", "county"];
+const locationFields = ["street", "locality", "town", "county"];
+const addressFields = ["house", "building", "flat", ...locationFields];
+const filterLabels = {
+  surname: "Surname",
+  match: "Name matching",
+  first_name: "Given names",
+  first_match: "First-name matching",
+  middle_initial: "Middle initial",
+  organisation: "Business",
+  postcode: "Postcode",
+  house: "House",
+  building: "Building",
+  flat: "Flat",
+  street: "Street",
+  locality: "Locality",
+  town: "Town / city",
+  county: "County",
+  near: "Near",
+};
 async function api(path) {
   const response = await fetch(path, { credentials: "same-origin" });
   const data = await response.json();
@@ -33,6 +51,9 @@ function reset() {
   searchGeography = null;
   $("geography-note").hidden = true;
   $("items").replaceChildren();
+  $("active-filters").replaceChildren();
+  $("search-suggestions").replaceChildren();
+  $("search-suggestions").hidden = true;
   $("next").hidden = true;
   $("previous").hidden = true;
   $("previous-top").hidden = true;
@@ -58,7 +79,7 @@ function addressNote() {
       : datasets.filter((d) => d.key === selection);
   const missing = selected.filter((d) => !addressCoverage.has(d.key));
   const available = selected.length > 0 && missing.length === 0;
-  for (const name of addressFields) form.elements[name].disabled = !available;
+  for (const name of locationFields) form.elements[name].disabled = !available;
   $("address-capability").textContent = available
     ? "Street, locality, town and county searches are ready for the selected editions."
     : "Address search is not ready for every selected edition. Choose an indexed edition or add its address index.";
@@ -93,6 +114,8 @@ function showKind(value) {
   $("people").setAttribute("aria-pressed", String(kind === "person"));
   $("business").setAttribute("aria-pressed", String(kind === "business"));
   $("person-fields").hidden = kind !== "person";
+  $("name-refinements").hidden = kind !== "person";
+  $("name-help").hidden = kind !== "person";
   $("business-field").hidden = kind !== "business";
 }
 $("people").addEventListener("click", () => showKind("person"));
@@ -465,6 +488,106 @@ function render() {
     ? `Page ${Number(lastQuery.get("page") || 1)} · Results ${(Number(lastQuery.get("page") || 1) - 1) * Number(lastQuery.get("limit") || 50) + 1}–${(Number(lastQuery.get("page") || 1) - 1) * Number(lastQuery.get("limit") || 50) + page.length} · ${page.length} source entries on this page.${next ? " More results available." : " End of results."}`
     : "No matching entries. Try Starts with, a postcode district, or All editions. A partial sample covers only its imported entries.";
 }
+function hasSearchAnchor(params) {
+  return [
+    "surname",
+    "organisation",
+    "postcode",
+    "near",
+    ...locationFields,
+  ].some((name) => params.get(name)?.trim());
+}
+function applyRefinement(params) {
+  params.delete("cursor");
+  params.delete("page");
+  const url = new URL(location.href);
+  url.search = params.toString();
+  history.pushState(null, "", url);
+  restoreURL();
+}
+function removeFilter(params, name) {
+  params.delete(name);
+  if (name === "near") params.delete("radius_m");
+  if (name === "first_name") params.delete("first_match");
+}
+function renderFilters(params) {
+  const container = $("active-filters");
+  container.replaceChildren();
+  for (const [name, label] of Object.entries(filterLabels)) {
+    const value = params.get(name);
+    if (
+      !value ||
+      (name === "match" && value === "exact") ||
+      (name === "first_match" && !params.get("first_name"))
+    )
+      continue;
+    const display =
+      name === "first_match"
+        ? {
+            exact: "Exact",
+            prefix: "Starts with",
+            given: "Given name + following names",
+          }[value] || value
+        : value;
+    const button = element("button", `${label}: ${display} ×`);
+    button.type = "button";
+    button.setAttribute("aria-label", `Remove ${label.toLowerCase()} filter`);
+    button.addEventListener("click", () => {
+      const revised = new URLSearchParams(params);
+      removeFilter(revised, name);
+      applyRefinement(revised);
+    });
+    container.append(button);
+  }
+  if (container.childElementCount) {
+    const clear = element("button", "Clear filters");
+    clear.type = "button";
+    clear.addEventListener("click", () =>
+      applyRefinement(
+        new URLSearchParams({
+          dataset: params.get("dataset"),
+          kind: params.get("kind") || "person",
+          limit: params.get("limit") || "50",
+        }),
+      ),
+    );
+    container.append(clear);
+  }
+}
+function renderSuggestions(params) {
+  const container = $("search-suggestions");
+  const add = (text, update) => {
+    const button = element("button", text);
+    button.type = "button";
+    button.addEventListener("click", () => {
+      const revised = new URLSearchParams(params);
+      update(revised);
+      applyRefinement(revised);
+    });
+    container.append(button);
+  };
+  const name = params.get("surname") || params.get("organisation") || "";
+  if (
+    params.get("match") !== "prefix" &&
+    !name.endsWith("*") &&
+    [...name.trim()].length >= 2
+  )
+    add("Try name prefixes", (p) => p.set("match", "prefix"));
+  for (const name of [
+    "middle_initial",
+    "flat",
+    "house",
+    "building",
+    "first_name",
+  ])
+    if (params.has(name))
+      add(`Search without ${filterLabels[name].toLowerCase()}`, (p) =>
+        removeFilter(p, name),
+      );
+  if (params.get("dataset") !== "all" && datasets.length > 1)
+    add("Search all editions", (p) => p.set("dataset", "all"));
+  container.hidden = container.childElementCount === 0;
+}
 async function search(params, trail = [], updateURL = true) {
   if (updateURL) {
     const url = new URL(location.href);
@@ -472,6 +595,25 @@ async function search(params, trail = [], updateURL = true) {
     history.pushState(null, "", url);
   }
   const id = ++generation;
+  searchGeography = null;
+  $("geography-note").hidden = true;
+  renderFilters(params);
+  $("search-suggestions").replaceChildren();
+  $("search-suggestions").hidden = true;
+  if (!hasSearchAnchor(params)) {
+    page = [];
+    next = "";
+    lastQuery = null;
+    pageHistory = [];
+    $("submit").disabled = datasets.length === 0;
+    $("items").replaceChildren();
+    for (const name of ["next", "previous", "previous-top", "next-top"])
+      $(name).hidden = true;
+    $("export").disabled = true;
+    $("status").textContent =
+      "Add a surname/business name, street, locality, town, county, postcode or nearby area to narrow these filters.";
+    return;
+  }
   $("submit").disabled = true;
   $("next").hidden = true;
   $("previous").hidden = true;
@@ -488,6 +630,7 @@ async function search(params, trail = [], updateURL = true) {
     searchGeography = data.geography || null;
     next = data.next_cursor;
     render();
+    if (!page.length) renderSuggestions(params);
     if (updateURL) $("results-title").scrollIntoView({ block: "start" });
   } catch (error) {
     if (id !== generation) return;
@@ -508,7 +651,7 @@ form.addEventListener("submit", (event) => {
     limit: $("page-size").value,
   });
   for (const name of kind === "person"
-    ? ["surname", "first_name", "postcode"]
+    ? ["surname", "first_name", "first_match", "middle_initial", "postcode"]
     : ["organisation", "postcode"]) {
     const value = form.elements[name].value.trim();
     if (value) params.set(name, value);
@@ -952,14 +1095,26 @@ function restoreURL() {
   for (const name of viewFields) params.delete(name);
   closeDialogs();
   restoreView(viewParams);
+  if (params.size) form.reset();
+  const chosen = params.get("dataset");
+  if (
+    chosen &&
+    [...form.elements.dataset.options].some((option) => option.value === chosen)
+  )
+    form.elements.dataset.value = chosen;
   if (
     !params.has("surname") &&
+    !params.has("first_name") &&
+    !params.has("middle_initial") &&
     !params.has("organisation") &&
     !params.has("postcode") &&
     !params.has("near") &&
     !addressFields.some((name) => params.has(name))
   ) {
-    reset();
+    if (params.size)
+      showKind(params.get("kind") === "business" ? "business" : "person");
+    else reset();
+    editionNote();
     return;
   }
   form.reset();
@@ -970,6 +1125,8 @@ function restoreURL() {
     "dataset",
     "surname",
     "first_name",
+    "first_match",
+    "middle_initial",
     "organisation",
     "postcode",
     "match",

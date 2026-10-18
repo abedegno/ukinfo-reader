@@ -556,3 +556,35 @@ dt {
 #address-details {
   max-width: 780px;
 }
+
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+.filter-chips:empty {
+  display: none;
+}
+.filter-chips button {
+  background: #edf3ed;
+  border: 1px solid #cbdace;
+  border-radius: 18px;
+  color: var(--accent);
+  font-size: 11px;
+  padding: 7px 11px;
+  min-height: 32px;
+  text-align: left;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+#search-suggestions button {
+  background: transparent;
+  border-style: dashed;
+}
+.filter-chips button:hover {
+  background: #e0ebdf;
+}
+#name-refinements {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+}

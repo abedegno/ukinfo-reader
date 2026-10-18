@@ -43,6 +43,10 @@ Guarded record/address links and reopening saved links are also implemented. The
 references depend on matching dataset keys and ingestion order; globally durable source
 identifiers, saved research lists and map exploration remain future work.
 
+Item 4 now includes [house/building/flat and given-name refinements](../search-refinements.md),
+middle initials, removable filter chips and explicit zero-result broadening actions.
+Place autocomplete, additional ordering choices and whole-search grouping remain open.
+
 Later query expansion should be explicit and explain its matches. Broad searches must
 retain complete pagination. Result counts and sorts need full-corpus benchmarks before
 being presented as cheap/exact operations. Map rendering can be optional and lazy-loaded

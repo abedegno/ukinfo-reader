@@ -87,7 +87,7 @@ const assert = require("node:assert/strict");
     assert.equal(exported[0].record.building, null);
     await window.getByLabel("Surname", { exact: true }).fill("");
     await window
-      .getByText("Search by street, town or county", { exact: true })
+      .getByText("Search by house, street, town or county", { exact: true })
       .click();
     assert.equal(
       await window.getByLabel("Street", { exact: true }).isEnabled(),
@@ -117,6 +117,26 @@ const assert = require("node:assert/strict");
     await window
       .getByRole("button", { name: "Close address", exact: true })
       .click();
+    await window
+      .getByRole("button", { name: "Clear filters", exact: true })
+      .click();
+    await window.locator('[name="postcode"]').fill("ZZ1");
+    if (
+      !(await window.locator("#address-controls").evaluate((node) => node.open))
+    )
+      await window.locator("#address-controls summary").click();
+    await window
+      .getByLabel("House number / suffix", { exact: true })
+      .fill("12");
+    await window.locator('[name="first_name"]').fill("Person");
+    await window.locator('[name="first_match"]').selectOption("given");
+    await window.getByRole("button", { name: "Search archive" }).click();
+    await window
+      .locator("#status")
+      .filter({ hasText: "1 source entries" })
+      .waitFor();
+    assert.equal(await window.locator("#items article").count(), 1);
+    assert.match(await window.locator("#items article").innerText(), /Person 011/);
     await window
       .getByRole("button", { name: "Open saved link", exact: true })
       .click();

@@ -216,6 +216,7 @@ func TestPostgresIntegration(t *testing.T) {
 	testGeography(t, db)
 	testAddresses(t, db)
 	testPremises(t, db)
+	testRefinements(t, db)
 }
 
 func testDesktopAdmin(t *testing.T, db *pgxpool.Pool) {

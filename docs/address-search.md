@@ -3,6 +3,8 @@
 The optional address index adds **street, village/locality, town/city and county**
 searches to the Go/PostgreSQL web and desktop interface. A name is optional. Combine
 address fields with each other, name filters, a postcode or a nearby radius.
+[House/building/flat and given-name refinements](search-refinements.md) work alongside
+these indexed controls without requiring another index build.
 
 ## Matching
 
@@ -72,7 +74,7 @@ GRANT SELECT ON address_locations, address_members, address_indexes TO ukinfo_se
 ```
 
 `GET /api/addresses` reports indexed datasets and their source/location counts.
-The form enables address fields only when every selected edition is indexed. “All
+The form enables street/locality/town/county fields only when every selected edition is indexed. “All
 editions” uses the same sample-exclusion rule as ordinary searches. Requests selecting
 an unindexed edition fail explicitly instead of silently returning incomplete results.
 New CLI and desktop imports build their address index after source ingestion. Existing
@@ -101,8 +103,9 @@ citation/export behaviour remain unchanged.
 schema-2 extension. A bounded dictionary cache resolves batches while a temporary
 integer staging table allows PostgreSQL to group memberships on disk.
 
-House/building/subbuilding search filters, place autocomplete, fuzzy matching and
-cross-edition entity linkage are later work.
+[House/building/subbuilding filters](search-refinements.md) now refine indexed searches
+against the displayed source fields. Place autocomplete, fuzzy matching and cross-edition
+entity linkage remain later work.
 [Address detail views](address-exploration.md) use existing postcode indexes and compare
 complete recorded premises, including house and flat distinctions.
 A matching street/location tuple does not establish a shared household or identity.

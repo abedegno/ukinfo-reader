@@ -110,6 +110,11 @@ func (a *API) datasets(w http.ResponseWriter, r *http.Request) {
 
 type query struct {
 	Dataset, Kind, Surname, First, Organisation, Postcode string
+	House                                                 string `json:",omitempty"`
+	Building                                              string `json:",omitempty"`
+	Flat                                                  string `json:",omitempty"`
+	FirstMatch                                            string `json:",omitempty"`
+	Middle                                                string `json:",omitempty"`
 	Street                                                string `json:",omitempty"`
 	Locality                                              string `json:",omitempty"`
 	Town                                                  string `json:",omitempty"`
@@ -160,13 +165,25 @@ func postcodeFullLength(input, compact string) int {
 
 func parse(v url.Values) (query, error) {
 	q := query{Street: Normalize(v.Get("street")), Locality: Normalize(v.Get("locality")), Town: Normalize(v.Get("town")), County: Normalize(v.Get("county")), Dataset: strings.TrimSpace(v.Get("dataset")), Kind: v.Get("kind"), Surname: Normalize(v.Get("surname")), First: Normalize(v.Get("first_name")), Organisation: Normalize(v.Get("organisation")), Postcode: strings.TrimSuffix(Postcode(v.Get("postcode")), "*"), Match: v.Get("match"), Near: Postcode(v.Get("near")), Limit: 50, Cursor: v.Get("cursor")}
-	for _, value := range []string{q.Street, q.Locality, q.Town, q.County} {
+	q.House, q.Building, q.Flat = Normalize(v.Get("house")), Normalize(v.Get("building")), Normalize(v.Get("flat"))
+	q.FirstMatch, q.Middle = v.Get("first_match"), Normalize(strings.TrimSuffix(strings.TrimSpace(v.Get("middle_initial")), "."))
+	if q.FirstMatch != "" && q.FirstMatch != "exact" && q.FirstMatch != "prefix" && q.FirstMatch != "given" {
+		return q, errors.New("first-name matching must be exact, prefix or given")
+	}
+	if q.Middle != "" && (utf8.RuneCountInString(q.Middle) != 1 || !isLetter(q.Middle)) {
+		return q, errors.New("enter one letter for the middle initial")
+	}
+	for i, value := range []string{q.Street, q.Locality, q.Town, q.County, q.Building, q.House, q.Flat} {
+		minimum := 2
+		if i >= 5 {
+			minimum = 1
+		}
 		if value == "" {
 			continue
 		}
 		base := strings.TrimSuffix(value, "*")
-		if strings.ContainsAny(base, "*?%") || (strings.HasSuffix(value, "*") && utf8.RuneCountInString(base) < 2) {
-			return q, fmt.Errorf("address fields accept exact text or at least two characters followed by a single trailing *")
+		if strings.ContainsAny(base, "*?%") || (strings.HasSuffix(value, "*") && utf8.RuneCountInString(base) < minimum) {
+			return q, fmt.Errorf("address fields accept exact text or a single trailing *; use two prefix characters, or one for house/flat")
 		}
 	}
 	if q.Near != "" {
@@ -223,7 +240,10 @@ func parse(v url.Values) (query, error) {
 	if q.Kind == "business" && (q.Surname != "" || q.First != "" || (q.Organisation == "" && q.Postcode == "" && q.Near == "" && !q.hasAddress())) {
 		return q, fmt.Errorf("enter a business name, address or postcode")
 	}
-	for _, s := range []string{q.Dataset, q.Surname, q.First, q.Organisation, q.Postcode, q.Near, q.Street, q.Locality, q.Town, q.County} {
+	if q.Kind == "business" && q.Middle != "" {
+		return q, errors.New("middle initial is only available for people searches")
+	}
+	for _, s := range []string{q.Dataset, q.Surname, q.First, q.Organisation, q.Postcode, q.Near, q.Street, q.Locality, q.Town, q.County, q.House, q.Building, q.Flat} {
 		if len(s) > 256 || strings.ContainsRune(s, 0) {
 			return q, fmt.Errorf("search field too long or invalid")
 		}
@@ -257,12 +277,12 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 		return
 	}
 	timeout := 2 * time.Second
-	if q.Near != "" || q.hasAddress() {
+	if q.Near != "" || q.hasAddress() || q.hasRefinements() {
 		timeout = 5 * time.Second
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), timeout)
 	defer cancel()
-	if q.hasAddress() {
+	if q.hasAddress() || q.hasRefinements() {
 		select {
 		case a.addressSlots <- struct{}{}:
 			defer func() { <-a.addressSlots }()
@@ -271,6 +291,45 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 			return
 		}
 	}
+	data, status, err := a.searchResults(ctx, q)
+	if err != nil {
+		fail(w, status, err.Error())
+		return
+	}
+	items, geography := data.Items, data.Geography
+	if export {
+		w.Header().Set("Content-Type", "application/x-ndjson")
+		w.Header().Set("Content-Disposition", `attachment; filename="ukinfo-page.jsonl"`)
+		encoder := json.NewEncoder(w)
+		for _, item := range items {
+			if err := encoder.Encode(struct {
+				Dataset            string           `json:"dataset"`
+				SourceID           string           `json:"source_id"`
+				Record             json.RawMessage  `json:"record"`
+				Distance           *float64         `json:"distance_m,omitempty"`
+				LocationQuality    int16            `json:"location_quality,omitempty"`
+				LocationTerminated string           `json:"location_terminated,omitempty"`
+				Geography          *GeographySearch `json:"geography,omitempty"`
+			}{item.Dataset, item.SourceID, item.Record, item.Distance, item.LocationQuality, item.LocationTerminated, geography}); err != nil {
+				return
+			}
+		}
+		return
+	}
+	respond(w, 200, data)
+}
+
+type searchResult struct {
+	Items     []result         `json:"items"`
+	Next      string           `json:"next_cursor"`
+	Geography *GeographySearch `json:"geography,omitempty"`
+	positions []cursor
+}
+
+// searchCandidates reads one indexed page. Its positions also allow a displayed-field
+// refinement to resume after an accepted occurrence rather than an arbitrary batch.
+func (a *API) searchCandidates(ctx context.Context, q query) (searchResult, int, error) {
+	var err error
 	datasetKeys := map[int16]string{}
 	datasetIDs := []int16{}
 	datasetSQL := "SELECT id,key FROM datasets WHERE key=$1 ORDER BY id"
@@ -284,8 +343,7 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 	}
 	ds, err := a.DB.Query(ctx, datasetSQL, datasetArgs...)
 	if err != nil {
-		fail(w, 503, "Catalogue unavailable")
-		return
+		return searchResult{}, 503, errors.New("Catalogue unavailable")
 	}
 	for ds.Next() {
 		var id int16
@@ -301,19 +359,16 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 	}
 	ds.Close()
 	if err != nil {
-		fail(w, 503, "Catalogue unavailable")
-		return
+		return searchResult{}, 503, errors.New("Catalogue unavailable")
 	}
 	if len(datasetIDs) == 0 {
-		fail(w, 404, "Edition not imported")
-		return
+		return searchResult{}, 404, errors.New("Edition not imported")
 	}
 	if q.hasAddress() {
 		var indexed int
 		err = a.DB.QueryRow(ctx, "SELECT count(*) FROM address_indexes i JOIN datasets d ON d.id=i.dataset_id AND d.entries=i.entries WHERE i.dataset_id=ANY($1::smallint[]) AND i.version=1", datasetIDs).Scan(&indexed)
 		if err != nil || indexed != len(datasetIDs) {
-			fail(w, 503, "Address search needs a complete address index for every selected edition")
-			return
+			return searchResult{}, 503, errors.New("Address search needs a complete address index for every selected edition")
 		}
 	}
 	kind := int16(0)
@@ -331,8 +386,7 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 				continue
 			}
 			if e != nil {
-				fail(w, 503, "Catalogue listing types unavailable")
-				return
+				return searchResult{}, 503, errors.New("Catalogue listing types unavailable")
 			}
 			selected = append(selected, dataset)
 		}
@@ -354,8 +408,7 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 			if errors.As(err, &geoErr) {
 				status = geoErr.Status
 			}
-			fail(w, status, err.Error())
-			return
+			return searchResult{}, status, errors.New(err.Error())
 		}
 		nearbyIDs = make([]int32, 0, len(distances))
 		for id := range distances {
@@ -379,7 +432,11 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 			continue
 		}
 		key := strings.TrimSuffix(filter.key, "*")
-		prefix := (!filter.postcode && (q.Match == "prefix" || strings.HasSuffix(filter.key, "*"))) || (filter.postcode && q.PostcodeLength > 0)
+		matching := q.Match
+		if filter.column == "first_id" && q.FirstMatch != "" {
+			matching = q.FirstMatch
+		}
+		prefix := (!filter.postcode && (matching == "prefix" || matching == "given" || strings.HasSuffix(filter.key, "*"))) || (filter.postcode && q.PostcodeLength > 0)
 		ids := []int32{}
 		sql := "SELECT id FROM terms WHERE key=$1"
 		termArgs := []any{key}
@@ -393,8 +450,7 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 		}
 		rows, e := a.DB.Query(ctx, sql, termArgs...)
 		if e != nil {
-			fail(w, 503, "Search vocabulary unavailable")
-			return
+			return searchResult{}, 503, errors.New("Search vocabulary unavailable")
 		}
 		for rows.Next() {
 			var id int32
@@ -408,8 +464,7 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 		}
 		rows.Close()
 		if err != nil {
-			fail(w, 503, "Search vocabulary unavailable")
-			return
+			return searchResult{}, 503, errors.New("Search vocabulary unavailable")
 		}
 		if len(ids) > 8192 {
 			// Small expansions use bound integer arrays. Broad expansions stay in
@@ -433,7 +488,7 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 	}
 	afterPostcode := int32(0)
 	order := "name_id,first_id,id,dataset_id"
-	if q.PostcodeLength > 0 || q.Near != "" {
+	if q.Postcode != "" || q.Near != "" {
 		order = "postcode_id,name_id,first_id,id,dataset_id"
 	}
 	if q.hasAddress() {
@@ -444,15 +499,14 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 		b, e := base64.RawURLEncoding.DecodeString(q.Cursor)
 		var c cursor
 		if e != nil || json.Unmarshal(b, &c) != nil || c.Query != q.fingerprint() || datasetKeys[c.Dataset] == "" || c.ID < 1 || c.Name < 0 || c.First < 0 || c.Postcode < 0 {
-			fail(w, 400, "Cursor does not match this search")
-			return
+			return searchResult{}, 400, errors.New("Cursor does not match this search")
 		}
 		afterPostcode = c.Postcode
 		afterID = c.ID
 		if q.hasAddress() {
 			args = append(args, c.ID, c.Dataset)
 			conditions = append(conditions, fmt.Sprintf("(id,dataset_id)>($%d,$%d)", len(args)-1, len(args)))
-		} else if q.PostcodeLength > 0 || q.Near != "" {
+		} else if q.Postcode != "" || q.Near != "" {
 			args = append(args, c.Postcode, c.Name, c.First, c.ID, c.Dataset)
 			conditions = append(conditions, fmt.Sprintf("(postcode_id,name_id,first_id,id,dataset_id)>($%d,$%d,$%d,$%d,$%d)", len(args)-4, len(args)-3, len(args)-2, len(args)-1, len(args)))
 		} else {
@@ -472,6 +526,7 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 	recordPostcodes := []int32{}
 	next := ""
 	var last cursor
+	positions := []cursor{}
 	// Radius-only searches traverse postcode-ID batches in the same order as
 	// their keyset cursor. Later batches cannot precede this page's candidates.
 	for batchStart := 0; !missing; {
@@ -539,8 +594,7 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 		}
 		if e != nil {
 			log.Printf("Search query failed: %v", e)
-			fail(w, 503, "Search unavailable or timed out; narrow the search")
-			return
+			return searchResult{}, 503, errors.New("Search unavailable or timed out; narrow the search")
 		}
 		for rows.Next() {
 			var id, name, first, postcode int32
@@ -548,8 +602,7 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 			if err = rows.Scan(&dataset, &id, &name, &first, &postcode); err != nil {
 				rows.Close()
 				finish()
-				fail(w, 503, "Search unavailable")
-				return
+				return searchResult{}, 503, errors.New("Search unavailable")
 			}
 			if len(ids) == q.Limit {
 				b, _ := json.Marshal(last)
@@ -560,13 +613,13 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 			recordDatasets = append(recordDatasets, dataset)
 			recordPostcodes = append(recordPostcodes, postcode)
 			last = cursor{Query: q.fingerprint(), Name: name, First: first, ID: id, Dataset: dataset, Postcode: postcode}
+			positions = append(positions, last)
 		}
 		err = rows.Err()
 		rows.Close()
 		finish()
 		if err != nil {
-			fail(w, 503, "Search timed out; narrow the search")
-			return
+			return searchResult{}, 503, errors.New("Search timed out; narrow the search")
 		}
 		if next != "" || !areaOnly || batchStart >= len(nearbyIDs) {
 			break
@@ -585,8 +638,7 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 	for dataset, requestedIDs := range requestedRecords {
 		records, e := a.loadRecords(ctx, dataset, requestedIDs)
 		if e != nil {
-			fail(w, 503, "Source records unavailable; catalogue needs verification")
-			return
+			return searchResult{}, 503, errors.New("Source records unavailable; catalogue needs verification")
 		}
 		for _, record := range records {
 			record.Dataset = datasetKeys[dataset]
@@ -604,30 +656,7 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 		}
 		items = append(items, item)
 	}
-	if export {
-		w.Header().Set("Content-Type", "application/x-ndjson")
-		w.Header().Set("Content-Disposition", `attachment; filename="ukinfo-page.jsonl"`)
-		encoder := json.NewEncoder(w)
-		for _, item := range items {
-			if err := encoder.Encode(struct {
-				Dataset            string           `json:"dataset"`
-				SourceID           string           `json:"source_id"`
-				Record             json.RawMessage  `json:"record"`
-				Distance           *float64         `json:"distance_m,omitempty"`
-				LocationQuality    int16            `json:"location_quality,omitempty"`
-				LocationTerminated string           `json:"location_terminated,omitempty"`
-				Geography          *GeographySearch `json:"geography,omitempty"`
-			}{item.Dataset, item.SourceID, item.Record, item.Distance, item.LocationQuality, item.LocationTerminated, geography}); err != nil {
-				return
-			}
-		}
-		return
-	}
-	respond(w, 200, struct {
-		Items     []result         `json:"items"`
-		Next      string           `json:"next_cursor"`
-		Geography *GeographySearch `json:"geography,omitempty"`
-	}{items, next, geography})
+	return searchResult{Items: items, Next: next, Geography: geography, positions: positions}, 200, nil
 }
 
 func (a *API) loadRecords(ctx context.Context, dataset int16, ids []int32) ([]result, error) {

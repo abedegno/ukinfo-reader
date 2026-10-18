@@ -368,7 +368,7 @@ test("address-only searches preserve fields, paging, bookmarks and edition cover
   });
   await page.goto("/");
   await page
-    .getByText("Search by street, town or county", { exact: true })
+    .getByText("Search by house, street, town or county", { exact: true })
     .click();
   await expect(page.locator('[name="street"]')).toBeDisabled();
   await page
@@ -599,4 +599,122 @@ test("record links reject changed identities and explain unavailable premises", 
   await expect(page.locator("#record-address-note")).toContainText(
     "house number or building name",
   );
+});
+
+test("premises filters, independent first names and removable chips preserve paging and bookmarks", async ({
+  page,
+}) => {
+  await page.goto(
+    "/?dataset=synthetic-demo&kind=person&postcode=ZZ1&house=1*&first_name=Person&first_match=given&limit=25",
+  );
+  await expect(page.locator("article")).toHaveCount(25);
+  await expect(page.locator("#status")).toContainText("Page 1");
+  await expect(page.locator('[name="house"]')).toHaveValue("1*");
+  await expect(page.locator('[name="first_match"]')).toHaveValue("given");
+  await page.getByRole("button", { name: "Next page" }).click();
+  await expect(page.locator("article")).toHaveCount(12);
+  await expect(page.locator("#status")).toContainText("Page 2");
+  await page.reload();
+  await expect(page.locator("article")).toHaveCount(12);
+  await expect(page.locator("#next")).toBeHidden();
+  await page
+    .getByRole("button", { name: "Remove house filter", exact: true })
+    .click();
+  await expect(page.locator("article")).toHaveCount(25);
+  await expect(page.locator("#status")).toContainText("Page 1");
+  await expect(page.locator('[name="house"]')).toHaveValue("");
+  expect(new URL(page.url()).searchParams.has("cursor")).toBe(false);
+  await page.goBack();
+  await expect(page.locator("article")).toHaveCount(12);
+  await expect(page.locator('[name="house"]')).toHaveValue("1*");
+  await page
+    .getByRole("button", { name: "Clear filters", exact: true })
+    .click();
+  await expect(page.locator("article")).toHaveCount(0);
+  await expect(page.getByLabel("Edition", { exact: true })).toHaveValue(
+    "synthetic-demo",
+  );
+  await expect(page.locator("#active-filters")).toBeEmpty();
+});
+
+test("first-name refinement and zero-result suggestions run real searches", async ({
+  page,
+}) => {
+  await page.goto(
+    "/?dataset=synthetic-demo&kind=person&surname=Exam*&match=prefix&first_name=Person%20011&first_match=exact&house=12",
+  );
+  await expect(page.locator("article")).toHaveCount(1);
+  await expect(page.locator("article")).toContainText("Person 011");
+  await page.locator('[name="first_name"]').fill("Person");
+  await page.getByRole("button", { name: "Search archive" }).click();
+  await expect(page.locator("#status")).toContainText("No matching entries");
+  await page
+    .getByRole("button", { name: "Search without given names", exact: true })
+    .click();
+  await expect(page.locator("article")).toHaveCount(1);
+  await expect(page.locator('[name="first_name"]')).toHaveValue("");
+  await expect(page.locator("#search-suggestions")).toBeHidden();
+  await page
+    .getByRole("button", { name: "Remove surname filter", exact: true })
+    .click();
+  await expect(page.locator("#status")).toContainText(
+    "Add a surname/business name",
+  );
+  await expect(page.locator("article")).toHaveCount(0);
+  await expect(page.locator('[name="house"]')).toHaveValue("12");
+});
+
+test("building, flat and middle initial controls round-trip and fit mobile without an address index", async ({
+  page,
+}) => {
+  await page.route("**/api/addresses", (route) =>
+    route.fulfill({ json: { available: false, datasets: [] } }),
+  );
+  await page.route("**/api/search?*", (route) => {
+    const params = new URL(route.request().url()).searchParams;
+    expect(params.get("building")).toBe("Rose*");
+    expect(params.get("flat")).toBe("Flat 2");
+    expect(params.get("middle_initial")).toBe("A");
+    expect(params.get("first_match")).toBe("given");
+    return route.fulfill({
+      json: {
+        items: [
+          {
+            dataset: "synthetic-demo",
+            source_id: "invented-refinement",
+            record: {
+              surname: "Example",
+              firstName: "John A",
+              building: "Rose House",
+              subbuilding: "Flat 2",
+              postcode: "ZZ11ZZ",
+            },
+          },
+        ],
+        next_cursor: "",
+      },
+    });
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(
+    "/?dataset=synthetic-demo&surname=Example&first_name=John&first_match=given&middle_initial=A&building=Rose*&flat=Flat+2",
+  );
+  await expect(page.locator("article")).toContainText("John A");
+  await expect(page.locator('[name="street"]')).toBeDisabled();
+  await expect(page.locator('[name="building"]')).toBeEnabled();
+  await expect(page.locator('[name="flat"]')).toHaveValue("Flat 2");
+  await expect(page.locator('[name="middle_initial"]')).toHaveValue("A");
+  await page.reload();
+  await expect(page.locator("article")).toHaveCount(1);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: "test-results/search-refinements-mobile.png",
+    fullPage: true,
+  });
+  await page.getByRole("button", { name: "Businesses", exact: true }).click();
+  await expect(page.locator("#name-refinements")).toBeHidden();
 });
