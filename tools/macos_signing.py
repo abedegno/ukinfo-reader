@@ -28,25 +28,52 @@ def runner_root():
     return Path(os.environ["RUNNER_TEMP"]).resolve()
 
 
+def decode_material(value):
+    # electron-builder's usual CSC_LINK form is the base64 PKCS#12 content.
+    # Also accept its base64 data-URL form; credentials are never printed.
+    if value.startswith("data:"):
+        header, value = value.split(",", 1)
+        if not header.endswith(";base64"):
+            raise RuntimeError("Certificate data URL must contain base64 material")
+    try:
+        if len(value) > 10 << 20:
+            raise ValueError("oversized credential")
+        return base64.b64decode("".join(value.split()), validate=True)
+    except (ValueError, TypeError):
+        raise RuntimeError("Signing material must be base64-encoded file content") from None
+
+
+def signing_identity(listing, team):
+    matches = re.findall(
+        r'\b([A-Fa-f0-9]{40})\s+"Developer ID Application: [^"\r\n]+\(' + re.escape(team) + r'\)"',
+        listing,
+    )
+    if len(matches) != 1:
+        raise RuntimeError("Expected one valid Developer ID Application identity for APPLE_TEAM_ID")
+    return matches[0]
+
+
 def prepare():
     root = runner_root()
     names = (
-        "MAC_CERT_P12_BASE64",
-        "MAC_CERT_PASSWORD",
-        "MAC_CODESIGN_IDENTITY",
-        "APPLE_ID",
+        "CSC_LINK",
+        "CSC_KEY_PASSWORD",
+        "APPLE_API_KEY",
+        "APPLE_API_KEY_ID",
+        "APPLE_API_ISSUER",
         "APPLE_TEAM_ID",
-        "APPLE_APP_PASSWORD",
     )
     if any(not os.environ.get(name) for name in names):
         raise RuntimeError(
             "Configure all six signing/notarization secrets in the desktop-signing environment"
         )
-    identity = os.environ["MAC_CODESIGN_IDENTITY"]
-    if not re.fullmatch(r"[a-fA-F0-9]{40}", identity):
-        raise RuntimeError(
-            "MAC_CODESIGN_IDENTITY must be the Developer ID certificate's SHA-1 fingerprint"
-        )
+    team = os.environ["APPLE_TEAM_ID"]
+    if not re.fullmatch(r"[A-Za-z0-9]{10}", team):
+        raise RuntimeError("APPLE_TEAM_ID must contain ten alphanumeric characters")
+    certificate_bytes = decode_material(os.environ["CSC_LINK"])
+    api_bytes = decode_material(os.environ["APPLE_API_KEY"])
+    if not api_bytes.startswith(b"-----BEGIN PRIVATE KEY-----"):
+        raise RuntimeError("APPLE_API_KEY must encode an App Store Connect .p8 private key")
     keychain = root / "ukinfo-signing.keychain-db"
     saved = root / "ukinfo-keychain-search.json"
     original = shlex.split(run(["security", "list-keychains", "-d", "user"]))
@@ -57,7 +84,7 @@ def prepare():
     run(["security", "unlock-keychain", "-p", password, str(keychain)])
     with tempfile.TemporaryDirectory(dir=root, prefix="ukinfo-cert-") as temporary:
         certificate = Path(temporary) / "identity.p12"
-        certificate.write_bytes(base64.b64decode(os.environ["MAC_CERT_P12_BASE64"], validate=True))
+        certificate.write_bytes(certificate_bytes)
         certificate.chmod(0o600)
         run(
             [
@@ -67,7 +94,7 @@ def prepare():
                 "-k",
                 str(keychain),
                 "-P",
-                os.environ["MAC_CERT_PASSWORD"],
+                os.environ["CSC_KEY_PASSWORD"],
                 "-T",
                 "/usr/bin/codesign",
                 "-T",
@@ -87,18 +114,25 @@ def prepare():
         ]
     )
     run(["security", "list-keychains", "-d", "user", "-s", str(keychain), *original])
+    identity = signing_identity(
+        run(["security", "find-identity", "-v", "-p", "codesigning", str(keychain)]), team
+    )
+    api_key = root / "ukinfo-notary-key.p8"
+    descriptor = os.open(api_key, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(descriptor, "wb") as stream:
+        stream.write(api_bytes)
     run(
         [
             "xcrun",
             "notarytool",
             "store-credentials",
             "ukinfo-notary",
-            "--apple-id",
-            os.environ["APPLE_ID"],
-            "--team-id",
-            os.environ["APPLE_TEAM_ID"],
-            "--password",
-            os.environ["APPLE_APP_PASSWORD"],
+            "--key",
+            str(api_key),
+            "--key-id",
+            os.environ["APPLE_API_KEY_ID"],
+            "--issuer",
+            os.environ["APPLE_API_ISSUER"],
             "--keychain",
             str(keychain),
         ]
@@ -156,8 +190,11 @@ def cleanup():
             run(["security", "list-keychains", "-d", "user", "-s", *json.loads(saved.read_text())])
             saved.unlink()
     finally:
-        if keychain.exists():
-            run(["security", "delete-keychain", str(keychain)])
+        try:
+            if keychain.exists():
+                run(["security", "delete-keychain", str(keychain)])
+        finally:
+            (root / "ukinfo-notary-key.p8").unlink(missing_ok=True)
 
 
 if __name__ == "__main__":

@@ -13,22 +13,28 @@ settings. Do not put keys, certificates or passwords in the repo or chat.
 
 | Secret | Value |
 | --- | --- |
-| `MAC_CERT_P12_BASE64` | Base64 export of a **Developer ID Application** signing certificate and its private key, in password-protected PKCS#12 format |
-| `MAC_CERT_PASSWORD` | Password for that PKCS#12 export |
-| `MAC_CODESIGN_IDENTITY` | The certificate's 40-character SHA-1 fingerprint (not a certificate filename) |
-| `APPLE_ID` | Apple ID authorized to notarize for the team |
-| `APPLE_TEAM_ID` | Developer team ID |
-| `APPLE_APP_PASSWORD` | Apple app-specific password for notarization |
+| `CSC_LINK` | Base64 content of a password-protected PKCS#12 export containing a **Developer ID Application** certificate and its private key (base64 data URLs are also accepted; filesystem paths and certificate-download URLs are not) |
+| `CSC_KEY_PASSWORD` | Password for that PKCS#12 export |
+| `APPLE_API_KEY` | Base64 content of the App Store Connect team API key `.p8` file |
+| `APPLE_API_KEY_ID` | App Store Connect API key ID |
+| `APPLE_API_ISSUER` | App Store Connect team API issuer ID |
+| `APPLE_TEAM_ID` | Developer team ID; the signing identity is discovered and checked against this team |
+
+These names and the API-key authentication scheme match Muesli's desktop-release
+workflow. GitHub secret values are write-only: their presence in the Muesli repo does
+not make them available here. Add the same credential material to this repository or
+the `desktop-signing` environment through GitHub settings. No Apple ID or app-specific
+password is needed. The API key may be reused only with authorization for that team.
 
 Configure environment reviewers/restrictions appropriate to the repository. Dispatch
-only a reviewed tag containing this workflow and its supporting tools (0.3.0 or later).
+only a reviewed tag containing this workflow and its supporting tools (0.3.1 or later; `desktop-v0.3.0` still uses the previous Apple-ID helper).
 The job checks that the tag matches the desktop package version. Missing credentials
 fail before building a candidate; there is no unsigned fallback in this workflow.
 
 ## What the workflow does
 
-1. Imports the certificate into a temporary runner keychain, stores notarization
-   credentials there, and adds only that temporary keychain to the existing search list.
+1. Imports the certificate into a temporary runner keychain, discovers its valid
+   Developer ID identity for the configured team, stores API-key notarization credentials there, and adds only that temporary keychain to the existing search list.
    Credential-bearing command arguments are not printed, including on subprocess failure.
 2. Signs the standalone decoder **during PyInstaller staging**, so embedded Python
    libraries carry the same Developer ID. They cannot be signed correctly by merely
@@ -44,7 +50,7 @@ fail before building a candidate; there is no unsigned fallback in this workflow
 6. Creates source-data-free ZIPs, SHA-256 files and manifests identifying the result
    as Developer ID signed, notarized and stapled. The manifest checks the actual app
    signature/ticket, rather than inferring success from an environment variable.
-7. Deletes the temporary certificate file and keychain and restores the runner's
+7. Deletes the temporary certificate/API-key files and keychain and restores the runner's
    original keychain search list. Candidate artifacts expire after seven days.
 
 The signing path needs a real certificate/Apple service run before it can be described

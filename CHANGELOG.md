@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Align optional macOS signing with Muesli's certificate/API-key secret names,
+  replacing Apple-ID/password authentication and discovering the certificate identity by team.
+
 - Add native archive inventory, edition/storage/completeness details, safe confirmed
   removal, sample-to-full actions and recovery of interrupted address indexing.
 - Persist original setup sources for verified restart after interruption and add
