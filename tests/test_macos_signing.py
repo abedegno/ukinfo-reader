@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from tools.macos_signing import decode_material, prepare, run, signing_identity
+from tools.macos_signing import decode_material, prepare, public_check, run, signing_identity
 
 
 class SigningCredentialsTests(unittest.TestCase):
@@ -21,6 +21,18 @@ class SigningCredentialsTests(unittest.TestCase):
                 run(["security", "-p", secret])
         self.assertNotIn(secret, str(caught.exception))
         self.assertIn("security failed", str(caught.exception))
+
+    def test_public_diagnostics_report_stapler_failure_but_reject_security_commands(self):
+        with patch(
+            "tools.macos_signing.subprocess.run",
+            return_value=subprocess.CompletedProcess([], 65, "Ticket not found", ""),
+        ) as command:
+            with self.assertRaisesRegex(RuntimeError, "Ticket not found"):
+                public_check(["xcrun", "stapler", "staple", "Example.app"])
+            command.reset_mock()
+            with self.assertRaisesRegex(RuntimeError, "restricted"):
+                public_check(["security", "import", "secret"])
+            command.assert_not_called()
 
     def test_missing_credentials_fail_before_any_keychain_mutation(self):
         with tempfile.TemporaryDirectory() as directory:

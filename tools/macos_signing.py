@@ -22,6 +22,29 @@ def run(args):
     return result.stdout
 
 
+def public_check(args):
+    """Report diagnostics only for commands that use no plaintext credentials."""
+    allowed = (
+        ("xcrun", "notarytool", "submit"),
+        ("xcrun", "notarytool", "log"),
+        ("xcrun", "stapler", "staple"),
+        ("xcrun", "stapler", "validate"),
+        ("codesign", "--verify"),
+        ("spctl", "--assess"),
+    )
+    if not any(tuple(args[: len(prefix)]) == prefix for prefix in allowed):
+        raise RuntimeError("Diagnostics are restricted to public signing checks")
+    print("Running " + " ".join(args[:3]), flush=True)
+    result = subprocess.run(args, capture_output=True, text=True)
+    if result.returncode:
+        raise RuntimeError(
+            f"{' '.join(args[:3])} failed (exit {result.returncode}):\n"
+            + result.stdout[-16000:]
+            + result.stderr[-16000:]
+        )
+    return result.stdout
+
+
 def runner_root():
     if sys.platform != "darwin" or os.environ.get("GITHUB_ACTIONS") != "true":
         raise RuntimeError("This credential helper runs only on a macOS GitHub Actions runner")
@@ -152,7 +175,7 @@ def notarize(app):
         archive = Path(temporary) / "application.zip"
         run(["ditto", "-c", "-k", "--keepParent", str(app), str(archive)])
         report = json.loads(
-            run(
+            public_check(
                 [
                     "xcrun",
                     "notarytool",
@@ -170,14 +193,32 @@ def notarize(app):
                 ]
             )
         )
+        print("Apple submission status: " + str(report.get("status")), flush=True)
         if report.get("status") != "Accepted":
+            submission = report.get("id", "")
+            if re.fullmatch(r"[A-Fa-f0-9-]{36}", submission):
+                print(
+                    public_check(
+                        [
+                            "xcrun",
+                            "notarytool",
+                            "log",
+                            submission,
+                            "--keychain-profile",
+                            "ukinfo-notary",
+                            "--keychain",
+                            str(keychain),
+                        ]
+                    ),
+                    flush=True,
+                )
             raise RuntimeError(
                 "Apple did not accept notarization; inspect the submission in the Apple developer account"
             )
-    run(["xcrun", "stapler", "staple", str(app)])
-    run(["xcrun", "stapler", "validate", str(app)])
-    run(["codesign", "--verify", "--deep", "--strict", str(app)])
-    run(["spctl", "--assess", "--type", "execute", str(app)])
+    public_check(["xcrun", "stapler", "staple", str(app)])
+    public_check(["xcrun", "stapler", "validate", str(app)])
+    public_check(["codesign", "--verify", "--deep", "--strict", str(app)])
+    public_check(["spctl", "--assess", "--type", "execute", str(app)])
     print("Developer ID app notarized, stapled and accepted by Gatekeeper.")
 
 

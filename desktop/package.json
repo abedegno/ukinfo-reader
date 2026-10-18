@@ -1,6 +1,6 @@
 {
   "name": "ukinfo-archive-desktop",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "private": true,
   "description": "Portable search interface for locally imported UK-Info archives",
   "author": "ukinfo-reader contributors",
