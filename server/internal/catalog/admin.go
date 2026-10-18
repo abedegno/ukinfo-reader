@@ -60,6 +60,7 @@ func (a *Admin) Handler() http.Handler {
 	mux.HandleFunc("GET /catalogue", a.inventory)
 	mux.HandleFunc("POST /remove-dataset", a.manageDataset)
 	mux.HandleFunc("POST /index-dataset", a.manageDataset)
+	mux.HandleFunc("POST /index-research", a.manageDataset)
 	mux.HandleFunc("GET /geography-source", func(w http.ResponseWriter, r *http.Request) {
 		respond(w, 200, map[string]string{"release": ONSPDRelease, "sha256": ONSPDSHA256, "url": ONSPDURL})
 	})

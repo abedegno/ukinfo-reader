@@ -211,7 +211,7 @@ test("conservative page grouping retains editions and excludes incomplete addres
   await page.getByLabel("Surname", { exact: true }).fill("Example");
   await page.getByRole("button", { name: "Search archive" }).click();
   await expect(page.locator("article")).toHaveCount(3);
-  await page.locator("#group-results").check();
+  await page.locator("#group-results").selectOption("page");
   await expect(page.locator("article")).toHaveCount(2);
   await expect(page.locator("article").first()).toContainText(
     "Invented 1999 · Invented 2005",
@@ -287,7 +287,7 @@ test("nearby area searches preserve radius, distances and coordinate provenance"
   await expect(page.locator("article")).toContainText("0.20 miles");
   await expect(page.locator("#geography-note")).toContainText("ONSPD 2026-08");
   await expect(page.locator("#geography-note")).toContainText(
-    "not distance order",
+    "not ordered by distance",
   );
   await expect(page.locator("#geography-note")).toContainText(
     "approximate district centre from 42 postcode points",

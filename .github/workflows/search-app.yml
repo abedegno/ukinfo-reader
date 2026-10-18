@@ -56,6 +56,7 @@ jobs:
         run: |
           build/desktop/ukinfo-server migrate
           python3 tools/search_demo.py | build/desktop/ukinfo-server import
+          build/desktop/ukinfo-server index-research --dataset synthetic-demo
           build/desktop/ukinfo-server serve --listen 127.0.0.1:8080 > /tmp/ukinfo-app.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid"' EXIT

@@ -69,7 +69,7 @@ test("research lists save notes and citations, compare, export/import and reopen
   expect(backup.lists[0].entries[0].note).toBe(
     "=Keep this literal research note",
   );
-  await page.locator("#research-dialog details summary").click();
+  await page.locator("#research-transfer > summary").click();
   await page.locator("#research-file").setInputFiles({
     name: "invented-research.json",
     mimeType: "application/json",
@@ -78,6 +78,10 @@ test("research lists save notes and citations, compare, export/import and reopen
   await expect(page.locator("#research-import-preview")).toContainText(
     "1 lists",
   );
+  await expect(page.locator("#research-import-preview")).toContainText(
+    "1 exact duplicates",
+  );
+  await page.locator("#research-skip-duplicates").uncheck();
   await page
     .getByRole("button", { name: "Add imported lists", exact: true })
     .click();
@@ -147,7 +151,7 @@ test("research addresses retain scope, safe text and source identity without ove
     .click();
   await page.getByRole("button", { name: "Open source", exact: true }).click();
   await expect(page.locator("#research-status")).toContainText(
-    "no longer identifies",
+    "original entry is not present",
   );
   await expect(page.locator("#research-dialog")).toBeVisible();
 });
@@ -306,14 +310,12 @@ test("near-limit collections export backups that can be imported into an empty p
   await page
     .getByRole("button", { name: "Research lists", exact: true })
     .click();
-  await page.locator("#research-dialog details summary").click();
-  await page
-    .locator("#research-file")
-    .setInputFiles({
-      name: "large-invented-backup.json",
-      mimeType: "application/json",
-      buffer: Buffer.from(raw),
-    });
+  await page.locator("#research-transfer > summary").click();
+  await page.locator("#research-file").setInputFiles({
+    name: "large-invented-backup.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(raw),
+  });
   await expect(page.locator("#research-import-preview")).toContainText(
     "1400 entries",
   );
@@ -325,4 +327,47 @@ test("near-limit collections export backups that can be imported into an empty p
   );
   await expect(page.locator("#research-list")).toContainText("1400");
   await expect(page.locator("#research-entries article")).toHaveCount(50);
+});
+test("research labels survive reload and exact backup duplicates are skipped by default", async ({
+  page,
+}) => {
+  await openRecord(page);
+  await saveRecord(page, "Invented labels", "Private note");
+  await page.locator("#close-details").click();
+  await page.locator("#research-open").click();
+  await page.locator("#research-entries details summary").click();
+  await page
+    .getByLabel("Research status for Person 000 Example", { exact: true })
+    .selectOption("follow-up");
+  await page
+    .getByLabel("Tags for Person 000 Example", { exact: true })
+    .fill("Invented, verify source");
+  await page.getByRole("button", { name: "Save labels", exact: true }).click();
+  await expect(page.locator("#research-status")).toHaveText(
+    "Research labels saved locally.",
+  );
+  const raw = await downloadText(page, page.locator("#research-json"));
+  const value = JSON.parse(raw);
+  expect(value.version).toBe(2);
+  expect(value.lists[0].entries[0].tags).toEqual(["Invented", "verify source"]);
+  await page.locator("#research-transfer > summary").click();
+  await page
+    .locator("#research-file")
+    .setInputFiles({
+      name: "private-invented.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(raw),
+    });
+  await expect(page.locator("#research-import-preview")).toContainText(
+    "1 exact duplicates",
+  );
+  await page.locator("#research-import").click();
+  await expect(page.locator("#research-list option")).toHaveCount(1);
+  await page.reload();
+  await page.locator("#research-open").click();
+  await expect(page.locator("#research-entries details summary")).toContainText(
+    "follow up",
+  );
+  await page.locator("#research-filter").fill("verify source");
+  await expect(page.locator("#research-entries article")).toHaveCount(1);
 });

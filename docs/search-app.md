@@ -117,7 +117,7 @@ process a separate role with SELECT only on the catalogue and optional geography
 CREATE ROLE ukinfo_search LOGIN; -- set its password separately, outside shell history
 GRANT CONNECT ON DATABASE ukinfo TO ukinfo_search;
 GRANT USAGE ON SCHEMA public TO ukinfo_search;
-GRANT SELECT ON datasets, entries, terms, record_blocks, catalog_schema, geography_releases, geography_active, postcode_locations, address_locations, address_members, address_indexes TO ukinfo_search;
+GRANT SELECT ON datasets, entries, terms, record_blocks, catalog_schema, geography_releases, geography_active, postcode_locations, address_locations, address_members, address_indexes, research_keys, research_indexes TO ukinfo_search;
 ALTER ROLE ukinfo_search SET default_transaction_read_only = on;
 ```
 
@@ -412,3 +412,12 @@ are factually correct. `stats` reports relation sizes and import timings without
 
 See [address search](address-search.md) for street, village/locality, town/city and
 county matching, optional index provisioning, coverage and storage requirements.
+
+## Research index and ordered results
+
+The optional [research index](research-index.md) enables grouping across the complete
+search, original-source reference lookup, and resolved industry/SIC business filters.
+Name A–Z, nearest and publication order use server-side result ordering and stable
+cursors. The desktop's archive manager builds indexes for existing imports; an index
+build does not reread the ISO or change the original record blocks. Its storage is
+additional to the earlier 38.26-GiB compact-catalogue measurement.

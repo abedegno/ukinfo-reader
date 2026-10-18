@@ -48,7 +48,7 @@ test("research schema limits, safe CSV and unknown-field removal", () => {
   assert.equal(output.lists[0].entries[0].untrustedHTML, undefined);
   assert.match(model.csv(output.lists[0]), /"'=malicious spreadsheet formula"/);
   for (const change of [
-    (d) => (d.version = 2),
+    (d) => (d.version = 3),
     (d) => (d.lists[0].entries[0].ref.id = 0),
     (d) => d.lists[0].entries.push(d.lists[0].entries[0]),
     (d) => (d.lists[0].entries[0].note = "a".repeat(4001)),
@@ -125,4 +125,43 @@ test("research IPC accepts only the owning window's main frame", async () => {
       handlers.get("ukinfo:research-read")({ sender: {}, senderFrame: frame }),
     /Archive window/,
   );
+});
+test("version-one research migrates with an original-byte compatibility backup and archival guards", async () => {
+  const directory = await fs.mkdtemp(
+    path.join(os.tmpdir(), "ukinfo-research-upgrade-"),
+  );
+  try {
+    const old = fixture();
+    old.version = 1;
+    const original = JSON.stringify(old, null, 2) + "\n";
+    await fs.writeFile(path.join(directory, "research-lists.json"), original);
+    const store = createResearchStore(directory),
+      value = await store.read();
+    assert.equal(value.version, 2);
+    value.revision++;
+    value.lists[0].entries[0].ref.archive_id = "a".repeat(64);
+    await store.write(value, old.revision);
+    assert.equal(
+      await fs.readFile(
+        path.join(directory, "research-lists.v1-backup.json"),
+        "utf8",
+      ),
+      original,
+    );
+    assert.equal(
+      (await store.read()).lists[0].entries[0].ref.archive_id,
+      "a".repeat(64),
+    );
+    value.revision++;
+    await store.write(value, value.revision - 1);
+    assert.equal(
+      await fs.readFile(
+        path.join(directory, "research-lists.v1-backup.json"),
+        "utf8",
+      ),
+      original,
+    );
+  } finally {
+    await fs.rm(directory, { recursive: true, force: true });
+  }
 });

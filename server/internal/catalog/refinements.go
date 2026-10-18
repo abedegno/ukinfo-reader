@@ -77,6 +77,9 @@ func (q query) accepts(raw json.RawMessage) (bool, error) {
 // is known. The shared request deadline bounds all batches; no candidate-count cap
 // can silently turn a sparse match into a false end of results.
 func (a *API) searchResults(ctx context.Context, q query) (searchResult, int, error) {
+	if q.Group != "" || q.Sort != "" {
+		return a.orderedResults(ctx, q)
+	}
 	if !q.hasRefinements() {
 		return a.searchCandidates(ctx, q)
 	}
@@ -112,3 +115,6 @@ func (a *API) searchResults(ctx context.Context, q query) (searchResult, int, er
 		q.Cursor = batch.Next
 	}
 }
+
+func (q query) hasBusinessFilters() bool { return q.SIC != "" || q.Industry != "" }
+func (q query) needsResearch() bool      { return q.Group != "" || q.hasBusinessFilters() }

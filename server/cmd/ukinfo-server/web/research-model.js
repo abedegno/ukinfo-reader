@@ -4,7 +4,7 @@
   const MAX_BYTES = 2 * 1024 * 1024;
   const fail = () => {
     throw new Error(
-      "Invalid research file. Use a UK-Info research JSON export (version 1, at most 2 MiB, 50 lists and 2,000 entries).",
+      "Invalid research file. Use a UK-Info research JSON export (version 1 or 2, at most 2 MiB, 50 lists and 2,000 entries).",
     );
   };
   function text(value, max, required = false) {
@@ -26,14 +26,19 @@
     if (!Number.isFinite(Date.parse(value))) fail();
     return value;
   }
+  function archive(value) {
+    text(value, 64, true);
+    if (!/^[a-f0-9]{64}$/.test(value)) fail();
+    return value;
+  }
   function empty() {
-    return { format: "ukinfo-research", version: 1, revision: 0, lists: [] };
+    return { format: "ukinfo-research", version: 2, revision: 0, lists: [] };
   }
   function validate(input) {
     object(input);
     if (
       input.format !== "ukinfo-research" ||
-      input.version !== 1 ||
+      ![1, 2].includes(input.version) ||
       !Number.isSafeInteger(input.revision) ||
       input.revision < 0 ||
       !Array.isArray(input.lists) ||
@@ -79,6 +84,20 @@
             warnings: 2048,
           }))
             summary[field] = text(item.summary[field], max);
+          const status =
+            input.version === 2 && item.status !== undefined ? item.status : "";
+          if (
+            !["", "candidate", "follow-up", "ruled-out", "reviewed"].includes(
+              status,
+            )
+          )
+            fail();
+          const tags =
+            input.version === 2 && item.tags !== undefined ? item.tags : [];
+          if (!Array.isArray(tags) || tags.length > 10) fail();
+          const validatedTags = [
+            ...new Set(tags.map((tag) => text(tag, 40, true).trim())),
+          ];
           return {
             id: unique(item.id),
             mode: item.mode,
@@ -87,9 +106,14 @@
               dataset: text(item.ref.dataset, 256, true),
               id: item.ref.id,
               source_id: text(item.ref.source_id, 512, true),
+              ...(input.version === 2 && item.ref.archive_id
+                ? { archive_id: archive(item.ref.archive_id) }
+                : {}),
             },
             summary,
             note: text(item.note, 4000),
+            ...(status ? { status } : {}),
+            ...(validatedTags.length ? { tags: validatedTags } : {}),
             created: date(item.created),
             updated: date(item.updated),
           };
@@ -98,7 +122,7 @@
     });
     const result = {
       format: input.format,
-      version: 1,
+      version: 2,
       revision: input.revision,
       lists,
     };
@@ -122,8 +146,8 @@
     return JSON.stringify([
       item.mode,
       item.scope,
-      item.ref.dataset,
-      item.ref.id,
+      item.ref.archive_id || item.ref.dataset,
+      item.ref.archive_id ? null : item.ref.id,
       item.ref.source_id,
     ]);
   }
@@ -146,6 +170,8 @@
         "Telephone",
         "Source entry",
         "Citation",
+        "Status",
+        "Tags",
         "Note",
         "Saved",
         "Updated",
@@ -162,6 +188,8 @@
         e.summary.phone,
         e.ref.source_id,
         e.summary.citation,
+        e.status || "",
+        (e.tags || []).join("; "),
         e.note,
         e.created,
         e.updated,

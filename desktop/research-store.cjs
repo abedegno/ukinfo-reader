@@ -1,6 +1,7 @@
 "use strict";
 const fs = require("node:fs/promises");
 const path = require("node:path");
+const { randomUUID } = require("node:crypto");
 function createResearchStore(directory, options = {}) {
   const model = options.model || require("./research-model.cjs");
   const filename = path.join(
@@ -32,6 +33,36 @@ function createResearchStore(directory, options = {}) {
           throw new Error(
             `${label} changed in another window. Reload before saving.`,
           );
+
+        if (!options.filename && next.version === 2) {
+          try {
+            const original = await fs.readFile(filename, "utf8");
+            if (JSON.parse(original).version === 1) {
+              const temporaryBackup = filename + ".v1-" + randomUUID() + ".tmp";
+              try {
+                const backup = await fs.open(temporaryBackup, "wx", 0o600);
+                try {
+                  await backup.writeFile(original);
+                  await backup.sync();
+                } finally {
+                  await backup.close();
+                }
+                try {
+                  await fs.link(
+                    temporaryBackup,
+                    path.join(directory, "research-lists.v1-backup.json"),
+                  );
+                } catch (error) {
+                  if (error.code !== "EEXIST") throw error;
+                }
+              } finally {
+                await fs.rm(temporaryBackup, { force: true });
+              }
+            }
+          } catch (error) {
+            if (error.code !== "ENOENT") throw error;
+          }
+        }
         await fs.mkdir(directory, { recursive: true, mode: 0o700 });
         const temporary = filename + ".tmp";
         try {

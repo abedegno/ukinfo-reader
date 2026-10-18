@@ -10,6 +10,7 @@
     <script src="/app.js" defer></script>
     <script src="/workbench.js" defer></script>
     <script src="/research.js" defer></script>
+    <script src="/groups.js" defer></script>
     <script src="/maps.js" defer></script>
     <script src="/postcode-setup.js" defer></script>
     <script src="/catalogue.js" defer></script>
@@ -86,6 +87,24 @@
           retains the complete workspace.
         </p>
       </details>
+    </dialog>
+    <dialog id="group-dialog" aria-labelledby="group-title">
+      <div class="dialog-heading">
+        <h2 id="group-title">Source occurrences</h2>
+        <button id="group-close" type="button">Close source occurrences</button>
+      </div>
+      <p id="group-status" role="status"></p>
+      <p class="note">
+        Identical recorded listings, not verified identities. Each source
+        remains separate. Publication dates do not establish dates of residence.
+      </p>
+      <div id="group-sources"></div>
+      <div class="record-actions">
+        <button id="group-previous" type="button" hidden>
+          Previous sources</button
+        ><button id="group-next" type="button" hidden>More sources</button
+        ><button id="group-export" type="button">Export source page</button>
+      </div>
     </dialog>
     <main>
       <section class="intro">
@@ -189,6 +208,25 @@
               </p>
             </details>
           </fieldset>
+          <details id="business-classification" hidden>
+            <summary>Business classification filters</summary>
+            <p class="note">
+              Search the source's resolved industry description or SIC text
+              exactly, or add a trailing *. Historical classifications may
+              differ from modern SIC. Unknown or ambiguous industries are
+              excluded from this filter. A research index is required.
+            </p>
+            <div class="fields">
+              <label
+                >Industry description<input
+                  name="industry"
+                  id="industry"
+                  maxlength="256" /></label
+              ><label
+                >Source SIC code<input name="sic" id="sic" maxlength="256"
+              /></label>
+            </div>
+          </details>
           <fieldset class="search-section" aria-describedby="location-hint">
             <legend>Where?</legend>
             <p id="location-hint" class="note section-hint">
@@ -377,21 +415,39 @@
                 <option selected>50</option>
                 <option>100</option>
               </select></label
-            ><label class="check"
-              ><input type="checkbox" id="group-results" /> Group identical
-              listings on this page</label
+            ><label
+              >Show<select id="group-results" form="search">
+                <option value="source">Source entries</option>
+                <option value="page">
+                  Group identical listings on this page
+                </option>
+                <option value="listing" id="whole-group-option" disabled>
+                  Group identical listings across this search
+                </option>
+              </select></label
+            >
+            <label
+              >Order<select id="result-sort" form="search">
+                <option value="catalogue">Catalogue order</option>
+                <option value="name">Name A–Z</option>
+                <option value="edition">Latest publication first</option>
+                <option value="nearest" id="nearest-order-option" disabled>
+                  Nearest to search centre
+                </option>
+              </select></label
             >
           </div>
           <p id="group-note" class="note" hidden>
-            Groups match recorded names, listing types, addresses and telephone
-            numbers. Incomplete addresses and source warnings remain separate.
-            They do not establish identity. Listings on other pages remain
-            separate.
+            Groups match recorded names, listing types, complete addresses,
+            telephone and resolved business classifications. Incomplete
+            addresses and unresolved warnings stay separate. Groups do not
+            establish identity.
           </p>
-          <p class="note">
-            Results use a stable catalogue order, not alphabetical order.
-            Edition dates refer to the cover disc.
+          <p id="order-note" class="note">
+            Catalogue order is stable, not alphabetical. Edition dates identify
+            cover discs.
           </p>
+          <p id="research-capability" class="note"></p>
           <nav class="pagination" aria-label="Top search result navigation">
             <button id="previous-top" type="button" hidden>
               ← Previous results</button
@@ -690,7 +746,7 @@
       aria-describedby="premises-notice"
     >
       <div class="dialog-heading">
-        <h2 id="address-title">Listings at this address</h2>
+        <h2 id="address-title" tabindex="-1">Listings at this address</h2>
         <button id="close-address" aria-label="Close address">✕</button>
       </div>
       <p id="address-heading" class="address-heading"></p>
@@ -726,7 +782,7 @@
     </dialog>
     <dialog id="details" aria-labelledby="record-title">
       <div class="dialog-heading">
-        <h2 id="record-title">Record details</h2>
+        <h2 id="record-title" tabindex="-1">Record details</h2>
         <button id="close-details" aria-label="Close details">✕</button>
       </div>
       <p id="provenance"></p>
@@ -791,6 +847,7 @@
       </div>
       <p id="research-storage-note" class="note"></p>
       <p id="research-status" role="status" aria-live="polite"></p>
+      <p id="research-draft-status" class="note" role="status"></p>
       <div class="fields">
         <label>Selected list<select id="research-list"></select></label
         ><label
@@ -824,7 +881,7 @@
           Delete this list permanently</button
         ><button id="research-delete-no" type="button">Keep list</button>
       </div>
-      <details>
+      <details id="research-transfer">
         <summary>Import a research backup</summary>
         <p class="note">
           Adds imported lists without replacing existing notes. Maximum 2 MiB;
@@ -836,6 +893,10 @@
             type="file"
             accept=".json,application/json"
         /></label>
+        <label class="check"
+          ><input type="checkbox" id="research-skip-duplicates" checked />Skip
+          exact copies of previously imported entries</label
+        >
         <p id="research-import-preview" role="status"></p>
         <button id="research-import" type="button" disabled>
           Add imported lists

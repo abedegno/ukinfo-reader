@@ -402,6 +402,23 @@ const assert = require("node:assert/strict");
       .locator(".catalogue-edition")
       .filter({ hasText: "Synthetic demo" })
       .waitFor();
+    await reopened
+      .locator(".catalogue-edition")
+      .filter({ hasText: "Synthetic demo" })
+      .getByRole("button", { name: "Build research index", exact: true })
+      .click();
+    await reopened
+      .locator("#catalogue-message")
+      .filter({ hasText: "Research index is ready" })
+      .waitFor({ timeout: 30000 });
+    const researchInventory = await reopened.evaluate(() =>
+      window.ukinfoDesktop.catalogue(),
+    );
+    assert.equal(
+      researchInventory.datasets.find((item) => item.key === "synthetic-demo")
+        .research_ready,
+      true,
+    );
     const diagnosticPath = path.join(directory, "diagnostics.json");
     await app.evaluate(({ dialog }, filePath) => {
       dialog.showSaveDialog = async () => ({ canceled: false, filePath });

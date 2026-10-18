@@ -1061,3 +1061,27 @@ input[type="radio"] {
     width: 100%;
   }
 }
+#group-dialog {
+  width: min(940px, 94vw);
+}
+#group-dialog button {
+  min-height: 44px;
+}
+.field-error {
+  color: #9d241b;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 8px 0;
+}
+[aria-invalid="true"] {
+  border: 2px solid #9d241b;
+}
+#record-fields p,
+#group-dialog p,
+#address-details p {
+  overflow-wrap: anywhere;
+}
+.dialog-heading {
+  gap: 12px;
+  flex-wrap: wrap;
+}

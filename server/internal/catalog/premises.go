@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -109,6 +110,7 @@ func premisesRecord(raw json.RawMessage) (premisesIdentity, string, error) {
 func (p premisesIdentity) key() string { b, _ := json.Marshal(p); return string(b) }
 
 type recordReference struct {
+	Archive string
 	Dataset string
 	ID      int32
 	Source  string
@@ -118,7 +120,15 @@ func parseRecordReference(v url.Values) (recordReference, error) {
 	if format := v.Get("format"); format != "" && format != "jsonl" {
 		return recordReference{}, errors.New("record format must be jsonl or omitted")
 	}
-	ref := recordReference{Dataset: strings.TrimSpace(v.Get("dataset")), Source: v.Get("source_id")}
+	ref := recordReference{Archive: v.Get("archive_id"), Dataset: strings.TrimSpace(v.Get("dataset")), Source: v.Get("source_id")}
+	if ref.Archive != "" {
+		decoded, e := hex.DecodeString(ref.Archive)
+		if e != nil || len(decoded) != 32 || ref.Source == "" {
+			return ref, errors.New("Invalid archival source reference")
+		}
+		ref.Archive = strings.ToLower(ref.Archive)
+	}
+
 	id, err := strconv.ParseInt(v.Get("id"), 10, 32)
 	if err != nil || id < 1 || ref.Dataset == "" || ref.Dataset == "all" || len(ref.Dataset) > 256 || len(ref.Source) > maxSourceIDBytes || strings.ContainsRune(ref.Dataset+ref.Source, 0) {
 		return ref, errors.New("choose a source edition and a valid record link")
@@ -127,6 +137,9 @@ func parseRecordReference(v url.Values) (recordReference, error) {
 	return ref, nil
 }
 func (a *API) referencedRecord(ctx context.Context, ref recordReference) (result, int, error) {
+	if ref.Archive != "" {
+		return a.archivalRecord(ctx, ref)
+	}
 	var dataset int16
 	var count int64
 	err := a.DB.QueryRow(ctx, "SELECT id,entries FROM datasets WHERE key=$1", ref.Dataset).Scan(&dataset, &count)
@@ -227,6 +240,7 @@ func (a *API) address(w http.ResponseWriter, r *http.Request) {
 		fail(w, status, err.Error())
 		return
 	}
+	ref.Dataset, ref.ID = anchor.Dataset, int32(anchor.ID)
 	identity, reason, err := premisesRecord(anchor.Record)
 	if err != nil {
 		fail(w, 503, "Source record unavailable")

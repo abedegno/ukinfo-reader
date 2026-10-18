@@ -142,7 +142,7 @@ function installImporter({
           "Archive management requires an app-owned local catalogue.",
         );
       const item = catalogueSelections.get(selection);
-      if (!item || !["remove", "index"].includes(action))
+      if (!item || !["remove", "index", "research"].includes(action))
         throw new Error("Refresh the catalogue and choose an edition.");
       if (action === "remove") {
         const result = await dialog.showMessageBox(window, {
@@ -177,7 +177,11 @@ function installImporter({
           controlRequest("/cancel", {}).catch(() => {});
         },
         done: controlRequest(
-          action === "remove" ? "/remove-dataset" : "/index-dataset",
+          action === "remove"
+            ? "/remove-dataset"
+            : action === "research"
+              ? "/index-research"
+              : "/index-dataset",
           { key: item.key, id: item.id },
           abort.signal,
         ),

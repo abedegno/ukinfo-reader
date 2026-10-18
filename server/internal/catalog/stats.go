@@ -20,6 +20,7 @@ func Statistics(ctx context.Context, db *pgxpool.Pool) (json.RawMessage, error) 
  'key',d.key,'manifest',d.manifest,'entries',d.entries,'stats',d.stats,
  'projection_heap_bytes',pg_table_size(format('entries_d%s',d.id)::regclass),
  'projection_index_bytes',pg_indexes_size(format('entries_d%s',d.id)::regclass),
+ 'research_index_bytes',COALESCE(pg_total_relation_size(to_regclass(format('research_d%s',d.id))),0),
  'record_block_bytes',pg_total_relation_size(format('blocks_d%s',d.id)::regclass))) FROM datasets d),'[]'::json))`).Scan(&raw)
 	if e != nil {
 		return nil, fmt.Errorf("catalogue statistics: %w", e)

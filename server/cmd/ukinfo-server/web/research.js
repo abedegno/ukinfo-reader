@@ -7,7 +7,8 @@
     pending = null,
     incoming = null,
     nameMode = "new",
-    shown = 50;
+    shown = 50,
+    mutationQueue = Promise.resolve();
   const checked = new Set(),
     drafts = new Map();
   const bridge = window.ukinfoDesktop;
@@ -88,12 +89,14 @@
     draftTimer = setTimeout(() => {
       flushDrafts()
         .then(() =>
-          status(
-            "Drafts saved for recovery on this device. Use Save note to commit them.",
+          draftStatus(
+            drafts.size
+              ? "Drafts saved for recovery on this device. Use Save note to commit them."
+              : "",
           ),
         )
         .catch((error) =>
-          status(`Draft recovery unavailable: ${error.message}`),
+          draftStatus(`Draft recovery unavailable: ${error.message}`),
         );
     }, 300);
   }
@@ -123,30 +126,47 @@
     data = model.validate(await storageRead());
     if (!byId(selected)) selected = data.lists[0]?.id || "";
   }
-  async function mutate(change) {
-    const apply = async () => {
-      const stored = model.validate(await storageRead());
-      if (stored.revision !== data.revision)
-        throw new Error(
-          "Research lists changed in another window. Reload lists before saving; your unsaved notes are still here.",
-        );
-      const next = structuredClone(data);
-      change(next);
-      next.revision++;
-      const validated = model.validate(next);
-      if (native) await bridge.researchWrite(validated, data.revision);
-      else localStorage.setItem(key, JSON.stringify(validated));
-      data = validated;
+  function mutate(change) {
+    const run = async () => {
+      const apply = async () => {
+        const stored = model.validate(await storageRead());
+        if (stored.revision !== data.revision)
+          throw new Error(
+            "Research lists changed in another window. Reload lists before saving; your unsaved notes are still here.",
+          );
+        const next = structuredClone(data);
+        change(next);
+        next.revision++;
+        const validated = model.validate(next);
+        if (native) await bridge.researchWrite(validated, data.revision);
+        else {
+          const original = localStorage.getItem(key);
+          if (
+            original &&
+            JSON.parse(original).version === 1 &&
+            localStorage.getItem(key + ".v1-backup") === null
+          )
+            localStorage.setItem(key + ".v1-backup", original);
+          localStorage.setItem(key, JSON.stringify(validated));
+        }
+        data = validated;
+      };
+      if (!native) {
+        if (!navigator.locks)
+          throw new Error(
+            "Saving research lists needs HTTPS or localhost in a browser with Web Locks support. JSON export is still available.",
+          );
+        await navigator.locks.request(key, apply);
+      } else await apply();
     };
-    if (!native) {
-      if (!navigator.locks)
-        throw new Error(
-          "Saving research lists needs HTTPS or localhost in a browser with Web Locks support. JSON export is still available.",
-        );
-      await navigator.locks.request(key, apply);
-    } else await apply();
+    const pending = mutationQueue.then(run);
+    mutationQueue = pending.catch(() => {});
+    return pending;
   }
+
   const status = (message) => ($("research-status").textContent = message);
+  const draftStatus = (message) =>
+    ($("research-draft-status").textContent = message);
   async function action(change, message) {
     try {
       await mutate(change);
@@ -161,6 +181,36 @@
       return false;
     }
   }
+  const importSignature = (list, entry) =>
+    JSON.stringify([
+      list.name,
+      model.key(entry),
+      entry.note,
+      entry.status || "",
+      entry.tags || [],
+      entry.summary,
+    ]);
+  function importPreview() {
+    if (!incoming) return;
+    const signatures = new Set(),
+      refs = new Set();
+    for (const list of data.lists)
+      for (const entry of list.entries) {
+        signatures.add(importSignature(list, entry));
+        refs.add(JSON.stringify([list.name, model.key(entry)]));
+      }
+    let identical = 0,
+      versions = 0;
+    for (const list of incoming.lists)
+      for (const entry of list.entries) {
+        if (signatures.has(importSignature(list, entry))) identical++;
+        else if (refs.has(JSON.stringify([list.name, model.key(entry)])))
+          versions++;
+      }
+    $("research-import-preview").textContent =
+      `${incoming.lists.length} lists · ${incoming.lists.reduce((count, list) => count + list.entries.length, 0)} entries · ${identical} exact duplicates · ${versions} source references with different saved details. ${$("research-skip-duplicates").checked ? "Exact duplicates will be skipped." : "Duplicates will be added as separate copies."} Existing lists and notes are kept; differing versions are added separately.`;
+  }
+  $("research-skip-duplicates").addEventListener("change", importPreview);
   function selection() {
     return (current()?.entries || []).filter((entry) => checked.has(entry.id));
   }
@@ -186,7 +236,12 @@
     container.replaceChildren();
     const term = $("research-filter").value.trim().toLocaleLowerCase();
     const entries = (current()?.entries || []).filter((entry) =>
-      [...Object.values(entry.summary), drafts.get(entry.id) ?? entry.note]
+      [
+        ...Object.values(entry.summary),
+        entry.status,
+        ...(entry.tags || []),
+        drafts.get(entry.id) ?? entry.note,
+      ]
         .join(" ")
         .toLocaleLowerCase()
         .includes(term),
@@ -230,6 +285,76 @@
       );
       if (entry.summary.warnings)
         body.append(element("p", entry.summary.warnings, "warning"));
+      const labels = element("details", ""),
+        labelSummary = element(
+          "summary",
+          entry.status || entry.tags?.length
+            ? `Research labels: ${(entry.status || "").replaceAll("-", " ") || "no status"}${entry.tags?.length ? " · " + entry.tags.join(", ") : ""}`
+            : "Add research status or tags",
+        );
+      const statusLabel = element("label", "Research status"),
+        statusSelect = element("select", "");
+      statusSelect.setAttribute(
+        "aria-label",
+        `Research status for ${entry.summary.title}`,
+      );
+      for (const [value, title] of [
+        ["", "Not set"],
+        ["candidate", "Candidate"],
+        ["follow-up", "Follow up"],
+        ["ruled-out", "Ruled out"],
+        ["reviewed", "Reviewed"],
+      ]) {
+        const option = element("option", title);
+        option.value = value;
+        statusSelect.append(option);
+      }
+      statusSelect.value = entry.status || "";
+      statusLabel.append(statusSelect);
+      const tagLabel = element("label", "Tags (comma separated)"),
+        tagsInput = element("input", "");
+      tagsInput.value = (entry.tags || []).join(", ");
+      tagsInput.maxLength = 400;
+      tagsInput.setAttribute("aria-label", `Tags for ${entry.summary.title}`);
+      tagLabel.append(tagsInput);
+      const saveLabels = element("button", "Save labels");
+      saveLabels.type = "button";
+      saveLabels.addEventListener("click", () => {
+        const savedStatus = statusSelect.value,
+          tags = [
+            ...new Set(
+              tagsInput.value
+                .split(",")
+                .map((value) => value.trim())
+                .filter(Boolean),
+            ),
+          ];
+        if (tags.length > 10 || tags.some((tag) => tag.length > 40)) {
+          status("Use at most 10 tags of 40 characters each.");
+          return;
+        }
+        action((next) => {
+          const target = next.lists
+            .flatMap((list) => list.entries)
+            .find((item) => item.id === entry.id);
+          if (!target) throw new Error("Entry no longer exists.");
+          target.status = savedStatus;
+          target.tags = tags;
+          target.updated = new Date().toISOString();
+        }, "Research labels saved locally.");
+      });
+      labels.append(
+        labelSummary,
+        element(
+          "p",
+          "These are your research judgements. They do not change the source listing or establish a person's identity.",
+          "note",
+        ),
+        statusLabel,
+        tagLabel,
+        saveLabels,
+      );
+      body.append(labels);
       const noteLabel = element("label", "Note"),
         textarea = document.createElement("textarea");
       textarea.rows = 3;
@@ -493,8 +618,7 @@
       if (file.size > model.MAX_BYTES)
         throw new Error("Research JSON must be at most 2 MiB.");
       incoming = model.parse(await file.text());
-      $("research-import-preview").textContent =
-        `${incoming.lists.length} lists · ${incoming.lists.reduce((n, l) => n + l.entries.length, 0)} entries. Existing lists and notes will be kept.`;
+      importPreview();
       $("research-import").disabled = !incoming.lists.length;
     } catch (error) {
       $("research-import-preview").textContent = error.message;
@@ -504,8 +628,29 @@
     if (!incoming) return;
     if (
       await action((next) => {
+        const signatures = new Set(
+          next.lists.flatMap((list) =>
+            list.entries.map((entry) => importSignature(list, entry)),
+          ),
+        );
+        const skip = $("research-skip-duplicates").checked;
         for (const list of incoming.lists) {
           const copy = structuredClone(list);
+          copy.entries = copy.entries.filter(
+            (entry) => !skip || !signatures.has(importSignature(list, entry)),
+          );
+          if (skip && list.entries.length && !copy.entries.length) continue;
+          if (
+            skip &&
+            !list.entries.length &&
+            next.lists.some(
+              (existing) =>
+                existing.name === list.name && !existing.entries.length,
+            )
+          )
+            continue;
+          for (const entry of copy.entries)
+            signatures.add(importSignature(list, entry));
           copy.id = uuid();
           for (const entry of copy.entries) entry.id = uuid();
           next.lists.push(copy);
@@ -574,7 +719,12 @@
         id: uuid(),
         mode,
         scope,
-        ref: { dataset: item.dataset, id: item.id, source_id: item.source_id },
+        ref: {
+          dataset: item.dataset,
+          id: item.id,
+          source_id: item.source_id,
+          ...(item.archive_id ? { archive_id: item.archive_id } : {}),
+        },
         summary: {
           title: recordName(r) || "Unnamed listing",
           address: addressText(r),

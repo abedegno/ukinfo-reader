@@ -60,7 +60,7 @@ claiming a save succeeded.
 
 ## Format and limits
 
-The portable JSON format is `ukinfo-research`, version 1, with a revision counter and
+The portable JSON format is `ukinfo-research`, version 2 (version 1 is accepted), with a revision counter and
 named lists. Both browser and native storage use the same validator. Limits:
 
 - 2 MiB serialized UTF-8, at most 50 lists and 2,000 entries across all lists.
@@ -100,6 +100,20 @@ and excluded from diagnostics. Browser storage is specific to the site's origin.
 Browser clearing/private browsing can lose it. Workspace export includes private
 history and drafts; import previews and adds saved query recipes only, keeping notes,
 drafts and logging settings untouched. Use full desktop backup/restore to preserve
-the complete archive workspace. List JSON version 1 remains compatible with earlier
-versions and continues to export committed notes only. Never attach either export
+the complete archive workspace. Version-1 files are upgraded when saved; their original bytes are retained as a compatibility backup. Version-2 exports include archival source IDs and optional research status/tags; older apps need a version-1 backup to roll back. List exports include committed notes only. Never attach either export
 to public issues without first removing private content.
+
+## Research labels and repeated imports
+
+Each saved entry has optional **Research status** (Candidate, Follow up, Ruled out,
+Reviewed) and up to ten tags of forty characters each. Open its research labels and
+choose **Save labels**. These are private research judgements, not source facts or
+identity confidence assigned by the app. List filtering searches saved labels too;
+JSON and CSV exports retain them.
+
+Research-backup import previews exact copies and references with different saved
+content. **Skip exact copies** is selected by default. It compares list name, source
+reference, saved summary, committed note and labels; timestamps alone do not create a
+new version. Changed content is added separately and existing notes are never replaced.
+Turn skipping off to deliberately keep separate copies. This is conservative duplicate
+handling, not an automatic merge of research judgements or people.

@@ -91,7 +91,7 @@
           body.append(
             element(
               "p",
-              `${item.count}${item.more ? "+" : ""} source entries on the first page. ${item.coverage}`,
+              `${item.count}${item.more ? "+" : ""} ${item.query.group === "listing" ? "listing groups" : "source entries"} on the first page. ${item.coverage}`,
               "note",
             ),
           );

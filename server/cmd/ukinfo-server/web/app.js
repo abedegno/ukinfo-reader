@@ -11,20 +11,32 @@ let datasets = [];
 let catalogueLoaded = false;
 let searchGeography = null;
 let addressCoverage = new Set();
+let researchCoverage = new Set(),
+  businessDatasets = null;
 let geographyAvailable = false;
 // Older bookmarks can combine a radius with an independent postcode restriction.
 // Keep that restriction in the visible filter chips without a second postcode box.
 let savedPostcodeConstraint = "";
 let restoredSearch = false;
+let initialUserEdited = false;
+for (const event of ["input", "change"])
+  form.addEventListener(event, () => {
+    if (!restoredSearch) initialUserEdited = true;
+  });
 function updatePostcodeMode() {
   const nearby = form.elements.postcode_scope.value === "near";
   $("nearby-controls").hidden = !nearby;
+  $("nearest-order-option").disabled =
+    !geographyAvailable || !nearby || !form.elements.postcode.value.trim();
+  if (!nearby && $("result-sort").value === "nearest")
+    $("result-sort").value = "catalogue";
   $("geography-capability").hidden = geographyAvailable && !nearby;
   $("postcode-constraint-note").hidden = !(nearby && savedPostcodeConstraint);
   $("postcode-constraint-note").textContent = savedPostcodeConstraint
     ? `This saved search also restricts results to ${savedPostcodeConstraint}. Remove the Postcode filter from the results to widen it.`
     : "";
 }
+form.elements.postcode.addEventListener("input", updatePostcodeMode);
 for (const input of form.elements.postcode_scope)
   input.addEventListener("change", () => {
     if (form.elements.postcode_scope.value === "in")
@@ -49,12 +61,19 @@ const filterLabels = {
   town: "Town / city",
   county: "County",
   near: "Near",
+  sic: "Source SIC code",
+  industry: "Industry",
+  group: "Result view",
+  sort: "Result order",
 };
 async function api(path) {
   const response = await fetch(path, { credentials: "same-origin" });
   const data = await response.json();
-  if (!response.ok)
-    throw new Error(data.error || "The catalogue is unavailable.");
+  if (!response.ok) {
+    const error = new Error(data.error || "The catalogue is unavailable.");
+    if (typeof data.field === "string") error.field = data.field;
+    throw error;
+  }
   return data;
 }
 function element(tag, text, className) {
@@ -64,6 +83,7 @@ function element(tag, text, className) {
   return node;
 }
 function reset() {
+  clearFieldErrors();
   generation++;
   page = [];
   pageHistory = [];
@@ -150,7 +170,14 @@ function explainSearch(params, count, more) {
       "Nearby uses approximate Great Britain postcode positions. Districts and sectors use a centre point, not an area boundary. Listings without eligible coordinates are excluded. This is not an exact property location.",
     );
   rule(
-    "Results use catalogue order. Grouping combines identical listings only on the current page; it does not establish that listings are the same person.",
+    params.get("group") === "listing"
+      ? "Identical recorded listings are grouped across this search, with all source occurrences available from View record. Incomplete or warned addresses remain separate. Groups do not establish the same person."
+      : params.get("group") === "page"
+        ? "Grouping applies to this page only; other pages can repeat the same listing."
+        : "Source entries remain separate, including repeated listings across editions.",
+  );
+  rule(
+    `Requested order: ${params.get("sort") || (params.get("group") === "listing" ? "grouped name order" : "catalogue order")}. Nearest order requires a nearby search.`,
   );
   rule(
     "Edition labels identify source publications. They do not establish dates of residence, moves or relationships.",
@@ -167,6 +194,35 @@ function explainSearch(params, count, more) {
   $("about-search").hidden = false;
   return sources.textContent;
 }
+function researchNote() {
+  const selected = selectedDatasets(form.elements.dataset.value).filter(
+    (d) =>
+      kind !== "business" || !businessDatasets || businessDatasets.has(d.key),
+  );
+  const available =
+    selected.length > 0 && selected.every((d) => researchCoverage.has(d.key));
+  $("whole-group-option").disabled = !available;
+  for (const field of ["industry", "sic"])
+    form.elements[field].disabled = !available;
+  $("research-capability").textContent = available
+    ? "Search-wide grouping and source classification indexes are ready for this scope."
+    : window.ukinfoDesktop
+      ? "Search-wide grouping and business classifications need research indexes. Open Manage archive → Build research index for the selected sources."
+      : "Search-wide grouping and business classifications are not ready for these sources. Ask the archive administrator to enable their research indexes.";
+}
+async function refreshResearch() {
+  try {
+    const value = await api("/api/research");
+    researchCoverage = new Set(value.datasets || []);
+    businessDatasets = value.business_datasets
+      ? new Set(value.business_datasets)
+      : null;
+  } catch {
+    researchCoverage = new Set();
+    businessDatasets = null;
+  }
+  researchNote();
+}
 async function refreshAddresses() {
   try {
     const data = await api("/api/addresses");
@@ -178,6 +234,7 @@ async function refreshAddresses() {
 }
 function editionNote() {
   addressNote();
+  researchNote();
   if (form.elements.dataset.value === "all") {
     $("edition-note").textContent =
       "Search all imported editions. Samples are excluded when their complete edition is available. " +
@@ -200,6 +257,8 @@ function showKind(value) {
   $("name-refinements").hidden = kind !== "person";
   $("name-help").hidden = kind !== "person";
   $("business-field").hidden = kind !== "business";
+  $("business-classification").hidden = kind !== "business";
+  researchNote();
   $("who-heading").textContent =
     kind === "person" ? "Who are you looking for?" : "Which business?";
   $("match-label").textContent =
@@ -302,7 +361,7 @@ function warnings(r) {
 }
 let selectedRecord = null;
 function citation(item) {
-  return `${recordName(item.record) || "Unnamed listing"}. ${editionTitle(item)}. Source entry ${item.source_id}. UK-Info Archive. Cover-disc date; underlying listing date unverified.`;
+  return `${recordName(item.record) || "Unnamed listing"}. ${editionTitle(item)}. Source entry ${item.source_id}.${item.archive_id ? ` Archival source v1 ${item.archive_id}.` : ""} UK-Info Archive. Cover-disc date; underlying listing date unverified.`;
 }
 function locationQuality(value) {
   return (
@@ -439,7 +498,10 @@ function details(item, occurrences = [item], options = {}) {
   raw.append(dl);
   fields.push(raw);
   $("record-fields").replaceChildren(...fields);
-  if (!$("details").open) $("details").showModal();
+  if (!$("details").open) {
+    $("details").showModal();
+    $("record-title").focus();
+  }
   recordActions(item, options.metadata);
 }
 async function copyText(text) {
@@ -496,13 +558,13 @@ function render() {
   $("geography-note").hidden = !searchGeography;
   if (searchGeography)
     $("geography-note").textContent =
-      `Within ${(searchGeography.radius_m / 1609.344).toFixed(1)} miles of ${searchGeography.near}${searchGeography.centre_type && searchGeography.centre_type !== "postcode" ? ` (approximate ${searchGeography.centre_type} centre from ${searchGeography.centre_postcodes} postcode points${searchGeography.centre_retired_only ? "; retired postcodes only" : ""}; radius from centre, not boundary)` : ""} · ONSPD ${searchGeography.reference.release} · approximate postcode positions. Results use catalogue order, not distance order.${searchGeography.terminated ? " The centre postcode is retired." : ""}`;
+      `Within ${(searchGeography.radius_m / 1609.344).toFixed(1)} miles of ${searchGeography.near}${searchGeography.centre_type && searchGeography.centre_type !== "postcode" ? ` (approximate ${searchGeography.centre_type} centre from ${searchGeography.centre_postcodes} postcode points${searchGeography.centre_retired_only ? "; retired postcodes only" : ""}; radius from centre, not boundary)` : ""} · ONSPD ${searchGeography.reference.release} · approximate postcode positions. ${lastQuery?.get("sort") === "nearest" ? "Results are ordered by distance." : "Results are not ordered by distance."}${searchGeography.terminated ? " The centre postcode is retired." : ""}`;
   $("items").replaceChildren();
   const groups = new Map();
   for (const item of page) {
     const r = item.record;
     const key =
-      $("group-results").checked &&
+      $("group-results").value === "page" &&
       recordName(r) &&
       (r.entry_type === "business" || (r.firstName && r.surname)) &&
       (r.street || r.street_1) &&
@@ -524,7 +586,7 @@ function render() {
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(item);
   }
-  $("group-note").hidden = !$("group-results").checked;
+  $("group-note").hidden = $("group-results").value === "source";
   for (const occurrences of groups.values()) {
     const item = occurrences[0];
     const r = item.record;
@@ -541,6 +603,14 @@ function render() {
     text.append(element("p", address.join(", ") || "Address not recorded"));
     const sources = [...new Set(occurrences.map(editionTitle))];
     text.append(element("p", sources.join(" · "), "source-badges"));
+    if (item.group_key)
+      text.append(
+        element(
+          "p",
+          `${item.occurrence_count} source occurrence${item.occurrence_count === 1 ? "" : "s"} · ${(item.editions || []).map((key) => editionTitle({ dataset: key })).join(" · ")}`,
+          "note",
+        ),
+      );
     if (occurrences.length > 1)
       text.append(
         element(
@@ -562,7 +632,11 @@ function render() {
     for (const note of warnings(r)) text.append(element("p", note, "warning"));
     const button = element("button", "View record ↗");
     button.type = "button";
-    button.addEventListener("click", () => details(item, occurrences));
+    button.addEventListener("click", () =>
+      item.group_key
+        ? window.openSourceGroup(item, lastQuery.get("dataset"))
+        : details(item, occurrences),
+    );
     card.append(text, button);
     $("items").append(card);
   }
@@ -571,8 +645,14 @@ function render() {
   $("previous-top").hidden = $("previous").hidden;
   $("next-top").hidden = $("next").hidden;
   $("export").disabled = page.length === 0;
+  const grouped = lastQuery.get("group") === "listing";
+  $("export").textContent = grouped
+    ? "Export representative page ↓"
+    : "Export this page ↓";
+  $("order-note").textContent =
+    `Order: ${{ catalogue: grouped ? "name A–Z within grouped listings" : "catalogue order (not alphabetical)", name: "name A–Z", nearest: "distance from the search centre", edition: "latest cover-disc publication first" }[lastQuery.get("sort") || "catalogue"]}. Ties use stable source/group keys. Edition dates do not establish residence dates.`;
   $("status").textContent = page.length
-    ? `Page ${Number(lastQuery.get("page") || 1)} · Results ${(Number(lastQuery.get("page") || 1) - 1) * Number(lastQuery.get("limit") || 50) + 1}–${(Number(lastQuery.get("page") || 1) - 1) * Number(lastQuery.get("limit") || 50) + page.length} · ${page.length} source entries on this page.${next ? " More results available." : " End of results."}`
+    ? `Page ${Number(lastQuery.get("page") || 1)} · Results ${(Number(lastQuery.get("page") || 1) - 1) * Number(lastQuery.get("limit") || 50) + 1}–${(Number(lastQuery.get("page") || 1) - 1) * Number(lastQuery.get("limit") || 50) + page.length} · ${page.length} ${grouped ? "listing groups" : "source entries"} on this page.${next ? " More results available." : " End of results."}`
     : "No matching entries. Try Starts with, a postcode district, or All editions. A partial sample covers only its imported entries.";
 }
 function hasSearchAnchor(params) {
@@ -582,6 +662,8 @@ function hasSearchAnchor(params) {
     "postcode",
     "near",
     ...locationFields,
+    "industry",
+    "sic",
   ].some((name) => params.get(name)?.trim());
 }
 function applyRefinement(params) {
@@ -594,7 +676,10 @@ function applyRefinement(params) {
 }
 function removeFilter(params, name) {
   params.delete(name);
-  if (name === "near") params.delete("radius_m");
+  if (name === "near") {
+    params.delete("radius_m");
+    if (params.get("sort") === "nearest") params.delete("sort");
+  }
   if (name === "first_name") params.delete("first_match");
 }
 function renderFilters(params) {
@@ -615,7 +700,16 @@ function renderFilters(params) {
             prefix: "Starts with",
             given: "Given name + following names",
           }[value] || value
-        : value;
+        : name === "group"
+          ? { listing: "Across this search", page: "On this page" }[value] ||
+            value
+          : name === "sort"
+            ? {
+                name: "Name A–Z",
+                nearest: "Nearest",
+                edition: "Latest publication",
+              }[value] || value
+            : value;
     const button = element("button", `${label}: ${display} ×`);
     button.type = "button";
     button.setAttribute("aria-label", `Remove ${label.toLowerCase()} filter`);
@@ -675,7 +769,43 @@ function renderSuggestions(params) {
     add("Search all editions", (p) => p.set("dataset", "all"));
   container.hidden = container.childElementCount === 0;
 }
+function clearFieldErrors() {
+  for (const node of form.querySelectorAll("[data-search-error]"))
+    node.remove();
+  for (const input of form.querySelectorAll("[aria-invalid]")) {
+    input.removeAttribute("aria-invalid");
+    input.setAttribute(
+      "aria-describedby",
+      (input.getAttribute("aria-describedby") || "")
+        .split(" ")
+        .filter((id) => id && !id.startsWith("search-error-"))
+        .join(" "),
+    );
+  }
+}
+function fieldError(error, focus) {
+  const input = form.elements[error.field];
+  if (!input || !input.id || typeof input.setAttribute !== "function") return;
+  const message = element("p", error.message, "field-error");
+  message.id = "search-error-" + input.id;
+  message.dataset.searchError = "true";
+  input.setAttribute("aria-invalid", "true");
+  input.setAttribute(
+    "aria-describedby",
+    [input.getAttribute("aria-describedby"), message.id]
+      .filter(Boolean)
+      .join(" "),
+  );
+  input.insertAdjacentElement("afterend", message);
+  const details = input.closest("details");
+  if (details) details.open = true;
+  if (focus) input.focus();
+}
+form.addEventListener("input", (event) => {
+  if (event.target.hasAttribute("aria-invalid")) clearFieldErrors();
+});
 async function search(params, trail = [], updateURL = true) {
+  clearFieldErrors();
   if (updateURL) {
     const url = new URL(location.href);
     url.search = params.toString();
@@ -730,19 +860,24 @@ async function search(params, trail = [], updateURL = true) {
       }),
     );
     if (!page.length) renderSuggestions(params);
-    if (updateURL) $("results-title").scrollIntoView({ block: "start" });
+    if (updateURL) {
+      $("results-title").scrollIntoView({ block: "start" });
+      $("results-title").focus({ preventScroll: true });
+    }
   } catch (error) {
     if (id !== generation) return;
     page = [];
     next = "";
     $("items").replaceChildren();
     $("status").textContent = error.message;
+    fieldError(error, updateURL);
   } finally {
     if (id === generation) $("submit").disabled = false;
   }
 }
 form.addEventListener("submit", (event) => {
   event.preventDefault();
+  restoredSearch = true;
   const params = new URLSearchParams({
     dataset: form.elements.dataset.value,
     kind,
@@ -751,7 +886,7 @@ form.addEventListener("submit", (event) => {
   });
   for (const name of kind === "person"
     ? ["surname", "first_name", "first_match", "middle_initial"]
-    : ["organisation"]) {
+    : ["organisation", "industry", "sic"]) {
     if (name === "first_match" && !form.elements.first_name.value.trim())
       continue;
     const value = form.elements[name].value.trim();
@@ -776,6 +911,10 @@ form.addEventListener("submit", (event) => {
         params.set("postcode", savedPostcodeConstraint);
     } else params.set("postcode", postcode);
   }
+  const mode = $("group-results").value,
+    sort = $("result-sort").value;
+  if (mode !== "source") params.set("group", mode);
+  if (sort !== "catalogue") params.set("sort", sort);
   search(params);
 });
 $("next").addEventListener("click", () => {
@@ -899,6 +1038,7 @@ window.addEventListener("ukinfo-catalogue-changed", async () => {
   try {
     await refreshDatasets();
     await refreshAddresses();
+    await refreshResearch();
     reset();
     for (const id of ["details", "address-details"])
       if ($(id).open) $(id).close();
@@ -914,6 +1054,7 @@ const viewFields = [
   "record_dataset",
   "record_id",
   "record_source",
+  "archive_id",
   "address_scope",
   "address_cursor",
 ];
@@ -924,11 +1065,13 @@ function hasRecordID(item) {
   return item && Number.isInteger(item.id) && item.id > 0 && item.dataset;
 }
 function recordParams(item) {
-  return new URLSearchParams({
+  const params = new URLSearchParams({
     dataset: item.dataset,
     id: String(item.id),
     source_id: item.source_id,
   });
+  if (item.archive_id) params.set("archive_id", item.archive_id);
+  return params;
 }
 function viewURL(
   mode,
@@ -943,6 +1086,7 @@ function viewURL(
   url.searchParams.set("record_dataset", item.dataset);
   url.searchParams.set("record_id", String(item.id));
   url.searchParams.set("record_source", item.source_id);
+  if (item.archive_id) url.searchParams.set("archive_id", item.archive_id);
   if (mode === "address") {
     url.searchParams.set("address_scope", scope);
     if (cursor) url.searchParams.set("address_cursor", cursor);
@@ -1006,6 +1150,7 @@ $("saved-link-form").addEventListener("submit", (event) => {
       dataset: params.get("record_dataset"),
       id: Number(params.get("record_id")),
       source_id: params.get("record_source") || "",
+      archive_id: params.get("archive_id") || "",
     };
     if (!["record", "address"].includes(mode) || !hasRecordID(ref))
       throw new Error(
@@ -1043,6 +1188,7 @@ async function restoreView(params) {
     dataset: params.get("record_dataset"),
     id: Number(params.get("record_id")),
     source_id: params.get("record_source") || "",
+    archive_id: params.get("archive_id") || "",
   };
   if (!hasRecordID(ref)) {
     $("status").textContent = "This record link is incomplete.";
@@ -1081,7 +1227,10 @@ async function openAddress(
   for (const id of ["address-first", "address-previous", "address-next"])
     $(id).hidden = true;
   $("export-address-page").disabled = true;
-  if (!$("address-details").open) $("address-details").showModal();
+  if (!$("address-details").open) {
+    $("address-details").showModal();
+    $("address-title").focus();
+  }
   $("address-details").scrollTop = 0;
   try {
     const params = recordParams(anchor);
@@ -1207,13 +1356,15 @@ window.addEventListener("ukinfo-geography-changed", () =>
   try {
     await refreshDatasets();
     await refreshAddresses();
+    await refreshResearch();
     try {
       await refreshGeography();
     } catch {
       $("geography-capability").textContent =
         "Postcode locations are currently unavailable.";
     }
-    restoreURL();
+    if (!restoredSearch && !initialUserEdited) restoreURL();
+    else editionNote();
   } catch (error) {
     $("coverage").textContent = "Connection unavailable";
     $("status").textContent = error.message;
@@ -1221,9 +1372,19 @@ window.addEventListener("ukinfo-geography-changed", () =>
   }
 })();
 
-$("group-results").addEventListener("change", () => {
-  if (lastQuery) render();
-});
+function changeResultOptions() {
+  if (!lastQuery) return;
+  const params = new URLSearchParams(lastQuery);
+  params.delete("group");
+  params.delete("sort");
+  if ($("group-results").value !== "source")
+    params.set("group", $("group-results").value);
+  if ($("result-sort").value !== "catalogue")
+    params.set("sort", $("result-sort").value);
+  applyRefinement(params);
+}
+$("group-results").addEventListener("change", changeResultOptions);
+$("result-sort").addEventListener("change", changeResultOptions);
 $("page-size").addEventListener("change", () => {
   if (lastQuery) form.requestSubmit();
 });
@@ -1274,6 +1435,8 @@ function restoreURL() {
     !params.has("organisation") &&
     !params.has("postcode") &&
     !params.has("near") &&
+    !params.has("industry") &&
+    !params.has("sic") &&
     !addressFields.some((name) => params.has(name))
   ) {
     if (params.size)
@@ -1291,6 +1454,8 @@ function restoreURL() {
     "first_match",
     "middle_initial",
     "organisation",
+    "industry",
+    "sic",
     "match",
     "radius_m",
     ...addressFields,
@@ -1300,6 +1465,10 @@ function restoreURL() {
     form.elements.first_match.value =
       params.get("match") === "prefix" ? "prefix" : "exact";
   $("page-size").value = params.get("limit") || "50";
+  $("group-results").value = params.get("group") || "source";
+  $("result-sort").value = params.get("sort") || "catalogue";
+  $("business-classification").open =
+    params.has("sic") || params.has("industry");
   editionNote();
   search(params, [], false);
 }
@@ -1479,6 +1648,7 @@ if (window.ukinfoDesktop) {
       await bridge.importSource(selected.selection, limit);
       await refreshDatasets(key);
       await refreshAddresses();
+      await refreshResearch();
       reset();
       $("import-stage").textContent = "Ready to search";
       $("import-bar").value = 100;
@@ -1491,6 +1661,7 @@ if (window.ukinfoDesktop) {
       try {
         await refreshDatasets(key);
         await refreshAddresses();
+        await refreshResearch();
       } catch {
         /* Preserve the original error. */
       }

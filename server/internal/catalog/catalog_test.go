@@ -219,6 +219,7 @@ func TestPostgresIntegration(t *testing.T) {
 	testPremises(t, db)
 	testRefinements(t, db)
 	testCatalogueManagement(t, db)
+	testResearchIndex(t, db)
 }
 
 func testDesktopAdmin(t *testing.T, db *pgxpool.Pool) {

@@ -51,7 +51,7 @@ func run() error {
 	desktopControl := flags.Bool("desktop-control", false, "enable capability-protected desktop ingestion on a separate loopback port")
 	legacyData := flags.String("source-data-dir", "", "repack-v1: app-managed schema-1 source directory; it remains unchanged")
 	addressBlocks := flags.Int("address-blocks", 0, "index-addresses: rollback-only pilot with this many evenly spaced source blocks per edition; zero builds the full index")
-	datasetKey := flags.String("dataset", "", "dataset key for verify or index-addresses")
+	datasetKey := flags.String("dataset", "", "dataset key for verify index-addresses or index-research")
 	onspd := flags.String("onspd-zip", "", "import-onspd: local official ZIP (no extraction)")
 	geoRelease := flags.String("release", catalog.ONSPDRelease, "ONSPD release YYYY-MM")
 	geoSHA := flags.String("sha256", catalog.ONSPDSHA256, "expected ONSPD ZIP SHA-256")
@@ -60,8 +60,8 @@ func run() error {
 	if err := flags.Parse(os.Args[1:]); err != nil {
 		return err
 	}
-	if command != "serve" && command != "migrate" && command != "import" && command != "verify" && command != "repack-v1" && command != "stats" && command != "import-onspd" && command != "index-addresses" && command != "lock-archive" {
-		return fmt.Errorf("command must be serve, migrate, import, verify, stats, repack-v1, import-onspd or index-addresses")
+	if command != "serve" && command != "migrate" && command != "import" && command != "verify" && command != "repack-v1" && command != "stats" && command != "import-onspd" && command != "index-addresses" && command != "lock-archive" && command != "index-research" {
+		return fmt.Errorf("command must be serve, migrate, import, verify, stats, repack-v1, import-onspd index-addresses or index-research")
 	}
 	if *desktopControl {
 		host, _, e := net.SplitHostPort(*listen)
@@ -114,7 +114,7 @@ func run() error {
 		return fmt.Errorf("database configuration failed")
 	}
 	defer db.Close()
-	if command == "migrate" || command == "import-onspd" || command == "index-addresses" || *data != "" {
+	if command == "migrate" || command == "import-onspd" || (command == "index-addresses" || command == "index-research") || *data != "" {
 		if err = catalog.Migrate(ctx, db); err != nil {
 			return err
 		}
@@ -169,6 +169,16 @@ func run() error {
 		}
 		fmt.Fprintf(os.Stderr, "Imported %d entries\n", n)
 		return nil
+	}
+	if command == "index-research" {
+		if *datasetKey == "" {
+			return errors.New("index-research requires --dataset")
+		}
+		report, e := catalog.IndexResearch(ctx, db, *datasetKey, catalog.AddressIndexOptions{CheckResources: checkAddressResources, Progress: progress})
+		if e != nil {
+			return e
+		}
+		return json.NewEncoder(os.Stdout).Encode(report)
 	}
 	if command == "index-addresses" {
 		if *datasetKey == "" {

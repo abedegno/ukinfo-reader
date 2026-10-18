@@ -27,7 +27,7 @@ var latencyBounds = [...]float64{0.05, 0.1, 0.25, 0.5, 1, 2, 5}
 func newAPIMetrics() *apiMetrics { return &apiMetrics{requests: make(map[metricKey]requestMetric)} }
 func metricRoute(path string) string {
 	switch path {
-	case "/api/search", "/api/export", "/api/record", "/api/address", "/api/map", "/api/datasets", "/api/addresses", "/api/geography", "/api/health":
+	case "/api/research", "/api/group", "/api/search", "/api/export", "/api/record", "/api/address", "/api/map", "/api/datasets", "/api/addresses", "/api/geography", "/api/health":
 		return path
 	}
 	return "other"

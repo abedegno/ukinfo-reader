@@ -93,6 +93,19 @@
         actions.append(
           action("Finish address search", () => manage(item, "index")),
         );
+      card.append(
+        el(
+          "p",
+          item.research_ready
+            ? "Search-wide grouping, archival lookup and business classifications ready."
+            : "Optional research index enables search-wide grouping, stable reference lookup and business classifications. It uses additional disk space; original source blocks are kept.",
+          "note",
+        ),
+      );
+      if (!item.research_ready)
+        actions.append(
+          action("Build research index", () => manage(item, "research")),
+        );
       const remove = action("Remove edition…", () => manage(item, "remove"));
       remove.className = "quiet-danger";
       actions.append(remove);
@@ -133,7 +146,9 @@
     $("catalogue-message").textContent =
       type === "remove"
         ? "Review the removal confirmation…"
-        : "Preparing address search… This may take several minutes.";
+        : type === "research"
+          ? "Building the research index… Large editions can take several minutes and need additional disk space."
+          : "Preparing address search… This may take several minutes.";
     $("catalogue-cancel").hidden = false;
     try {
       const result = await bridge.manageDataset(item.selection, type);
@@ -142,7 +157,9 @@
         ? "Edition kept."
         : type === "remove"
           ? "Edition removed. Research lists and notes are preserved."
-          : "Address search is ready.";
+          : type === "research"
+            ? "Research index is ready."
+            : "Address search is ready.";
     } catch (error) {
       $("catalogue-message").textContent = error.message;
     } finally {

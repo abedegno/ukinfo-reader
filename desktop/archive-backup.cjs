@@ -5,6 +5,7 @@ const { createHash, randomUUID } = require("node:crypto");
 const ROOTS = new Set([
   "catalogue",
   "research-lists.json",
+  "research-lists.v1-backup.json",
   "setup-state.json",
   "workbench.json",
   "research-drafts.json",
@@ -267,11 +268,7 @@ async function copyArchive({
       ).trim() !== "18"
     )
       throw new Error("Invalid restored database version.");
-    await fs.writeFile(
-      path.join(
-        staging,
-        mode === "backup" ? metadataName : "ukinfo-profile.json",
-      ),
+    const metadata =
       JSON.stringify(
         mode === "backup"
           ? { ...manifest, files }
@@ -284,7 +281,15 @@ async function copyArchive({
             },
         null,
         2,
-      ) + "\n",
+      ) + "\n";
+    if (Buffer.byteLength(metadata) > 32 * 1024 * 1024)
+      throw new Error("Backup manifest exceeds the supported size.");
+    await fs.writeFile(
+      path.join(
+        staging,
+        mode === "backup" ? metadataName : "ukinfo-profile.json",
+      ),
+      metadata,
       { mode: 0o600, flag: "wx" },
     );
     signal?.throwIfAborted();

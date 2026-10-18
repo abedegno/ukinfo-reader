@@ -41,6 +41,7 @@ def main():
         if file.name in {
             "PG_VERSION",
             "research-lists.json",
+            "research-lists.v1-backup.json",
             "workbench.json",
             "research-drafts.json",
             "setup-state.json",

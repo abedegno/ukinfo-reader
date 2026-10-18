@@ -58,7 +58,7 @@ test("note drafts survive reload, save deliberately, and cannot overwrite a conc
   await page.locator("#close-details").click();
   await page.locator("#research-open").click();
   await page.locator("#research-entries textarea").fill("Recoverable draft");
-  await expect(page.locator("#research-status")).toContainText(
+  await expect(page.locator("#research-draft-status")).toContainText(
     "Drafts saved for recovery",
   );
   // Reload without committing the note; accept the browser's unsaved-note prompt.
@@ -79,13 +79,13 @@ test("note drafts survive reload, save deliberately, and cannot overwrite a conc
   await second.goto("/");
   await second.locator("#research-open").click();
   await second.locator("#research-entries textarea").fill("Other tab draft");
-  await expect(second.locator("#research-status")).toContainText(
+  await expect(second.locator("#research-draft-status")).toContainText(
     "Drafts saved for recovery",
   );
   await page
     .locator("#research-entries textarea")
     .fill("Local competing draft");
-  await expect(page.locator("#research-status")).toContainText(
+  await expect(page.locator("#research-draft-status")).toContainText(
     "changed in another window",
   );
   expect(

@@ -22,6 +22,10 @@
     "town",
     "county",
     "limit",
+    "group",
+    "sort",
+    "industry",
+    "sic",
   ]);
   function fail() {
     throw new Error(

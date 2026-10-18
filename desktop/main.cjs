@@ -125,7 +125,16 @@ if (!app.requestSingleInstanceLock()) {
         { role: "windowMenu" },
         {
           role: "help",
-          submenu: [{ label: "Export diagnostics…", click: exportDiagnostics }],
+          submenu: [
+            {
+              label: "Check for updates…",
+              click: () =>
+                shell.openExternal(
+                  "https://github.com/abedegno/ukinfo-reader/releases",
+                ),
+            },
+            { label: "Export diagnostics…", click: exportDiagnostics },
+          ],
         },
       ]),
     );

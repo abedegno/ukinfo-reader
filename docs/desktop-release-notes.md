@@ -37,10 +37,11 @@ Each archive has a SHA-256 file and a build manifest recording its exact commit,
 architecture and pinned runtime source. These are development preview packages, not
 a claim of compatibility with every older OS or a tested public hosting capacity.
 
-## Changes in the next draft
+## Changes in the 0.4.0 draft
 
 - Verified private archive backups, separate restores and archive switching.
-- Saved search recipes, optional local research history and recoverable note drafts.
+- Saved search recipes, optional local research history, recoverable note drafts, research labels and duplicate-import preview.
+- Optional research index for search-wide groups, archival references, business industry/SIC filters and full-result ordering.
 - Search coverage/rule explanations, larger controls and quick return to the form.
 - Bounded logs, isolated health checks, private aggregate metrics and edge-quota example.
 - Shipped-component inventory and full dependency review. Go is now pinned to 1.26.9;
