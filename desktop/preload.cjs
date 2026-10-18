@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld("ukinfoDesktop", {
   researchRead: () => ipcRenderer.invoke("ukinfo:research-read"),
   researchWrite: (value, revision) =>
     ipcRenderer.invoke("ukinfo:research-write", { value, revision }),
+  exportDiagnostics: () => ipcRenderer.invoke("ukinfo:export-diagnostics"),
   showArchiveFolder: () => ipcRenderer.invoke("ukinfo:show-archive-folder"),
   catalogue: () => ipcRenderer.invoke("ukinfo:catalogue"),
   manageDataset: (selection, action) =>

@@ -215,3 +215,7 @@ supported discs, temporary space requirements and cancellation.
 **Manage archive** shows storage/completeness, upgrades samples, restarts interrupted
 setup and safely removes imports while preserving research notes. See
 [catalogue management](docs/catalogue-management.md) and [macOS release signing](docs/macos-signing.md).
+
+Desktop problems: use **Help → Export diagnostics…** and attach the reviewed JSON to
+a [desktop bug report](https://github.com/abedegno/ukinfo-reader/issues/new?template=desktop.yml).
+See [diagnostics contents and exclusions](docs/diagnostics.md).

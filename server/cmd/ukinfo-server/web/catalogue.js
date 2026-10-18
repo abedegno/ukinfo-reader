@@ -206,6 +206,23 @@
       $("catalogue-message").textContent = error.message;
     }),
   );
+  $("catalogue-diagnostics").addEventListener("click", async () => {
+    const button = $("catalogue-diagnostics");
+    button.disabled = true;
+    $("diagnostics-message").textContent = "Choose where to save diagnostics…";
+    try {
+      const result = await bridge.exportDiagnostics();
+      $("diagnostics-message").textContent = result.canceled
+        ? "Export canceled."
+        : result.busy
+          ? "Another diagnostics export is open."
+          : "Diagnostics saved. Review the JSON, then attach it to your issue.";
+    } catch (error) {
+      $("diagnostics-message").textContent = error.message;
+    } finally {
+      button.disabled = false;
+    }
+  });
   bridge
     .capabilities()
     .then((c) => {

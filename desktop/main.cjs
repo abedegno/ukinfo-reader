@@ -1,9 +1,17 @@
 "use strict";
-const { app, BrowserWindow, dialog, ipcMain, shell } = require("electron");
+const {
+  app,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  shell,
+  Menu,
+} = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
 const { startServer } = require("./supervisor.cjs");
 const { installImporter } = require("./import-ui.cjs");
+const { installDiagnostics } = require("./diagnostics.cjs");
 const { installResearch } = require("./research-store.cjs");
 
 // An explicit data directory makes an unpacked build portable, including imports.
@@ -13,6 +21,8 @@ if (process.env.UKINFO_DATA_DIR)
 let server,
   window,
   importer,
+  diagnostics,
+  lifecycle = "starting",
   quitPending = false,
   quitting = false;
 if (!app.requestSingleInstanceLock()) {
@@ -25,10 +35,43 @@ if (!app.requestSingleInstanceLock()) {
     }
   });
   app.whenReady().then(async () => {
+    const runtime = app.isPackaged
+      ? path.join(process.resourcesPath, "runtime")
+      : path.resolve(__dirname, "../build/desktop");
+    diagnostics = installDiagnostics({
+      app,
+      ipcMain,
+      dialog,
+      getWindow: () => window,
+      directory: app.getPath("userData"),
+      runtime,
+      getServer: () => server,
+      getLifecycle: () => lifecycle,
+      ownsCatalogue: !process.env.UKINFO_DESKTOP_DATABASE_URL,
+    });
+    const exportDiagnostics = () =>
+      diagnostics
+        .exportReport()
+        .catch(() =>
+          dialog.showErrorBox(
+            "Diagnostics not saved",
+            "Choose a writable location and try again.",
+          ),
+        );
+    Menu.setApplicationMenu(
+      Menu.buildFromTemplate([
+        ...(process.platform === "darwin" ? [{ role: "appMenu" }] : []),
+        { role: "fileMenu" },
+        { role: "editMenu" },
+        { role: "viewMenu" },
+        { role: "windowMenu" },
+        {
+          role: "help",
+          submenu: [{ label: "Export diagnostics…", click: exportDiagnostics }],
+        },
+      ]),
+    );
     try {
-      const runtime = app.isPackaged
-        ? path.join(process.resourcesPath, "runtime")
-        : path.resolve(__dirname, "../build/desktop");
       const executable =
         process.env.UKINFO_SERVER || path.join(runtime, "ukinfo-server");
       const args = [
@@ -61,11 +104,21 @@ if (!app.requestSingleInstanceLock()) {
       });
       server.exit.then(() => {
         if (!quitting) {
-          dialog.showErrorBox(
-            "Archive server stopped",
-            "Close the app and inspect server.log before restarting.",
-          );
-          app.quit();
+          lifecycle = "server-stopped";
+          dialog
+            .showMessageBox({
+              type: "error",
+              message: "Archive server stopped",
+              detail:
+                "You can export diagnostics to attach to an issue before restarting.",
+              buttons: ["Export diagnostics…", "Quit"],
+              defaultId: 0,
+              cancelId: 1,
+            })
+            .then(async ({ response }) => {
+              if (response === 0) await exportDiagnostics();
+              app.quit();
+            });
         }
         log.end();
       });
@@ -131,9 +184,20 @@ if (!app.requestSingleInstanceLock()) {
         directory: app.getPath("userData"),
       });
       await window.loadURL(server.address);
+      lifecycle = "running";
       window.show();
     } catch (error) {
-      dialog.showErrorBox("Unable to open the archive", error.message);
+      lifecycle = "startup-failed";
+      const choice = await dialog.showMessageBox({
+        type: "error",
+        message: "Unable to open the archive",
+        detail:
+          error.message + "\nYou can export diagnostics to attach to an issue.",
+        buttons: ["Export diagnostics…", "Quit"],
+        defaultId: 0,
+        cancelId: 1,
+      });
+      if (choice.response === 0) await exportDiagnostics();
       app.quit();
     }
   });

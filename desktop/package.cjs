@@ -49,6 +49,29 @@ const path = require("node:path");
     ],
     afterCopy: [
       async ({ buildPath }) => {
+        const commit = require("node:child_process")
+          .execFileSync("git", ["rev-parse", "HEAD"], {
+            cwd: __dirname,
+            encoding: "utf8",
+          })
+          .trim();
+        if (!/^[a-f0-9]{40}$/.test(commit))
+          throw new Error("Invalid build commit");
+        await fs.promises.writeFile(
+          path.join(buildPath, "build-info.json"),
+          JSON.stringify({
+            commit,
+            source_modified: Boolean(
+              require("node:child_process")
+                .execFileSync(
+                  "git",
+                  ["status", "--porcelain", "--untracked-files=no"],
+                  { cwd: __dirname, encoding: "utf8" },
+                )
+                .trim(),
+            ),
+          }),
+        );
         await fs.promises.copyFile(
           path.resolve(
             __dirname,

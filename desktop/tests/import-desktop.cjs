@@ -35,6 +35,17 @@ const assert = require("node:assert/strict");
     const window = await app.firstWindow();
     await window.locator("#import-open").waitFor();
     assert.equal(await window.evaluate(() => typeof require), "undefined");
+    assert.equal(
+      await app.evaluate(({ Menu }) =>
+        Menu.getApplicationMenu().items.some((item) =>
+          item.submenu?.items.some(
+            (child) => child.label === "Export diagnostics…",
+          ),
+        ),
+      ),
+      true,
+      "native Help menu offers diagnostics even during setup",
+    );
     const capabilities = await window.evaluate(() =>
       window.ukinfoDesktop.capabilities(),
     );
@@ -393,6 +404,31 @@ const assert = require("node:assert/strict");
       .locator(".catalogue-edition")
       .filter({ hasText: "Synthetic demo" })
       .waitFor();
+    const diagnosticPath = path.join(directory, "diagnostics.json");
+    await app.evaluate(({ dialog }, filePath) => {
+      dialog.showSaveDialog = async () => ({ canceled: false, filePath });
+    }, diagnosticPath);
+    await reopened
+      .getByRole("button", { name: "Export diagnostics…", exact: true })
+      .click();
+    await reopened
+      .locator("#diagnostics-message")
+      .filter({ hasText: "Diagnostics saved" })
+      .waitFor();
+    const diagnosticText = fs.readFileSync(diagnosticPath, "utf8");
+    const diagnostic = JSON.parse(diagnosticText);
+    assert.equal(diagnostic.health, "healthy");
+    assert.equal(diagnostic.catalogue.status, "available");
+    assert.equal(
+      diagnostic.catalogue.datasets.some((d) => d.edition === "synthetic-demo"),
+      true,
+    );
+    assert.equal(diagnosticText.includes(directory), false);
+    assert.equal(
+      diagnosticText.includes("Saved across desktop restarts."),
+      false,
+    );
+    assert.equal(diagnosticText.includes("127.0.0.1"), false);
     await reopened.locator("#catalogue-dialog").screenshot({
       path: path.join(root, "desktop/test-results/desktop-catalogue.png"),
     });

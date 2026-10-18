@@ -1,0 +1,37 @@
+name: Desktop app bug
+description: Report installation, import, search or desktop problems
+title: "[Desktop] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Export diagnostics with **Help → Export diagnostics…** (also in **Manage archive → Get help**).
+        Review the JSON, then attach it below. Startup error dialogs also offer an export.
+        Do not attach records, research backups, raw logs, database files or disc images.
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Use invented names and addresses. Include the edition and whether this is a sample or complete import.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+      description: Describe the error. Redact any personal data or file paths in screenshots.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: Drag the diagnostics JSON here. If export fails, give the app version, operating system and CPU type instead.
+    validations:
+      required: true

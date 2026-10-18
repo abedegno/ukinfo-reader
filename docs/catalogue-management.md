@@ -82,3 +82,10 @@ running PostgreSQL directory. Copying just research JSON does not back up the ca
 Automated tests use invented data to check partition ownership, stale confirmations,
 index/import exclusion, other-edition preservation, new identities on reimport,
 setup-history persistence, browser actions and native confirmation/note preservation.
+
+## Report a problem
+
+Use **Get help → Export diagnostics…** to save a support summary for an issue. The
+report excludes records, research notes, logs, credentials and paths. It is also
+available in the native **Help** menu and startup error dialogs. See
+[desktop diagnostics](diagnostics.md).
