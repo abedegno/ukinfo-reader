@@ -1,18 +1,47 @@
 """Build the narrow MIT-licensed InstallShield helper from pinned upstream source."""
 
 import hashlib
+import http.client
 import json
 import shutil
 import subprocess
 import sys
 import tarfile
 import tempfile
+import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
 VERSION = "1.6.2"
 URL = f"https://github.com/twogood/unshield/archive/refs/tags/{VERSION}.tar.gz"
 SHA256 = "a937ef596ad94d16e7ed2c8553ad7be305798dcdcfd65ae60210b1e54ab51a2f"
+
+
+def download_source(archive):
+    urls = [URL, f"https://codeload.github.com/twogood/unshield/tar.gz/refs/tags/{VERSION}"]
+    for attempt in range(4):
+        try:
+            with (
+                urllib.request.urlopen(urls[attempt % len(urls)], timeout=30) as response,
+                archive.open("wb") as stream,
+            ):
+                size = 0
+                while chunk := response.read(1024 * 1024):
+                    size += len(chunk)
+                    if size > 5 * 1024 * 1024:
+                        raise RuntimeError("Unshield source exceeds expected size bound")
+                    stream.write(chunk)
+            if hashlib.sha256(archive.read_bytes()).hexdigest() != SHA256:
+                raise RuntimeError("Unshield source hash mismatch")
+            return
+        except (urllib.error.URLError, TimeoutError, ConnectionError, http.client.IncompleteRead):
+            archive.unlink(missing_ok=True)
+            if attempt == 3:
+                raise RuntimeError(
+                    "Pinned cabinet source could not be downloaded after four attempts"
+                ) from None
+            time.sleep(2**attempt)
 
 
 def build(output):
@@ -24,10 +53,7 @@ def build(output):
     with tempfile.TemporaryDirectory(prefix="ukinfo-unshield-") as temporary:
         root = Path(temporary)
         archive = root / "source.tar.gz"
-        with urllib.request.urlopen(URL, timeout=60) as response, archive.open("wb") as stream:
-            shutil.copyfileobj(response, stream)
-        if hashlib.sha256(archive.read_bytes()).hexdigest() != SHA256:
-            raise RuntimeError("Unshield source hash mismatch")
+        download_source(archive)
         with tarfile.open(archive) as source:
             source.extractall(root, filter="data")
         source = root / f"unshield-{VERSION}"

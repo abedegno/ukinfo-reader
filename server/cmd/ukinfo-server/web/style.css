@@ -1085,3 +1085,24 @@ input[type="radio"] {
   gap: 12px;
   flex-wrap: wrap;
 }
+.result-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+}
+.result-options label {
+  font-size: 13px;
+  min-width: 0;
+}
+.result-options select {
+  width: 100%;
+  font-size: 14px;
+}
+@media (max-width: 600px) {
+  .result-options .wide-option {
+    grid-column: 1 / -1;
+  }
+  .result-options select {
+    font-size: 16px;
+  }
+}

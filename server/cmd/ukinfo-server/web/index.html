@@ -402,8 +402,8 @@
           <div class="result-options">
             <label
               >Export format<select id="export-format">
-                <option value="jsonl">Original JSONL</option>
-                <option value="csv">Readable CSV</option>
+                <option value="jsonl">JSON Lines</option>
+                <option value="csv">CSV</option>
               </select></label
             ><label
               >Results per page<select
@@ -415,18 +415,16 @@
                 <option selected>50</option>
                 <option>100</option>
               </select></label
-            ><label
+            ><label class="wide-option"
               >Show<select id="group-results" form="search">
                 <option value="source">Source entries</option>
-                <option value="page">
-                  Group identical listings on this page
-                </option>
+                <option value="page">Group this page</option>
                 <option value="listing" id="whole-group-option" disabled>
-                  Group identical listings across this search
+                  Group across search
                 </option>
               </select></label
             >
-            <label
+            <label class="wide-option"
               >Order<select id="result-sort" form="search">
                 <option value="catalogue">Catalogue order</option>
                 <option value="name">Name A–Z</option>

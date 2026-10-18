@@ -96,3 +96,40 @@ test("invalid fields have associated errors and keyboard focus; clear resets the
     .click();
   await expect(page.locator("#record-title")).toBeFocused();
 });
+test("grouping and order labels fit narrow screens and magnified layouts", async ({
+  page,
+}) => {
+  for (const width of [1240, 768, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(
+      "/?dataset=synthetic-demo&surname=Example&group=listing&sort=edition&limit=25",
+    );
+    await expect(page.locator("#items article")).toHaveCount(25);
+    const sizes = await page
+      .locator("#group-results, #result-sort")
+      .evaluateAll((nodes) =>
+        nodes.map((node) => {
+          const style = getComputedStyle(node),
+            canvas = document.createElement("canvas"),
+            ctx = canvas.getContext("2d");
+          ctx.font = style.font;
+          return {
+            available:
+              node.clientWidth -
+              parseFloat(style.paddingLeft) -
+              parseFloat(style.paddingRight) -
+              24,
+            text: ctx.measureText(node.selectedOptions[0].textContent.trim())
+              .width,
+          };
+        }),
+      );
+    for (const size of sizes)
+      expect(size.available).toBeGreaterThanOrEqual(size.text);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+  }
+});
