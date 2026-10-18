@@ -125,3 +125,9 @@ a PostgreSQL backup into a separate database. Retain the original until verifica
 and representative searches pass. The local desktop cold-copy format is not a cross-OS
 or cross-major-version server backup. For a live hosted database use PostgreSQL's
 [supported backup methods](https://www.postgresql.org/docs/18/backup.html).
+
+The edge recipe is exercised by `python3 tools/check_hosting_edge.py`. It starts a
+network-isolated nginx with a temporary verified self-signed certificate and an invented
+static upstream. A burst yields 11 accepted / 9 HTTP-429 search requests and 3 accepted /
+3 HTTP-429 exports. It tests TLS verification and the configured quota semantics; it
+does not test a public certificate, DNS, a production VM or database throughput.

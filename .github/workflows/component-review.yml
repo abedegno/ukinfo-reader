@@ -1,9 +1,9 @@
 name: Component advisory checks
 on:
   push:
-    paths: ['desktop/package*.json', 'server/go.mod', 'server/go.sum', 'tools/desktop-constraints.txt', '.github/workflows/component-review.yml']
+    paths: ['desktop/package*.json', 'server/go.mod', 'server/go.sum', 'tools/desktop-constraints.txt', 'deploy/nginx/**', 'tools/check_hosting_edge.py', '.github/workflows/component-review.yml']
   pull_request:
-    paths: ['desktop/package*.json', 'server/go.mod', 'server/go.sum', 'tools/desktop-constraints.txt', '.github/workflows/component-review.yml']
+    paths: ['desktop/package*.json', 'server/go.mod', 'server/go.sum', 'tools/desktop-constraints.txt', 'deploy/nginx/**', 'tools/check_hosting_edge.py', '.github/workflows/component-review.yml']
   schedule:
     - cron: '25 7 * * 1'
   workflow_dispatch:
@@ -27,6 +27,8 @@ jobs:
       - name: Check reachable Go vulnerabilities
         working-directory: server
         run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+      - name: Verify hosting TLS and per-client search/export quotas without real data
+        run: python3 tools/check_hosting_edge.py
       - name: Record remaining manual advisory gate
         run: |
           echo 'See SECURITY.md: Electron/Chromium/Node, PostgreSQL, CPython and native decoder suppliers also need release-time advisory review.' >> "$GITHUB_STEP_SUMMARY"

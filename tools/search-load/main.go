@@ -40,6 +40,7 @@ func main() {
 	host := flag.String("url", "http://127.0.0.1:8080", "base API URL")
 	duration := flag.Duration("duration", 10*time.Second, "duration of each closed-loop stage")
 	rate := flag.Int("rate", 100, "scheduled requests per second")
+	requestTimeout := flag.Duration("request-timeout", 8*time.Second, "HTTP request timeout; longer than the API search deadline")
 	arrivals := flag.Duration("arrival-duration", 30*time.Second, "scheduled-arrival stage duration")
 	hashPath := flag.String("cases", "", "private JSON array of {query,sha256} cases, validated before timing")
 	out := flag.String("output", "", "data-free aggregate JSON report")
@@ -49,6 +50,7 @@ func main() {
 		panic(err)
 	}
 	type queryCase struct {
+		Path   string `json:"path,omitempty"`
 		Query  string `json:"query"`
 		SHA256 string `json:"sha256"`
 	}
@@ -56,15 +58,30 @@ func main() {
 	if err = json.Unmarshal(raw, &cases); err != nil {
 		panic(err)
 	}
-	if len(cases) == 0 || *rate < 1 || *duration <= 0 || *arrivals <= 0 || *out == "" {
+	if len(cases) == 0 || *rate < 1 || *duration <= 0 || *arrivals <= 0 || *requestTimeout <= 0 || *out == "" {
 		panic("cases, output and positive duration/rate are required")
 	}
+	classes := map[string]int{}
+	for i := range cases {
+		if cases[i].Path == "" {
+			cases[i].Path = "/api/search"
+		}
+		switch cases[i].Path {
+		case "/api/search", "/api/export", "/api/group", "/api/address", "/api/record":
+		default:
+			panic("unsupported private case endpoint")
+		}
+		if decoded, e := hex.DecodeString(cases[i].SHA256); e != nil || len(decoded) != 32 {
+			panic("case needs a validated SHA-256")
+		}
+		classes[cases[i].Path]++
+	}
+
 	transport := &http.Transport{MaxIdleConns: 64, MaxIdleConnsPerHost: 64, MaxConnsPerHost: 64, DisableCompression: true}
 	defer transport.CloseIdleConnections()
-	client := &http.Client{Transport: transport, Timeout: 3 * time.Second}
-	url := *host + "/api/search?"
+	client := &http.Client{Transport: transport, Timeout: *requestTimeout}
 	request := func(index int) bool {
-		response, err := client.Get(url + cases[index].Query)
+		response, err := client.Get(*host + cases[index].Path + "?" + cases[index].Query)
 		if err != nil {
 			return false
 		}
@@ -81,7 +98,7 @@ func main() {
 			panic("warmup response failed validation")
 		}
 	}
-	result := map[string]any{"cases": len(cases), "closed_loop": map[string]measures{}, "notes": []string{"Every response body is hash-checked against previously validated private cases.", "HTTP transfer and body hashing are timed; client JSON parsing is excluded.", "Scheduled-arrival latency includes scheduling and queue delay.", "This report alone does not establish production capacity; document corpus, hardware, quotas and warm/cold conditions separately."}}
+	result := map[string]any{"cases": len(cases), "case_classes": classes, "request_timeout_seconds": requestTimeout.Seconds(), "closed_loop": map[string]measures{}, "notes": []string{"Every response body is hash-checked against previously validated private cases.", "HTTP transfer and body hashing are timed; client JSON parsing is excluded.", "Scheduled-arrival latency includes scheduling and queue delay.", "This report alone does not establish production capacity; document corpus, hardware, quotas and warm/cold conditions separately."}}
 
 	var sequence atomic.Uint64
 	for _, concurrency := range []int{1, 8, 32} {
