@@ -6,12 +6,26 @@ original Windows application.
 
 **Supported releases:**
 
-| Release | Distribution | Entries |
-|---|---|---:|
-| UK-Info Disk SE | PC Format 78, January 1998 | 27,983,545 |
-| UK-Info Disk SE 4.0 | PC Format 94, April 1999 | 46,355,850 |
-| UK-Info 2004 SE (residential) | PC Plus 218, July 2004 | 63,373,974 |
-| UK-Info Disk V10.5 SE (residential + business) | PC Format 175, June 2005 | 51,350,897 |
+| Release | Distribution | Entries | Internet Archive source |
+|---|---|---:|---|
+| UK-Info Disk SE | PC Format 78, January 1998 | 27,983,545 | [PC Format 78](https://archive.org/details/pc-format-78) |
+| UK-Info Disk SE 4.0 | PC Format 94, April 1999 | 46,355,850 | [PC Format 94b](https://archive.org/details/pcf-94b-apr-1999-uk-info) |
+| UK-Info 2004 SE (residential) | PC Plus 218, July 2004 | 63,373,974 | [PC Plus 218 DVD](https://archive.org/details/pcp-218-dvd) |
+| UK-Info Disk V10.5 SE (residential + business) | PC Format 175, June 2005 | 51,350,897 | [PC Format 175 DVDs](https://archive.org/details/pcf-175-dvd-1-06-05.7z) |
+
+### Find the source media
+
+Use the Internet Archive item links above and choose the matching source file:
+
+- **PC Format 78:** `PC_FORMAT_78.iso`.
+- **PC Format 94b:** `PCF 94b apr 1999 UK-INFO.iso`, rather than the other ISO in the item.
+- **PC Plus 218:** `PCP218_DVD.iso` for UK-Info 2004 SE.
+- **PC Format 175:** `PCF175DVD2_06_05.7z` for UK-Info 2005 SE. The archive item
+  contains both DVDs; UK-Info is on **DVD 2**, despite `dvd-1` in the item's URL.
+
+The desktop app can import supported ISO/7z files directly. For the Python reader,
+follow the extraction examples below. Source images and directory data are not bundled
+with this repository or the app.
 
 All supported scopes have been validated across their complete source streams. Known
 [early-disc defects](docs/formats/pcf78.md#source-defects-and-validation-limits) and
