@@ -2,7 +2,14 @@
 const fs = require("node:fs");
 const path = require("node:path");
 function shouldSign(file) {
-  if ([".app", ".framework"].includes(path.extname(file))) return true;
+  // Licence trees retain upstream directory names, including Tcl.framework.
+  // They are resources, not executable bundles; still inspect any files for Mach-O.
+  const notice = file.includes(
+    `${path.sep}runtime${path.sep}notices${path.sep}`,
+  );
+  if ([".app", ".framework"].includes(path.extname(file)) && !notice)
+    return true;
+  if (notice && !fs.statSync(file).isFile()) return false;
   let descriptor;
   try {
     descriptor = fs.openSync(file, "r");

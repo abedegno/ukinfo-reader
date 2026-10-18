@@ -17,6 +17,21 @@ test("signing selects Mach-O/native code and bundles, leaving ordinary archive r
     await fs.writeFile(resource, Buffer.from([0, 1, 0, 0, 4, 9]));
     assert.equal(shouldSign(resource), false);
     assert.equal(shouldSign(path.join(directory, "Example.app")), true);
+    const framework = path.join(
+      directory,
+      "runtime",
+      "notices",
+      "CPython",
+      "Tcl.framework",
+    );
+    await fs.mkdir(framework, { recursive: true });
+    assert.equal(shouldSign(framework), false);
+    const license = path.join(framework, "LICENSE");
+    await fs.writeFile(license, "Redistribution licence");
+    assert.equal(shouldSign(license), false);
+    const native = path.join(framework, "native");
+    await fs.copyFile(binary, native);
+    assert.equal(shouldSign(native), true);
     await assert.rejects(
       signForDistribution("unused.app", "not-a-fingerprint", "unused"),
       /fingerprint/,
