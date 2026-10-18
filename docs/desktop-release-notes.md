@@ -36,3 +36,17 @@ optional ONSPD reference added through **Postcode setup**; online backgrounds ar
 Each archive has a SHA-256 file and a build manifest recording its exact commit,
 architecture and pinned runtime source. These are development preview packages, not
 a claim of compatibility with every older OS or a tested public hosting capacity.
+
+## Changes in the next draft
+
+- Verified private archive backups, separate restores and archive switching.
+- Saved search recipes, optional local research history and recoverable note drafts.
+- Search coverage/rule explanations, larger controls and quick return to the form.
+- Bounded logs, isolated health checks, private aggregate metrics and edge-quota example.
+- Shipped-component inventory and full dependency review. Go is now pinned to 1.26.9;
+  x/text 0.41.0 and x/sys 0.44.0 replace versions flagged by the new advisory scan.
+  The updated Go scan and full npm audit report no advisories. These checks do not
+  establish that every native dependency is free of vulnerabilities.
+
+All release candidates remain drafts. Clean customer installation and real-catalogue
+upgrade/recovery rehearsals remain acceptance work.

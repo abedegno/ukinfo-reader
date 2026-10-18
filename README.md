@@ -4,14 +4,37 @@ Read historical UK-Info Disk databases with Python. Search names and postcodes, 
 stored household addresses, and export records to JSON Lines or CSV without installing the
 original Windows application.
 
+## Choose how to use it
+
+- **Desktop app:** the [desktop guide](docs/desktop-releases.md) explains first-launch
+  import, platform packages and release status. [Release downloads](https://github.com/abedegno/ukinfo-reader/releases)
+  only show published builds; current preview builds remain drafts. The app includes
+  its runtimes and an invented demo, with no directory data bundled.
+- **Web search / self-hosting:** follow [server setup](docs/search-app.md) and the
+  [hosting guide](docs/hosting.md). There is no project-operated public data service.
+- **Python / preservation:** use the [CLI quick start](#quick-start) below for direct
+  reading, validation and streaming exports from supported media.
+
+| Component     | Platforms checked                                                | Scope                                                                |
+| ------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Desktop       | macOS Apple Silicon, macOS Intel, Linux x86-64 (Ubuntu 22.04 CI) | Native packages; Windows desktop and Linux ARM are not yet supported |
+| Web/API       | Go + PostgreSQL 18                                               | Browser UI shared with desktop; self-hosted deployment               |
+| Python reader | macOS, Linux, Windows CI; Python 3.10+                           | CLI reader; optional dependencies for media preparation              |
+
+“Portable” means no separately installed Python/Go/PostgreSQL is needed. User data
+normally lives in the OS application-data folder. `UKINFO_DATA_DIR` selects a private
+archive folder; moving the executable does not move that archive. Cold backup/restore
+requires matching OS, CPU and PostgreSQL major version; this is not a cross-platform
+single-file database. See [backup and archive switching](docs/catalogue-management.md).
+
 **Supported releases:**
 
-| Release | Distribution | Entries | Internet Archive source |
-|---|---|---:|---|
-| UK-Info Disk SE | PC Format 78, January 1998 | 27,983,545 | [PC Format 78](https://archive.org/details/pc-format-78) |
-| UK-Info Disk SE 4.0 | PC Format 94, April 1999 | 46,355,850 | [PC Format 94b](https://archive.org/details/pcf-94b-apr-1999-uk-info) |
-| UK-Info 2004 SE (residential) | PC Plus 218, July 2004 | 63,373,974 | [PC Plus 218 DVD](https://archive.org/details/pcp-218-dvd) |
-| UK-Info Disk V10.5 SE (residential + business) | PC Format 175, June 2005 | 51,350,897 | [PC Format 175 DVDs](https://archive.org/details/pcf-175-dvd-1-06-05.7z) |
+| Release                                        | Distribution               |    Entries | Internet Archive source                                                  |
+| ---------------------------------------------- | -------------------------- | ---------: | ------------------------------------------------------------------------ |
+| UK-Info Disk SE                                | PC Format 78, January 1998 | 27,983,545 | [PC Format 78](https://archive.org/details/pc-format-78)                 |
+| UK-Info Disk SE 4.0                            | PC Format 94, April 1999   | 46,355,850 | [PC Format 94b](https://archive.org/details/pcf-94b-apr-1999-uk-info)    |
+| UK-Info 2004 SE (residential)                  | PC Plus 218, July 2004     | 63,373,974 | [PC Plus 218 DVD](https://archive.org/details/pcp-218-dvd)               |
+| UK-Info Disk V10.5 SE (residential + business) | PC Format 175, June 2005   | 51,350,897 | [PC Format 175 DVDs](https://archive.org/details/pcf-175-dvd-1-06-05.7z) |
 
 ### Find the source media
 
@@ -54,7 +77,8 @@ Street, locality, town/city and county search is available through an optional
 [Search form design and controls](docs/search-interface.md) explains the Who/Where layout.
 [Refine names and premises](docs/search-refinements.md) with house/building/flat filters,
 given-name modes, middle initials and removable search filters.
-[Research lists](docs/research-lists.md) retain notes/citations locally;
+[Research lists and saved searches](docs/research-lists.md) retain notes/citations,
+recoverable drafts and optional private search history locally;
 [optional maps](docs/maps.md) show approximate postcode positions.
 [Desktop setup, build and release instructions](docs/desktop-releases.md) cover the
 first-launch wizard and native preview packages.
@@ -161,11 +185,11 @@ searches scan compressed columns; PC Format 78 surname searches use its original
 The SE 4.0 disc passed a full validation of **248,690 blocks** across **9,565 postcode
 sectors**:
 
-| Stored items | Count |
-|---|---:|
+| Stored items                            |      Count |
+| --------------------------------------- | ---------: |
 | Directory entries, including businesses | 46,355,850 |
-| Addresses | 24,279,520 |
-| Postcodes | 1,462,313 |
+| Addresses                               | 24,279,520 |
+| Postcodes                               |  1,462,313 |
 
 The SE 4.0 reader recovers full forenames, surnames, second initials, address components,
 postcodes, telephone numbers and the original business fields. `household_id` groups entries

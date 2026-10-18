@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
-        with: {go-version: '1.26.4', cache-dependency-path: server/go.sum}
+        with: {go-version: '1.26.9', cache-dependency-path: server/go.sum}
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with: {python-version: '3.14.7'}
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
@@ -56,7 +56,7 @@ jobs:
           key: native-pg-${{ matrix.platform }}-${{ matrix.runner }}-${{ hashFiles('tools/build_postgres_runtime.py') }}
       - name: Stage Go and standalone decoder with notices
         run: |
-          python -m pip install -e '.[desktop]'
+          python -m pip install -c tools/desktop-constraints.txt -e '.[desktop]'
           python tools/stage_desktop.py --postgres "$RUNNER_TEMP/pg-runtime"
           python tools/check_media_runtime.py build/desktop/ukinfo-import
       - name: Verify native PostgreSQL lifecycle
@@ -68,7 +68,7 @@ jobs:
         run: |
           npm ci
           npm test
-          npm audit --omit=dev
+          npm audit --audit-level=high
           npx playwright install --with-deps chromium
           node build-icon.cjs
           npm run pack

@@ -24,6 +24,8 @@ import (
 
 type API struct {
 	DB             *pgxpool.Pool
+	HealthDB       *pgxpool.Pool
+	metrics        *apiMetrics
 	slots          chan struct{}
 	decoder        *zstd.Decoder
 	geographyCache *geographyCache
@@ -36,7 +38,7 @@ func NewAPI(db *pgxpool.Pool) *API {
 	if err != nil {
 		panic(err)
 	}
-	return &API{DB: db, slots: make(chan struct{}, 32), decoder: decoder, geographyCache: newGeographyCache(), geographySlots: make(chan struct{}, 2), addressSlots: make(chan struct{}, 4)}
+	return &API{DB: db, HealthDB: db, metrics: newAPIMetrics(), slots: make(chan struct{}, 32), decoder: decoder, geographyCache: newGeographyCache(), geographySlots: make(chan struct{}, 2), addressSlots: make(chan struct{}, 4)}
 }
 func respond(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -52,7 +54,7 @@ func (a *API) Handler() http.Handler {
 	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), time.Second)
 		defer cancel()
-		if err := a.DB.Ping(ctx); err != nil {
+		if err := a.HealthDB.Ping(ctx); err != nil {
 			fail(w, 503, "Database unavailable")
 			return
 		}
@@ -66,8 +68,12 @@ func (a *API) Handler() http.Handler {
 	mux.HandleFunc("GET /api/address", a.address)
 	mux.HandleFunc("GET /api/search", a.search)
 	mux.HandleFunc("GET /api/export", func(w http.ResponseWriter, r *http.Request) { a.searchPage(w, r, true) })
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return a.metrics.wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
+		if r.URL.Path == "/api/health" {
+			mux.ServeHTTP(w, r)
+			return
+		}
 		select {
 		case a.slots <- struct{}{}:
 			defer func() { <-a.slots }()
@@ -76,7 +82,7 @@ func (a *API) Handler() http.Handler {
 			return
 		}
 		mux.ServeHTTP(w, r)
-	})
+	}))
 }
 func (a *API) datasets(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)

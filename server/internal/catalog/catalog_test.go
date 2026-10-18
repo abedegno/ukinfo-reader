@@ -98,6 +98,7 @@ func TestPostgresIntegration(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer db.Close()
+	testHealthIsolation(t, db)
 	if err = Migrate(ctx, db); err != nil {
 		t.Fatal(err)
 	}

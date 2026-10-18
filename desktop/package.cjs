@@ -13,6 +13,7 @@ const path = require("node:path");
     "ukinfo-server",
     "ukinfo-import",
     "ukinfo-cabinet",
+    "components.json",
     "cabinet-notices/BUILD.json",
     "pg/bin/postgres",
     "pg/bin/initdb",
@@ -20,6 +21,24 @@ const path = require("node:path");
     if (!fs.existsSync(path.join(runtime, name)))
       throw new Error(
         `Missing staged runtime: ${name}. See docs/search-app.md.`,
+      );
+  }
+  const stagedInventory = JSON.parse(
+    await fs.promises.readFile(path.join(runtime, "components.json"), "utf8"),
+  );
+  for (const file of stagedInventory.executables) {
+    if (
+      !["ukinfo-server", "ukinfo-import", "ukinfo-cabinet"].includes(file.name)
+    )
+      throw new Error("Unexpected inventory executable");
+    const hash = require("node:crypto").createHash("sha256");
+    for await (const chunk of fs.createReadStream(
+      path.join(runtime, file.name),
+    ))
+      hash.update(chunk);
+    if (hash.digest("hex") !== file.sha256)
+      throw new Error(
+        "Staged runtime inventory is stale; restage before packaging",
       );
   }
   const destinations = await packager({
@@ -82,6 +101,37 @@ const path = require("node:path");
           runtime,
           path.join(path.dirname(buildPath), "runtime"),
           { recursive: true },
+        );
+        const componentsPath = path.join(
+          path.dirname(buildPath),
+          "runtime/components.json",
+        );
+        const components = JSON.parse(
+          await fs.promises.readFile(componentsPath, "utf8"),
+        );
+        const electronVersions = JSON.parse(
+          require("node:child_process").execFileSync(
+            require("electron"),
+            ["-p", "JSON.stringify(process.versions)"],
+            {
+              env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" },
+              encoding: "utf8",
+            },
+          ),
+        );
+        if (
+          electronVersions.electron !==
+          require("./package.json").devDependencies.electron
+        )
+          throw new Error("Electron runtime version does not match the pin");
+        components.electron = {
+          electron: electronVersions.electron,
+          chromium: electronVersions.chrome,
+          node: electronVersions.node,
+        };
+        await fs.promises.writeFile(
+          componentsPath,
+          JSON.stringify(components, null, 2) + "\n",
         );
         await fs.promises.copyFile(
           path.resolve(__dirname, "../LICENSE"),

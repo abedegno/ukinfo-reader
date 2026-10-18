@@ -13,14 +13,17 @@ For matching main-branch pushes, pull requests, manual dispatches and `desktop-v
    native runtime and `cube`, retain source notices, fix library relocation paths, and
    check executables after moving the installation prefix.
 2. Build the Go service and standalone PyInstaller decoder; collect runtime notices.
+   A runtime component inventory records Python packages from decoder analysis, Go
+   modules and source versions; packaging adds actual Electron/Chromium/Node versions.
    External decoder libraries retain supplier notices from the build's Homebrew/Debian
    packages, recorded in a separate dependency manifest; missing notices fail staging.
-3. Check native PostgreSQL lifecycle, desktop unit tests and dependency audit.
+3. Check native PostgreSQL lifecycle, desktop unit tests and the full npm dependency audit (including devDependencies).
 4. Generate the native icon from the repository SVG, package Electron, and apply an
    ad-hoc integrity signature on macOS.
 5. Launch the **packaged** app: complete the empty-catalogue wizard, import invented
    data, search/export, save a research note, close/relaunch, reopen its guarded source,
-   and verify the owned PostgreSQL child shuts down.
+   and verify the owned PostgreSQL child shuts down. A second native gate performs a
+   verified cold backup/separate restore and checks saved queries and the original archive.
 6. Reject obvious source/user-data artifacts, create ZIP/tar.gz archives, SHA-256 files
    and per-platform build manifests. Upload non-PR artifacts for 3 days. Published release assets are retained separately.
 
@@ -114,3 +117,15 @@ The manual **Signed macOS candidates** workflow is separate from ordinary previe
 builds. It requires Apple credentials in the `desktop-signing` environment and
 produces reviewed artifacts without publishing. See [macOS signing](macos-signing.md)
 for secrets, entitlement scope, embedded-decoder signing and validation limits.
+
+## Inventory and maintenance
+
+Every archive contains `runtime/components.json`; release build manifests include it
+for review without unpacking an executable. Staged executable hashes describe binaries
+before final macOS signing; the archive SHA-256 describes the final signed/notarized
+package. Signing can change Mach-O bytes, so these are distinct integrity checks.
+The Python desktop build closure is constrained by `tools/desktop-constraints.txt`;
+this pins versions but does not make OS toolchains/wheels bit-for-bit reproducible.
+See [SECURITY.md](../SECURITY.md) for advisory review and update policy. Clean user
+hardware, external-drive recovery and upgrade testing remain release acceptance work,
+not claims established by a successful CI build.

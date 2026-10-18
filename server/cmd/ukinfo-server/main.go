@@ -44,6 +44,7 @@ func run() error {
 	}
 	flags := flag.NewFlagSet("ukinfo-server", flag.ContinueOnError)
 	listen := flags.String("listen", "127.0.0.1:8080", "HTTP listen address; :0 selects an available port")
+	metricsListen := flags.String("metrics-listen", "", "optional private loopback metrics listener (127.0.0.1:9091)")
 	origin := flags.String("public-origin", "", "public origin behind a TLS reverse proxy (https://example.org)")
 	data := flags.String("data-dir", "", "desktop: app-managed data directory")
 	binaries := flags.String("pg-bin", "", "desktop: directory containing PostgreSQL 18 initdb and postgres")
@@ -265,7 +266,31 @@ func run() error {
 		w.Header().Set("Cache-Control", "no-store")
 		_ = json.NewEncoder(w).Encode(map[string]any{"tiles_url": tileURL, "attribution": tileAttribution})
 	})
-	mux.Handle("/api/", catalog.NewAPI(db).Handler())
+	api := catalog.NewAPI(db)
+	healthConfig := config.Copy()
+	healthConfig.MaxConns, healthConfig.MinConns = 1, 0
+	healthConfig.ConnConfig.RuntimeParams["statement_timeout"] = "1000"
+	healthDB, e := pgxpool.NewWithConfig(ctx, healthConfig)
+	if e != nil {
+		return errors.New("health database configuration failed")
+	}
+	defer healthDB.Close()
+	api.HealthDB = healthDB
+	if *metricsListen != "" {
+		host, _, e := net.SplitHostPort(*metricsListen)
+		if e != nil || net.ParseIP(host) == nil || !net.ParseIP(host).IsLoopback() {
+			return errors.New("metrics-listen requires an explicit loopback IP address")
+		}
+		metricsListener, e := net.Listen("tcp", *metricsListen)
+		if e != nil {
+			return e
+		}
+		metricsServer := &http.Server{Handler: api.Metrics(), ReadHeaderTimeout: 5 * time.Second, WriteTimeout: 5 * time.Second, IdleTimeout: 30 * time.Second, MaxHeaderBytes: 16384}
+		defer metricsServer.Close()
+		go func() { _ = metricsServer.Serve(metricsListener) }()
+		go func() { <-ctx.Done(); _ = metricsServer.Close() }()
+	}
+	mux.Handle("/api/", api.Handler())
 	mux.Handle("/", http.FileServer(http.FS(ui)))
 	secure := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Reject cross-origin requests and DNS rebinding against the local server.

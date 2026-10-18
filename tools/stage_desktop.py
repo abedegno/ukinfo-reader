@@ -15,6 +15,7 @@ import sysconfig
 from pathlib import Path
 
 from build_cabinet_runtime import build as build_cabinet
+from desktop_inventory import collect as collect_inventory
 from desktop_notices import dependency_notices
 
 
@@ -167,6 +168,7 @@ def main():
     if (output / "pg").exists():
         shutil.rmtree(output / "pg")
     shutil.copytree(pg, output / "pg", symlinks=False)
+    collect_inventory(root, output)
     print(f"Staged {version.strip()} and Go server in {output}")
 
 

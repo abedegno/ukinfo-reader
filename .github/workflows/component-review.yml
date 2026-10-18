@@ -1,0 +1,33 @@
+name: Component advisory checks
+on:
+  push:
+    paths: ['desktop/package*.json', 'server/go.mod', 'server/go.sum', 'tools/desktop-constraints.txt', '.github/workflows/component-review.yml']
+  pull_request:
+    paths: ['desktop/package*.json', 'server/go.mod', 'server/go.sum', 'tools/desktop-constraints.txt', '.github/workflows/component-review.yml']
+  schedule:
+    - cron: '25 7 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  advisories:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with: {go-version: '1.26.9', cache-dependency-path: server/go.sum}
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with: {node-version: '22', cache: npm, cache-dependency-path: desktop/package-lock.json}
+      - name: Audit npm including shipped Electron declared as a dev dependency
+        working-directory: desktop
+        run: |
+          npm ci --ignore-scripts
+          npm audit --audit-level=high
+      - name: Check reachable Go vulnerabilities
+        working-directory: server
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+      - name: Record remaining manual advisory gate
+        run: |
+          echo 'See SECURITY.md: Electron/Chromium/Node, PostgreSQL, CPython and native decoder suppliers also need release-time advisory review.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'These checks neither publish releases nor prove all shipped native components are free of vulnerabilities.' >> "$GITHUB_STEP_SUMMARY"

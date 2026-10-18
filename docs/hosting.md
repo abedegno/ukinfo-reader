@@ -11,13 +11,13 @@ reproduce an inexpensive VPS's cores or disk performance. Benchmark the chosen h
 
 ## Shortlist
 
-| Option | Relevant allowance or base price | Fit |
-|---|---|---|
-| Oracle Always Free A1 | 2 OCPUs, 12 GB RAM, 200 GB combined boot/block storage | Potential zero-cost self-hosted Go/PostgreSQL instance |
-| Hetzner CX23, EU | 2 vCPUs, 4 GB RAM, 40 GB NVMe; €5.49/month before VAT and IPv4 | Candidate for the complete 2005 edition |
-| Hetzner CX33, EU | 4 vCPUs, 8 GB RAM, 80 GB NVMe; €8.49/month before VAT and IPv4 | Candidate for the measured complete four-edition catalogue |
-| Supabase Free | 500 MB database quota | Too small for the full catalogue |
-| Cloudflare Pages | Free static requests and bandwidth | Frontend assets only; PostgreSQL and Go still need a host |
+| Option                | Relevant allowance or base price                               | Fit                                                        |
+| --------------------- | -------------------------------------------------------------- | ---------------------------------------------------------- |
+| Oracle Always Free A1 | 2 OCPUs, 12 GB RAM, 200 GB combined boot/block storage         | Potential zero-cost self-hosted Go/PostgreSQL instance     |
+| Hetzner CX23, EU      | 2 vCPUs, 4 GB RAM, 40 GB NVMe; €5.49/month before VAT and IPv4 | Candidate for the complete 2005 edition                    |
+| Hetzner CX33, EU      | 4 vCPUs, 8 GB RAM, 80 GB NVMe; €8.49/month before VAT and IPv4 | Candidate for the measured complete four-edition catalogue |
+| Supabase Free         | 500 MB database quota                                          | Too small for the full catalogue                           |
+| Cloudflare Pages      | Free static requests and bandwidth                             | Frontend assets only; PostgreSQL and Go still need a host  |
 
 Oracle's current allowance is **2 OCPUs / 12 GB**, rather than the older 4 / 24 figures
 still repeated in tutorials. Free resources must be in the home region. A1 capacity
@@ -79,3 +79,49 @@ monitoring, transferred-byte/egress estimates and a dump/restore rehearsal.
 Use the [load tool](../tools/search-load/README.md)
 with private validated fixtures. Account signup, paid provisioning, public publication
 of directory records and final DNS configuration have not been performed.
+
+## Edge quotas and private metrics
+
+A reviewable nginx example is in [deploy/nginx/ukinfo.conf](../deploy/nginx/ukinfo.conf).
+Replace the example hostname/certificate paths, run `nginx -t`, and start Go with the
+same `--public-origin https://…`. It limits each socket client to 30 API requests/minute
+with a burst of 10, exports to 6/minute with a burst of 2, and four concurrent
+connections. These are starting settings to tune with observed traffic, not measured
+capacity promises. Rejections use HTTP 429. Clients sharing a NAT share a quota.
+The example assumes nginx is the internet edge: if placing a CDN in front, configure
+its trusted proxy CIDRs and real-client-IP handling before using these zones. Never
+trust arbitrary forwarded headers. See the [nginx rate-limit module](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html).
+
+Run the service using the SELECT-only role described in the setup guide:
+
+```sh
+# DATABASE_URL is supplied privately by the service manager, not committed in a unit.
+ukinfo-server serve --listen 127.0.0.1:8080 \
+  --public-origin https://archive.example.org --metrics-listen 127.0.0.1:9091
+```
+
+The search pool has at most eight connections; health has a separate pool with at most
+one connection and a one-second deadline. `/api/health` bypasses the 32-request search
+admission queue. A genuine database failure still returns 503. A health success does
+not prove that a representative search or catalogue verification succeeds.
+
+`http://127.0.0.1:9091/metrics` exposes Prometheus text counters/histograms by fixed route
+and status, active requests and search-pool occupancy/cancelled acquisitions. The
+listener rejects non-loopback bind addresses and is absent unless requested. Do not
+publish it through the proxy. There are no query strings, source IDs, names, IPs or
+unbounded request paths in metric labels. Monitor latency histograms, 503/error rates,
+429s at the edge, sustained pool saturation, process RSS, disk/WAL and PostgreSQL I/O.
+Metric counters reset on restart; retain them in an operator-managed monitor if needed.
+
+The example's access log omits requests, IPs and referrers. nginx error logs can still
+include the failed request: keep them private, apply rotation/retention and redact
+before sharing. Disable request logging if it is not needed. Do not enable SQL
+parameter/debug logging on this dataset. Metrics and private query history serve
+different purposes; the server does not collect the browser's research history.
+
+Before launch, run the load tool against the intended host with exports and expensive
+address/radius searches, verify quotas with more than one client, and rehearse restoring
+a PostgreSQL backup into a separate database. Retain the original until verification
+and representative searches pass. The local desktop cold-copy format is not a cross-OS
+or cross-major-version server backup. For a live hosted database use PostgreSQL's
+[supported backup methods](https://www.postgresql.org/docs/18/backup.html).

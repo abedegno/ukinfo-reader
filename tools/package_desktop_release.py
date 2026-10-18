@@ -38,7 +38,14 @@ def main():
             ".parquet",
         }:
             raise RuntimeError(f"Source/data artifact in release bundle: {file.name}")
-        if file.name in {"PG_VERSION", "research-lists.json", "setup-state.json", "password"}:
+        if file.name in {
+            "PG_VERSION",
+            "research-lists.json",
+            "workbench.json",
+            "research-drafts.json",
+            "setup-state.json",
+            "password",
+        }:
             raise RuntimeError("User data must not be packaged")
     args.output.mkdir(parents=True, exist_ok=True)
     label = f"ukinfo-archive-{version}-{system}-{arch}"
@@ -87,6 +94,7 @@ def main():
         ],
         "postgresql": json.loads((runtime / "pg/BUILD.json").read_text()),
         "cabinet": json.loads((runtime / "cabinet-notices/BUILD.json").read_text()),
+        "components": json.loads((runtime / "components.json").read_text()),
         "media_readers": {"pycdlib": "1.22.0", "py7zr": "1.1.4"},
         "signing": signing,
         "catalogue_included": False,
