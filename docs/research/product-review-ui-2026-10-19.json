@@ -1,0 +1,31 @@
+{
+  "reviewed_commit": "7d5a8bf1f2f47d152beb7c09662bba33d863a34b",
+  "method": "Headless Chromium via Playwright; existing local Go preview; invented synthetic-demo only. Geometries are observations, not an accessibility conformance audit.",
+  "desktop": {
+    "viewport_width": 1240,
+    "viewport_height": 900,
+    "collapsed_search_form_height": 1070,
+    "results_heading_document_y": 454,
+    "label_font_px": 12,
+    "hint_font_px": 11,
+    "listing_type_badge_font_px": 9,
+    "view_record_button_width": 88,
+    "view_record_button_height": 23,
+    "record_dialog_initial_focus": "close-details",
+    "record_dialog_action_heights": [34, 33, 33, 33, 33, 33, 33, 33],
+    "visible_sort_control": false,
+    "explicit_cancel_search_control": false
+  },
+  "mobile": {
+    "viewport_width": 390,
+    "viewport_height": 844,
+    "collapsed_search_form_height": 1109,
+    "results_heading_document_y": 1577,
+    "horizontal_overflow": false
+  },
+  "limitations": [
+    "Single browser, font environment and invented catalogue; geometry will vary.",
+    "Target-size spacing exceptions were not audited; a 23px action height alone does not establish a WCAG failure.",
+    "Screen readers, 200%/400% zoom, touch devices and real users were not tested during this review."
+  ]
+}
