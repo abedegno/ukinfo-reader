@@ -58,6 +58,24 @@ as validated. Without configured credentials, only ordinary ad-hoc builds have b
 executed. A signed candidate should also be downloaded and opened on clean customer
 machines before promoting it to a public release. Linux builds remain unsigned.
 
+## Attach candidates to a draft
+
+After **Desktop packages** succeeds for a tag and **Signed macOS candidates** succeeds
+for the same commit, dispatch **Attach signed desktop candidates to draft** with:
+
+- `tag`: the existing `desktop-v` tag.
+- `package_run`: the successful tag-triggered Desktop packages run ID.
+- `signing_run`: the successful Signed macOS candidates run ID.
+
+The workflow checks both run identities, events and commits, requires an existing
+**draft**, downloads Linux and both signed Mac packages, and verifies all checksums,
+versions and source-data exclusion flags. Both Mac manifests must record Developer ID,
+notarization and stapling. It replaces only the six Mac files, updates the signing
+paragraph in the draft notes, and checks the size and SHA-256 digest of all nine
+uploaded files. It never publishes a release. Failed uploads can leave a partially
+updated draft; rerun only after inspecting the failure. Ordinary package builds must
+finish before promotion so they cannot overwrite the signed assets afterwards.
+
 ## Primary references
 
 - [Electron code signing](https://www.electronjs.org/docs/latest/tutorial/code-signing)

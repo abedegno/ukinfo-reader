@@ -1,0 +1,112 @@
+name: Attach signed desktop candidates to draft
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing desktop-v tag with a draft release
+        required: true
+        type: string
+      package_run:
+        description: Successful Desktop packages run for this tag
+        required: true
+        type: string
+      signing_run:
+        description: Successful Signed macOS candidates run for this commit
+        required: true
+        type: string
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: signed-draft-${{ inputs.tag }}
+  cancel-in-progress: false
+jobs:
+  attach:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: {ref: 'refs/tags/${{ inputs.tag }}'}
+      - name: Verify source runs and download tested candidates
+        env:
+          GH_TOKEN: '${{ github.token }}'
+          RELEASE_TAG: '${{ inputs.tag }}'
+          PACKAGE_RUN: '${{ inputs.package_run }}'
+          SIGNING_RUN: '${{ inputs.signing_run }}'
+        run: |
+          python3 - <<'PY'
+          import json, os, re, subprocess
+          def gh(*args):
+              return subprocess.check_output(['gh', *args], text=True)
+          tag = os.environ['RELEASE_TAG']
+          assert re.fullmatch(r'desktop-v[0-9]+\.[0-9]+\.[0-9]+', tag)
+          assert tag == 'desktop-v' + json.load(open('desktop/package.json'))['version']
+          commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          for name, workflow, event in [('PACKAGE_RUN', 'desktop.yml', 'push'), ('SIGNING_RUN', 'macos-signing.yml', 'workflow_dispatch')]:
+              run_id = os.environ[name]
+              assert run_id.isdigit()
+              run = json.loads(gh('api', f'repos/{os.environ["GITHUB_REPOSITORY"]}/actions/runs/{run_id}'))
+              assert run['status'] == 'completed' and run['conclusion'] == 'success'
+              assert run['head_sha'] == commit and run['event'] == event
+              assert run['path'] == '.github/workflows/' + workflow
+              if name == 'PACKAGE_RUN':
+                  assert run['head_branch'] == tag
+          assert json.loads(gh('release', 'view', tag, '--json', 'isDraft'))['isDraft'] is True
+          PY
+          gh run download "$PACKAGE_RUN" --name desktop-linux-x64 --dir candidates/linux
+          gh run download "$SIGNING_RUN" --pattern 'signed-desktop-*' --dir candidates/macos
+      - name: Verify checksums, provenance and signed macOS manifests
+        env: {RELEASE_TAG: '${{ inputs.tag }}'}
+        run: |
+          python3 tools/verify_desktop_release.py candidates --tag "$RELEASE_TAG" --commit "$(git rev-parse HEAD)"
+          python3 - <<'CHECK'
+          import json
+          from pathlib import Path
+          root = Path('candidates')
+          expected = set()
+          for manifest in root.rglob('*.build.json'):
+              info = json.loads(manifest.read_text())
+              if info['platform'] == 'darwin':
+                  assert info['signing'] == 'Developer ID, notarized and stapled'
+              archive = info['archive']
+              expected.update([archive, archive + '.sha256', manifest.name])
+          files = [p for p in root.rglob('*') if p.is_file()]
+          assert len(files) == 9 and {p.name for p in files} == expected
+          notes = Path('docs/desktop-release-notes.md').read_text()
+          start = notes.index('These preview packages are')
+          end = notes.index('\nNo original UK-Info data', start)
+          notes = notes[:start] + (
+              'The macOS packages are **Developer ID signed, notarized by Apple and stapled**.\n'
+              'Apple Silicon and Intel candidates passed packaged-app tests and Gatekeeper\n'
+              'assessment in CI. Linux packages are unsigned. Check the accompanying SHA-256\n'
+              'checksum and build manifest before installing.\n\n'
+              'This is an unpublished preview candidate. Download-and-open verification on a\n'
+              'clean Mac remains a release check.\n'
+          ) + notes[end:]
+          Path('signed-notes.md').write_text(notes)
+          CHECK
+      - name: Replace macOS assets on the existing draft
+        env:
+          GH_TOKEN: '${{ github.token }}'
+          RELEASE_TAG: '${{ inputs.tag }}'
+        run: |
+          test "$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)" = true
+          while IFS= read -r -d '' asset; do
+            gh release upload "$RELEASE_TAG" "$asset" --clobber
+          done < <(find candidates/macos -type f -print0)
+          gh release edit "$RELEASE_TAG" --draft --prerelease --notes-file signed-notes.md
+          gh release view "$RELEASE_TAG" --json isDraft,assets > release-state.json
+          python3 - <<'CHECK'
+          import hashlib, json
+          from pathlib import Path
+          release = json.loads(Path('release-state.json').read_text())
+          assert release['isDraft'] is True
+          assets = {asset['name']: asset for asset in release['assets']}
+          files = [p for p in Path('candidates').rglob('*') if p.is_file()]
+          assert len(assets) == len(files) == 9
+          for path in files:
+              asset = assets[path.name]
+              assert asset['size'] == path.stat().st_size
+              assert asset['digest'] == 'sha256:' + hashlib.sha256(path.read_bytes()).hexdigest()
+          print('All nine draft assets verified; release remains unpublished.')
+          CHECK
