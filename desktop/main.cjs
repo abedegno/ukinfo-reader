@@ -9,19 +9,31 @@ const {
 } = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
+const { createBoundedLog } = require("./bounded-log.cjs");
 const { startServer } = require("./supervisor.cjs");
 const { installImporter } = require("./import-ui.cjs");
 const { installDiagnostics } = require("./diagnostics.cjs");
+const { installMaintenance } = require("./archive-maintenance.cjs");
+const { readProfile } = require("./profile-location.cjs");
 const { installResearch } = require("./research-store.cjs");
 
 // An explicit data directory makes an unpacked build portable, including imports.
 // Run only one app against a given directory; PostgreSQL owns its physical cluster.
-if (process.env.UKINFO_DATA_DIR)
-  app.setPath("userData", path.resolve(process.env.UKINFO_DATA_DIR));
+const profileRoot = path.resolve(
+  process.env.UKINFO_DATA_DIR || app.getPath("userData"),
+);
+let profileProblem = null;
+try {
+  app.setPath("userData", readProfile(profileRoot));
+} catch (error) {
+  profileProblem = error;
+  app.setPath("userData", profileRoot);
+}
 let server,
   window,
   importer,
   diagnostics,
+  maintenance,
   lifecycle = "starting",
   quitPending = false,
   quitting = false;
@@ -49,6 +61,32 @@ if (!app.requestSingleInstanceLock()) {
       getLifecycle: () => lifecycle,
       ownsCatalogue: !process.env.UKINFO_DESKTOP_DATABASE_URL,
     });
+    maintenance = installMaintenance({
+      app,
+      ipcMain,
+      dialog,
+      getWindow: () => window,
+      getServer: () => server,
+      directory: app.getPath("userData"),
+      profileRoot,
+      executable:
+        process.env.UKINFO_SERVER || path.join(runtime, "ukinfo-server"),
+      ownsCatalogue: !process.env.UKINFO_DESKTOP_DATABASE_URL,
+      stop: async () => {
+        if (importer) await importer.cancel();
+        if (server) await server.stop();
+      },
+      restart: () => {
+        quitting = true;
+        app.relaunch();
+        app.quit();
+      },
+    });
+    const archiveAction = (action) =>
+      maintenance.run(action).catch((error) => {
+        if (!quitting)
+          dialog.showErrorBox("Archive operation stopped", error.message);
+      });
     const exportDiagnostics = () =>
       diagnostics
         .exportReport()
@@ -62,6 +100,26 @@ if (!app.requestSingleInstanceLock()) {
       Menu.buildFromTemplate([
         ...(process.platform === "darwin" ? [{ role: "appMenu" }] : []),
         { role: "fileMenu" },
+        {
+          label: "Archive",
+          submenu: [
+            {
+              label: "Create backup…",
+              enabled: !process.env.UKINFO_DESKTOP_DATABASE_URL,
+              click: () => archiveAction("backup"),
+            },
+            {
+              label: "Restore backup…",
+              enabled: !process.env.UKINFO_DESKTOP_DATABASE_URL,
+              click: () => archiveAction("restore"),
+            },
+            {
+              label: "Open archive…",
+              enabled: !process.env.UKINFO_DESKTOP_DATABASE_URL,
+              click: () => archiveAction("open"),
+            },
+          ],
+        },
         { role: "editMenu" },
         { role: "viewMenu" },
         { role: "windowMenu" },
@@ -72,6 +130,7 @@ if (!app.requestSingleInstanceLock()) {
       ]),
     );
     try {
+      if (profileProblem) throw profileProblem;
       const executable =
         process.env.UKINFO_SERVER || path.join(runtime, "ukinfo-server");
       const args = [
@@ -94,16 +153,15 @@ if (!app.requestSingleInstanceLock()) {
         );
       }
       fs.mkdirSync(app.getPath("userData"), { recursive: true, mode: 0o700 });
-      const log = fs.createWriteStream(
+      const log = await createBoundedLog(
         path.join(app.getPath("userData"), "server.log"),
-        { flags: "a", mode: 0o600 },
       );
       server = await startServer(executable, args, {
         env,
         log: (text) => log.write(text),
       });
       server.exit.then(() => {
-        if (!quitting) {
+        if (!quitting && !maintenance.active) {
           lifecycle = "server-stopped";
           dialog
             .showMessageBox({
@@ -193,16 +251,27 @@ if (!app.requestSingleInstanceLock()) {
         message: "Unable to open the archive",
         detail:
           error.message + "\nYou can export diagnostics to attach to an issue.",
-        buttons: ["Export diagnostics…", "Quit"],
-        defaultId: 0,
-        cancelId: 1,
+        buttons: [
+          "Open archive…",
+          "Restore backup…",
+          "Export diagnostics…",
+          "Quit",
+        ],
+        defaultId: 2,
+        cancelId: 3,
       });
-      if (choice.response === 0) await exportDiagnostics();
+      if (choice.response === 0) await archiveAction("open");
+      if (choice.response === 1) await archiveAction("restore");
+      if (choice.response === 2) await exportDiagnostics();
       app.quit();
     }
   });
   app.on("window-all-closed", () => app.quit());
   app.on("before-quit", (event) => {
+    if (maintenance?.active) {
+      event.preventDefault();
+      return;
+    }
     if (server && !quitting) {
       event.preventDefault();
       if (quitPending) return;

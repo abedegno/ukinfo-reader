@@ -69,19 +69,41 @@ Research snapshots remain readable throughout and are not evidence of an identit
 
 ## Back up or move
 
-Export research lists as JSON. Keep original media and the ONSPD ZIP to rebuild the
-search catalogue. **Show app data folder** opens the native file manager at the app's
-fixed data directory; it does not let a page open an arbitrary path.
+Use **Create backup…** under Manage archive or the native **Archive** menu. Save
+research notes first. The app stops its database and holds the same ownership lock
+used by database startup while copying. It copies database files, credentials, research
+lists, setup history and supported workspace files into a new private folder, hashes
+every file, rereads the copy to verify hashes, then restarts the original archive.
+Original media, caches and logs are excluded. At least 5 GiB free is retained.
 
-For a full local backup, quit the app and wait for PostgreSQL to stop, then copy the
-**entire** app data directory to separate storage. Restore to a separate directory
-using the same app version, operating system and CPU architecture; set
-`UKINFO_DATA_DIR` to that restored directory before launching. Never copy or replace a
-running PostgreSQL directory. Copying just research JSON does not back up the catalogue.
+**Restore backup…** verifies compatibility, paths and every file's checksum while
+creating a separate folder. It restarts into that restored archive. Your prior archive
+and the backup remain unchanged. **Open archive…** switches between existing archive
+folders and remembers your choice. The default profile location retains a small private
+`archive-location.json` pointer. When using `UKINFO_DATA_DIR`, that directory holds the
+pointer, so the environment-selected root remains the profile selector across restarts.
+If a selected drive is missing, startup offers Open archive, Restore backup or diagnostics.
 
-Automated tests use invented data to check partition ownership, stale confirmations,
-index/import exclusion, other-edition preservation, new identities on reimport,
-setup-history persistence, browser actions and native confirmation/note preservation.
+Backups are physical PostgreSQL 18 copies: use the same operating system, CPU architecture
+and compatible app schema. They are not a cross-platform migration format. Checksums detect
+accidental corruption; they do not authenticate a backup's author. Only restore backups
+you trust. Archives using external tablespaces/symlinks need a separately managed logical
+backup. External database connections are not copied or switched by the desktop controls.
+
+Backups contain directory records, research notes and database credentials. Keep them
+private; **never attach a backup to a public issue**. A diagnostics export is not a backup.
+Cancellation removes only the in-progress destination. A forced shutdown may leave a
+hidden `.partial` folder; it is not a completed backup. The original archive is retained.
+Use native Cancel copy and let the app restart instead of force-quitting during a copy.
+
+For manual backups, quit and wait for PostgreSQL to stop before copying the entire archive
+folder. Never copy a live cluster. Research-only JSON export remains available in Research
+lists. Both server and PostgreSQL logs retain at most an 8 MiB current file and three rotated
+files; old log contents are not copied into backups or diagnostic exports.
+
+PostgreSQL checks stale PID files using `pg_ctl status` and its own startup lock/shared-memory
+checks. The app does not delete PID files or adopt another running server. Live or uncertain
+ownership still fails with existing files preserved.
 
 ## Report a problem
 

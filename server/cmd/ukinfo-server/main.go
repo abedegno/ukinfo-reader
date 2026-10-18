@@ -59,7 +59,7 @@ func run() error {
 	if err := flags.Parse(os.Args[1:]); err != nil {
 		return err
 	}
-	if command != "serve" && command != "migrate" && command != "import" && command != "verify" && command != "repack-v1" && command != "stats" && command != "import-onspd" && command != "index-addresses" {
+	if command != "serve" && command != "migrate" && command != "import" && command != "verify" && command != "repack-v1" && command != "stats" && command != "import-onspd" && command != "index-addresses" && command != "lock-archive" {
 		return fmt.Errorf("command must be serve, migrate, import, verify, stats, repack-v1, import-onspd or index-addresses")
 	}
 	if *desktopControl {
@@ -75,6 +75,12 @@ func run() error {
 			return fmt.Errorf("parent-stdin requires serve")
 		}
 		go func() { _, _ = io.Copy(io.Discard, os.Stdin); stop() }()
+	}
+	if command == "lock-archive" {
+		if *data == "" {
+			return fmt.Errorf("lock-archive requires --data-dir")
+		}
+		return desktop.HoldArchiveLock(ctx, *data, os.Stdin, os.Stdout)
 	}
 	dsn := os.Getenv("DATABASE_URL")
 	if *data != "" {

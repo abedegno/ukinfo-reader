@@ -6,7 +6,9 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/url"
 	"os"
@@ -27,7 +29,7 @@ type Local struct {
 	cmd  *exec.Cmd
 	lock *flock.Flock
 	done chan struct{}
-	log  *os.File
+	log  io.WriteCloser
 	once sync.Once
 }
 
@@ -121,7 +123,17 @@ func Start(ctx context.Context, directory, bin string) (_ *Local, err error) {
 		}
 	}
 	if _, e = os.Stat(filepath.Join(data, "postmaster.pid")); e == nil {
-		return nil, fmt.Errorf("cluster has a postmaster.pid; check for an orphan before restarting (no automatic PID removal)")
+		// pg_ctl only inspects status here. PostgreSQL itself owns stale-lock and
+		// shared-memory checks during startup; the app never deletes PID files.
+		check, cancel := context.WithTimeout(ctx, 5*time.Second)
+		statusErr := exec.CommandContext(check, filepath.Join(bin, "pg_ctl"), "status", "-D", data).Run()
+		cancel()
+		var exit *exec.ExitError
+		if !errors.As(statusErr, &exit) || exit.ExitCode() != 3 {
+			return nil, fmt.Errorf("archive database may still be running; close its owning app before retrying (files preserved)")
+		}
+	} else if !os.IsNotExist(e) {
+		return nil, fmt.Errorf("cannot inspect archive database status; files preserved")
 	}
 	listener, e := net.Listen("tcp", "127.0.0.1:0")
 	if e != nil {
@@ -129,7 +141,7 @@ func Start(ctx context.Context, directory, bin string) (_ *Local, err error) {
 	}
 	port := listener.Addr().(*net.TCPAddr).Port
 	_ = listener.Close()
-	p.log, err = os.OpenFile(filepath.Join(directory, "postgres.log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+	p.log, err = openRotatingLog(filepath.Join(directory, "postgres.log"), 8<<20, 3)
 	if err != nil {
 		return nil, err
 	}

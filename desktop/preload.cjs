@@ -4,6 +4,15 @@ contextBridge.exposeInMainWorld("ukinfoDesktop", {
   researchRead: () => ipcRenderer.invoke("ukinfo:research-read"),
   researchWrite: (value, revision) =>
     ipcRenderer.invoke("ukinfo:research-write", { value, revision }),
+  archiveMaintenance: (action) =>
+    ipcRenderer.invoke("ukinfo:archive-maintenance", action),
+  cancelArchiveCopy: () => ipcRenderer.invoke("ukinfo:archive-cancel"),
+  onArchiveProgress: (callback) => {
+    const listener = (_event, state) => callback(state);
+    ipcRenderer.on("ukinfo:archive-progress", listener);
+    return () =>
+      ipcRenderer.removeListener("ukinfo:archive-progress", listener);
+  },
   exportDiagnostics: () => ipcRenderer.invoke("ukinfo:export-diagnostics"),
   showArchiveFolder: () => ipcRenderer.invoke("ukinfo:show-archive-folder"),
   catalogue: () => ipcRenderer.invoke("ukinfo:catalogue"),

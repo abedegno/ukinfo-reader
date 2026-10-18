@@ -78,14 +78,18 @@ jobs:
         env:
           UKINFO_PG_BIN: '${{ github.workspace }}/build/desktop/pg/bin'
           UKINFO_TEST_APP: '${{ github.workspace }}/dist/desktop/UK-Info Archive-${{ matrix.platform }}/UK-Info Archive.app/Contents/MacOS/UK-Info Archive'
-        run: npm run test:import
+        run: |
+          npm run test:import
+          npm run test:backup
       - name: Packaged app onboarding/import/search/lists/shutdown (Linux)
         if: runner.os == 'Linux'
         working-directory: desktop
         env:
           UKINFO_PG_BIN: '${{ github.workspace }}/build/desktop/pg/bin'
           UKINFO_TEST_APP: '${{ github.workspace }}/dist/desktop/UK-Info Archive-linux-x64/UK-Info Archive'
-        run: xvfb-run -a npm run test:import
+        run: |
+          xvfb-run -a npm run test:import
+          xvfb-run -a npm run test:backup
       - name: Create source-free archive, checksums and provenance
         run: python tools/package_desktop_release.py
       - if: github.event_name != 'pull_request'

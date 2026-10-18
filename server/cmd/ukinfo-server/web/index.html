@@ -351,6 +351,16 @@
         >
       </footer>
     </main>
+    <dialog id="archive-copy-dialog" aria-labelledby="archive-copy-heading">
+      <h2 id="archive-copy-heading">Copying your archive</h2>
+      <p>
+        The app will restart when copying and verification finish. Existing
+        archives are preserved. Keep backup folders private.
+      </p>
+      <progress id="archive-copy-progress"></progress>
+      <p id="archive-copy-status" role="status" aria-live="polite"></p>
+      <button id="archive-copy-cancel" type="button">Cancel copy</button>
+    </dialog>
     <dialog id="catalogue-dialog" aria-labelledby="catalogue-heading">
       <div class="dialog-heading">
         <h2 id="catalogue-heading">Your archive</h2>
@@ -392,6 +402,17 @@
       </section>
       <details class="catalogue-section">
         <summary>Back up or move your archive</summary>
+        <p>
+          Create a verified private backup with the database stopped. Restore
+          makes a separate archive and keeps your current one. Backups include
+          records, saved notes and database credentials; never attach them to an
+          issue.
+        </p>
+        <div class="catalogue-actions">
+          <button id="catalogue-backup" type="button">Create backup…</button>
+          <button id="catalogue-restore" type="button">Restore backup…</button>
+          <button id="catalogue-switch" type="button">Open archive…</button>
+        </div>
         <p>
           Export research lists as JSON to back up saved records and notes. Keep
           copies of your original media and ONSPD ZIP so you can rebuild the

@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/jackc/pgx/v5"
@@ -33,8 +34,18 @@ func TestLifecycle(t *testing.T) {
 		other.Close()
 		t.Fatal("second owner accepted")
 	}
+	pidPath := filepath.Join(dir, "pg18", "postmaster.pid")
+	stale, err := os.ReadFile(pidPath)
+	if err != nil {
+		t.Fatal(err)
+	}
 	first.Close()
 	first.Close() // shutdown is idempotent
+	lines := strings.Split(string(stale), "\n")
+	lines[0] = "99999999" // outside supported systems' PID range; never a live process
+	if err = os.WriteFile(pidPath, []byte(strings.Join(lines, "\n")), 0600); err != nil {
+		t.Fatal(err)
+	}
 	relocated := filepath.Join(filepath.Dir(dir), "relocated")
 	if err = os.Rename(dir, relocated); err != nil {
 		t.Fatal(err)

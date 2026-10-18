@@ -223,6 +223,53 @@
       button.disabled = false;
     }
   });
+  if (bridge.archiveMaintenance) {
+    for (const [id, action] of [
+      ["catalogue-backup", "backup"],
+      ["catalogue-restore", "restore"],
+      ["catalogue-switch", "open"],
+    ]) {
+      $(id).addEventListener("click", async () => {
+        $("catalogue-message").textContent = "Review the archive operation…";
+        try {
+          const result = await bridge.archiveMaintenance(action);
+          $("catalogue-message").textContent = result.canceled
+            ? "Operation canceled. Your archive is unchanged."
+            : "Restarting…";
+        } catch (error) {
+          $("catalogue-message").textContent = error.message;
+        }
+      });
+    }
+    bridge.onArchiveProgress((state) => {
+      const modal = $("archive-copy-dialog");
+      if (state.phase === "idle") {
+        if (modal.open) modal.close();
+        return;
+      }
+      if (!modal.open) modal.showModal();
+      const progress = $("archive-copy-progress");
+      if (state.total > 0) {
+        progress.max = state.total;
+        progress.value = state.done;
+      } else progress.removeAttribute("value");
+      $("archive-copy-status").textContent =
+        `${state.phase === "stopping" ? "Stopping the database safely…" : state.phase === "verifying" ? "Verifying copied files…" : state.phase === "complete" ? "Copy verified." : "Copying files…"}${state.total ? ` ${size(state.done)} of ${size(state.total)}` : ""}`;
+    });
+    $("archive-copy-cancel").addEventListener("click", () =>
+      bridge.cancelArchiveCopy(),
+    );
+    $("archive-copy-dialog").addEventListener("cancel", (event) => {
+      event.preventDefault();
+      bridge.cancelArchiveCopy();
+    });
+  } else
+    for (const id of [
+      "catalogue-backup",
+      "catalogue-restore",
+      "catalogue-switch",
+    ])
+      $(id).hidden = true;
   bridge
     .capabilities()
     .then((c) => {

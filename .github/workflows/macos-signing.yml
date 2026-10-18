@@ -67,6 +67,7 @@ jobs:
           node build-icon.cjs
           npm run pack
           npm run test:import
+          npm run test:backup
       - name: Notarize and staple
         env: {PLATFORM: '${{ matrix.platform }}'}
         run: python tools/macos_signing.py notarize "dist/desktop/UK-Info Archive-$PLATFORM/UK-Info Archive.app"
