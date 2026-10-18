@@ -11,6 +11,26 @@ let datasets = [];
 let catalogueLoaded = false;
 let searchGeography = null;
 let addressCoverage = new Set();
+let geographyAvailable = false;
+// Older bookmarks can combine a radius with an independent postcode restriction.
+// Keep that restriction in the visible filter chips without a second postcode box.
+let savedPostcodeConstraint = "";
+let restoredSearch = false;
+function updatePostcodeMode() {
+  const nearby = form.elements.postcode_scope.value === "near";
+  $("nearby-controls").hidden = !nearby;
+  $("geography-capability").hidden = geographyAvailable && !nearby;
+  $("postcode-constraint-note").hidden = !(nearby && savedPostcodeConstraint);
+  $("postcode-constraint-note").textContent = savedPostcodeConstraint
+    ? `This saved search also restricts results to ${savedPostcodeConstraint}. Remove the Postcode filter from the results to widen it.`
+    : "";
+}
+for (const input of form.elements.postcode_scope)
+  input.addEventListener("change", () => {
+    if (form.elements.postcode_scope.value === "in")
+      savedPostcodeConstraint = "";
+    updatePostcodeMode();
+  });
 const locationFields = ["street", "locality", "town", "county"];
 const addressFields = ["house", "building", "flat", ...locationFields];
 const filterLabels = {
@@ -118,6 +138,10 @@ function showKind(value) {
   $("name-refinements").hidden = kind !== "person";
   $("name-help").hidden = kind !== "person";
   $("business-field").hidden = kind !== "business";
+  $("who-heading").textContent =
+    kind === "person" ? "Who are you looking for?" : "Which business?";
+  $("match-label").textContent =
+    kind === "person" ? "Surname match" : "Business name match";
 }
 $("people").addEventListener("click", () => showKind("person"));
 $("business").addEventListener("click", () => showKind("business"));
@@ -652,8 +676,10 @@ form.addEventListener("submit", (event) => {
     limit: $("page-size").value,
   });
   for (const name of kind === "person"
-    ? ["surname", "first_name", "first_match", "middle_initial", "postcode"]
-    : ["organisation", "postcode"]) {
+    ? ["surname", "first_name", "first_match", "middle_initial"]
+    : ["organisation"]) {
+    if (name === "first_match" && !form.elements.first_name.value.trim())
+      continue;
     const value = form.elements[name].value.trim();
     if (value) params.set(name, value);
   }
@@ -662,9 +688,19 @@ form.addEventListener("submit", (event) => {
     if (!input.disabled && input.value.trim())
       params.set(name, input.value.trim());
   }
-  if (form.elements.near.value.trim()) {
-    params.set("near", form.elements.near.value.trim());
-    params.set("radius_m", form.elements.radius_m.value);
+  const postcode = form.elements.postcode.value.trim();
+  if (postcode) {
+    if (form.elements.postcode_scope.value === "near") {
+      if (!geographyAvailable) {
+        $("status").textContent =
+          "Nearby search needs postcode locations. Use In this postcode, or add a postcode reference in Postcode setup.";
+        return;
+      }
+      params.set("near", postcode);
+      params.set("radius_m", form.elements.radius_m.value);
+      if (savedPostcodeConstraint)
+        params.set("postcode", savedPostcodeConstraint);
+    } else params.set("postcode", postcode);
   }
   search(params);
 });
@@ -1074,11 +1110,13 @@ $("export-address-page").addEventListener("click", async () => {
 
 async function refreshGeography() {
   const geo = await api("/api/geography");
-  $("near").disabled = !geo.available;
+  geographyAvailable = geo.available === true;
+  $("postcode-near").disabled = !geographyAvailable;
   $("radius").disabled = !geo.available;
   $("geography-capability").textContent = geo.available
     ? `ONSPD ${geo.reference.release} · Great Britain · current and retired postcodes`
-    : "Postcode locations have not been added to this catalogue yet.";
+    : "Nearby search needs postcode locations. Postcode matching is still available.";
+  updatePostcodeMode();
   if (geo.available) {
     $("geography-attribution").hidden = false;
     const year = geo.reference.release.slice(0, 4);
@@ -1121,7 +1159,34 @@ function restoreURL() {
   for (const name of viewFields) params.delete(name);
   closeDialogs();
   restoreView(viewParams);
-  if (params.size) form.reset();
+  // Initial capability requests may finish after someone has started typing.
+  // A blank initial URL must not erase their draft; history navigation still resets.
+  if (!params.size && !restoredSearch) {
+    restoredSearch = true;
+    updatePostcodeMode();
+    editionNote();
+    return;
+  }
+  restoredSearch = true;
+  form.reset();
+  savedPostcodeConstraint = params.has("near")
+    ? params.get("postcode") || ""
+    : "";
+  form.elements.postcode_scope.value = params.has("near") ? "near" : "in";
+  form.elements.postcode.value =
+    params.get("near") || params.get("postcode") || "";
+  updatePostcodeMode();
+  $("name-options").open =
+    params.get("match") === "prefix" ||
+    params.has("middle_initial") ||
+    (params.has("first_name") && params.get("first_match") !== "given");
+  $("address-controls").open = [
+    "house",
+    "building",
+    "flat",
+    "locality",
+    "county",
+  ].some((name) => params.has(name));
   const chosen = params.get("dataset");
   if (
     chosen &&
@@ -1143,9 +1208,7 @@ function restoreURL() {
     editionNote();
     return;
   }
-  form.reset();
-  $("nearby-controls").open = params.has("near");
-  $("address-controls").open = addressFields.some((name) => params.has(name));
+
   showKind(params.get("kind") === "business" ? "business" : "person");
   for (const name of [
     "dataset",
@@ -1154,13 +1217,14 @@ function restoreURL() {
     "first_match",
     "middle_initial",
     "organisation",
-    "postcode",
     "match",
-    "near",
     "radius_m",
     ...addressFields,
   ])
     if (params.has(name)) form.elements[name].value = params.get(name);
+  if (params.has("first_name") && !params.has("first_match"))
+    form.elements.first_match.value =
+      params.get("match") === "prefix" ? "prefix" : "exact";
   $("page-size").value = params.get("limit") || "50";
   editionNote();
   search(params, [], false);

@@ -5,11 +5,11 @@ work on an existing catalogue without an index build or another data copy.
 
 ## Houses, buildings and flats
 
-Open **Search by house, street, town or county**. Add:
+Open **More address filters**. Add:
 
-- **House number / suffix**, for example `12` or `12A`.
+- **House number**, for example `12` or `12A`.
 - **Building name**, for example `Rose House`.
-- **Flat / subbuilding**, for example `Flat 2`.
+- **Flat or unit**, for example `Flat 2`.
 
 Combine them with at least one indexed constraint: surname/business name, street,
 locality, town, county, postcode or nearby area. A building name or first name alone
@@ -34,15 +34,18 @@ still require the [optional address index](address-search.md) in each selected e
 
 ## Given names and middle initials
 
-The **First-name matching** selector overrides the main name matching selector for
-`first_name` only:
+Open **Name search options** for independent **Surname match** and **First name match**
+controls. New UI searches default to exact surnames and **Given name + others** for first
+names. The first-name selector affects `first_name` only:
 
 | Mode | Behaviour |
 | --- | --- |
-| Use name matching above | Existing exact/prefix behaviour applies to supplied name fields. |
-| Exact given names | The entire recorded given-name field must match. `John` excludes `John A`. |
-| Given name (+ others) | Match `John`, `John A` and `John Arthur`, but exclude `Johnny`. Multiple supplied given names must also occur at the start in that order. |
+| Exact text | The entire recorded given-name field must match. `John` excludes `John A`. |
+| Given name + others | Match `John`, `John A` and `John Arthur`, but exclude `Johnny`. Multiple supplied given names must also occur at the start in that order. |
 | Starts with | Literal prefix of the recorded given-name field, including longer names. |
+
+Existing saved links without `first_match` keep the API's previous exact/prefix
+inheritance from `match`; the form displays that as an explicit mode.
 
 A trailing `*` explicitly requests a prefix even when another mode is selected.
 **Middle initial** checks the first letter of the **second** recorded given-name token;
@@ -77,9 +80,9 @@ export is emitted on the server to preserve large source integers.
 | `middle_initial` | One Unicode letter, with an optional final period. |
 
 ```text
-/api/search?dataset=all&postcode=WS13&house=12&flat=Flat%202
+/api/search?dataset=all&postcode=AA1&house=12&flat=Flat%202
 /api/search?dataset=all&surname=Smith&first_name=John&first_match=given&middle_initial=A
-/api/search?dataset=all&kind=business&postcode=WS13&building=Rose*
+/api/search?dataset=all&kind=business&postcode=AA1&building=Rose*
 ```
 
 Invalid filters return 400. Changed filters invalidate a cursor. The existing edition

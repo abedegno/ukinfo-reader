@@ -835,3 +835,138 @@ textarea {
   border: 0;
   padding: 0;
 }
+
+/* Search groups keep related questions together and labels above their controls. */
+#search .search-intro {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 22px;
+}
+#search .search-section {
+  border: 0;
+  border-top: 1px solid var(--line);
+  padding: 20px 0 0;
+  margin: 24px 0 0;
+  min-width: 0;
+}
+#search .search-section > legend {
+  padding: 0 10px 0 0;
+  font-size: 14px;
+  font-weight: 650;
+}
+#search .section-hint {
+  margin: -4px 0 16px;
+}
+#search .fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+#search label {
+  line-height: 1.5;
+}
+#search input:not([type="radio"]),
+#search select {
+  min-height: 44px;
+  width: 100%;
+}
+#search .fields > label,
+#search .match-fields label {
+  display: flex;
+  flex-direction: column;
+}
+#search .fields label input,
+#search .fields label select {
+  margin-top: 6px;
+}
+#search #name-refinements {
+  min-width: 0;
+}
+#search #name-refinements[hidden] {
+  display: none;
+}
+#search .match-fields label {
+  min-height: 0;
+}
+#search .match-fields > label > span {
+  color: var(--ink);
+  font-size: inherit;
+  font-weight: 600;
+}
+#search .search-options {
+  margin-top: 18px;
+  padding: 0;
+}
+#search .search-options summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+#search .search-options[open] > summary {
+  margin-bottom: 16px;
+}
+#search .postcode-scope {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  border: 0;
+  margin: 12px 0 0;
+  padding: 0;
+  min-width: 0;
+}
+#search .postcode-scope label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  min-height: 36px;
+  cursor: pointer;
+}
+#search input[type="radio"] {
+  margin: 0;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+#search #nearby-controls {
+  border-left: 3px solid var(--line);
+  padding: 0 0 0 14px;
+  margin: 12px 0;
+}
+#search #nearby-controls[hidden] {
+  display: none;
+}
+#search .place-fields {
+  margin-top: 22px;
+}
+#search .primary {
+  width: 100%;
+  justify-content: space-between;
+  min-height: 44px;
+  margin-bottom: 0;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+@media (max-width: 380px) {
+  #search .fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+#search {
+  container-type: inline-size;
+}
+@container (max-width: 320px) {
+  #search .match-fields {
+    grid-template-columns: 1fr;
+  }
+}

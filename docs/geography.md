@@ -93,12 +93,14 @@ The project's MIT licence does not relicense the reference data.
 
 ## Search, accuracy and pagination
 
-Expand **Search near a postcode**, enter a centre postcode, district (`WS13`) or sector (`WS13 7`), and select a radius.
+Enter a full or partial postcode in **Where?**, choose **Nearby**, and select a distance.
+The same postcode box is used for **In this postcode** searches. `AA1 1AA`, `AA1` and
+`AA1 1` are format illustrations; nearby searches need a postcode present in the installed reference.
 A name is optional. The UI offers 1/2/5/10/25 miles; the API accepts 50–50,000 integer
 metres. Existing name, business, edition and postcode filters can be combined with it.
 
 ```text
-/api/search?dataset=all&near=WS137SW&radius_m=8047&surname=Smith
+/api/search?dataset=all&near=AA11AA&radius_m=8047&surname=Smith
 ```
 
 Results include approximate distance, coordinate positional quality and postcode

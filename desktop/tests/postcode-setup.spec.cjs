@@ -45,7 +45,7 @@ test("desktop postcode setup verifies a chosen ZIP, reports errors and enables n
     }),
   );
   await page.goto("/");
-  await expect(page.locator("#near")).toBeDisabled();
+  await expect(page.locator("#postcode-near")).toBeDisabled();
   await page
     .getByRole("button", { name: "Postcode setup", exact: true })
     .click();
@@ -65,12 +65,12 @@ test("desktop postcode setup verifies a chosen ZIP, reports errors and enables n
   await expect(page.locator("#postcode-message")).toContainText(
     "SHA-256 mismatch",
   );
-  await expect(page.locator("#near")).toBeDisabled();
+  await expect(page.locator("#postcode-near")).toBeDisabled();
   await page.locator("#postcode-start").click();
   await expect(page.locator("#postcode-message")).toContainText("are ready");
   await expect(page.locator("#postcode-reference-status")).toContainText(
     "1,234,567",
   );
   await page.locator("#postcode-setup-close").click();
-  await expect(page.locator("#near")).toBeEnabled();
+  await expect(page.locator("#postcode-near")).toBeEnabled();
 });

@@ -50,173 +50,223 @@
               Businesses
             </button>
           </div>
-          <label
-            >Name matching<select name="match" id="match">
-              <option value="exact">Exact name</option>
-              <option value="prefix">Starts with</option>
-            </select></label
-          >
-          <div id="person-fields" class="fields">
-            <label
-              >Surname<input
-                name="surname"
-                autocomplete="off"
-                placeholder="e.g. Smith"
-                maxlength="256" /></label
-            ><label
-              >First name <span>(optional)</span
-              ><input
-                name="first_name"
-                autocomplete="off"
-                placeholder="e.g. John"
-                maxlength="256"
-            /></label>
-          </div>
-          <div id="name-refinements" class="fields">
-            <label
-              >First-name matching<select name="first_match">
-                <option value="">Use name matching above</option>
-                <option value="exact">Exact given names</option>
-                <option value="given">Given name (+ others)</option>
-                <option value="prefix">Starts with</option>
-              </select></label
-            >
-            <label
-              >Middle initial <span>(optional)</span
-              ><input
-                name="middle_initial"
-                maxlength="2"
-                placeholder="e.g. A"
-                autocomplete="off"
-            /></label>
-          </div>
-          <p id="name-help" class="note">
-            Given-name matching finds John and John A, but not Johnny. Middle
-            initial checks the second recorded given name or initial. Missing
-            names are not inferred.
+          <p class="search-intro">
+            Use a name, a place, or both. Fill in only what you know.
           </p>
-          <label id="business-field" hidden
-            >Business name<input
-              name="organisation"
-              autocomplete="off"
-              placeholder="e.g. Archive Supplies"
-              maxlength="256"
-          /></label>
-          <div class="bottom-fields">
-            <label
-              >Postcode <span>(optional)</span
-              ><input
+          <fieldset class="search-section">
+            <legend id="who-heading">Who are you looking for?</legend>
+            <div id="person-fields" class="fields">
+              <label for="surname"
+                >Surname<input
+                  id="surname"
+                  name="surname"
+                  autocomplete="off"
+                  spellcheck="false"
+                  maxlength="256"
+                  aria-describedby="name-hint"
+              /></label>
+              <label for="first-name"
+                >First name<input
+                  id="first-name"
+                  name="first_name"
+                  autocomplete="off"
+                  spellcheck="false"
+                  maxlength="256"
+                  aria-describedby="name-hint"
+              /></label>
+            </div>
+            <label id="business-field" for="organisation" hidden
+              >Business name<input
+                id="organisation"
+                name="organisation"
+                autocomplete="off"
+                spellcheck="false"
+                maxlength="256"
+                aria-describedby="name-hint"
+            /></label>
+            <p id="name-hint" class="note">
+              Names ignore case. Add * to match the beginning of a name, for
+              example Smi*.
+            </p>
+            <details id="name-options" class="search-options">
+              <summary>Name search options</summary>
+              <div class="fields match-fields">
+                <label for="match"
+                  ><span id="match-label">Surname match</span
+                  ><select name="match" id="match">
+                    <option value="exact">Exact text</option>
+                    <option value="prefix">Starts with</option>
+                  </select></label
+                >
+                <div id="name-refinements">
+                  <label for="first-match"
+                    >First name match<select
+                      id="first-match"
+                      name="first_match"
+                    >
+                      <option value="exact">Exact text</option>
+                      <option value="given" selected>
+                        Given name + others
+                      </option>
+                      <option value="prefix">Starts with</option>
+                    </select></label
+                  >
+                  <label for="middle-initial"
+                    >Middle initial<input
+                      id="middle-initial"
+                      name="middle_initial"
+                      maxlength="2"
+                      autocomplete="off"
+                      spellcheck="false"
+                      aria-describedby="name-help"
+                  /></label>
+                </div>
+              </div>
+              <p id="name-help" class="note">
+                “Given name + others” finds John and John A, but not Johnny.
+                Middle initial checks the second recorded given name or initial.
+              </p>
+            </details>
+          </fieldset>
+          <fieldset class="search-section" aria-describedby="location-hint">
+            <legend>Where?</legend>
+            <p id="location-hint" class="note section-hint">
+              Optional. Search by location alone, or narrow a name search.
+            </p>
+            <label for="postcode"
+              >Postcode<input
+                id="postcode"
                 name="postcode"
                 autocomplete="off"
-                placeholder="WS13, WS13 7 or WS13 7SW"
+                spellcheck="false"
                 maxlength="12"
+                aria-describedby="postcode-hint"
             /></label>
-          </div>
-          <details id="address-controls" class="nearby-controls">
-            <summary>Search by house, street, town or county</summary>
-            <div class="fields">
-              <label
-                >House number / suffix<input
-                  name="house"
-                  placeholder="e.g. 12A"
-                  maxlength="256"
-              /></label>
-              <label
-                >Building name<input
-                  name="building"
-                  placeholder="e.g. Rose House"
-                  maxlength="256"
-              /></label>
-            </div>
-            <label
-              >Flat / subbuilding<input
-                name="flat"
-                placeholder="e.g. Flat 2"
-                maxlength="256"
-            /></label>
-            <p class="note">
-              Combine house, building or flat with a surname/business name,
-              street, locality, town, county, postcode or nearby area. These
-              fields use displayed source values; a missing flat is not treated
-              as the whole building.
+            <p id="postcode-hint" class="note">
+              Full postcode, district or sector. Format example: AA1 1AA
+              (illustration only).
             </p>
-            <p id="address-capability" class="note">
-              Checking address coverage…
-            </p>
-            <label
-              >Street<input
-                name="street"
-                placeholder="e.g. High Street"
-                maxlength="256"
-                disabled
-            /></label>
-            <label
-              >Village / locality<input
-                name="locality"
-                placeholder="e.g. Shenstone"
-                maxlength="256"
-                disabled
-            /></label>
-            <div class="fields">
+            <fieldset
+              class="postcode-scope"
+              aria-describedby="geography-capability"
+            >
+              <legend class="visually-hidden">How to use the postcode</legend>
               <label
-                >Town / city<input
-                  name="town"
-                  placeholder="e.g. Lichfield"
-                  maxlength="256"
+                ><input
+                  type="radio"
+                  name="postcode_scope"
+                  value="in"
+                  id="postcode-in"
+                  checked
+                />In this postcode</label
+              >
+              <label
+                ><input
+                  type="radio"
+                  name="postcode_scope"
+                  value="near"
+                  id="postcode-near"
                   disabled
-              /></label>
-              <label
-                >County<input
-                  name="county"
-                  placeholder="e.g. Staffordshire"
-                  maxlength="256"
+                />Nearby</label
+              >
+            </fieldset>
+            <div id="nearby-controls" hidden>
+              <label for="radius"
+                >Distance from postcode<select
+                  name="radius_m"
+                  id="radius"
                   disabled
-              /></label>
-            </div>
-            <p class="note">
-              Search without a name, or combine address and name filters.
-              Address fields match exact text; add a trailing * for a prefix.
-              Uses places as recorded on the disc.
-            </p>
-          </details>
-          <details id="nearby-controls" class="nearby-controls">
-            <summary>Search near a postcode</summary>
-            <p id="geography-capability" class="note">
-              Checking postcode locations…
-            </p>
-            <div class="fields">
-              <label
-                >Centre postcode<input
-                  name="near"
-                  id="near"
-                  placeholder="e.g. WS13 or WS13 7"
-                  maxlength="12"
-                  disabled /></label
-              ><label
-                >Within<select name="radius_m" id="radius" disabled>
-                  <option value="1609">1 mile</option>
-                  <option value="3219">2 miles</option>
-                  <option value="8047" selected>5 miles</option>
-                  <option value="16093">10 miles</option>
-                  <option value="40234">25 miles</option>
+                >
+                  <option value="1609">Within 1 mile</option>
+                  <option value="3219">Within 2 miles</option>
+                  <option value="8047" selected>Within 5 miles</option>
+                  <option value="16093">Within 10 miles</option>
+                  <option value="40234">Within 25 miles</option>
                 </select></label
               >
+              <p class="note">
+                Approximate postcode positions in Great Britain. Districts and
+                sectors use a centre point, not their boundary. Northern Ireland
+                and incomplete source postcodes are excluded.
+              </p>
             </div>
-            <p class="note">
-              Districts and sectors use an approximate centre, not their
-              boundary. Uses approximate postcode positions. Northern Ireland
-              and incomplete source postcodes are excluded. You can search an
-              area without entering a name.
+            <p id="geography-capability" class="note">
+              Checking nearby search availability…
             </p>
-          </details>
+            <p id="postcode-constraint-note" class="note" hidden></p>
+            <div class="fields place-fields">
+              <label for="street"
+                >Street<input
+                  id="street"
+                  name="street"
+                  autocomplete="off"
+                  maxlength="256"
+                  disabled
+              /></label>
+              <label for="town"
+                >Town or city<input
+                  id="town"
+                  name="town"
+                  autocomplete="off"
+                  maxlength="256"
+                  disabled
+              /></label>
+            </div>
+            <p id="address-capability" class="note">
+              Checking address search availability…
+            </p>
+            <details id="address-controls" class="search-options">
+              <summary>More address filters</summary>
+              <div class="fields">
+                <label for="house"
+                  >House number<input
+                    id="house"
+                    name="house"
+                    maxlength="256"
+                    autocomplete="off"
+                /></label>
+                <label for="flat"
+                  >Flat or unit<input
+                    id="flat"
+                    name="flat"
+                    maxlength="256"
+                    autocomplete="off"
+                /></label>
+              </div>
+              <label for="building"
+                >Building name<input
+                  id="building"
+                  name="building"
+                  maxlength="256"
+                  autocomplete="off"
+              /></label>
+              <label for="locality"
+                >Village or locality<input
+                  id="locality"
+                  name="locality"
+                  maxlength="256"
+                  autocomplete="off"
+                  disabled
+              /></label>
+              <label for="county"
+                >County<input
+                  id="county"
+                  name="county"
+                  maxlength="256"
+                  autocomplete="off"
+                  disabled
+              /></label>
+              <p class="note">
+                Matches places as recorded on the disc. Use * at the end for a
+                prefix. Combine house, building or flat with a name, street,
+                town, county or postcode. Missing address parts are not
+                inferred.
+              </p>
+            </details>
+          </fieldset>
           <button class="primary" id="submit" type="submit">
             Search archive <span aria-hidden="true">↗</span>
           </button>
-          <p class="note">
-            Names ignore case and extra spaces. Use Starts with or a trailing *
-            (Smi*) for name prefixes. Postcodes accept districts, sectors and
-            full codes. Enter a name, address, postcode or nearby area to begin.
-          </p>
         </form>
         <section class="results" aria-labelledby="results-title">
           <div class="results-heading">

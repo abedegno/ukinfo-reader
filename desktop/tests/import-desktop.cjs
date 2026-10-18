@@ -109,16 +109,14 @@ const assert = require("node:assert/strict");
     assert.equal(exported[0].dataset, "synthetic-demo");
     assert.equal(exported[0].record.building, null);
     await window.getByLabel("Surname", { exact: true }).fill("");
-    await window
-      .getByText("Search by house, street, town or county", { exact: true })
-      .click();
+    await window.getByText("More address filters", { exact: true }).click();
     assert.equal(
       await window.getByLabel("Street", { exact: true }).isEnabled(),
       true,
     );
     await window.getByLabel("Street", { exact: true }).fill("Invented Street");
     await window
-      .getByLabel("Town / city", { exact: true })
+      .getByLabel("Town or city", { exact: true })
       .fill("Fictional Town");
     await window.getByRole("button", { name: "Search archive" }).click();
     await window.locator("article").first().waitFor();
@@ -148,10 +146,10 @@ const assert = require("node:assert/strict");
       !(await window.locator("#address-controls").evaluate((node) => node.open))
     )
       await window.locator("#address-controls summary").click();
-    await window
-      .getByLabel("House number / suffix", { exact: true })
-      .fill("12");
+    await window.getByLabel("House number", { exact: true }).fill("12");
     await window.locator('[name="first_name"]').fill("Person");
+    if (!(await window.locator("#name-options").evaluate((node) => node.open)))
+      await window.locator("#name-options summary").click();
     await window.locator('[name="first_match"]').selectOption("given");
     await window.getByRole("button", { name: "Search archive" }).click();
     await window

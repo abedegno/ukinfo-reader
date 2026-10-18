@@ -275,10 +275,10 @@ test("nearby area searches preserve radius, distances and coordinate provenance"
     });
   });
   await page.goto("/");
-  await page.getByText("Search near a postcode", { exact: true }).click();
-  await expect(page.locator("#near")).toBeEnabled();
-  await page.getByLabel("Centre postcode", { exact: true }).fill("ZZ1");
-  const centreBox = await page.locator("#near").boundingBox();
+  await page.getByRole("radio", { name: "Nearby", exact: true }).check();
+  await expect(page.locator("#postcode")).toBeEnabled();
+  await page.getByLabel("Postcode", { exact: true }).fill("ZZ1");
+  const centreBox = await page.locator("#postcode").boundingBox();
   const submitBox = await page.locator("#submit").boundingBox();
   expect(submitBox.y).toBeGreaterThan(centreBox.y + centreBox.height);
   await page.locator("#radius").selectOption("3219");
@@ -304,8 +304,9 @@ test("nearby area searches preserve radius, distances and coordinate provenance"
   );
   await page.getByRole("button", { name: "Close details" }).click();
   await page.reload();
-  await expect(page.locator("#nearby-controls")).toHaveAttribute("open", "");
-  await expect(page.locator("#near")).toHaveValue("ZZ1");
+  await expect(page.locator("#nearby-controls")).toBeVisible();
+  await expect(page.locator("#postcode-near")).toBeChecked();
+  await expect(page.locator("#postcode")).toHaveValue("ZZ1");
   await expect(page.locator("#radius")).toHaveValue("3219");
   await expect(page.locator("article")).toHaveCount(1);
   await expect(page.locator("#geography-attribution")).toContainText(
@@ -367,16 +368,14 @@ test("address-only searches preserve fields, paging, bookmarks and edition cover
     });
   });
   await page.goto("/");
-  await page
-    .getByText("Search by house, street, town or county", { exact: true })
-    .click();
+  await page.getByText("More address filters", { exact: true }).click();
   await expect(page.locator('[name="street"]')).toBeDisabled();
   await page
     .getByLabel("Edition", { exact: true })
     .selectOption("synthetic-demo");
   await expect(page.locator('[name="street"]')).toBeEnabled();
   await page.getByLabel("Street", { exact: true }).fill("Invented*");
-  await page.getByLabel("Town / city", { exact: true }).fill("Example Town");
+  await page.getByLabel("Town or city", { exact: true }).fill("Example Town");
   await page.getByLabel("County", { exact: true }).fill("Old County");
   await page.getByRole("button", { name: "Search archive" }).click();
   await expect(page.locator("article")).toContainText("First Example");
@@ -717,4 +716,141 @@ test("building, flat and middle initial controls round-trip and fit mobile witho
   });
   await page.getByRole("button", { name: "Businesses", exact: true }).click();
   await expect(page.locator("#name-refinements")).toBeHidden();
+});
+
+test("one postcode field switches between postcode matching and nearby without combining stale filters", async ({
+  page,
+}) => {
+  await page.route("**/api/geography", (route) =>
+    route.fulfill({
+      json: { available: true, reference: { release: "2026-08" } },
+    }),
+  );
+  const seen = [];
+  await page.route("**/api/search?*", (route) => {
+    seen.push(new URL(route.request().url()).searchParams);
+    return route.fulfill({ json: { items: [], next_cursor: "" } });
+  });
+  await page.goto("/");
+  await expect(page.locator('#search input[name="postcode"]')).toHaveCount(1);
+  await expect(page.locator('#search input[name="near"]')).toHaveCount(0);
+  await expect(page.getByLabel("Street", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Town or city", { exact: true })).toBeVisible();
+  await expect(page.locator("#name-options")).not.toHaveAttribute("open", "");
+  const postcode = page.getByLabel("Postcode", { exact: true });
+  await postcode.fill("ZZ1");
+  await page.getByRole("button", { name: "Search archive" }).click();
+  await expect.poll(() => seen.length).toBe(1);
+  expect(seen[0].get("postcode")).toBe("ZZ1");
+  expect(seen[0].has("near")).toBe(false);
+  await page.getByRole("radio", { name: "Nearby", exact: true }).check();
+  await expect(postcode).toHaveValue("ZZ1");
+  await page.locator("#radius").selectOption("3219");
+  await page.getByRole("button", { name: "Search archive" }).click();
+  await expect.poll(() => seen.length).toBe(2);
+  expect(seen[1].get("near")).toBe("ZZ1");
+  expect(seen[1].has("postcode")).toBe(false);
+  expect(seen[1].get("radius_m")).toBe("3219");
+  await page.reload();
+  await expect(page.locator("#postcode-near")).toBeChecked();
+  await expect(postcode).toHaveValue("ZZ1");
+  await page
+    .getByRole("radio", { name: "In this postcode", exact: true })
+    .check();
+  await expect(page.locator("#nearby-controls")).toBeHidden();
+  await page.getByRole("button", { name: "Search archive" }).click();
+  await expect.poll(() => seen.at(-1)?.has("postcode")).toBe(true);
+  expect(seen.at(-1).has("near")).toBe(false);
+  expect(seen.at(-1).has("radius_m")).toBe(false);
+});
+
+test("legacy combined postcode and radius bookmarks keep both constraints until explicitly removed", async ({
+  page,
+}) => {
+  await page.route("**/api/geography", (route) =>
+    route.fulfill({
+      json: { available: true, reference: { release: "2026-08" } },
+    }),
+  );
+  const seen = [];
+  await page.route("**/api/search?*", (route) => {
+    seen.push(new URL(route.request().url()).searchParams);
+    return route.fulfill({ json: { items: [], next_cursor: "" } });
+  });
+  await page.goto(
+    "/?dataset=synthetic-demo&near=ZZ1&postcode=ZZ1%201&radius_m=3219",
+  );
+  await expect(page.locator("#postcode")).toHaveValue("ZZ1");
+  await expect(page.locator("#postcode-constraint-note")).toContainText(
+    "ZZ1 1",
+  );
+  await page.getByRole("button", { name: "Search archive" }).click();
+  await expect.poll(() => seen.length).toBe(2);
+  expect(seen.at(-1).get("postcode")).toBe("ZZ1 1");
+  expect(seen.at(-1).get("near")).toBe("ZZ1");
+  await page
+    .getByRole("button", { name: "Remove postcode filter", exact: true })
+    .click();
+  await expect(page.locator("#postcode-constraint-note")).toBeHidden();
+  expect(seen.at(-1).has("postcode")).toBe(false);
+});
+
+test("name options align at desktop and mobile widths and legacy matching keeps its meaning", async ({
+  page,
+}) => {
+  await page.goto(
+    "/?dataset=synthetic-demo&surname=Example&first_name=Person&match=prefix",
+  );
+  await expect(page.locator("#first-match")).toHaveValue("prefix");
+  for (const width of [1240, 768, 390, 320]) {
+    await page.setViewportSize({ width, height: 1000 });
+    const surname = await page.locator("#surname").boundingBox();
+    const first = await page.locator("#first-name").boundingBox();
+    const match = await page.locator("#match").boundingBox();
+    const firstMatch = await page.locator("#first-match").boundingBox();
+    if (width > 380) {
+      expect(Math.abs(surname.y - first.y)).toBeLessThan(2);
+      if (width > 600) expect(Math.abs(match.y - firstMatch.y)).toBeLessThan(2);
+      else {
+        expect(firstMatch.y).toBeGreaterThan(match.y);
+        expect(firstMatch.width).toBeGreaterThan(200);
+      }
+    }
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+  }
+  await page.goto("/");
+  await expect(page.locator("#first-match")).toHaveValue("given");
+  await expect(page.locator("#name-options")).not.toHaveAttribute("open", "");
+  await expect(page.locator("#postcode")).not.toHaveAttribute("placeholder");
+  await expect(page.locator("#postcode-hint")).toContainText(
+    "illustration only",
+  );
+});
+
+test("finishing availability checks does not erase a search already being typed", async ({
+  page,
+}) => {
+  let finish;
+  const ready = new Promise((resolve) => {
+    finish = resolve;
+  });
+  await page.route("**/api/geography", async (route) => {
+    await ready;
+    await route.fulfill({
+      json: { available: true, reference: { release: "2026-08" } },
+    });
+  });
+  await page.goto("/");
+  await page.getByLabel("Surname", { exact: true }).fill("Example");
+  await page.getByLabel("Postcode", { exact: true }).fill("ZZ1");
+  finish();
+  await expect(page.locator("#geography-capability")).toBeHidden();
+  await expect(page.getByLabel("Surname", { exact: true })).toHaveValue(
+    "Example",
+  );
+  await expect(page.getByLabel("Postcode", { exact: true })).toHaveValue("ZZ1");
 });

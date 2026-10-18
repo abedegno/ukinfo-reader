@@ -219,10 +219,11 @@ and follow PostgreSQL recovery procedures. Preserve the password file with its c
   characters for surnames/business names; first-name prefixes can contain one. Exact
   names such as Li and Ng have no minimum length. `?`, `%`, embedded/multiple `*`,
   contains matching and fuzzy matching are not supported. Literal apostrophes are supported.
-- Postcode keys remove whitespace and uppercase. Districts (`WS13`), sectors (`WS13 7`)
-  and full postcodes (`WS13 7SW`) are supported. A trailing `*` is optional (`WS13*`). **Keep the sector space where ambiguous:**
+- Postcode examples below illustrate formats, not installed reference locations.
+  Postcode keys remove whitespace and uppercase. Districts (`AA1`), sectors (`AA1 1`)
+  and full postcodes (`AA1 1AA`) are supported. A trailing `*` is optional (`AA1*`). **Keep the sector space where ambiguous:**
   `W11` is the district, `W1 1` is a sector. Matching checks the length of the full code,
-  so `WS1` does not include `WS13`. Displayed partial source values can match a district
+  so `AA1` does not include `AA10`. Displayed partial source values can match a district
   when equal to that district; raw full postcodes never replace partial displayed codes.
 - Prefix searches have no vocabulary-count rejection. Small expansions use bound integer
   arrays; broad expansions stay inside PostgreSQL in a shared materialized CTE. All matching
@@ -234,7 +235,7 @@ and follow PostgreSQL recovery procedures. Preserve the password file with its c
   import with the same manifest edition exists; samples remain individually selectable.
   Results identify their originating `dataset`. This is occurrence search, not person identity matching.
 - People require surname, postcode or nearby centre; businesses require organisation,
-  postcode or nearby centre. `near=WS137SW&radius_m=8047` selects an approximate
+  postcode or nearby centre. `near=AA11AA&radius_m=8047` selects an approximate
   five-mile circle. `radius_m` accepts integer metres from 50 to 50,000; defaults to 8,047.
   Nearby responses include `geography` provenance and per-item `distance_m`,
   `location_quality` and optional `location_terminated`. `/api/geography` reports availability.
@@ -267,12 +268,20 @@ Nearby search then runs locally/offline. The pinned August 2026 reference uses a
 
 ## Using the interface
 
-The edition selector defaults to **All editions**. Choose exact names or **Starts with**,
-then enter a name or postcode. The result cards show their edition and directory type.
-Expand **Search near a postcode**
-to enter a full centre postcode and a 1/2/5/10/25-mile radius; a name is optional. Nearby
-results show approximate postcode-point distances, use catalogue order rather than
-nearest-first order, and exclude incomplete/unlocated and non-geographic postcodes.
+The edition selector defaults to **All editions**. Enter a surname/business name,
+postcode or address in the **Who?** and **Where?** groups. A name is optional for a
+location search. **Name search options** contains independent surname/first-name
+matching; new first-name searches include following given names by default. Use a
+trailing `*` for a prefix. Detailed house/building/flat/locality/county controls live in
+**More address filters**, while street and town remain visible.
+
+Enter a postcode once, then choose **In this postcode** or **Nearby**. Nearby reveals
+a 1/2/5/10/25-mile distance and accepts a full postcode, district or sector. Results show
+approximate postcode-point distances, use catalogue order rather than nearest-first
+order, and exclude incomplete/unlocated and non-geographic postcodes. See the
+[search form design](search-interface.md) for controls, saved-link compatibility and
+research references.
+
 Page sizes are 25/50/100 with controls above and below results. Search URLs preserve filters,
 page size and the current cursor; browser Back/Forward restores searches. A directly opened
 page URL cannot reconstruct the app's earlier page history; use browser history or start

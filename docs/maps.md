@@ -53,7 +53,7 @@ its ordinary no-referrer policy elsewhere.
 
 ## API and validation
 
-`GET /api/map?postcode=WS137SW&postcode=WS137SE` resolves 1–100 full displayed postcodes.
+`GET /api/map?postcode=AA11AA&postcode=AA11AB` resolves 1–100 full displayed postcodes.
 Duplicates normalize to one lookup. The response has `reference`, `points`, `unlocated`
 and a precision notice. Each point includes postcode, latitude, longitude, quality and
 termination date. Invalid/partial codes return 400; unavailable reference/data or busy

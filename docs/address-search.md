@@ -85,9 +85,9 @@ search; rerun `index-addresses` to finish. Cancellation cannot undo that source 
 ## HTTP examples
 
 ```text
-/api/search?dataset=all&street=High%20Street&town=Lichfield
+/api/search?dataset=all&street=High%20Street&town=Example Town
 /api/search?dataset=all&surname=Smith&county=Stafford*
-/api/search?dataset=all&kind=business&street=High*&postcode=WS13
+/api/search?dataset=all&kind=business&street=High*&postcode=AA1
 ```
 
 Supported parameters: `street`, `locality`, `town`, `county`. All are optional,

@@ -51,6 +51,7 @@ See the [complete-edition measurements](docs/research/compact-catalogue.md#all-f
 
 Street, locality, town/city and county search is available through an optional
 [additive address index](docs/address-search.md), including on existing catalogues.
+[Search form design and controls](docs/search-interface.md) explains the Who/Where layout.
 [Refine names and premises](docs/search-refinements.md) with house/building/flat filters,
 given-name modes, middle initials and removable search filters.
 [Research lists](docs/research-lists.md) retain notes/citations locally;
