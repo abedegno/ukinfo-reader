@@ -27,7 +27,8 @@ the `desktop-signing` environment through GitHub settings. No Apple ID or app-sp
 password is needed. The API key may be reused only with authorization for that team.
 
 Configure environment reviewers/restrictions appropriate to the repository. Dispatch
-only a reviewed tag containing this workflow and its supporting tools (0.3.1 or later; `desktop-v0.3.0` still uses the previous Apple-ID helper).
+only a reviewed tag containing this workflow and its supporting tools. Use 0.3.3 or later;
+0.3.1 had a licence-folder signing bug and 0.3.2 lacked useful notarization diagnostics.
 The job checks that the tag matches the desktop package version. Missing credentials
 fail before building a candidate; there is no unsigned fallback in this workflow.
 
@@ -53,10 +54,11 @@ fail before building a candidate; there is no unsigned fallback in this workflow
 7. Deletes the temporary certificate/API-key files and keychain and restores the runner's
    original keychain search list. Candidate artifacts expire after seven days.
 
-The signing path needs a real certificate/Apple service run before it can be described
-as validated. Without configured credentials, only ordinary ad-hoc builds have been
-executed. A signed candidate should also be downloaded and opened on clean customer
-machines before promoting it to a public release. Linux builds remain unsigned.
+Both native architectures passed the real certificate/Apple service path for
+[`desktop-v0.3.3`](https://github.com/abedegno/ukinfo-reader/actions/runs/39157660872):
+packaged-app tests, Apple Accepted status, stapling, nested-signature verification and
+Gatekeeper assessment. Downloading and opening the resulting candidate on clean customer
+machines remains a check before public release. Linux builds remain unsigned.
 
 ## Attach candidates to a draft
 

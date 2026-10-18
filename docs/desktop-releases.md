@@ -39,8 +39,12 @@ conflicting writes, map precision and source-free fixtures.
 1. Set `desktop/package.json` and its lockfile root version together.
 2. Merge reviewed code and verify all CI workflows, including native packages.
 3. Tag that commit `desktop-vVERSION` and push the tag. A mismatched package version fails.
-4. Inspect the resulting draft, platform packages, checksums and manifests. Publish the
-   draft explicitly when ready; no branch push publishes a release automatically.
+4. For signed Mac downloads, run **Signed macOS candidates** for this tag. After it
+   and the tag's Desktop packages run succeed, use **Attach signed desktop candidates
+   to draft** with both run IDs. See [macOS signing](macos-signing.md).
+5. Inspect the draft, checksums and manifests, then test downloading/opening the apps
+   on clean machines. Keep releases as drafts until explicitly approved for publication;
+   no branch push or signing workflow publishes automatically.
 
 No auto-updater is installed. Replace the application bundle to update; keep the user
 profile/data directory. Back up research JSON and the catalogue before moving data or
@@ -79,11 +83,13 @@ restored runtimes still pass lifecycle and packaged-app checks before release.
 
 ## Signing and platform limits
 
-Current packages are unsigned previews (macOS ad-hoc signed, not notarized). A production
-macOS release needs a Developer ID identity, entitlement review and notarization with
-the account's credentials. Those credentials are not present in the repository and no
-signing bypass is built into the app. Linux archives target the CI baseline, not every
-Linux distribution. Test hardware/OS compatibility before broad distribution.
+Ordinary workflow artifacts are macOS ad-hoc signed previews. The separate signed
+candidate workflow produces Developer ID signed, Apple-notarized and stapled Mac apps;
+both architectures passed this path for 0.3.3. The manual draft-attachment workflow
+verifies and replaces Mac assets after all builds succeed. Check each release's notes
+and build manifests for its actual signing status. Credentials are held in GitHub
+secrets. Linux archives remain unsigned and target the CI baseline, not every Linux
+distribution. Test hardware/OS compatibility before broad distribution.
 
 Primary references: [GitHub runner architectures](https://docs.github.com/en/actions/reference/runners/github-hosted-runners),
 [PostgreSQL native build/relocation guidance](https://www.postgresql.org/docs/18/install-make.html),
