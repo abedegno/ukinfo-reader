@@ -538,3 +538,21 @@ dt {
 #geography-attribution {
   margin-top: 28px;
 }
+
+.address-heading {
+  white-space: pre-line;
+  line-height: 1.6;
+}
+#address-items article {
+  display: block;
+  padding: 16px 0;
+}
+#address-items h3 {
+  margin: 0 0 8px;
+}
+#address-items .record-actions {
+  margin-top: 10px;
+}
+#address-details {
+  max-width: 780px;
+}

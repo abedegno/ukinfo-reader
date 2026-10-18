@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add guarded direct record links, saved-link reopening, exact-premises address pages,
+  people/business co-listings, edition-scope comparison, pagination and raw page exports.
+
 - Add optional street, locality, town/city and county indexes, address-only and combined
   searches, edition coverage, cursor paging and a guarded rollback-only index pilot.
 

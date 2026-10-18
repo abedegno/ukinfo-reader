@@ -103,6 +103,38 @@ const assert = require("node:assert/strict");
     await window.getByRole("button", { name: "Next page" }).click();
     await window.locator("#status").filter({ hasText: "Page 2" }).waitFor();
     assert.equal(await window.locator("article").count(), 50);
+    await window
+      .locator("article")
+      .first()
+      .getByRole("button", { name: "View record" })
+      .click();
+    await window.locator("#explore-address:enabled").waitFor();
+    await window
+      .getByRole("button", { name: "Explore this address", exact: true })
+      .click();
+    await window.locator("#address-items article").first().waitFor();
+    assert.equal(await window.locator("#address-items article").count(), 1);
+    await window
+      .getByRole("button", { name: "Close address", exact: true })
+      .click();
+    await window
+      .getByRole("button", { name: "Open saved link", exact: true })
+      .click();
+    await window
+      .getByLabel("Saved link", { exact: true })
+      .fill(
+        "http://127.0.0.1:1/?view=record&record_dataset=synthetic-demo&record_id=1&record_source=invented%3A0",
+      );
+    await window
+      .getByRole("button", { name: "Open link", exact: true })
+      .click();
+    await window
+      .locator("#record-title")
+      .filter({ hasText: "Person 000 Example" })
+      .waitFor();
+    await window
+      .getByRole("button", { name: "Close details", exact: true })
+      .click();
     await app.evaluate(({ shell }) => {
       shell.openExternal = async (url) => {
         globalThis.ukinfoOpenedURL = url;

@@ -11,6 +11,7 @@
     <header>
       <a class="brand" href="/">UK–Info <span>ARCHIVE</span></a>
       <div class="header-actions">
+        <button id="saved-link-open" type="button">Open saved link</button>
         <button id="import-open" type="button" hidden>Add edition +</button
         ><span class="badge">Historical directory</span>
       </div>
@@ -268,20 +269,89 @@
       </section>
       <p id="import-message" role="status" aria-live="polite"></p>
     </dialog>
-    <dialog id="details">
+    <dialog id="saved-link-dialog" aria-labelledby="saved-link-title">
+      <div class="dialog-heading">
+        <h2 id="saved-link-title">Open a saved record or address</h2>
+        <button id="saved-link-close" aria-label="Close saved link">✕</button>
+      </div>
+      <p class="note">
+        Paste a saved link to open its source record or address in this
+        catalogue. This also works with links saved from another session or
+        installation.
+      </p>
+      <form id="saved-link-form">
+        <label
+          >Saved link<input
+            id="saved-link"
+            type="url"
+            required
+            placeholder="Paste a record or address link"
+        /></label>
+        <button type="submit" class="primary">Open link</button>
+      </form>
+      <p id="saved-link-status" role="status"></p>
+    </dialog>
+    <dialog
+      id="address-details"
+      aria-labelledby="address-title"
+      aria-describedby="premises-notice"
+    >
+      <div class="dialog-heading">
+        <h2 id="address-title">Listings at this address</h2>
+        <button id="close-address" aria-label="Close address">✕</button>
+      </div>
+      <p id="address-heading" class="address-heading"></p>
+      <label
+        >Edition scope<select id="address-scope">
+          <option value="edition">Selected record's edition</option>
+          <option value="all">All available editions</option>
+        </select></label
+      >
+      <p id="premises-notice" class="note">
+        Matches require the same complete postcode and recorded premises
+        components, including flat/subbuilding. Shared addresses do not
+        establish family relationships or continuous residence.
+      </p>
+      <div class="record-actions">
+        <button id="copy-address-link" type="button">Copy address link</button>
+        <button id="export-address-page" type="button" disabled>
+          Export address page
+        </button>
+      </div>
+      <p id="address-status" role="status" aria-live="polite"></p>
+      <div id="address-items"></div>
+      <nav class="pagination" aria-label="Address listing pages">
+        <button id="address-first" type="button" hidden>First page</button>
+        <button id="address-previous" type="button" hidden>
+          Previous address page
+        </button>
+        <button id="address-next" type="button" hidden>
+          Next address page
+        </button>
+      </nav>
+    </dialog>
+    <dialog id="details" aria-labelledby="record-title">
       <div class="dialog-heading">
         <h2 id="record-title">Record details</h2>
         <button id="close-details" aria-label="Close details">✕</button>
       </div>
       <p id="provenance"></p>
       <div class="record-actions">
-        <button id="copy-address" type="button">Copy address</button
+        <button id="back-address" type="button" hidden>
+          Back to address listings
+        </button>
+        <button id="copy-record-link" type="button" disabled>
+          Copy record link</button
+        ><button id="explore-address" type="button" disabled>
+          Explore this address</button
+        ><button id="copy-address" type="button">Copy address</button
         ><button id="copy-citation" type="button">Copy citation</button
         ><button id="export-record" type="button">
           Export original record
         </button>
       </div>
       <p id="record-feedback" role="status"></p>
+      <p id="record-address-note" class="note"></p>
       <div id="record-fields"></div>
     </dialog>
   </body>

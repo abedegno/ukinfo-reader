@@ -209,8 +209,13 @@ function locationQuality(value) {
 function distanceText(value) {
   return `Approximately ${(value / 1609.344).toFixed(2)} miles`;
 }
-function details(item, occurrences = [item]) {
+function details(item, occurrences = [item], options = {}) {
+  viewGeneration++;
+  if ($("address-details").open) $("address-details").close();
+  if (options.updateURL !== false && hasRecordID(item))
+    setViewURL("record", item);
   selectedRecord = item;
+  $("back-address").hidden = !options.fromAddress || !addressView;
   $("record-title").textContent = recordName(item.record) || "Record details";
   $("provenance").textContent =
     editionTitle(item) +
@@ -324,7 +329,8 @@ function details(item, occurrences = [item]) {
   raw.append(dl);
   fields.push(raw);
   $("record-fields").replaceChildren(...fields);
-  $("details").showModal();
+  if (!$("details").open) $("details").showModal();
+  recordActions(item, options.metadata);
 }
 async function copyText(text) {
   try {
@@ -352,7 +358,11 @@ function downloadBlob(blob, filename) {
 $("export-record").addEventListener("click", async () => {
   // Fetch original JSON bytes: browser JSON parsing can round source integers.
   try {
-    const response = await fetch(`/api/export?${lastQuery}`);
+    const response = await fetch(
+      hasRecordID(selectedRecord)
+        ? `/api/record?${recordParams(selectedRecord)}&format=jsonl`
+        : `/api/export?${lastQuery}`,
+    );
     if (!response.ok) throw new Error("Export unavailable");
     const lines = (await response.text()).trim().split("\n");
     const line = lines.find((line) => {
@@ -371,7 +381,7 @@ $("export-record").addEventListener("click", async () => {
     $("record-feedback").textContent = e.message;
   }
 });
-$("close-details").addEventListener("click", () => $("details").close());
+$("close-details").addEventListener("click", closeView);
 function render() {
   $("geography-note").hidden = !searchGeography;
   if (searchGeography)
@@ -629,6 +639,278 @@ async function refreshDatasets(preferred) {
       : "No editions imported yet. Follow the catalogue import guide to add your local disc data.";
   editionNote();
 }
+const viewFields = [
+  "view",
+  "record_dataset",
+  "record_id",
+  "record_source",
+  "address_scope",
+  "address_cursor",
+];
+let viewGeneration = 0;
+let recordActionGeneration = 0;
+let addressView = null;
+function hasRecordID(item) {
+  return item && Number.isInteger(item.id) && item.id > 0 && item.dataset;
+}
+function recordParams(item) {
+  return new URLSearchParams({
+    dataset: item.dataset,
+    id: String(item.id),
+    source_id: item.source_id,
+  });
+}
+function viewURL(
+  mode,
+  item,
+  { scope = "edition", cursor = "", standalone = false } = {},
+) {
+  const url = new URL(
+    standalone ? location.origin + location.pathname : location.href,
+  );
+  for (const field of viewFields) url.searchParams.delete(field);
+  url.searchParams.set("view", mode);
+  url.searchParams.set("record_dataset", item.dataset);
+  url.searchParams.set("record_id", String(item.id));
+  url.searchParams.set("record_source", item.source_id);
+  if (mode === "address") {
+    url.searchParams.set("address_scope", scope);
+    if (cursor) url.searchParams.set("address_cursor", cursor);
+  }
+  return url;
+}
+function setViewURL(mode, item, options = {}) {
+  history.pushState(null, "", viewURL(mode, item, options));
+}
+function closeDialogs() {
+  viewGeneration++;
+  recordActionGeneration++;
+  for (const id of ["details", "address-details"])
+    if ($(id).open) $(id).close();
+}
+function closeView() {
+  closeDialogs();
+  const url = new URL(location.href);
+  for (const name of viewFields) url.searchParams.delete(name);
+  history.pushState(null, "", url);
+}
+async function recordActions(item, metadata) {
+  const generation = ++recordActionGeneration;
+  $("copy-record-link").disabled = !hasRecordID(item);
+  $("explore-address").disabled = true;
+  $("record-address-note").textContent = "";
+  if (!hasRecordID(item)) return;
+  try {
+    const data = metadata || (await api(`/api/record?${recordParams(item)}`));
+    if (generation !== recordActionGeneration || !$("details").open) return;
+    $("explore-address").disabled = !data.address_available;
+    $("record-address-note").textContent = data.address_available
+      ? "Explore co-listed people and businesses at this recorded address, within this edition or across available editions."
+      : data.address_reason;
+  } catch (error) {
+    if (generation === recordActionGeneration)
+      $("record-address-note").textContent = error.message;
+  }
+}
+$("back-address").addEventListener("click", () =>
+  openAddress(addressView.anchor, {
+    scope: addressView.scope,
+    cursor: addressView.cursor,
+    trail: addressView.trail,
+  }),
+);
+$("saved-link-open").addEventListener("click", () => {
+  $("saved-link-status").textContent = "";
+  $("saved-link-dialog").showModal();
+});
+$("saved-link-close").addEventListener("click", () =>
+  $("saved-link-dialog").close(),
+);
+$("saved-link-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  try {
+    const params = new URL($("saved-link").value.trim()).searchParams;
+    const mode = params.get("view");
+    const ref = {
+      dataset: params.get("record_dataset"),
+      id: Number(params.get("record_id")),
+      source_id: params.get("record_source") || "",
+    };
+    if (!["record", "address"].includes(mode) || !hasRecordID(ref))
+      throw new Error(
+        "Paste a record or address link created by this application.",
+      );
+    const url = viewURL(mode, ref, {
+      scope: params.get("address_scope") || "edition",
+      cursor: params.get("address_cursor") || "",
+    });
+    $("saved-link-dialog").close();
+    history.pushState(null, "", url);
+    restoreURL();
+  } catch (error) {
+    $("saved-link-status").textContent =
+      "Paste a record or address link created by this application.";
+  }
+});
+$("copy-record-link").addEventListener("click", () =>
+  copyText(viewURL("record", selectedRecord, { standalone: true }).href),
+);
+$("explore-address").addEventListener("click", () =>
+  openAddress(selectedRecord),
+);
+for (const id of ["details", "address-details"])
+  $(id).addEventListener("cancel", (event) => {
+    event.preventDefault();
+    closeView();
+  });
+$("close-address").addEventListener("click", closeView);
+async function restoreView(params) {
+  const mode = params.get("view");
+  if (!["record", "address"].includes(mode)) return;
+  const generation = ++viewGeneration;
+  const ref = {
+    dataset: params.get("record_dataset"),
+    id: Number(params.get("record_id")),
+    source_id: params.get("record_source") || "",
+  };
+  if (!hasRecordID(ref)) {
+    $("status").textContent = "This record link is incomplete.";
+    return;
+  }
+  try {
+    const data = await api(`/api/record?${recordParams(ref)}`);
+    if (generation !== viewGeneration) return;
+    if (mode === "record")
+      details(data.item, [data.item], { updateURL: false, metadata: data });
+    else
+      openAddress(data.item, {
+        scope: params.get("address_scope") || "edition",
+        cursor: params.get("address_cursor") || "",
+        updateURL: false,
+      });
+  } catch (error) {
+    if (generation === viewGeneration) $("status").textContent = error.message;
+  }
+}
+async function openAddress(
+  anchor,
+  { scope = "edition", cursor = "", trail = [], updateURL = true } = {},
+) {
+  if (!hasRecordID(anchor)) return;
+  const generation = ++viewGeneration;
+  recordActionGeneration++;
+  if ($("details").open) $("details").close();
+  addressView = { anchor, scope, cursor, trail, next: "", items: [] };
+  if (updateURL) setViewURL("address", anchor, { scope, cursor });
+  $("address-heading").textContent = addressText(anchor.record);
+  $("address-scope").value = scope;
+  $("address-status").textContent =
+    "Finding listings at this recorded address…";
+  $("address-items").replaceChildren();
+  for (const id of ["address-first", "address-previous", "address-next"])
+    $(id).hidden = true;
+  $("export-address-page").disabled = true;
+  if (!$("address-details").open) $("address-details").showModal();
+  $("address-details").scrollTop = 0;
+  try {
+    const params = recordParams(anchor);
+    params.set("scope", scope);
+    params.set("limit", "50");
+    if (cursor) params.set("cursor", cursor);
+    const data = await api(`/api/address?${params}`);
+    if (generation !== viewGeneration) return;
+    addressView.next = data.next_cursor;
+    addressView.items = data.items;
+    $("premises-notice").textContent = data.notice;
+    let edition = "";
+    for (const item of data.items) {
+      if (edition !== item.dataset) {
+        edition = item.dataset;
+        $("address-items").append(element("h3", editionTitle(item)));
+      }
+      const card = element("article", "");
+      card.append(
+        element("h3", recordName(item.record) || "Unnamed listing"),
+        element("p", listingType(item.record)),
+        element("p", citation(item), "note"),
+      );
+      if (
+        item.dataset === anchor.dataset &&
+        item.source_id === anchor.source_id
+      )
+        card.append(element("p", "Selected source record", "badge"));
+      const button = element("button", "View source record");
+      button.type = "button";
+      button.addEventListener("click", () =>
+        details(item, [item], { fromAddress: true }),
+      );
+      card.append(button);
+      $("address-items").append(card);
+    }
+    $("address-status").textContent = data.items.length
+      ? `${data.items.length} source listing${data.items.length === 1 ? "" : "s"} on this page. ${data.next_cursor ? "More listings available." : "End of listings."}`
+      : "No matching source listings. Recorded address variations may be missed.";
+    $("address-first").hidden = !cursor;
+    $("address-previous").hidden = trail.length === 0;
+    $("address-next").hidden = !data.next_cursor;
+    $("export-address-page").disabled = data.items.length === 0;
+  } catch (error) {
+    if (generation === viewGeneration) {
+      $("address-status").textContent = error.message;
+      $("address-first").hidden = !cursor;
+    }
+  }
+}
+$("address-scope").addEventListener("change", () =>
+  openAddress(addressView.anchor, { scope: $("address-scope").value }),
+);
+$("address-next").addEventListener("click", () =>
+  openAddress(addressView.anchor, {
+    scope: addressView.scope,
+    cursor: addressView.next,
+    trail: [...addressView.trail, addressView.cursor],
+  }),
+);
+$("address-previous").addEventListener("click", () =>
+  openAddress(addressView.anchor, {
+    scope: addressView.scope,
+    cursor: addressView.trail.at(-1),
+    trail: addressView.trail.slice(0, -1),
+  }),
+);
+$("address-first").addEventListener("click", () =>
+  openAddress(addressView.anchor, { scope: addressView.scope }),
+);
+$("copy-address-link").addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(
+      viewURL("address", addressView.anchor, {
+        scope: addressView.scope,
+        cursor: addressView.cursor,
+        standalone: true,
+      }).href,
+    );
+    $("address-status").textContent = "Address link copied.";
+  } catch {
+    $("address-status").textContent =
+      "Copy unavailable. Copy the page URL from your browser.";
+  }
+});
+$("export-address-page").addEventListener("click", async () => {
+  const params = recordParams(addressView.anchor);
+  params.set("scope", addressView.scope);
+  params.set("format", "jsonl");
+  if (addressView.cursor) params.set("cursor", addressView.cursor);
+  try {
+    const response = await fetch(`/api/address?${params}`);
+    if (!response.ok)
+      throw new Error((await response.json()).error || "Export unavailable");
+    downloadBlob(await response.blob(), "ukinfo-address-page.jsonl");
+  } catch (error) {
+    $("address-status").textContent = error.message;
+  }
+});
+
 (async () => {
   try {
     await refreshDatasets();
@@ -665,7 +947,11 @@ $("page-size").addEventListener("change", () => {
   if (lastQuery) form.requestSubmit();
 });
 function restoreURL() {
-  const params = new URLSearchParams(location.search);
+  const viewParams = new URLSearchParams(location.search);
+  const params = new URLSearchParams(viewParams);
+  for (const name of viewFields) params.delete(name);
+  closeDialogs();
+  restoreView(viewParams);
   if (
     !params.has("surname") &&
     !params.has("organisation") &&

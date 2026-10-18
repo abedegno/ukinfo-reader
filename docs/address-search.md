@@ -101,8 +101,10 @@ citation/export behaviour remain unchanged.
 schema-2 extension. A bounded dictionary cache resolves batches while a temporary
 integer staging table allows PostgreSQL to group memberships on disk.
 
-House numbers, building/subbuilding names, address detail pages, household exploration,
-place autocomplete, fuzzy matching and cross-edition entity linkage are later work.
+House/building/subbuilding search filters, place autocomplete, fuzzy matching and
+cross-edition entity linkage are later work.
+[Address detail views](address-exploration.md) use existing postcode indexes and compare
+complete recorded premises, including house and flat distinctions.
 A matching street/location tuple does not establish a shared household or identity.
 
 See the [complete-edition measurements](research/address-index.md) for the retained

@@ -394,3 +394,209 @@ test("address-only searches preserve fields, paging, bookmarks and edition cover
     ),
   ).toBe(true);
 });
+
+test("record links and exact-address exploration work with the real invented catalogue", async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async (text) => {
+          window.copiedRecordLink = text;
+        },
+      },
+    }),
+  );
+  await page.goto(
+    "/?view=record&record_dataset=synthetic-demo&record_id=1&record_source=invented%3A0",
+  );
+  await expect(page.locator("#details")).toBeVisible();
+  await expect(page.locator("#record-title")).toContainText(
+    "Person 000 Example",
+  );
+  await expect(page.locator("#explore-address")).toBeEnabled();
+  await page
+    .getByRole("button", { name: "Copy record link", exact: true })
+    .click();
+  const copied = new URL(await page.evaluate(() => window.copiedRecordLink));
+  expect(copied.searchParams.get("record_source")).toBe("invented:0");
+  expect(copied.searchParams.has("surname")).toBe(false);
+
+  await page
+    .getByRole("button", { name: "Explore this address", exact: true })
+    .click();
+  await expect(page.locator("#address-details")).toBeVisible();
+  await expect(page.locator("#address-items article")).toHaveCount(1);
+  await expect(page.locator("#address-heading")).toContainText(
+    "1 Invented Street",
+  );
+  await expect(page.locator("#address-items")).toContainText(
+    "Selected source record",
+  );
+  await page.locator("#address-scope").selectOption("all");
+  await expect(page.locator("#address-items article")).toHaveCount(1);
+  await expect(page).toHaveURL(/address_scope=all/);
+  await page.reload();
+  await expect(page.locator("#address-details")).toBeVisible();
+  await expect(page.locator("#address-scope")).toHaveValue("all");
+  await expect(page.locator("#address-items article")).toHaveCount(1);
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export address page" }).click();
+  const download = await downloadPromise;
+  const stream = await download.createReadStream();
+  let body = "";
+  for await (const chunk of stream) body += chunk;
+  const items = body.trim().split("\n").map(JSON.parse);
+  expect(items).toHaveLength(1);
+  expect(items[0].source_id).toBe("invented:0");
+  await page
+    .getByRole("button", { name: "View source record", exact: true })
+    .click();
+  await expect(page.locator("#details")).toBeVisible();
+  await expect(page.locator("#record-title")).toContainText(
+    "Person 000 Example",
+  );
+  await expect(page.locator("#back-address")).toBeVisible();
+  await page.getByRole("button", { name: "Back to address listings" }).click();
+  await expect(page.locator("#address-details")).toBeVisible();
+  await page.goBack();
+  await expect(page.locator("#details")).toBeVisible();
+  await page.goBack();
+  await expect(page.locator("#address-details")).toBeVisible();
+  await page
+    .getByRole("button", { name: "Close address", exact: true })
+    .click();
+  await expect(page.locator("#address-details")).not.toBeVisible();
+  expect(new URL(page.url()).searchParams.has("view")).toBe(false);
+});
+
+test("address pages preserve scope, pagination, reload and raw record exports", async ({
+  page,
+}) => {
+  const anchor = {
+    dataset: "synthetic-demo",
+    id: 1,
+    source_id: "anchor",
+    record: {
+      surname: "Example",
+      firstName: "June",
+      houseno: "12",
+      subbuilding: "Flat 1",
+      street: "Invented Street",
+      postcode: "ZZ1 1ZZ",
+    },
+  };
+  await page.route("**/api/record?*", (route) => {
+    const params = new URL(route.request().url()).searchParams;
+    if (params.get("format") === "jsonl")
+      return route.fulfill({
+        contentType: "application/x-ndjson",
+        body: '{"dataset":"synthetic-demo","id":1,"source_id":"anchor","record":{"raw_integer":9007199254740993}}\n',
+      });
+    return route.fulfill({ json: { item: anchor, address_available: true } });
+  });
+  await page.route("**/api/address?*", (route) => {
+    const params = new URL(route.request().url()).searchParams;
+    const second = params.has("cursor");
+    expect(params.get("source_id")).toBe("anchor");
+    return route.fulfill({
+      json: {
+        anchor,
+        scope: params.get("scope"),
+        items: [
+          {
+            ...anchor,
+            source_id: second ? "second" : "anchor",
+            record: { ...anchor.record, firstName: second ? "Second" : "June" },
+          },
+        ],
+        next_cursor: second ? "" : "page-two",
+        notice:
+          "Same recorded premises; relationships and continuous residence are not inferred.",
+      },
+    });
+  });
+  await page.goto(
+    "/?view=record&record_dataset=synthetic-demo&record_id=1&record_source=anchor",
+  );
+  await expect(page.locator("#details")).toBeVisible();
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export original record" }).click();
+  const download = await downloadPromise;
+  let body = "";
+  for await (const chunk of await download.createReadStream()) body += chunk;
+  expect(body).toContain("9007199254740993");
+  await page.getByRole("button", { name: "Explore this address" }).click();
+  await expect(page.locator("#address-items")).toContainText("June");
+  await page.getByRole("button", { name: "Next address page" }).click();
+  await expect(page.locator("#address-items")).toContainText("Second");
+  await expect(page).toHaveURL(/address_cursor=page-two/);
+  await page.getByRole("button", { name: "Previous address page" }).click();
+  await expect(page.locator("#address-items")).toContainText("June");
+  await page.locator("#address-scope").selectOption("all");
+  await expect(page).toHaveURL(/address_scope=all/);
+  await page.getByRole("button", { name: "Next address page" }).click();
+  await page.reload();
+  await expect(page.locator("#address-items")).toContainText("Second");
+  await expect(page.locator("#address-scope")).toHaveValue("all");
+  await page.getByRole("button", { name: "First page", exact: true }).click();
+  await expect(page.locator("#address-items")).toContainText("June");
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+});
+
+test("saved links from another installation open locally without external navigation", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page
+    .getByRole("button", { name: "Open saved link", exact: true })
+    .click();
+  await page
+    .getByLabel("Saved link", { exact: true })
+    .fill(
+      "https://other-installation.invalid/archive?view=record&record_dataset=synthetic-demo&record_id=1&record_source=invented%3A0",
+    );
+  await page.getByRole("button", { name: "Open link", exact: true }).click();
+  await expect(page.locator("#details")).toBeVisible();
+  await expect(page.locator("#record-title")).toContainText(
+    "Person 000 Example",
+  );
+  expect(new URL(page.url()).hostname).toBe("127.0.0.1");
+  await page
+    .getByRole("button", { name: "Close details", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Open saved link", exact: true })
+    .click();
+  await page
+    .getByLabel("Saved link", { exact: true })
+    .fill("https://other-installation.invalid/ordinary-page");
+  await page.getByRole("button", { name: "Open link", exact: true }).click();
+  await expect(page.locator("#saved-link-status")).toContainText(
+    "Paste a record or address link",
+  );
+});
+
+test("record links reject changed identities and explain unavailable premises", async ({
+  page,
+}) => {
+  await page.goto(
+    "/?view=record&record_dataset=synthetic-demo&record_id=1&record_source=changed",
+  );
+  await expect(page.locator("#status")).toContainText("same source entry");
+  await expect(page.locator("#details")).not.toBeVisible();
+  await page.goto(
+    "/?view=record&record_dataset=synthetic-demo&record_id=126&record_source=invented%3Abusiness",
+  );
+  await expect(page.locator("#details")).toBeVisible();
+  await expect(page.locator("#explore-address")).toBeDisabled();
+  await expect(page.locator("#record-address-note")).toContainText(
+    "house number or building name",
+  );
+});

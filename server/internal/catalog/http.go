@@ -61,6 +61,8 @@ func (a *API) Handler() http.Handler {
 	mux.HandleFunc("GET /api/datasets", a.datasets)
 	mux.HandleFunc("GET /api/geography", a.geography)
 	mux.HandleFunc("GET /api/addresses", a.addresses)
+	mux.HandleFunc("GET /api/record", a.record)
+	mux.HandleFunc("GET /api/address", a.address)
 	mux.HandleFunc("GET /api/search", a.search)
 	mux.HandleFunc("GET /api/export", func(w http.ResponseWriter, r *http.Request) { a.searchPage(w, r, true) })
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

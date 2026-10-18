@@ -9,8 +9,9 @@ Exact and prefix name searches, postcode district/sector searches, optional near
 and [street/locality/town/county searches](address-search.md), all-edition searches,
 keyset pagination, readable record details, page-local identical-listing grouping,
 source comparison, copyable citations and current-page JSONL/CSV exports are implemented.
-Catalogue-wide deduplication, alphabetical sorting, contains/fuzzy matching, stable direct
-record permalinks, background bulk exports, resumable ingestion, automatic database
+[Direct record links and exact-address exploration](address-exploration.md) add co-listed
+people/businesses, edition-scope comparison, saved-link opening and page exports.
+Catalogue-wide deduplication, alphabetical sorting, contains/fuzzy matching, background bulk exports, resumable ingestion, automatic database
 upgrades and signed installers are not yet implemented.
 
 ## Requirements and edition scope
