@@ -115,4 +115,6 @@ jobs:
           else
             gh release create "$RELEASE_TAG" --draft --prerelease --title "UK-Info Archive ${RELEASE_TAG#desktop-v} (preview)" --notes-file docs/desktop-release-notes.md
           fi
-          find release-assets -type f -exec gh release upload "$RELEASE_TAG" '{}' --clobber \;
+          while IFS= read -r -d '' asset; do
+            gh release upload "$RELEASE_TAG" "$asset" --clobber
+          done < <(find release-assets -type f -print0)
