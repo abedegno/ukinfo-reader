@@ -113,14 +113,24 @@ A matching street/location tuple does not establish a shared household or identi
 See the [complete-edition measurements](research/address-index.md) for the retained
 layout, storage, query experiments and benchmark limits.
 
-## Selective names with address filters
+## Adaptive address queries
 
-For name/business-name searches with at most 128 source candidates across the selected
-editions, the API checks addresses directly from the lossless record blocks using the
-same displayed-field projection as the address index. This avoids expanding an entire
-town's address postings for a small set of names, especially on HDD storage.
+The API probes both sides of a combined address search before expanding large postings:
 
-The API first probes for 129 candidates. If that extra candidate exists, it retains
-the indexed address intersection; 128 is a plan-selection threshold, not a result cap.
-Address-index readiness, prefix/exact matching, grouping, ordering and cursor pagination
-retain their existing rules. No new index, source re-import or timeout increase is needed.
+- A complete address candidate set of at most 1,024 occurrences can be used directly.
+- With an independent name, postcode, nearby or classification anchor, up to 4,096
+  source candidates can be checked against preserved address fields if they occupy at
+  most 128 source blocks. This accommodates many adjacent postcode entries efficiently.
+- If either probe overflows its budget, the complete indexed intersection remains
+  available. These are execution-plan budgets, never caps on matching results.
+
+The direct source path uses the same displayed address projection as indexing, and
+applies house/building/flat and given-name refinements before SQL grouping/pagination.
+It loads at most 100 source records at a time. A request-local cache reuses decoded
+blocks (at most 4 MiB / 128 blocks) and the candidate plan across refinement batches;
+no Go record cache is shared between visitors or retained after the request.
+
+Address-index readiness, prefix/exact matching, grouping, ordering and cursor rules
+remain unchanged. No new index, re-import or timeout increase is required. National
+address sorting and broad listing grouping can still exceed deadlines; see the
+[query-planning review](research/query-planning-2026-10-19.md).

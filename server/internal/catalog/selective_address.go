@@ -4,68 +4,119 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 )
 
-// This is a plan-selection threshold, never a limit on matching results. If the
-// complete name candidate set exceeds it, retain the indexed address join.
-const selectiveAddressLimit = 128
+// Budgets select an access path; an overflow always retains the complete SQL
+// intersection. Many adjacent occurrences can share one compressed source block.
+const selectiveAddressLimit = 4096
+const selectiveAddressBlocks = 128
+const selectivePostingsLimit = 1024
 
-// matchSelectiveAddresses avoids expanding a whole town's address postings for
-// a handful of name matches. Use the same displayed-field projection as the
-// address index, then let SQL perform ordering, grouping and cursor pagination.
 func (a *API) matchSelectiveAddresses(ctx context.Context, f *candidateFilters) error {
 	q := f.q
-	if f.missing || !q.hasAddress() || (q.Surname == "" && q.Organisation == "") {
+	if f.missing || !q.hasAddress() {
 		return nil
 	}
-	sql := "SELECT dataset_id,id FROM entries WHERE " + strings.Join(f.conditions, " AND ") + fmt.Sprintf(" LIMIT %d", selectiveAddressLimit+1)
-	if len(f.termCTEs) != 0 {
-		sql = "WITH " + strings.Join(f.termCTEs, ", ") + " " + sql
-	}
-	rows, err := a.DB.Query(ctx, sql, f.args...)
+	// First try the compact address side. LIMIT bounds the probe, never the result:
+	// only a completely exhausted probe may replace the address intersection.
+	args := []any{f.datasetIDs}
+	predicate := addressPredicate(q, &args)
+	sql := fmt.Sprintf("SELECT m.dataset_id,candidate FROM address_locations l JOIN address_members m ON m.location_id=l.id CROSS JOIN LATERAL unnest(m.ids) candidate WHERE m.dataset_id=ANY($1::smallint[]) AND %s LIMIT %d", predicate, selectivePostingsLimit+1)
+	candidates, count, err := a.addressPlanCandidates(ctx, sql, args)
 	if err != nil {
 		return err
 	}
+	if count <= selectivePostingsLimit {
+		f.useAddressCandidates(candidates)
+		if !q.hasRefinements() || f.missing {
+			return nil
+		}
+	}
+	// A source-side probe is useful only with an independent indexed anchor.
+	if !f.addressMatched && q.Surname == "" && q.Organisation == "" && q.Postcode == "" && q.Near == "" && !q.hasBusinessFilters() {
+		return nil
+	}
+	sql = "SELECT dataset_id,id FROM entries WHERE " + strings.Join(f.conditions, " AND ") + fmt.Sprintf(" LIMIT %d", selectiveAddressLimit+1)
+	if len(f.termCTEs) > 0 {
+		sql = "WITH " + strings.Join(f.termCTEs, ",") + " " + sql
+	}
+	candidates, count, err = a.addressPlanCandidates(ctx, sql, f.args)
+	if err != nil || count > selectiveAddressLimit {
+		return err
+	}
+	blocks := map[recordBlockKey]bool{}
+	for dataset, ids := range candidates {
+		for _, id := range ids {
+			blocks[recordBlockKey{dataset, (id - 1) / blockRows}] = true
+		}
+	}
+	if len(blocks) > selectiveAddressBlocks {
+		return nil
+	}
+	matched := map[int16][]int32{}
+	for _, dataset := range f.datasetIDs {
+		ids := candidates[dataset]
+		sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+		// Keep record allocations bounded even for the maximum 64-KiB source row.
+		for start := 0; start < len(ids); start += 100 {
+			records, err := a.loadRecords(ctx, dataset, ids[start:min(start+100, len(ids))])
+			if err != nil {
+				return err
+			}
+			for _, record := range records {
+				var source addressSource
+				if err = json.Unmarshal(record.Record, &source); err != nil {
+					return err
+				}
+				location, err := source.project()
+				if err != nil {
+					return err
+				}
+				if location.matches(q) {
+					accepted := true
+					if q.hasRefinements() {
+						accepted, err = q.accepts(record.Record)
+						if err != nil {
+							return err
+						}
+					}
+					if accepted {
+						matched[dataset] = append(matched[dataset], int32(record.ID))
+					}
+				}
+			}
+		}
+	}
+	f.useAddressCandidates(matched)
+	return nil
+}
+
+func (a *API) addressPlanCandidates(ctx context.Context, sql string, args []any) (map[int16][]int32, int, error) {
+	rows, err := a.DB.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
 	candidates := map[int16][]int32{}
 	count := 0
 	for rows.Next() {
 		var dataset int16
 		var id int32
 		if err = rows.Scan(&dataset, &id); err != nil {
-			break
+			return nil, 0, err
 		}
 		candidates[dataset] = append(candidates[dataset], id)
 		count++
 	}
-	if err == nil {
-		err = rows.Err()
-	}
-	rows.Close()
-	if err != nil || count > selectiveAddressLimit {
-		return err
-	}
+	return candidates, count, rows.Err()
+}
+
+func (f *candidateFilters) useAddressCandidates(candidates map[int16][]int32) {
 	conditions := []string{}
 	for _, dataset := range f.datasetIDs {
-		records, err := a.loadRecords(ctx, dataset, candidates[dataset])
-		if err != nil {
-			return err
-		}
-		ids := []int32{}
-		for _, record := range records {
-			var source addressSource
-			if err = json.Unmarshal(record.Record, &source); err != nil {
-				return err
-			}
-			location, err := source.project()
-			if err != nil {
-				return err
-			}
-			if location.matches(q) {
-				ids = append(ids, int32(record.ID))
-			}
-		}
-		if len(ids) != 0 {
+		if ids := candidates[dataset]; len(ids) > 0 {
 			f.args = append(f.args, dataset, ids)
 			conditions = append(conditions, fmt.Sprintf("(dataset_id=$%d AND id=ANY($%d::integer[]))", len(f.args)-1, len(f.args)))
 		}
@@ -76,7 +127,6 @@ func (a *API) matchSelectiveAddresses(ctx context.Context, f *candidateFilters) 
 	} else {
 		f.conditions = append(f.conditions, "("+strings.Join(conditions, " OR ")+")")
 	}
-	return nil
 }
 
 func (l addressLocation) matches(q query) bool {

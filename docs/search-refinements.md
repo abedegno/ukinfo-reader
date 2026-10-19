@@ -106,3 +106,12 @@ already did. Since the exact postcode is constant, this retains the same occurre
 order and avoids a poor name-order plan for selective postcode/given-name combinations.
 
 [Validation and representative measurements](research/search-refinements.md).
+
+## Execution
+
+Small first-name vocabulary expansions apply the existing given-name/middle-initial
+rules before fetching source blocks. Broad expansions retain the complete SQL path
+and authoritative source-field checks; the vocabulary threshold never truncates the
+search. Refinement batches reuse their request's candidate plan and bounded decoded
+block cache. Selective address searches can also apply premises refinements before
+ordering and grouping. Large sparse searches still run within the shared request deadline.

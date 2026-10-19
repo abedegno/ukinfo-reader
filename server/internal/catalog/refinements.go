@@ -28,6 +28,20 @@ func textMatches(value, filter string) bool {
 	return value == filter
 }
 
+func (q query) acceptsGivenName(first string) bool {
+	first = Normalize(first)
+	if q.First != "" && q.FirstMatch == "given" && !strings.HasSuffix(q.First, "*") && first != q.First && !strings.HasPrefix(first, q.First+" ") {
+		return false
+	}
+	if q.Middle != "" {
+		parts := strings.Fields(strings.ReplaceAll(first, ".", " "))
+		if len(parts) < 2 || !strings.HasPrefix(parts[1], q.Middle) {
+			return false
+		}
+	}
+	return true
+}
+
 // Refine only displayed fields: raw references and hidden postcode precision are
 // never used to supply missing house/building/flat or name information.
 func (q query) accepts(raw json.RawMessage) (bool, error) {
@@ -60,17 +74,7 @@ func (q query) accepts(raw json.RawMessage) (bool, error) {
 			return false, nil
 		}
 	}
-	first := Normalize(Text(row, "firstName"))
-	if q.First != "" && q.FirstMatch == "given" && !strings.HasSuffix(q.First, "*") && first != q.First && !strings.HasPrefix(first, q.First+" ") {
-		return false, nil
-	}
-	if q.Middle != "" {
-		parts := strings.Fields(strings.ReplaceAll(first, ".", " "))
-		if len(parts) < 2 || !strings.HasPrefix(parts[1], q.Middle) {
-			return false, nil
-		}
-	}
-	return true, nil
+	return q.acceptsGivenName(Text(row, "firstName")), nil
 }
 
 // Search complete candidate pages until the requested filtered page plus lookahead

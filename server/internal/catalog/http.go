@@ -83,7 +83,7 @@ func (a *API) Handler() http.Handler {
 			fail(w, 503, "Search capacity reached; retry shortly")
 			return
 		}
-		mux.ServeHTTP(w, r)
+		mux.ServeHTTP(w, r.WithContext(withRecordCache(r.Context())))
 	}))
 }
 func (a *API) datasets(w http.ResponseWriter, r *http.Request) {
@@ -397,6 +397,20 @@ type candidateFilters struct {
 }
 
 func (a *API) candidateFilters(ctx context.Context, q query) (candidateFilters, int, error) {
+	cache := recordCache(ctx)
+	key := q.fingerprint()
+	if f, ok := cache.getPlan(key); ok {
+		f.q.Cursor, f.q.Limit = q.Cursor, q.Limit
+		return f, 200, nil
+	}
+	f, status, err := a.buildCandidateFilters(ctx, q)
+	if err == nil {
+		cache.putPlan(key, f)
+	}
+	return f, status, err
+}
+
+func (a *API) buildCandidateFilters(ctx context.Context, q query) (candidateFilters, int, error) {
 	var err error
 	datasetKeys := map[int16]string{}
 	datasetIDs := []int16{}
@@ -509,13 +523,13 @@ func (a *API) candidateFilters(ctx context.Context, q query) (candidateFilters, 
 		}
 		prefix := (!filter.postcode && (matching == "prefix" || matching == "given" || strings.HasSuffix(filter.key, "*"))) || (filter.postcode && q.PostcodeLength > 0)
 		ids := []int32{}
-		sql := "SELECT id FROM terms WHERE key=$1"
+		sql := "SELECT id,key FROM terms WHERE key=$1"
 		termArgs := []any{key}
 		if prefix {
-			sql = "SELECT id FROM terms WHERE key >= $1 AND key < $2 ORDER BY key LIMIT 8193"
+			sql = "SELECT id,key FROM terms WHERE key >= $1 AND key < $2 ORDER BY key LIMIT 8193"
 			termArgs = append(termArgs, key+"\U0010ffff")
 			if filter.postcode {
-				sql = "SELECT id FROM terms WHERE key >= $1 AND key < $2 AND (length(key)=$3 OR key=$1) ORDER BY key LIMIT 8193"
+				sql = "SELECT id,key FROM terms WHERE key >= $1 AND key < $2 AND (length(key)=$3 OR key=$1) ORDER BY key LIMIT 8193"
 				termArgs = append(termArgs, q.PostcodeLength)
 			}
 		}
@@ -523,10 +537,16 @@ func (a *API) candidateFilters(ctx context.Context, q query) (candidateFilters, 
 		if e != nil {
 			return candidateFilters{}, 503, errors.New("Search vocabulary unavailable")
 		}
+		observed := 0
 		for rows.Next() {
 			var id int32
-			if err = rows.Scan(&id); err != nil {
+			var term string
+			if err = rows.Scan(&id, &term); err != nil {
 				break
+			}
+			observed++
+			if filter.column == "first_id" && !q.acceptsGivenName(term) {
+				continue
 			}
 			ids = append(ids, id)
 		}
@@ -537,7 +557,7 @@ func (a *API) candidateFilters(ctx context.Context, q query) (candidateFilters, 
 		if err != nil {
 			return candidateFilters{}, 503, errors.New("Search vocabulary unavailable")
 		}
-		if len(ids) > 8192 {
+		if observed > 8192 {
 			// Small expansions use bound integer arrays. Broad expansions stay in
 			// PostgreSQL and are shared by all edition branches, without truncation.
 			args = append(args, key, key+"\U0010ffff")
@@ -783,49 +803,62 @@ func (a *API) loadRecords(ctx context.Context, dataset int16, ids []int32) ([]re
 	}
 	groups := map[int32][]int32{}
 	blockIDs := []int32{}
+	cache := recordCache(ctx)
+	found := make(map[int32]storedRecord, len(ids))
 	for _, id := range ids {
 		block := (id - 1) / blockRows
+		if raw := cache.get(recordBlockKey{dataset, block}); raw != nil {
+			record, err := recordAt(raw, int((id-1)%blockRows))
+			if err != nil {
+				return nil, err
+			}
+			found[id] = record
+			continue
+		}
 		if _, ok := groups[block]; !ok {
 			blockIDs = append(blockIDs, block)
 		}
 		groups[block] = append(groups[block], id)
 	}
-	rows, e := a.DB.Query(ctx, "SELECT id,payload FROM record_blocks WHERE dataset_id=$1 AND id=ANY($2::integer[])", dataset, blockIDs)
-	if e != nil {
-		return nil, e
-	}
-	defer rows.Close()
-	found := make(map[int32]storedRecord, len(ids))
-	for rows.Next() {
-		if e = ctx.Err(); e != nil {
+	if len(blockIDs) > 0 {
+		rows, e := a.DB.Query(ctx, "SELECT id,payload FROM record_blocks WHERE dataset_id=$1 AND id=ANY($2::integer[])", dataset, blockIDs)
+		if e != nil {
 			return nil, e
 		}
-		var block int32
-		var compressed []byte
-		if e = rows.Scan(&block, &compressed); e != nil {
-			return nil, e
-		}
-		raw, err := unpackBlock(a.decoder, compressed)
-		if err != nil {
-			return nil, err
-		}
-		for _, id := range groups[block] {
-			r, err := recordAt(raw, int((id-1)%blockRows))
+		defer rows.Close()
+		for rows.Next() {
+			if e = ctx.Err(); e != nil {
+				return nil, e
+			}
+			var block int32
+			var compressed []byte
+			if e = rows.Scan(&block, &compressed); e != nil {
+				return nil, e
+			}
+			raw, err := unpackBlock(a.decoder, compressed)
 			if err != nil {
 				return nil, err
 			}
-			found[id] = r
+			cache.put(recordBlockKey{dataset, block}, raw)
+			for _, id := range groups[block] {
+				r, err := recordAt(raw, int((id-1)%blockRows))
+				if err != nil {
+					return nil, err
+				}
+				found[id] = r
+			}
 		}
-	}
-	if e = rows.Err(); e != nil {
-		return nil, e
+		if e = rows.Err(); e != nil {
+			return nil, e
+		}
+		rows.Close()
 	}
 	var manifest Manifest
 	var rawManifest []byte
-	if e = a.DB.QueryRow(ctx, "SELECT manifest FROM datasets WHERE id=$1", dataset).Scan(&rawManifest); e != nil {
+	if e := a.DB.QueryRow(ctx, "SELECT manifest FROM datasets WHERE id=$1", dataset).Scan(&rawManifest); e != nil {
 		return nil, e
 	}
-	if e = json.Unmarshal(rawManifest, &manifest); e != nil {
+	if e := json.Unmarshal(rawManifest, &manifest); e != nil {
 		return nil, e
 	}
 	archive := archiveIdentity(manifest)

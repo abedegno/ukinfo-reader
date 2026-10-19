@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Extend adaptive address searches to postcode/nearby/classification anchors, compact
+  address candidate sets and source-block budgets rather than a 128-entry cutoff.
+- Reuse decoded source blocks and candidate plans within a bounded HTTP request;
+  filter small given-name vocabularies before loading records and apply selective
+  premises refinements before SQL ordering/grouping.
+
 - Avoid whole-town address expansion for selective name/business searches by checking
   the complete small candidate set against preserved address fields. Retain full
   indexed searches above the threshold, with unchanged grouping and pagination.
