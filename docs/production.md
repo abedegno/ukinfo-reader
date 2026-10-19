@@ -34,6 +34,7 @@ production() {
   docker compose --env-file private/production.env -p ukinfo-production \
     -f deploy/compose.production.yaml "$@"
 }
+production config --quiet
 production build api
 production up -d db
 production run --rm admin migrate
@@ -109,7 +110,11 @@ failure domain; a second directory on the same NAS is not an off-device backup.
 Protect backups as carefully as the live database.
 
 A checksum and table-of-contents check do not establish recoverability. Rehearse
-on a **new, explicitly named database**, keeping the serving database intact:
+on a **separate PostgreSQL instance and data directory**, keeping the serving
+instance intact. A second database in the serving instance shares its buffers, CPU
+and autovacuum workers; it can disrupt live searches even with no table locks.
+Cap rehearsal resources and give its disk I/O lower priority where supported.
+Create a new, explicitly named destination database in that separate instance:
 
 1. Check free space for a complete second catalogue plus restore/WAL headroom.
 2. Verify the archive with `sha256sum -c FILE.dump.sha256` inside the DB container.

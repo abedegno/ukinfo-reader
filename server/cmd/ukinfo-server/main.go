@@ -317,7 +317,11 @@ func run() error {
 		go func() { <-ctx.Done(); _ = metricsServer.Close() }()
 	}
 	mux.Handle("/api/", api.Handler())
-	mux.Handle("/", http.FileServer(http.FS(ui)))
+	web, e := webHandler(ui)
+	if e != nil {
+		return fmt.Errorf("embedded web assets: %w", e)
+	}
+	mux.Handle("/", web)
 	var handler http.Handler = mux
 	if *publicLimits {
 		handler = limits.Wrap(handler)
