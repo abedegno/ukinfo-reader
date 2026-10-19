@@ -24,6 +24,7 @@ import (
 
 	"github.com/abedegno/ukinfo-reader/server/internal/catalog"
 	"github.com/abedegno/ukinfo-reader/server/internal/desktop"
+	"github.com/abedegno/ukinfo-reader/server/internal/publichttp"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -46,6 +47,8 @@ func run() error {
 	listen := flags.String("listen", "127.0.0.1:8080", "HTTP listen address; :0 selects an available port")
 	metricsListen := flags.String("metrics-listen", "", "optional private loopback metrics listener (127.0.0.1:9091)")
 	origin := flags.String("public-origin", "", "public origin behind a TLS reverse proxy (https://example.org)")
+	publicLimits := flags.Bool("public-limits", false, "bound anonymous API rates, exports and concurrent work")
+	trustedProxy := flags.String("trusted-proxy", "", "public-limits: comma-separated socket peer CIDRs trusted for CF-Connecting-IP; never trust arbitrary forwarded headers")
 	data := flags.String("data-dir", "", "desktop: app-managed data directory")
 	binaries := flags.String("pg-bin", "", "desktop: directory containing PostgreSQL 18 initdb and postgres")
 	desktopControl := flags.Bool("desktop-control", false, "enable capability-protected desktop ingestion on a separate loopback port")
@@ -59,6 +62,13 @@ func run() error {
 	parent := flags.Bool("parent-stdin", false, "desktop: shut down when parent closes stdin")
 	if err := flags.Parse(os.Args[1:]); err != nil {
 		return err
+	}
+	limits, err := publichttp.New(*trustedProxy)
+	if err != nil {
+		return err
+	}
+	if *trustedProxy != "" && !*publicLimits {
+		return errors.New("trusted-proxy requires public-limits")
 	}
 	if command != "serve" && command != "migrate" && command != "import" && command != "verify" && command != "repack-v1" && command != "stats" && command != "import-onspd" && command != "index-addresses" && command != "lock-archive" && command != "index-research" {
 		return fmt.Errorf("command must be serve, migrate, import, verify, stats, repack-v1, import-onspd index-addresses or index-research")
@@ -295,13 +305,23 @@ func run() error {
 		if e != nil {
 			return e
 		}
-		metricsServer := &http.Server{Handler: api.Metrics(), ReadHeaderTimeout: 5 * time.Second, WriteTimeout: 5 * time.Second, IdleTimeout: 30 * time.Second, MaxHeaderBytes: 16384}
+		metricsHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			api.Metrics().ServeHTTP(w, r)
+			if *publicLimits && r.URL.Path == "/metrics" && r.Method == "GET" {
+				limits.WriteMetrics(w)
+			}
+		})
+		metricsServer := &http.Server{Handler: metricsHandler, ReadHeaderTimeout: 5 * time.Second, WriteTimeout: 5 * time.Second, IdleTimeout: 30 * time.Second, MaxHeaderBytes: 16384}
 		defer metricsServer.Close()
 		go func() { _ = metricsServer.Serve(metricsListener) }()
 		go func() { <-ctx.Done(); _ = metricsServer.Close() }()
 	}
 	mux.Handle("/api/", api.Handler())
 	mux.Handle("/", http.FileServer(http.FS(ui)))
+	var handler http.Handler = mux
+	if *publicLimits {
+		handler = limits.Wrap(handler)
+	}
 	secure := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Reject cross-origin requests and DNS rebinding against the local server.
 		if r.Host != strings.TrimPrefix(strings.TrimPrefix(allowedOrigin, "https://"), "http://") {
@@ -315,7 +335,12 @@ func run() error {
 		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: "+tileOrigin+"; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Referrer-Policy", "no-referrer")
-		mux.ServeHTTP(w, r)
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+		if strings.HasPrefix(allowedOrigin, "https://") {
+			w.Header().Set("Strict-Transport-Security", "max-age=31536000")
+		}
+		handler.ServeHTTP(w, r)
 	})
 	server := &http.Server{Handler: secure, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second, IdleTimeout: 30 * time.Second, MaxHeaderBytes: 16384}
 	go func() {

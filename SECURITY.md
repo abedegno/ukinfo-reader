@@ -41,3 +41,11 @@ See [Electron's security guidance](https://www.electronjs.org/docs/latest/tutori
 [PostgreSQL security](https://www.postgresql.org/support/security/),
 [Go vulnerability management](https://go.dev/doc/security/vuln/) and
 [desktop release gates](docs/desktop-releases.md).
+
+## Anonymous hosted services
+
+Use the [public hosting profile](docs/hosting.md#public-service-through-cloudflare-tunnel)
+for client quotas, bounded work and explicit trusted-proxy handling. Cloudflare WAF/DDoS
+protection complements application limits and database/container isolation. Never make
+an unrestricted origin available alongside the tunnel. A clean dependency scan and
+these controls are not a guarantee against every vulnerability or denial of service.

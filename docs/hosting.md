@@ -90,6 +90,47 @@ Use the [load tool](../tools/search-load/README.md)
 with private validated fixtures. Account signup, paid provisioning, public publication
 of directory records and final DNS configuration have not been performed.
 
+## Public service through Cloudflare Tunnel
+
+For an anonymous hosted service, `serve --public-limits` enables in-process quotas:
+
+- Two API requests/second per IPv4 address or IPv6 /64, burst ten.
+- Six page exports/minute per client, burst two; exports also consume API quota.
+- Eight API requests in flight globally, with at most two expensive searches,
+  exports, record/group/address/map requests per client. Startup metadata does not
+  share that smaller per-client concurrency cap.
+- At most 8,192 client buckets; expired buckets are reclaimed under pressure.
+  If the table is full of active buckets, new clients receive HTTP 429.
+- HTTP 429 with `Retry-After` on quota/capacity rejection; GET/HEAD only, query strings
+  capped at 8 KiB. Local loopback health checks retain independent admission.
+
+These limits are per process and reset on restart. Shared NATs share a quota;
+replicas multiply global capacity. Limits reduce abuse; they cannot prevent copying
+public search results or guarantee availability against distributed application attacks.
+
+With Cloudflare Tunnel, pin the connector's Docker address and pass only that peer,
+for example `--trusted-proxy 192.0.2.10/32`. The address is an illustration: use your
+actual private connector address. Only those socket peers may supply a single valid
+`CF-Connecting-IP`; malformed/missing headers are rejected. Untrusted forwarded headers
+and `X-Forwarded-For` never choose a bucket. Keep the Docker network dedicated to this
+API and its connector, and do not publish the API to the LAN/Internet. Without a
+trusted proxy, the socket address is used. `--trusted-proxy` requires `--public-limits`.
+
+Cloudflare Free provides managed WAF/DDoS protection and limited custom/rate rules.
+Check the zone's **existing** quota use and expression-field limits before assigning
+its single rate-limit slot. A rule protecting another service must not be overwritten.
+A separate NAS proxy is optional when application admission and client quotas are
+already enforced. Keep SQL timeouts, the SELECT-only role and container resource caps.
+
+HTTPS deployments also send HSTS for this hostname (no includeSubDomains/preload),
+frame protection and a restrictive Permissions-Policy, alongside CSP, nosniff and
+no-referrer. Private metrics add `ukinfo_public_denied_total`, `ukinfo_public_active`
+and `ukinfo_public_client_buckets`; no IPs, queries or identities are labels/logged.
+Do not expose the metrics or desktop control listeners through the tunnel.
+
+References: [Cloudflare rate-limit availability](https://developers.cloudflare.com/waf/rate-limiting-rules/),
+[Cloudflare client-IP headers](https://developers.cloudflare.com/fundamentals/reference/http-headers/).
+
 ## Edge quotas and private metrics
 
 A reviewable nginx example is in [deploy/nginx/ukinfo.conf](../deploy/nginx/ukinfo.conf).
