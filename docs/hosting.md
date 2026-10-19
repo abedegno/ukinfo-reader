@@ -5,19 +5,25 @@ The complete 2005 catalogue measured **11.79 GiB**; all four supported editions 
 measured **38.26 GiB** (189,064,266 source occurrences).
 The optional [ONSPD nearby-search reference](geography.md) adds about **840 MiB**
 for postcode coordinates and indexes, plus import/WAL headroom.
+The later [research-index measurements](research/review-validation.md) add **45.84 GiB**
+for complete grouping/archival lookup/business classification indexes. The combined
+local database, including the existing address/coordinate indexes and small development
+samples, measures **86.40 GiB**. The 38.26 GiB figure is the base catalogue. An 80 GB
+disk cannot hold the measured fully indexed installation; OS, WAL, temporary builds,
+growth and backups need additional space.
 The [local full-corpus measurements](research/compact-catalogue.md) tested the Go API and
 PostgreSQL together under a 2-CPU/1-GiB container cap. A CPU quota on an M4 Pro does not
 reproduce an inexpensive VPS's cores or disk performance. Benchmark the chosen host.
 
 ## Shortlist
 
-| Option                | Relevant allowance or base price                               | Fit                                                        |
-| --------------------- | -------------------------------------------------------------- | ---------------------------------------------------------- |
-| Oracle Always Free A1 | 2 OCPUs, 12 GB RAM, 200 GB combined boot/block storage         | Potential zero-cost self-hosted Go/PostgreSQL instance     |
-| Hetzner CX23, EU      | 2 vCPUs, 4 GB RAM, 40 GB NVMe; €5.49/month before VAT and IPv4 | Candidate for the complete 2005 edition                    |
-| Hetzner CX33, EU      | 4 vCPUs, 8 GB RAM, 80 GB NVMe; €8.49/month before VAT and IPv4 | Candidate for the measured complete four-edition catalogue |
-| Supabase Free         | 500 MB database quota                                          | Too small for the full catalogue                           |
-| Cloudflare Pages      | Free static requests and bandwidth                             | Frontend assets only; PostgreSQL and Go still need a host  |
+| Option                | Relevant allowance or base price                               | Fit                                                                 |
+| --------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Oracle Always Free A1 | 2 OCPUs, 12 GB RAM, 200 GB combined boot/block storage         | Potential zero-cost self-hosted Go/PostgreSQL instance              |
+| Hetzner CX23, EU      | 2 vCPUs, 4 GB RAM, 40 GB NVMe; €5.49/month before VAT and IPv4 | Candidate for the complete 2005 edition                             |
+| Hetzner CX33, EU      | 4 vCPUs, 8 GB RAM, 80 GB NVMe; €8.49/month before VAT and IPv4 | Base catalogue only; extra storage needed for full research indexes |
+| Supabase Free         | 500 MB database quota                                          | Too small for the full catalogue                                    |
+| Cloudflare Pages      | Free static requests and bandwidth                             | Frontend assets only; PostgreSQL and Go still need a host           |
 
 Oracle's current allowance is **2 OCPUs / 12 GB**, rather than the older 4 / 24 figures
 still repeated in tutorials. Free resources must be in the home region. A1 capacity
@@ -63,8 +69,12 @@ Use one VM with Go and PostgreSQL 18, plus a TLS reverse proxy. For a paid exper
 start with **4 GB RAM** and enough disk for the measured catalogue, OS, WAL, temporary
 index builds and recovery space. Treat the local 1 GiB benchmark cap as an experiment,
 not a production RAM recommendation. The 40 GB CX23 disk is smaller than the measured
-four-edition database even before OS space; the 80 GB CX33 is a more plausible
-multi-edition starting point. Before ordering, use
+four-edition base database even before OS space. The 80 GB CX33 can accommodate the
+base catalogue, but **cannot hold the current 86.40 GiB fully indexed database**.
+For all optional features, budget a larger disk or attached volume; 150–200 GiB is a
+planning allowance to verify against actual WAL/build/retention needs, not a measured
+minimum. Keep recoverable backups on separate storage. Additional volumes change the
+quoted base budget. Before ordering, use
 `ukinfo-server stats` on the actual combined catalogue. Leave at least 5 GiB available;
 more space is needed for a local restore alongside the live copy.
 

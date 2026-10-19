@@ -222,6 +222,99 @@ def main():
         break
     if nearby_report is None:
         raise AssertionError("No usable postcode centre for nearest-order validation")
+    business_reports = []
+    business_source = next((item for item in complete if item["key"].startswith("se2005-")), None)
+    if business_source:
+        business_anchors = []
+        for code in anchors:
+            page, _ = fetch(
+                "/api/search",
+                {
+                    "dataset": business_source["key"],
+                    "kind": "business",
+                    "postcode": code.split()[0],
+                    "limit": 100,
+                },
+            )
+            for item in page["items"]:
+                row = item["record"]
+                if (
+                    isinstance(row.get("industry"), str)
+                    and isinstance(row.get("sic_code"), str)
+                    and row["industry"]
+                    and row["sic_code"]
+                    and identity(row)
+                ):
+                    if row["postcode"] not in business_anchors:
+                        business_anchors.append(row["postcode"])
+                    break
+            if len(business_anchors) == 3:
+                break
+        if not business_anchors:
+            raise AssertionError("No resolved business classification anchor")
+        for number, code in enumerate(business_anchors):
+            # A district exercises real classification page boundaries; a single
+            # full postcode often contains only one business in each category.
+            query = {
+                "dataset": args.scope,
+                "kind": "business",
+                "postcode": code.split()[0],
+                "limit": 100,
+            }
+            reference, _, _ = walk("/api/search", query)
+            anchor = next(
+                item["record"]
+                for item in reference.values()
+                if isinstance(item["record"].get("industry"), str)
+                and isinstance(item["record"].get("sic_code"), str)
+                and item["record"]["industry"]
+                and item["record"]["sic_code"]
+            )
+            industry, sic = normalize(anchor["industry"]), normalize(anchor["sic_code"])
+            filters = [
+                {"industry": industry},
+                {"sic": sic},
+                {"industry": industry[:2] + "*"},
+                {"sic": sic[:2] + "*"},
+                {"industry": industry, "sic": sic},
+                {"industry": industry, "organisation": anchor["organisation"]},
+            ]
+            sizes, timings = [], []
+            for values in filters:
+                expected = set()
+                for ref, item in reference.items():
+                    for param, wanted in values.items():
+                        field = {"sic": "sic_code"}.get(param, param)
+                        raw_value = item["record"].get(field)
+                        value = normalize(raw_value) if isinstance(raw_value, str) else ""
+                        wanted = normalize(wanted)
+                        if not value or (
+                            not value.startswith(wanted[:-1])
+                            if wanted.endswith("*")
+                            else value != wanted
+                        ):
+                            break
+                    else:
+                        expected.add(ref)
+                actual, elapsed, _ = walk("/api/search", {**query, **values, "limit": 2})
+                if set(actual) != expected:
+                    raise AssertionError("Business filter traversal differs from source fields")
+                sizes.append(len(actual))
+                timings.extend(elapsed)
+            for values in (filters[2], filters[3], filters[-1]):
+                fetch("/api/search", {**query, **values, "limit": 50}, save=True)
+            business_reports.append(
+                {
+                    "case": number,
+                    "source_occurrences": len(reference),
+                    "filter_result_counts": sizes,
+                    "classification_pages_exercised": any(size > 2 for size in sizes),
+                    "page_ms": timings,
+                    "membership_exact": True,
+                }
+            )
+        if not any(item["classification_pages_exercised"] for item in business_reports):
+            raise AssertionError("Business validation did not exercise a real page boundary")
     if args.private_cases:
         args.private_cases.parent.mkdir(parents=True, exist_ok=True)
         args.private_cases.write_text(json.dumps(load_cases, indent=2) + "\n")
@@ -232,6 +325,7 @@ def main():
                 "method": "Exhaustive bounded occurrence queries, independently recomputed grouping tuples, exact source-set comparison for group/source/order traversals; no new source-file completeness proof. Query values and source records excluded.",
                 "cases": reports,
                 "nearby": nearby_report,
+                "business": business_reports,
                 "private_load_cases": len(load_cases),
             },
             indent=2,

@@ -23,6 +23,53 @@ const fs = require("node:fs/promises"),
     delete env.UKINFO_PG_BIN;
   }
   let app;
+  const legacyResearch =
+    JSON.stringify(
+      {
+        format: "ukinfo-research",
+        version: 1,
+        revision: 0,
+        lists: [
+          {
+            id: "backup-list",
+            name: "Invented backup research",
+            entries: [
+              {
+                id: "legacy-entry",
+                mode: "record",
+                scope: "edition",
+                ref: {
+                  dataset: "synthetic-demo",
+                  id: 1,
+                  source_id: "invented:0",
+                },
+                summary: {
+                  title: "Invented legacy entry",
+                  address: "Invented Street",
+                  postcode: "ZZ11ZZ",
+                  edition: "Invented edition",
+                  listing: "Invented",
+                  phone: "",
+                  citation: "Invented citation",
+                  warnings: "",
+                },
+                note: "Private invented note retained through upgrade and restore",
+                created: "2026-10-18T00:00:00.000Z",
+                updated: "2026-10-18T00:00:00.000Z",
+              },
+            ],
+          },
+        ],
+      },
+      null,
+      2,
+    ) + "\n";
+  await fs.mkdir(directory, { recursive: true, mode: 0o700 });
+  await fs.writeFile(
+    path.join(directory, "research-lists.json"),
+    legacyResearch,
+    { mode: 0o600 },
+  );
   async function launch() {
     app = await electron.launch({
       ...(process.env.UKINFO_TEST_APP
@@ -83,10 +130,13 @@ const fs = require("node:fs/promises"),
       .click();
     await window.evaluate(async () => {
       const next = await window.ukinfoDesktop.researchRead();
+      if (
+        next.version !== 2 ||
+        next.lists[0].entries[0].note !==
+          "Private invented note retained through upgrade and restore"
+      )
+        throw new Error("Legacy research was not preserved during upgrade");
       next.revision++;
-      next.lists = [
-        { id: "backup-list", name: "Invented backup research", entries: [] },
-      ];
       await window.ukinfoDesktop.researchWrite(next, next.revision - 1);
       const workspace = await window.ukinfoDesktop.workbenchRead();
       workspace.revision++;
@@ -106,6 +156,13 @@ const fs = require("node:fs/promises"),
     const before = await fs.readFile(
       path.join(directory, "research-lists.json"),
       "utf8",
+    );
+    assert.equal(
+      await fs.readFile(
+        path.join(directory, "research-lists.v1-backup.json"),
+        "utf8",
+      ),
+      legacyResearch,
     );
     await copy(window, "backup", [copies]);
     const backups = (await fs.readdir(copies)).filter((n) =>
@@ -136,6 +193,20 @@ const fs = require("node:fs/promises"),
       await fs.readFile(path.join(directory, "archive-location.json"), "utf8"),
     );
     assert.notEqual(location.directory, await fs.realpath(directory));
+    assert.equal(
+      await fs.readFile(
+        path.join(location.directory, "research-lists.v1-backup.json"),
+        "utf8",
+      ),
+      legacyResearch,
+    );
+    assert.equal(
+      await fs.readFile(
+        path.join(location.directory, "research-lists.json"),
+        "utf8",
+      ),
+      before,
+    );
     assert.equal(
       await fs.readFile(path.join(directory, "research-lists.json"), "utf8"),
       before,
@@ -171,7 +242,7 @@ const fs = require("node:fs/promises"),
       false,
     );
     console.log(
-      "Native cold backup, verified restore, preserved original and restored searches/research passed.",
+      "Native v1 research upgrade, compatibility copy, cold backup, verified restore, preserved original and restored searches/research passed.",
     );
   } finally {
     if (app) await app.close().catch(() => {});

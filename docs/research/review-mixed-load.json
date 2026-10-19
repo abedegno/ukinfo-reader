@@ -1,0 +1,301 @@
+{
+  "case_classes": {
+    "/api/export": 8,
+    "/api/search": 34
+  },
+  "cases": 42,
+  "closed_loop": {
+    "1": {
+      "requests": 744,
+      "errors": 0,
+      "median_ms": 10.269833,
+      "p95_ms": 27.031625,
+      "p99_ms": 38.036833,
+      "max_ms": 201.430042,
+      "wall_seconds": 10.010612333,
+      "requests_per_second": 74.32112794413213
+    },
+    "32": {
+      "requests": 1883,
+      "errors": 0,
+      "median_ms": 222.410083,
+      "p95_ms": 308.176042,
+      "p99_ms": 347.070625,
+      "max_ms": 391.446875,
+      "wall_seconds": 10.1902735,
+      "requests_per_second": 184.78404922105378
+    },
+    "8": {
+      "requests": 1800,
+      "errors": 0,
+      "median_ms": 35.477708,
+      "p95_ms": 94.23525,
+      "p99_ms": 112.011958,
+      "max_ms": 278.862917,
+      "wall_seconds": 10.054899125,
+      "requests_per_second": 179.0172111746571
+    }
+  },
+  "notes": [
+    "Every response body is hash-checked against previously validated private cases.",
+    "HTTP transfer and body hashing are timed; client JSON parsing is excluded.",
+    "Scheduled-arrival latency includes scheduling and queue delay.",
+    "This report alone does not establish production capacity; document corpus, hardware, quotas and warm/cold conditions separately."
+  ],
+  "request_timeout_seconds": 8,
+  "scheduled_arrivals": {
+    "load_generator_drops": 0,
+    "rate_per_second": 10,
+    "scheduled_requests": 300,
+    "stats": {
+      "requests": 300,
+      "errors": 0,
+      "median_ms": 13.299458,
+      "p95_ms": 29.022541,
+      "p99_ms": 35.772416,
+      "max_ms": 40.157833,
+      "wall_seconds": 29.928788916,
+      "requests_per_second": 10.023793506713508
+    }
+  },
+  "environment": {
+    "backend_cpu_limit": 2,
+    "backend_memory_bytes": 1073741824,
+    "backend": "Go API and PostgreSQL 18.6 in the same Docker cgroup; read-only database role",
+    "host": "Apple M4 Pro development machine",
+    "cache": "Warm repeated selected keys; no OS or PostgreSQL cache flush",
+    "client_proxy": "Host Go client and a 0.25-CPU/64-MiB loopback nginx proxy outside backend quota; no TLS or edge quotas in capacity run",
+    "request_deadline_seconds": 5,
+    "ordered_sql_budget_seconds": 4,
+    "full_source_occurrences": 189064266,
+    "complete_editions": 4,
+    "database_bytes": 92774807231,
+    "research_index_bytes": 49216307200
+  },
+  "resource_samples": [
+    {
+      "elapsed_seconds": 1.05,
+      "cpu": "26.07%",
+      "working_memory": "228.5MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 22
+    },
+    {
+      "elapsed_seconds": 3.1,
+      "cpu": "27.01%",
+      "working_memory": "228.9MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 22
+    },
+    {
+      "elapsed_seconds": 5.14,
+      "cpu": "73.20%",
+      "working_memory": "229.2MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 22
+    },
+    {
+      "elapsed_seconds": 7.18,
+      "cpu": "94.73%",
+      "working_memory": "229.5MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 22
+    },
+    {
+      "elapsed_seconds": 9.23,
+      "cpu": "92.30%",
+      "working_memory": "230.5MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 22
+    },
+    {
+      "elapsed_seconds": 11.28,
+      "cpu": "95.53%",
+      "working_memory": "230.1MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 22
+    },
+    {
+      "elapsed_seconds": 13.32,
+      "cpu": "96.51%",
+      "working_memory": "229.6MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 22
+    },
+    {
+      "elapsed_seconds": 15.37,
+      "cpu": "199.78%",
+      "working_memory": "261.3MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    },
+    {
+      "elapsed_seconds": 17.41,
+      "cpu": "199.16%",
+      "working_memory": "265.8MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    },
+    {
+      "elapsed_seconds": 19.47,
+      "cpu": "198.49%",
+      "working_memory": "266.5MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    },
+    {
+      "elapsed_seconds": 21.53,
+      "cpu": "198.14%",
+      "working_memory": "267.9MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    },
+    {
+      "elapsed_seconds": 23.59,
+      "cpu": "200.55%",
+      "working_memory": "269.9MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    },
+    {
+      "elapsed_seconds": 25.64,
+      "cpu": "199.02%",
+      "working_memory": "272.8MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    },
+    {
+      "elapsed_seconds": 27.71,
+      "cpu": "198.73%",
+      "working_memory": "272.2MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    },
+    {
+      "elapsed_seconds": 29.75,
+      "cpu": "198.18%",
+      "working_memory": "270.6MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    },
+    {
+      "elapsed_seconds": 31.81,
+      "cpu": "198.07%",
+      "working_memory": "270.9MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    },
+    {
+      "elapsed_seconds": 33.85,
+      "cpu": "160.42%",
+      "working_memory": "267.5MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    },
+    {
+      "elapsed_seconds": 35.91,
+      "cpu": "13.95%",
+      "working_memory": "265.3MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    },
+    {
+      "elapsed_seconds": 37.96,
+      "cpu": "19.04%",
+      "working_memory": "268.1MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    },
+    {
+      "elapsed_seconds": 40.0,
+      "cpu": "14.91%",
+      "working_memory": "268.8MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    },
+    {
+      "elapsed_seconds": 42.06,
+      "cpu": "19.93%",
+      "working_memory": "267.3MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    },
+    {
+      "elapsed_seconds": 44.11,
+      "cpu": "13.62%",
+      "working_memory": "267.4MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    },
+    {
+      "elapsed_seconds": 46.15,
+      "cpu": "21.46%",
+      "working_memory": "267.9MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    },
+    {
+      "elapsed_seconds": 48.2,
+      "cpu": "13.21%",
+      "working_memory": "267.5MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    },
+    {
+      "elapsed_seconds": 50.23,
+      "cpu": "17.92%",
+      "working_memory": "267MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    },
+    {
+      "elapsed_seconds": 52.27,
+      "cpu": "14.28%",
+      "working_memory": "267.6MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    },
+    {
+      "elapsed_seconds": 54.31,
+      "cpu": "19.69%",
+      "working_memory": "267.7MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    },
+    {
+      "elapsed_seconds": 56.35,
+      "cpu": "14.31%",
+      "working_memory": "267.4MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    },
+    {
+      "elapsed_seconds": 58.41,
+      "cpu": "20.53%",
+      "working_memory": "267.3MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    },
+    {
+      "elapsed_seconds": 60.45,
+      "cpu": "13.41%",
+      "working_memory": "268MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    },
+    {
+      "elapsed_seconds": 62.5,
+      "cpu": "18.61%",
+      "working_memory": "268.6MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    },
+    {
+      "elapsed_seconds": 64.55,
+      "cpu": "2.89%",
+      "working_memory": "267.1MiB / 1GiB",
+      "block_io": "897GB / 436GB",
+      "pids": 28
+    }
+  ]
+}

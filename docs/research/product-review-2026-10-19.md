@@ -8,6 +8,9 @@ implemented.** The previously authorised search-form redesign was completed, tes
 and saved before this review began. The local preview remains at
 <http://127.0.0.1:58318>. Releases remain unpublished drafts.
 
+> Implementation follow-up: [recommendation status and evidence](../review-implementation.md).
+> This report records the review boundary; its original feature-gap descriptions remain historical.
+
 ## Executive assessment
 
 The project has a credible preservation and search foundation. Four precisely identified

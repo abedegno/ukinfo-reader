@@ -23,11 +23,13 @@ ukinfo-server index-research --dataset se2005-pcf175-2005-06
 
 Reapply the read-role grants from [server setup](search-app.md) after migrating an
 existing catalogue: the new `research_keys` and `research_indexes` tables need SELECT.
-A small existing 10,000-entry source sample used **3,252,224 bytes** and built in
-**0.27 seconds** on the local development machine. This is a pilot, not a full-corpus
-capacity result. Linear extrapolation is approximately 62 GB for all 189 million
-occurrences, before WAL/build headroom and variation in business descriptions. Check
-free space before building. Source media are not needed for this pass.
+The four complete editions now have measured research indexes covering **189,064,266
+source entries**, including **6,152,296 businesses** in 2005. Together they add
+**45.84 GiB**, before WAL/build/recovery headroom. Individual local builds took
+6.1–21.4 minutes. See [per-edition measurements and validation limits](research/review-validation.md).
+The native builder was outside the database's two-CPU/one-GiB Docker cap; these are
+development-machine build times, not a VPS performance promise. Check free space
+before building. Source media are not needed for this pass.
 
 The build scans bounded compressed-block windows, writes a new edition partition and
 publishes its completion marker only after validating its row count. An import or
@@ -102,8 +104,20 @@ be opened. `research-lists.json` and its browser storage key keep their existing
 
 All cursors bind the submitted filters, ordering, geography release and selected
 catalogue generation. Change the criteria/catalogue and rerun from the first page.
+The small-backend [national-query probes](research/review-validation.md#wider-national-queries-remaining-performance-limits)
+still time out for common-name/broad-prefix grouping and national street alphabetical
+order. Narrow by location or edition, or use occurrence mode. The warm bounded-query
+load result does not establish fast national grouping.
+
 Search deadlines/admission still apply: expensive national sorts can require narrower
 criteria; they are not returned as an incomplete successful result.
+Ordered SQL has a four-second statement budget inside the API's five-second request
+budget. Name-anchored queries without address/geography constraints use bounded windows
+of 128 distinct name pairs before indexed source/group lookups; the page limit is at
+most 100, and cursor predicates apply before the lookahead. This bounds intermediate
+work without capping the search's total matching terms or entries. Other orders and
+address/geography constraints use the selective materialized candidate path. A timeout
+returns an explicit error; it never turns a partial scan into a successful final page.
 
 Business **Industry description** and **Source SIC code** match the resolved source
 strings, exactly or with one trailing `*` (at least two prefix characters). They can

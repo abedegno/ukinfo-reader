@@ -185,6 +185,31 @@ func testResearchIndex(t *testing.T, db *pgxpool.Pool) {
 	if len(businesses) != 2 {
 		t.Fatal("business classification", len(businesses))
 	}
+	for _, order := range []string{"", "&sort=name", "&sort=edition"} {
+		base := "/api/search?dataset=all&kind=business&postcode=AA1&industry=invented*&sic=12*&limit=1" + order
+		seen := map[string]bool{}
+		for path := base; ; {
+			body := get(path, 200)
+			var items []result
+			var next string
+			json.Unmarshal(body["items"], &items)
+			json.Unmarshal(body["next_cursor"], &next)
+			for _, item := range items {
+				key := item.Dataset + ":" + item.SourceID
+				if seen[key] {
+					t.Fatal("classified business repeated across pages")
+				}
+				seen[key] = true
+			}
+			if next == "" {
+				break
+			}
+			path = base + "&cursor=" + url.QueryEscape(next)
+		}
+		if len(seen) != 2 {
+			t.Fatal("classification district pages lost sources", len(seen))
+		}
+	}
 	for _, extra := range []string{"&street=Invented+Street&sort=name", "&first_name=Name&first_match=given&house=1"} {
 		query := "/api/search?dataset=research-old&surname=Researchonly&group=listing&limit=2" + extra
 		count := 0

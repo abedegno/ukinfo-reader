@@ -577,7 +577,15 @@ func (a *API) candidateFilters(ctx context.Context, q query) (candidateFilters, 
 			}
 			clauses = append(clauses, "r."+filter.column+"<>''", predicate)
 		}
-		conditions = append(conditions, "EXISTS(SELECT 1 FROM research_keys r WHERE "+strings.Join(clauses, " AND ")+")")
+		// Keep a selective source anchor ahead of classification probes. Pulling
+		// this EXISTS up into a semi-join can start with a national industry prefix
+		// and do millions of random source-ID lookups for one postcode district.
+		// Classification-only searches retain their classification-driven plan.
+		fence := ""
+		if q.Postcode != "" || q.Near != "" || q.Surname != "" || q.First != "" || q.Organisation != "" {
+			fence = " OFFSET 0"
+		}
+		conditions = append(conditions, "EXISTS(SELECT 1 FROM research_keys r WHERE "+strings.Join(clauses, " AND ")+fence+")")
 	}
 
 	return candidateFilters{q: q, datasetKeys: datasetKeys, datasetIDs: datasetIDs, args: args, conditions: conditions, termCTEs: termCTEs, missing: missing, areaOnly: areaOnly, geography: geography, nearbyIDs: nearbyIDs, radiusArg: radiusArg, distances: distances}, 200, nil

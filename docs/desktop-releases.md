@@ -23,7 +23,8 @@ For matching main-branch pushes, pull requests, manual dispatches and `desktop-v
 5. Launch the **packaged** app: complete the empty-catalogue wizard, import invented
    data, search/export, save a research note, close/relaunch, reopen its guarded source,
    and verify the owned PostgreSQL child shuts down. A second native gate performs a
-   verified cold backup/separate restore and checks saved queries and the original archive.
+   version-1 research upgrade, retaining the original bytes for rollback, followed by a
+   verified cold backup/separate restore that checks notes, saved queries and the original archive.
 6. Reject obvious source/user-data artifacts, create ZIP/tar.gz archives, SHA-256 files
    and per-platform build manifests. Upload non-PR artifacts for 3 days. Published release assets are retained separately.
 

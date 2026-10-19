@@ -1,0 +1,101 @@
+{
+  "method": "Two sequential observations per class on the combined-budget API after warm mixed traffic. No cache reset, original-query fixture export or exhaustive broad-result completeness check. Returned name/classification predicates checked when present; explicit deadline errors retained. Not a concurrency/capacity test.",
+  "cases": [
+    {
+      "class": "common-name-group",
+      "repeat": 0,
+      "status": 503,
+      "milliseconds": 4033.17,
+      "items": 0,
+      "has_next": false
+    },
+    {
+      "class": "common-name-group",
+      "repeat": 1,
+      "status": 503,
+      "milliseconds": 4009.89,
+      "items": 0,
+      "has_next": false
+    },
+    {
+      "class": "broad-prefix-group",
+      "repeat": 0,
+      "status": 503,
+      "milliseconds": 4257.4,
+      "items": 0,
+      "has_next": false
+    },
+    {
+      "class": "broad-prefix-group",
+      "repeat": 1,
+      "status": 503,
+      "milliseconds": 4074.28,
+      "items": 0,
+      "has_next": false
+    },
+    {
+      "class": "common-name-alphabetical",
+      "repeat": 0,
+      "status": 200,
+      "milliseconds": 2592.73,
+      "items": 50,
+      "has_next": true
+    },
+    {
+      "class": "common-name-alphabetical",
+      "repeat": 1,
+      "status": 200,
+      "milliseconds": 1793.28,
+      "items": 50,
+      "has_next": true
+    },
+    {
+      "class": "common-name-publication",
+      "repeat": 0,
+      "status": 200,
+      "milliseconds": 1668.64,
+      "items": 50,
+      "has_next": true
+    },
+    {
+      "class": "common-name-publication",
+      "repeat": 1,
+      "status": 200,
+      "milliseconds": 1571.53,
+      "items": 50,
+      "has_next": true
+    },
+    {
+      "class": "national-street-alphabetical",
+      "repeat": 0,
+      "status": 503,
+      "milliseconds": 4024.85,
+      "items": 0,
+      "has_next": false
+    },
+    {
+      "class": "national-street-alphabetical",
+      "repeat": 1,
+      "status": 503,
+      "milliseconds": 4016.78,
+      "items": 0,
+      "has_next": false
+    },
+    {
+      "class": "national-industry-prefix",
+      "repeat": 0,
+      "status": 503,
+      "milliseconds": 2014.39,
+      "items": 0,
+      "has_next": false
+    },
+    {
+      "class": "national-industry-prefix",
+      "repeat": 1,
+      "status": 200,
+      "milliseconds": 1216.74,
+      "items": 50,
+      "has_next": true
+    }
+  ]
+}

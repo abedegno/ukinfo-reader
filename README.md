@@ -68,7 +68,9 @@ available. The Python reader provides verified streaming ingestion. Edition sele
 people/business search across editions, partial postcodes and name prefixes, optional
 ONSPD nearby search, readable
 record details, lossless page exports and a desktop import dialog are implemented. All four supported editions have been imported and
-verified: **189,064,266 source occurrences in a 38.26 GiB PostgreSQL catalogue**.
+verified: **189,064,266 source occurrences in a 38.26 GiB base PostgreSQL catalogue**.
+Optional address/research indexes and postcode coordinates need additional storage;
+see the [current feature validation and disk measurements](docs/research/review-validation.md).
 See the [complete-edition measurements](docs/research/compact-catalogue.md#all-four-complete-editions).
 [Setup, current limits and portable app instructions →](docs/search-app.md)
 
