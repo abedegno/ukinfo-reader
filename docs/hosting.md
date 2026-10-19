@@ -17,13 +17,13 @@ reproduce an inexpensive VPS's cores or disk performance. Benchmark the chosen h
 
 ## Shortlist
 
-| Option                | Relevant allowance or base price                               | Fit                                                                 |
-| --------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------- |
-| Oracle Always Free A1 | 2 OCPUs, 12 GB RAM, 200 GB combined boot/block storage         | Potential zero-cost self-hosted Go/PostgreSQL instance              |
-| Hetzner CX23, EU      | 2 vCPUs, 4 GB RAM, 40 GB NVMe; €5.49/month before VAT and IPv4 | Candidate for the complete 2005 edition                             |
-| Hetzner CX33, EU      | 4 vCPUs, 8 GB RAM, 80 GB NVMe; €8.49/month before VAT and IPv4 | Base catalogue only; extra storage needed for full research indexes |
-| Supabase Free         | 500 MB database quota                                          | Too small for the full catalogue                                    |
-| Cloudflare Pages      | Free static requests and bandwidth                             | Frontend assets only; PostgreSQL and Go still need a host           |
+| Option                | Relevant allowance or base price                               | Fit                                                                    |
+| --------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Oracle Always Free A1 | 2 OCPUs, 12 GB RAM, 200 GB combined boot/block storage         | Potential zero-cost self-hosted Go/PostgreSQL instance                 |
+| Hetzner CX23, EU      | 2 vCPUs, 4 GB RAM, 40 GB NVMe; €5.49/month before VAT and IPv4 | Candidate for the 2005 base catalogue; measure optional-index headroom |
+| Hetzner CX33, EU      | 4 vCPUs, 8 GB RAM, 80 GB NVMe; €8.49/month before VAT and IPv4 | Base catalogue only; extra storage needed for full research indexes    |
+| Supabase Free         | 500 MB database quota                                          | Too small for the full catalogue                                       |
+| Cloudflare Pages      | Free static requests and bandwidth                             | Frontend assets only; PostgreSQL and Go still need a host              |
 
 Oracle's current allowance is **2 OCPUs / 12 GB**, rather than the older 4 / 24 figures
 still repeated in tutorials. Free resources must be in the home region. A1 capacity

@@ -11,14 +11,14 @@ a release or replace existing downloads automatically.
 In the repository's `desktop-signing` environment, add these secrets through GitHub's
 settings. Do not put keys, certificates or passwords in the repo or chat.
 
-| Secret | Value |
-| --- | --- |
-| `CSC_LINK` | Base64 content of a password-protected PKCS#12 export containing a **Developer ID Application** certificate and its private key (base64 data URLs are also accepted; filesystem paths and certificate-download URLs are not) |
-| `CSC_KEY_PASSWORD` | Password for that PKCS#12 export |
-| `APPLE_API_KEY` | Base64 content of the App Store Connect team API key `.p8` file |
-| `APPLE_API_KEY_ID` | App Store Connect API key ID |
-| `APPLE_API_ISSUER` | App Store Connect team API issuer ID |
-| `APPLE_TEAM_ID` | Developer team ID; the signing identity is discovered and checked against this team |
+| Secret             | Value                                                                                                                                                                                                                        |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CSC_LINK`         | Base64 content of a password-protected PKCS#12 export containing a **Developer ID Application** certificate and its private key (base64 data URLs are also accepted; filesystem paths and certificate-download URLs are not) |
+| `CSC_KEY_PASSWORD` | Password for that PKCS#12 export                                                                                                                                                                                             |
+| `APPLE_API_KEY`    | Base64 content of the App Store Connect team API key `.p8` file                                                                                                                                                              |
+| `APPLE_API_KEY_ID` | App Store Connect API key ID                                                                                                                                                                                                 |
+| `APPLE_API_ISSUER` | App Store Connect team API issuer ID                                                                                                                                                                                         |
+| `APPLE_TEAM_ID`    | Developer team ID; the signing identity is discovered and checked against this team                                                                                                                                          |
 
 These names and the API-key authentication scheme match Muesli's desktop-release
 workflow. GitHub secret values are write-only: their presence in the Muesli repo does
@@ -61,10 +61,14 @@ fail before building a candidate; there is no unsigned fallback in this workflow
    original keychain search list. Candidate artifacts expire after seven days.
 
 Both native architectures passed the real certificate/Apple service path for
-[`desktop-v0.3.3`](https://github.com/abedegno/ukinfo-reader/actions/runs/39157660872):
-packaged-app tests, Apple Accepted status, stapling, nested-signature verification and
-Gatekeeper assessment. Downloading and opening the resulting candidate on clean customer
-machines remains a check before public release. Linux builds remain unsigned.
+[`desktop-v0.4.2`](https://github.com/abedegno/ukinfo-reader/actions/runs/39182930388):
+packaged-app tests, Apple Accepted status, stapling, ticket validation, nested-signature
+verification and Gatekeeper assessment. The combined notarize/archive step avoids a
+redundant online ticket lookup after a successful full verification. The 0.4.0/0.4.1
+attempts exposed repeated Apple CloudKit connection-loss errors; their tags remain
+immutable and their drafts are superseded. No ticket or signature failure was accepted.
+Downloading and opening the final candidate on clean customer machines remains a check
+before public release. Linux builds remain unsigned.
 
 ## Attach candidates to a draft
 

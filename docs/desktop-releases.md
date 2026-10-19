@@ -89,7 +89,8 @@ restored runtimes still pass lifecycle and packaged-app checks before release.
 
 Ordinary workflow artifacts are macOS ad-hoc signed previews. The separate signed
 candidate workflow produces Developer ID signed, Apple-notarized and stapled Mac apps;
-both architectures passed this path for 0.3.3. The manual draft-attachment workflow
+both architectures passed this path for
+[0.4.2](https://github.com/abedegno/ukinfo-reader/actions/runs/39182930388). The manual draft-attachment workflow
 verifies and replaces Mac assets after all builds succeed. Check each release's notes
 and build manifests for its actual signing status. Credentials are held in GitHub
 secrets. Linux archives remain unsigned and target the CI baseline, not every Linux

@@ -115,7 +115,12 @@ research persistence, cancellation/management and owned PostgreSQL shutdown. The
 gate now starts with version-1 research and a note, verifies the upgraded model and
 original-byte compatibility copy, performs a cold backup and separate restore, and checks
 notes, saved queries, the compatibility copy, search results and the retained original.
-This path passed locally on Apple Silicon; the release matrix checks native platform builds.
+This path passed locally on Apple Silicon and in the
+[0.4.2 three-platform release matrix](https://github.com/abedegno/ukinfo-reader/actions/runs/39182930254).
+[Both Mac candidates](https://github.com/abedegno/ukinfo-reader/actions/runs/39182930388)
+also passed Apple notarization, stapling, strict signatures and Gatekeeper.
+The measured API and search UI are unchanged from `e56720f`; subsequent release patches
+change desktop versions and packaging only.
 
 Clean customer browser-download/quarantine/install tests on actual ARM/Intel Macs,
 representative usability/screen-reader studies, a full private-catalogue restore with
