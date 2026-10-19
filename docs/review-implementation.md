@@ -36,7 +36,7 @@ local verification can proceed while those remain outstanding.
 [component advisory checks](https://github.com/abedegno/ukinfo-reader/actions/runs/39182930286) pass.
 The [draft attachment](https://github.com/abedegno/ukinfo-reader/actions/runs/39183586365)
 checks all nine uploaded asset sizes/digests and retains draft status. Linux remains unsigned.
-The [0.4.2 draft](https://github.com/abedegno/ukinfo-reader/releases/tag/untagged-1c712c7064373d470252)
+The [0.4.2 draft](https://github.com/abedegno/ukinfo-reader/releases)
 is unpublished; earlier 0.4.0/0.4.1 drafts are superseded.
 
 The measured API/search UI is unchanged from `e56720f`; the later patch versions address
