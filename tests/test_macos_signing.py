@@ -7,7 +7,14 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from tools.macos_signing import decode_material, prepare, public_check, run, signing_identity
+from tools.macos_signing import (
+    decode_material,
+    prepare,
+    public_check,
+    run,
+    signing_identity,
+    ticket_check,
+)
 
 
 class SigningCredentialsTests(unittest.TestCase):
@@ -65,3 +72,54 @@ class SigningMaterialTests(unittest.TestCase):
             signing_identity(listing, "WRONG12345")
         with self.assertRaisesRegex(RuntimeError, "one valid"):
             signing_identity(listing + listing, "ABCDE12345")
+
+
+class TicketTransportTests(unittest.TestCase):
+    def test_lost_connection_retries_then_requires_success(self):
+        failure = subprocess.CompletedProcess(
+            [], 68, "", "Error Domain=NSURLErrorDomain Code=-1005"
+        )
+        success = subprocess.CompletedProcess([], 0, "Ticket validated", "")
+        with (
+            patch(
+                "tools.macos_signing.subprocess.run", side_effect=[failure, failure, success]
+            ) as command,
+            patch("tools.macos_signing.time.sleep") as sleep,
+        ):
+            self.assertEqual(
+                ticket_check(["xcrun", "stapler", "validate", "Invented.app"]), "Ticket validated"
+            )
+            self.assertEqual(command.call_count, 3)
+            self.assertEqual([call.args[0] for call in sleep.call_args_list], [2, 4])
+
+    def test_bad_ticket_is_fatal_without_retry(self):
+        with (
+            patch(
+                "tools.macos_signing.subprocess.run",
+                return_value=subprocess.CompletedProcess([], 68, "Invalid ticket", ""),
+            ) as command,
+            patch("tools.macos_signing.time.sleep") as sleep,
+        ):
+            with self.assertRaisesRegex(RuntimeError, "Invalid ticket"):
+                ticket_check(["xcrun", "stapler", "validate", "Invented.app"])
+            self.assertEqual(command.call_count, 1)
+            sleep.assert_not_called()
+
+    def test_persistent_transport_failure_is_bounded_and_still_fatal(self):
+        with (
+            patch(
+                "tools.macos_signing.subprocess.run",
+                return_value=subprocess.CompletedProcess([], 68, "NSURLErrorDomain Code=-1005", ""),
+            ) as command,
+            patch("tools.macos_signing.time.sleep") as sleep,
+        ):
+            with self.assertRaisesRegex(RuntimeError, "Code=-1005"):
+                ticket_check(["xcrun", "stapler", "staple", "Invented.app"])
+            self.assertEqual(command.call_count, 4)
+            self.assertEqual([call.args[0] for call in sleep.call_args_list], [2, 4, 8])
+
+    def test_retry_helper_rejects_credential_commands(self):
+        with patch("tools.macos_signing.subprocess.run") as command:
+            with self.assertRaisesRegex(RuntimeError, "restricted"):
+                ticket_check(["security", "import", "invented-secret"])
+            command.assert_not_called()

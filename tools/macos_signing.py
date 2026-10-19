@@ -9,6 +9,7 @@ import shlex
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 
@@ -43,6 +44,33 @@ def public_check(args):
             + result.stderr[-16000:]
         )
     return result.stdout
+
+
+def ticket_check(args):
+    """Retry only the observed Apple ticket transport interruption, never acceptance."""
+    if tuple(args[:3]) not in {
+        ("xcrun", "stapler", "staple"),
+        ("xcrun", "stapler", "validate"),
+    }:
+        raise RuntimeError("Ticket retries are restricted to stapler checks")
+    for attempt in range(4):
+        try:
+            return public_check(args)
+        except RuntimeError as error:
+            message = str(error)
+            if (
+                attempt == 3
+                or "failed (exit 68)" not in message
+                or "NSURLErrorDomain Code=-1005" not in message
+            ):
+                raise
+            delay = 2 ** (attempt + 1)
+            print(
+                f"Apple ticket connection interrupted; retrying in {delay}s "
+                f"(attempt {attempt + 2}/4).",
+                flush=True,
+            )
+            time.sleep(delay)
 
 
 def runner_root():
@@ -215,8 +243,8 @@ def notarize(app):
             raise RuntimeError(
                 "Apple did not accept notarization; inspect the submission in the Apple developer account"
             )
-    public_check(["xcrun", "stapler", "staple", str(app)])
-    public_check(["xcrun", "stapler", "validate", str(app)])
+    ticket_check(["xcrun", "stapler", "staple", str(app)])
+    ticket_check(["xcrun", "stapler", "validate", str(app)])
     public_check(["codesign", "--verify", "--deep", "--strict", str(app)])
     public_check(["spctl", "--assess", "--type", "execute", str(app)])
     print("Developer ID app notarized, stapled and accepted by Gatekeeper.")

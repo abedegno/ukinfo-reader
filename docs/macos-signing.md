@@ -48,6 +48,10 @@ fail before building a candidate; there is no unsigned fallback in this workflow
    are clean runner/profile checks; they do not simulate every customer OS installation.
 5. Submits the app ZIP with Apple's `notarytool`, requires **Accepted**, staples and
    validates the ticket, verifies nested signatures, and checks Gatekeeper assessment.
+   Stapling/validation retries only the observed connection-loss error (exit 68 plus
+   `NSURLErrorDomain Code=-1005`), at most four attempts with 2/4/8-second waits. The
+   packager uses the same ticket check. Invalid tickets, signature failures and persistent
+   transport failures remain fatal; notarization acceptance is never inferred from a retry.
 6. Creates source-data-free ZIPs, SHA-256 files and manifests identifying the result
    as Developer ID signed, notarized and stapled. The manifest checks the actual app
    signature/ticket, rather than inferring success from an environment variable.

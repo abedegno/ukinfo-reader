@@ -9,6 +9,11 @@ import subprocess
 import tarfile
 from pathlib import Path
 
+if __package__:
+    from .macos_signing import ticket_check
+else:
+    from macos_signing import ticket_check
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -77,7 +82,7 @@ def main():
             ["codesign", "-dv", "--verbose=4", str(app)], capture_output=True, text=True, check=True
         )
         if "Authority=Developer ID Application:" in result.stderr:
-            subprocess.run(["xcrun", "stapler", "validate", str(app)], check=True)
+            ticket_check(["xcrun", "stapler", "validate", str(app)])
             signing = "Developer ID, notarized and stapled"
         else:
             signing = "ad-hoc, not notarized"
