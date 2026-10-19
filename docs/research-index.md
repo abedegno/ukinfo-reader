@@ -124,4 +124,4 @@ strings, exactly or with one trailing `*` (at least two prefix characters). They
 anchor a search without a business name. No modern SIC labels or fuzzy categories are
 inferred. Missing/ambiguous industry descriptions remain unknown and are excluded by
 an industry filter. The 2004 SE disc has no business file. See the
-[modern business format evidence](formats/modern-se.md#business-records).
+[modern business format evidence](formats/modern-se.md#v105-business-layout-and-selection).

@@ -1,0 +1,35 @@
+name: Web search bug
+description: Report a search, display or self-hosting problem
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use invented examples. Do not include real records, research backups, private search URLs,
+        database credentials or raw logs. Report vulnerabilities using SECURITY.md.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment and edition
+      description: Public archive or self-hosted? Include browser, OS, edition, sample/full status and server version if known.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Describe the controls and matching modes used, with invented search terms.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+      description: Include the error text. Redact records and private information from screenshots.
+    validations:
+      required: true

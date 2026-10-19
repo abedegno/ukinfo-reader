@@ -3,7 +3,19 @@
 Contributions to format research, edition support, tests, documentation and the reader are
 welcome. Please describe the concrete problem and the evidence behind a change.
 
-## Development setup
+## Find the right component
+
+- `src/ukinfo_reader/` and `tests/`: Python decoding, validation and streaming ingestion.
+- `server/`: Go API, PostgreSQL catalogue and embedded web UI.
+- `desktop/`: Electron shell, native lifecycle and browser tests.
+- `docs/formats/` and `docs/validation/`: format evidence and aggregate source reports.
+- `tools/` and `.github/workflows/`: build, release and verification tooling.
+
+Start with the [documentation index](docs/README.md). Report ordinary bugs through
+the [issue chooser](https://github.com/abedegno/ukinfo-reader/issues/new/choose); use
+[SECURITY.md](SECURITY.md) for vulnerabilities.
+
+## Python development setup
 
 Use Python 3.10 or later:
 
@@ -67,6 +79,10 @@ contribution can be distributed under that license. The original software and da
 their own rights. Be respectful and keep technical disagreement focused on evidence.
 
 ## Search application
+
+For the Go service, run `go test ./...` and `go vet ./...` from `server/`.
+For desktop unit tests, run `npm ci` and `npm test` from `desktop/`. Database/browser
+integration and native packaging need the additional setup below.
 
 See [the application guide](docs/search-app.md#verification) for Go/PostgreSQL integration,
 desktop lifecycle and browser test commands. Use invented fixtures for committed tests and

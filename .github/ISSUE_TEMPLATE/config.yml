@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Setup and documentation
+    url: https://github.com/abedegno/ukinfo-reader/blob/main/docs/README.md
+    about: Find desktop, server, Python and edition guides.
+  - name: Security reporting
+    url: https://github.com/abedegno/ukinfo-reader/blob/main/SECURITY.md
+    about: Read the private reporting guidance before disclosing a vulnerability.

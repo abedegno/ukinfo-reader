@@ -1,0 +1,17 @@
+name: Feature suggestion
+description: Suggest a search, preservation or usability improvement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the task and where the current behaviour falls short. Use invented examples.
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested improvement
+      description: Include alternatives or relevant examples from other tools, if useful. Do not include directory records or private research.
+    validations:
+      required: true

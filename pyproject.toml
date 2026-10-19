@@ -27,6 +27,8 @@ ukinfo-validate = "ukinfo_reader.validation:main"
 ukinfo-inspect = "ukinfo_reader.modern_inspect:main"
 
 [project.urls]
+Documentation = "https://github.com/abedegno/ukinfo-reader/blob/main/docs/README.md"
+Changelog = "https://github.com/abedegno/ukinfo-reader/blob/main/CHANGELOG.md"
 Repository = "https://github.com/abedegno/ukinfo-reader"
 Issues = "https://github.com/abedegno/ukinfo-reader/issues"
 

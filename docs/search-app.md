@@ -4,7 +4,9 @@ A shared Go service serves the web UI and searches PostgreSQL 18. Electron launc
 that same service with an app-managed local PostgreSQL process. The original Python
 reader remains the verified decoder and importer: searches do not run Python.
 
-Development preview. Hosted capacity still needs testing on the intended server.
+Development preview. The [public archive](https://ukinfo.6153112.xyz) serves the four
+complete editions. Hosted capacity depends on storage and workload; broad national
+grouping/sorting and cold HDD reads can exceed query deadlines.
 Exact and prefix name searches, postcode district/sector searches, optional nearby
 and [street/locality/town/county searches](address-search.md), all-edition searches,
 keyset pagination, readable record details, page-local identical-listing grouping,
@@ -17,8 +19,12 @@ given-name matching, middle initials, removable filters and zero-result actions.
 maps](maps.md) are available in the web interface and desktop app. The desktop opens a
 guided importer for an empty catalogue; [native package/release CI](desktop-releases.md)
 tests the wizard, imports and list persistence across restarts.
-Catalogue-wide deduplication, alphabetical sorting, contains/fuzzy matching, background bulk exports, resumable ingestion, automatic database
-upgrades and signed installers are not yet implemented.
+The optional [research index](research-index.md) adds search-wide identical-listing
+grouping and name/publication/distance ordering. This groups listings, not identities.
+Contains/fuzzy matching, background bulk exports, resumable ingestion and automatic
+database upgrades are not implemented. Signed/notarized macOS candidates are prepared
+through the [release workflow](desktop-releases.md#signing-and-platform-limits);
+all desktop releases remain drafts.
 
 ## Requirements and edition scope
 
@@ -163,9 +169,10 @@ library notices from the native distribution too.
 `npm run pack` produces an unsigned native development directory under `dist/desktop`.
 It includes Electron, the Go binary, a standalone Python decoder and the staged
 PostgreSQL runtime; **no catalogue**. End users do not need Python installed.
-Only native macOS/Linux bundles are supported at present. Windows local process supervision,
-signing/notarization and installer-specific testing remain future work. Native packaged
-archives are checked through [desktop release CI](desktop-releases.md). PostgreSQL/runtime
+Only native macOS/Linux bundles are supported at present. Windows local process
+supervision remains unsupported. macOS signing/notarization has a separate
+[candidate workflow](macos-signing.md); ordinary local builds remain unsigned/ad-hoc.
+Native packaged archives are checked through [desktop release CI](desktop-releases.md). PostgreSQL/runtime
 redistribution notices must accompany any bundle you distribute; the project's MIT license
 does not relicense those dependencies or the original data.
 
@@ -234,8 +241,10 @@ and follow PostgreSQL recovery procedures. Preserve the password file with its c
 - `dataset=all` searches imported editions together. Samples are excluded when a complete
   import with the same manifest edition exists; samples remain individually selectable.
   Results identify their originating `dataset`. This is occurrence search, not person identity matching.
-- People require surname, postcode or nearby centre; businesses require organisation,
-  postcode or nearby centre. `near=AA11AA&radius_m=8047` selects an approximate
+- People need a surname or a location constraint; businesses can also anchor a search
+  with organisation, industry or source SIC code. Address-only searches require the
+  [address index](address-search.md); classifications require the
+  [research index](research-index.md). `near=AA11AA&radius_m=8047` selects an approximate
   five-mile circle. `radius_m` accepts integer metres from 50 to 50,000; defaults to 8,047.
   Nearby responses include `geography` provenance and per-item `distance_m`,
   `location_quality` and optional `location_terminated`. `/api/geography` reports availability.
@@ -243,12 +252,14 @@ and follow PostgreSQL recovery procedures. Preserve the password file with its c
 - `limit=1..100` (default 50). Reply: `{items:[{dataset,id,source_id,record}],next_cursor:"..."}`.
   Repeat the original filters with `cursor=...`. Cursors are opaque and bound to normalized
   filters, postcode precision and the edition selection; no exact-total query or offset scan.
-- Ordering uses internal name/first-name codes and import ordinal, with dataset IDs
+- Default catalogue ordering uses internal name/first-name codes and import ordinal, with dataset IDs
   breaking ties so editions interleave rather than exhausting one edition first. Each edition
   contributes at most `limit+1` indexed candidates before the global page is selected.
   Postcode-prefix and nearby searches order by postcode code before name codes to use the existing
   postcode index efficiently. This order is stable, **not alphabetical or chronological**.
-  Old-version cursors may be invalid after upgrading. Edition labels use cover-disc dates,
+  With the research index, `sort=name`, `sort=edition` and `sort=distance` provide
+  explicit ordering; distance requires a nearby centre. See [ordering rules](research-index.md#ordering-and-classifications).
+  Old-version cursors may be invalid after upgrading or a catalogue change. Edition labels use cover-disc dates,
   not verified electoral-roll dates.
 - `GET /api/export` takes the same filters, limit and cursor and returns the matching
   bounded page as NDJSON. Original JSONL page/record downloads retain exact source numeric
@@ -277,8 +288,9 @@ trailing `*` for a prefix. Detailed house/building/flat/locality/county controls
 
 Enter a postcode once, then choose **In this postcode** or **Nearby**. Nearby reveals
 a 1/2/5/10/25-mile distance and accepts a full postcode, district or sector. Results show
-approximate postcode-point distances, use catalogue order rather than nearest-first
-order, and exclude incomplete/unlocated and non-geographic postcodes. See the
+approximate postcode-point distances. Catalogue order is the default; with the research
+index, **Nearest to search centre** selects distance order. Nearby searches exclude
+incomplete/unlocated and non-geographic postcodes. See the
 [search form design](search-interface.md) for controls, saved-link compatibility and
 research references.
 
@@ -303,9 +315,11 @@ returned occurrences. It requires a recorded street and house/building, and leav
 incomplete names/postcodes and warned records separate. Sources remain individually
 inspectable and a comparison table shows their human-facing fields. This does not establish
 that listings describe the same person. Grouping does not combine entries on different
-pages, alter the source pagination or remove occurrences from page exports. True
-catalogue-wide grouping needs a dedicated grouping index and group-aware cursors; it is
-not implemented by hiding duplicates after pagination.
+pages, alter the source pagination or remove occurrences from page exports.
+
+**Group across search** uses the optional [research index](research-index.md) and
+group-aware cursors to group across pages. Page-local grouping remains a separate mode;
+it does not change the underlying occurrence pagination.
 
 See [the interface polish measurements](research/search-polish.md) for bounded local
 checks of the new query paths. They do not establish hosted capacity.

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Add bounded public API quotas, explicit Cloudflare tunnel-peer trust and additional
+  browser security headers for anonymous hosted deployments.
+- Reorganise the README and documentation around web, desktop, Python and preservation
+  workflows; update edition scope, feature/release status and public-service guidance.
+  Add web-search and feature issue forms.
+
 - Align optional macOS signing with Muesli's certificate/API-key secret names,
   replacing Apple-ID/password authentication and discovering the certificate identity by team.
 

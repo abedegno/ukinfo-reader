@@ -1,6 +1,15 @@
-# Hosting options
+# Hosting and operations
 
-Checked **17 October 2026**. This is a shortlist and provisional budget.
+## Current deployment and capacity
+
+The [public archive](https://ukinfo.6153112.xyz) runs the Go service and PostgreSQL 18
+in Docker on a NAS, through a dedicated Cloudflare Tunnel. It serves four complete
+editions with no sample/demo datasets. The database has no public port; the API uses
+a SELECT-only role, explicit tunnel-peer trust, per-client quotas and bounded work.
+See [public service controls](#public-service-through-cloudflare-tunnel).
+
+The original 17 October 2026 hosting shortlist below is a dated planning record.
+Prices, provider allowances and availability must be checked before provisioning.
 The complete 2005 catalogue measured **11.79 GiB**; all four supported editions together
 measured **38.26 GiB** (189,064,266 source occurrences).
 The optional [ONSPD nearby-search reference](geography.md) adds about **840 MiB**
@@ -63,7 +72,7 @@ patterns can change these estimates substantially. The current Go endpoint does 
 compress HTTP responses itself. Enable JSON/NDJSON compression on the chosen TLS proxy,
 then measure real transfer and CPU cost; see the [nginx gzip module](https://nginx.org/en/docs/http/ngx_http_gzip_module.html).
 
-## Proposed first deployment
+## Planning another deployment
 
 Use one VM with Go and PostgreSQL 18, plus a TLS reverse proxy. For a paid experiment,
 start with **4 GB RAM** and enough disk for the measured catalogue, OS, WAL, temporary
@@ -87,8 +96,9 @@ The acceptance gate on that VM is a longer run of varied searches and concurrent
 exports, with cold and warm observations, latency/error/drop counts, memory/disk/IO
 monitoring, transferred-byte/egress estimates and a dump/restore rehearsal.
 Use the [load tool](../tools/search-load/README.md)
-with private validated fixtures. Account signup, paid provisioning, public publication
-of directory records and final DNS configuration have not been performed.
+with private validated fixtures. These VM measurements/provisioning gates are distinct from the current NAS deployment.
+Cold HDD group/record reads on the NAS can exceed deadlines; a new host still needs
+its own acceptance checks. A production backup/restore rehearsal remains outstanding.
 
 ## Public service through Cloudflare Tunnel
 
