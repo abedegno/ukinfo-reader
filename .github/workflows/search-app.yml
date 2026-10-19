@@ -35,6 +35,7 @@ jobs:
         run: |
           python3 ../tools/check_web_assets.py
           python3 ../tools/test_monitor.py
+          python3 ../tools/check_serving_role.py
           test -z "$(gofmt -l .)"
           go vet ./...
           go test -race -count=1 ./...
