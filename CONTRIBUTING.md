@@ -88,3 +88,19 @@ See [the application guide](docs/search-app.md#verification) for Go/PostgreSQL i
 desktop lifecycle and browser test commands. Use invented fixtures for committed tests and
 screenshots. Keep imports, PostgreSQL clusters, bundles and record-level test output ignored.
 The hosted and desktop builds share the same SQL, API and embedded UI.
+
+### Production policy checks
+
+These checks use invented fixtures and never mount an imported catalogue:
+
+```sh
+python3 tools/test_monitor.py
+python3 tools/check_serving_role.py
+python3 tools/check_hosting_edge.py
+```
+
+The serving-role check uses Docker and a temporary PostgreSQL 18 container with no
+network access or published ports; its data is in tmpfs and is removed afterward.
+It checks fresh and existing roles, readable results, denied writes with read-only
+transactions disabled, column grants, ownership, membership and PUBLIC permissions.
+CI runs it on Linux. The edge check also needs Go and OpenSSL.

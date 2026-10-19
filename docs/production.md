@@ -63,6 +63,12 @@ production exec -T db psql -X -U ukinfo -d ukinfo \
   -f /docker-entrypoint-initdb.d/search-role.sql
 ```
 
+The policy removes elevated role attributes and direct write/create grants from an
+existing serving role. It refuses roles with object ownership or role memberships;
+review those explicitly or use a dedicated serving role. Residual write access
+through PUBLIC also causes the transaction to fail for explicit review. It does not silently
+reassign objects or remove unrelated users' grants.
+
 Changing the environment file alone does not rotate existing database passwords.
 Rotate roles in PostgreSQL and recreate the affected clients together. Verify the
 serving role cannot write even with `default_transaction_read_only=off`; that setting
