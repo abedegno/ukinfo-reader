@@ -1,0 +1,6 @@
+tunnel: REPLACE_WITH_TUNNEL_UUID
+credentials-file: /etc/cloudflared/tunnel.json
+ingress:
+  - hostname: archive.example.org
+    service: http://api:8080
+  - service: http_status:404

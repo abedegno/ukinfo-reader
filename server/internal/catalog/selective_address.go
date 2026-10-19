@@ -14,11 +14,19 @@ const selectiveAddressLimit = 4096
 const selectiveAddressBlocks = 128
 const selectivePostingsLimit = 1024
 
-func (a *API) matchSelectiveAddresses(ctx context.Context, f *candidateFilters) error {
+func (a *API) matchSelectiveAddresses(ctx context.Context, f *candidateFilters) (err error) {
 	q := f.q
 	if f.missing || !q.hasAddress() {
 		return nil
 	}
+	plan := "fallback"
+	defer func() {
+		if err != nil {
+			a.metrics.plan("error")
+		} else {
+			a.metrics.plan(plan)
+		}
+	}()
 	// First try the compact address side. LIMIT bounds the probe, never the result:
 	// only a completely exhausted probe may replace the address intersection.
 	args := []any{f.datasetIDs}
@@ -30,6 +38,7 @@ func (a *API) matchSelectiveAddresses(ctx context.Context, f *candidateFilters) 
 	}
 	if count <= selectivePostingsLimit {
 		f.useAddressCandidates(candidates)
+		plan = "address"
 		if !q.hasRefinements() || f.missing {
 			return nil
 		}
@@ -89,6 +98,7 @@ func (a *API) matchSelectiveAddresses(ctx context.Context, f *candidateFilters) 
 			}
 		}
 	}
+	plan = "source"
 	f.useAddressCandidates(matched)
 	return nil
 }

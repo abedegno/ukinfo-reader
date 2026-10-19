@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/klauspost/compress/zstd"
@@ -25,14 +24,14 @@ type storedRecord struct {
 // point searches skip unwanted JSON without decoding every occurrence in a block.
 func packBlock(encoder *zstd.Encoder, records []storedRecord) ([]byte, error) {
 	if len(records) == 0 || len(records) > blockRows {
-		return nil, errors.New("invalid block row count")
+		return nil, recordIntegrity("invalid block row count")
 	}
 	var raw bytes.Buffer
 	raw.WriteString(blockMagic)
 	_ = binary.Write(&raw, binary.LittleEndian, uint16(len(records)))
 	for _, r := range records {
 		if len(r.SourceID) == 0 || len(r.SourceID) > maxSourceIDBytes || len(r.Record) > maxRecordBytes || !json.Valid(r.Record) {
-			return nil, errors.New("invalid record block entry")
+			return nil, recordIntegrity("invalid record block entry")
 		}
 		_ = binary.Write(&raw, binary.LittleEndian, uint16(len(r.SourceID)))
 		_ = binary.Write(&raw, binary.LittleEndian, uint32(len(r.Record)))
@@ -45,37 +44,37 @@ func packBlock(encoder *zstd.Encoder, records []storedRecord) ([]byte, error) {
 func unpackBlock(decoder *zstd.Decoder, compressed []byte) ([]byte, error) {
 	raw, err := decoder.DecodeAll(compressed, nil)
 	if err != nil {
-		return nil, fmt.Errorf("record block checksum/encoding: %w", err)
+		return nil, fmt.Errorf("%w: record block checksum/encoding: %v", errRecordIntegrity, err)
 	}
 	if len(raw) < 7 || len(raw) > maxBlockBytes || string(raw[:5]) != blockMagic {
-		return nil, errors.New("unsupported or corrupt record block")
+		return nil, recordIntegrity("unsupported or corrupt record block")
 	}
 	count := int(binary.LittleEndian.Uint16(raw[5:7]))
 	if count < 1 || count > blockRows {
-		return nil, errors.New("invalid record block count")
+		return nil, recordIntegrity("invalid record block count")
 	}
 	pos := 7
 	for i := 0; i < count; i++ {
 		if pos+6 > len(raw) {
-			return nil, errors.New("truncated record block")
+			return nil, recordIntegrity("truncated record block")
 		}
 		sourceLen := int(binary.LittleEndian.Uint16(raw[pos:]))
 		recordLen := int(binary.LittleEndian.Uint32(raw[pos+2:]))
 		pos += 6
 		if sourceLen < 1 || sourceLen > maxSourceIDBytes || recordLen < 2 || recordLen > maxRecordBytes || sourceLen+recordLen > len(raw)-pos {
-			return nil, errors.New("invalid record block lengths")
+			return nil, recordIntegrity("invalid record block lengths")
 		}
 		pos += sourceLen + recordLen
 	}
 	if pos != len(raw) {
-		return nil, errors.New("trailing bytes in record block")
+		return nil, recordIntegrity("trailing bytes in record block")
 	}
 	return raw, nil
 }
 func recordAt(raw []byte, offset int) (storedRecord, error) {
 	count := int(binary.LittleEndian.Uint16(raw[5:7]))
 	if offset < 0 || offset >= count {
-		return storedRecord{}, errors.New("record outside block")
+		return storedRecord{}, recordIntegrity("record outside block")
 	}
 	pos := 7
 	for i := 0; i < count; i++ {
@@ -87,5 +86,5 @@ func recordAt(raw []byte, offset int) (storedRecord, error) {
 		}
 		pos += a + b
 	}
-	return storedRecord{}, errors.New("record not found in block")
+	return storedRecord{}, recordIntegrity("record not found in block")
 }

@@ -22,6 +22,7 @@ type requestBlockCache struct {
 	bytes   int
 	planKey string
 	plan    *candidateFilters
+	observe *apiMetrics
 }
 
 func cloneCandidateFilters(f candidateFilters) candidateFilters {
@@ -65,7 +66,15 @@ func (c *requestBlockCache) get(key recordBlockKey) []byte {
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return c.blocks[key]
+	raw := c.blocks[key]
+	if c.observe != nil {
+		if raw != nil {
+			c.observe.cacheHits.Add(1)
+		} else {
+			c.observe.cacheMisses.Add(1)
+		}
+	}
+	return raw
 }
 func (c *requestBlockCache) put(key recordBlockKey, raw []byte) {
 	if c == nil || len(raw) > requestBlockCacheBytes {

@@ -20,7 +20,7 @@ with a web interface, an Electron desktop preview and a documented Python reader
 | --- | --- | --- |
 | Search online | [Public archive](https://ukinfo.6153112.xyz) | A browser; no login or import |
 | Use a local desktop archive | [Desktop setup](docs/desktop-setup.md) and [builds](docs/desktop-releases.md) | Supported source media; macOS or Linux x86-64 |
-| Host your own instance | [Server setup](docs/search-app.md) and [hosting](docs/hosting.md) | Go service, PostgreSQL 18 and imported source media |
+| Host your own instance | [Production deployment](docs/production.md) and [hosting](docs/hosting.md) | Go service, PostgreSQL 18 and imported source media |
 | Read or export original files | [Python quick start](docs/reader-quick-start.md) | Python 3.10+ and extracted source files |
 | Investigate another edition | [Edition support guide](docs/adding-editions.md) | Source identity, format evidence and validation |
 

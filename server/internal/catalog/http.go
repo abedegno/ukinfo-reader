@@ -46,7 +46,16 @@ func respond(w http.ResponseWriter, status int, v any) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 func fail(w http.ResponseWriter, status int, message string) {
-	respond(w, status, map[string]string{"error": message})
+	code := "unavailable"
+	switch status {
+	case 400:
+		code = "invalid_request"
+	case 404:
+		code = "not_found"
+	case 429:
+		code = "rate_limited"
+	}
+	writeFailure(w, status, code, message)
 }
 
 func (a *API) Handler() http.Handler {
@@ -72,6 +81,7 @@ func (a *API) Handler() http.Handler {
 	mux.HandleFunc("GET /api/export", func(w http.ResponseWriter, r *http.Request) { a.searchPage(w, r, true) })
 	return a.metrics.wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Set("X-Request-ID", newRequestID())
 		if r.URL.Path == "/api/health" {
 			mux.ServeHTTP(w, r)
 			return
@@ -83,7 +93,9 @@ func (a *API) Handler() http.Handler {
 			fail(w, 503, "Search capacity reached; retry shortly")
 			return
 		}
-		mux.ServeHTTP(w, r.WithContext(withRecordCache(r.Context())))
+		ctx := withRecordCache(r.Context())
+		recordCache(ctx).observe = a.metrics
+		mux.ServeHTTP(w, r.WithContext(ctx))
 	}))
 }
 func (a *API) datasets(w http.ResponseWriter, r *http.Request) {
@@ -346,7 +358,7 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 	}
 	data, status, err := a.searchResults(ctx, q)
 	if err != nil {
-		fail(w, status, err.Error())
+		failError(w, status, err)
 		return
 	}
 	items, geography := data.Items, data.Geography
@@ -775,7 +787,7 @@ func (a *API) searchCandidates(ctx context.Context, q query) (searchResult, int,
 	for dataset, requestedIDs := range requestedRecords {
 		records, e := a.loadRecords(ctx, dataset, requestedIDs)
 		if e != nil {
-			return searchResult{}, 503, errors.New("Source records unavailable; catalogue needs verification")
+			return searchResult{}, 503, sourceReadError(e)
 		}
 		for _, record := range records {
 			record.Dataset = datasetKeys[dataset]
@@ -840,6 +852,9 @@ func (a *API) loadRecords(ctx context.Context, dataset int16, ids []int32) ([]re
 				return nil, err
 			}
 			cache.put(recordBlockKey{dataset, block}, raw)
+			if cache != nil && cache.observe != nil {
+				cache.observe.decodedBlocks.Add(1)
+			}
 			for _, id := range groups[block] {
 				r, err := recordAt(raw, int((id-1)%blockRows))
 				if err != nil {
@@ -859,14 +874,14 @@ func (a *API) loadRecords(ctx context.Context, dataset int16, ids []int32) ([]re
 		return nil, e
 	}
 	if e := json.Unmarshal(rawManifest, &manifest); e != nil {
-		return nil, e
+		return nil, recordIntegrity("invalid stored manifest")
 	}
 	archive := archiveIdentity(manifest)
 
 	for _, id := range ids {
 		r, ok := found[id]
 		if !ok {
-			return nil, fmt.Errorf("missing source record block")
+			return nil, recordIntegrity("missing source record block")
 		}
 		resultRows = append(resultRows, result{ID: int64(id), SourceID: r.SourceID, Record: r.Record, Archive: archive})
 	}
