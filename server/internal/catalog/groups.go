@@ -25,7 +25,7 @@ func (a *API) groupSources(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	f, status, err := a.candidateFilters(ctx, query{Dataset: scope, Kind: "person"})
 	if err != nil {
-		fail(w, status, err.Error())
+		failError(w, status, err)
 		return
 	}
 	var after cursor
@@ -76,7 +76,7 @@ func (a *API) groupSources(w http.ResponseWriter, r *http.Request) {
 	for dataset, ids := range requested {
 		records, e := a.loadRecords(ctx, dataset, ids)
 		if e != nil {
-			fail(w, 503, "Group source records unavailable")
+			failError(w, 503, sourceReadError(e))
 			return
 		}
 		for _, record := range records {

@@ -280,7 +280,7 @@ func (a *API) orderedCandidates(ctx context.Context, q query) (searchResult, []o
 	for dataset, ids := range requested {
 		records, e := a.loadRecords(ctx, dataset, ids)
 		if e != nil {
-			return searchResult{}, nil, 503, errors.New("Source records unavailable")
+			return searchResult{}, nil, 503, sourceReadError(e)
 		}
 		for _, item := range records {
 			item.Dataset = f.datasetKeys[dataset]

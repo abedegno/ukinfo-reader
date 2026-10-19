@@ -1,0 +1,26 @@
+# Add to compose.production.yaml for a dedicated Cloudflare Tunnel ingress.
+services:
+  api:
+    ports: !reset []
+    command: [serve, --listen, '0.0.0.0:8080', --metrics-listen, '127.0.0.1:9091', --public-origin, '${UKINFO_PUBLIC_ORIGIN}', --public-limits, --trusted-proxy, '${UKINFO_TUNNEL_PEER:-172.29.248.2}/32']
+    networks:
+      edge: {ipv4_address: '${UKINFO_TUNNEL_API:-172.29.248.3}'}
+  cloudflared:
+    image: cloudflare/cloudflared:2026.10.1
+    user: '${UKINFO_MONITOR_UID:-1000}:${UKINFO_MONITOR_GID:-1000}'
+    command: [tunnel, --no-autoupdate, --config, /etc/cloudflared/config.yml, run]
+    volumes: ['${UKINFO_TUNNEL_DIR:?Set a private tunnel directory}:/etc/cloudflared:ro']
+    networks:
+      edge: {ipv4_address: '${UKINFO_TUNNEL_PEER:-172.29.248.2}'}
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    cpus: 0.5
+    mem_limit: 256m
+    pids_limit: 64
+    restart: unless-stopped
+    logging: {driver: json-file, options: {max-size: 10m, max-file: '3'}}
+networks:
+  edge:
+    ipam:
+      config: [{subnet: '${UKINFO_TUNNEL_SUBNET:-172.29.248.0/29}'}]

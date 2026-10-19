@@ -55,3 +55,5 @@ research and measurement records, rather than promises about every deployment:
 - [Product review](research/product-review-2026-10-19.md) · [Implementation follow-up](review-implementation.md)
 
 [Back to the project](../README.md)
+
+- [Production deployment, monitoring and recovery](production.md) — separate serving credentials, TLS ingress, backups and isolated restore checks.

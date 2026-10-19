@@ -151,7 +151,7 @@ func (a *API) referencedRecord(ctx context.Context, ref recordReference) (result
 	}
 	records, err := a.loadRecords(ctx, dataset, []int32{ref.ID})
 	if err != nil {
-		return result{}, 503, errors.New("Source record unavailable; catalogue needs verification")
+		return result{}, 503, sourceReadError(err)
 	}
 	item := records[0]
 	item.Dataset = ref.Dataset
@@ -170,7 +170,7 @@ func (a *API) record(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	item, status, err := a.referencedRecord(ctx, ref)
 	if err != nil {
-		fail(w, status, err.Error())
+		failError(w, status, err)
 		return
 	}
 	_, reason, err := premisesRecord(item.Record)
@@ -237,7 +237,7 @@ func (a *API) address(w http.ResponseWriter, r *http.Request) {
 	}
 	anchor, status, err := a.referencedRecord(ctx, ref)
 	if err != nil {
-		fail(w, status, err.Error())
+		failError(w, status, err)
 		return
 	}
 	ref.Dataset, ref.ID = anchor.Dataset, int32(anchor.ID)
@@ -367,7 +367,7 @@ func (a *API) address(w http.ResponseWriter, r *http.Request) {
 			}
 			records, e := a.loadRecords(ctx, dataset.ID, ids)
 			if e != nil {
-				fail(w, 503, "Address source records unavailable or timed out")
+				failError(w, 503, sourceReadError(e))
 				return
 			}
 			for _, item := range records {

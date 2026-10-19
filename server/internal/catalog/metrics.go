@@ -2,8 +2,10 @@ package catalog
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -16,21 +18,64 @@ type metricKey struct {
 	Route  string
 	Status int
 }
+type queryMetricKey struct {
+	Class  string
+	Status int
+}
 type apiMetrics struct {
-	mu       sync.Mutex
-	requests map[metricKey]requestMetric
-	active   int
+	mu            sync.Mutex
+	requests      map[metricKey]requestMetric
+	active        int
+	plans         map[string]uint64
+	classes       map[queryMetricKey]uint64
+	cacheHits     atomic.Uint64
+	cacheMisses   atomic.Uint64
+	decodedBlocks atomic.Uint64
 }
 
 var latencyBounds = [...]float64{0.05, 0.1, 0.25, 0.5, 1, 2, 5}
 
-func newAPIMetrics() *apiMetrics { return &apiMetrics{requests: make(map[metricKey]requestMetric)} }
+func newAPIMetrics() *apiMetrics {
+	return &apiMetrics{requests: make(map[metricKey]requestMetric), plans: map[string]uint64{}, classes: map[queryMetricKey]uint64{}}
+}
 func metricRoute(path string) string {
 	switch path {
 	case "/api/research", "/api/group", "/api/search", "/api/export", "/api/record", "/api/address", "/api/map", "/api/datasets", "/api/addresses", "/api/geography", "/api/health":
 		return path
 	}
 	return "other"
+}
+
+func queryClass(r *http.Request) string {
+	q := r.URL.Query()
+	if q.Get("group") == "listing" {
+		return "grouped"
+	}
+	if q.Get("sort") != "" && q.Get("sort") != "catalogue" {
+		return "ordered"
+	}
+	for _, key := range []string{"street", "locality", "town", "county"} {
+		if q.Get(key) != "" {
+			return "address"
+		}
+	}
+	if q.Get("near") != "" {
+		return "nearby"
+	}
+	if q.Get("postcode") != "" {
+		return "postcode"
+	}
+	return "name"
+}
+func (m *apiMetrics) plan(name string) {
+	switch name {
+	case "address", "source", "fallback", "error":
+	default:
+		return
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.plans[name]++
 }
 
 type metricWriter struct {
@@ -76,6 +121,13 @@ func (m *apiMetrics) wrap(next http.Handler) http.Handler {
 				}
 			}
 			m.requests[key] = item
+			if key.Route == "/api/search" || key.Route == "/api/export" {
+				class := queryClass(r)
+				m.classes[queryMetricKey{class, status}]++
+				if status >= 500 {
+					log.Printf("Request %s: route=%s class=%s status=%d", w.Header().Get("X-Request-ID"), key.Route, class, status)
+				}
+			}
 		}()
 		next.ServeHTTP(writer, r)
 	})
@@ -104,6 +156,16 @@ func (a *API) Metrics() http.Handler {
 			fmt.Fprintf(w, "ukinfo_api_request_duration_seconds_count{route=%q,status=%q} %d\n", key.Route, fmt.Sprint(key.Status), item.Count)
 			fmt.Fprintf(w, "ukinfo_api_request_duration_seconds_sum{route=%q,status=%q} %g\n", key.Route, fmt.Sprint(key.Status), item.Seconds)
 		}
+		fmt.Fprintln(w, "# TYPE ukinfo_query_requests_total counter")
+		for key, count := range a.metrics.classes {
+			fmt.Fprintf(w, "ukinfo_query_requests_total{class=%q,status=%q} %d\n", key.Class, fmt.Sprint(key.Status), count)
+		}
+		fmt.Fprintln(w, "# TYPE ukinfo_address_plans_total counter")
+		for plan, count := range a.metrics.plans {
+			fmt.Fprintf(w, "ukinfo_address_plans_total{plan=%q} %d\n", plan, count)
+		}
+		fmt.Fprintf(w, "# TYPE ukinfo_record_block_cache_lookups_total counter\nukinfo_record_block_cache_lookups_total{result=\"hit\"} %d\nukinfo_record_block_cache_lookups_total{result=\"miss\"} %d\n", a.metrics.cacheHits.Load(), a.metrics.cacheMisses.Load())
+		fmt.Fprintf(w, "# TYPE ukinfo_record_blocks_decoded_total counter\nukinfo_record_blocks_decoded_total %d\n", a.metrics.decodedBlocks.Load())
 		stats := a.DB.Stat()
 		fmt.Fprintln(w, "# TYPE ukinfo_pool_acquired gauge")
 		fmt.Fprintf(w, "ukinfo_pool_acquired %d\n", stats.AcquiredConns())

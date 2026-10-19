@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/style.css" />
     <script src="/research-model.js" defer></script>
     <script src="/workbench-model.js" defer></script>
+    <script src="/http-client.js" defer></script>
     <script src="/app.js" defer></script>
     <script src="/workbench.js" defer></script>
     <script src="/research.js" defer></script>
@@ -366,6 +367,7 @@
           <button class="primary" id="submit" type="submit">
             Search archive <span aria-hidden="true">↗</span>
           </button>
+          <button id="cancel-search" type="button" hidden>Cancel search</button>
           <button id="clear-search" type="button">Clear search fields</button>
         </form>
         <section class="results" aria-labelledby="results-title">
@@ -376,6 +378,10 @@
             <button id="export" type="button" disabled>
               Export this page ↓
             </button>
+          </div>
+          <div id="search-recovery" hidden>
+            <button id="retry-search" type="button">Retry search</button>
+            <button id="source-search" type="button" hidden>Show source entries</button>
           </div>
           <p id="status" role="status" aria-live="polite">
             Choose an edition and enter a name or postcode to begin.

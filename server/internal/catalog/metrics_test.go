@@ -79,3 +79,43 @@ func testHealthIsolation(t *testing.T, db *pgxpool.Pool) {
 		t.Fatal(busy.Code, busy.Body.String())
 	}
 }
+
+func TestQueryMetricsBoundedAndCacheReuse(t *testing.T) {
+	m := newAPIMetrics()
+	for path, want := range map[string]string{
+		"/api/search?group=listing&surname=PRIVATE": "grouped",
+		"/api/search?sort=name":                     "ordered",
+		"/api/search?town=PRIVATE":                  "address",
+		"/api/search?near=PRIVATE":                  "nearby",
+		"/api/search?postcode=PRIVATE":              "postcode",
+		"/api/search?surname=PRIVATE":               "name",
+	} {
+		if got := queryClass(httptest.NewRequest("GET", path, nil)); got != want {
+			t.Fatalf("class=%s want=%s", got, want)
+		}
+	}
+	m.plan("PRIVATE")
+	m.plan("source")
+	if len(m.plans) != 1 || m.plans["source"] != 1 {
+		t.Fatal(m.plans)
+	}
+	ctx := withRecordCache(context.Background())
+	cache := recordCache(ctx)
+	cache.observe = m
+	key := recordBlockKey{dataset: 1, block: 2}
+	if cache.get(key) != nil {
+		t.Fatal("unexpected cached block")
+	}
+	cache.put(key, []byte("invented source block"))
+	for i := 0; i < 100; i++ {
+		if cache.get(key) == nil {
+			t.Fatal("request-local block lost")
+		}
+	}
+	if m.cacheMisses.Load() != 1 || m.cacheHits.Load() != 100 {
+		t.Fatal("repeated source reads are not being observed correctly")
+	}
+	if recordCache(withRecordCache(context.Background())).get(key) != nil {
+		t.Fatal("source block leaked between requests")
+	}
+}

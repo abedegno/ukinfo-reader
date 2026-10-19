@@ -66,16 +66,43 @@ const filterLabels = {
   group: "Result view",
   sort: "Result order",
 };
-async function api(path) {
-  const response = await fetch(path, { credentials: "same-origin" });
-  const data = await response.json();
-  if (!response.ok) {
-    const error = new Error(data.error || "The catalogue is unavailable.");
-    if (typeof data.field === "string") error.field = data.field;
-    throw error;
-  }
-  return data;
+const api = (path, options) => window.UKInfoHTTP.request(path, options);
+let searchController = null, retryTimer = null, retryAt = 0, failedSearch = null;
+function clearSearchRecovery() {
+  clearTimeout(retryTimer);
+  retryTimer = null;
+  retryAt = 0;
+  failedSearch = null;
+  $("search-recovery").hidden = true;
 }
+function searchRecovery(error, params, trail) {
+  failedSearch = { params: new URLSearchParams(params), trail };
+  $("search-recovery").hidden = false;
+  $("retry-search").hidden = !error.retryable;
+  $("source-search").hidden = !(params.get("group") === "listing" || params.get("sort")) || error.status !== 503;
+  const seconds = error.retryAfter || 0;
+  retryAt = Date.now() + seconds * 1000;
+  const tick = () => {
+    const remaining = Math.max(0, Math.ceil((retryAt - Date.now()) / 1000));
+    $("retry-search").disabled = remaining > 0;
+    $("source-search").disabled = remaining > 0;
+    $("retry-search").textContent = remaining ? `Retry in ${remaining}s` : "Retry search";
+    if (remaining) retryTimer = setTimeout(tick, 250);
+  };
+  tick();
+}
+$("retry-search").addEventListener("click", () => {
+  if (failedSearch && Date.now() >= retryAt) search(failedSearch.params, failedSearch.trail);
+});
+$("source-search").addEventListener("click", () => {
+  if (!failedSearch || Date.now() < retryAt) return;
+  const params = new URLSearchParams(failedSearch.params);
+  params.delete("group"); params.delete("sort"); params.delete("cursor"); params.delete("page");
+  $("group-results").value = "source"; $("result-sort").value = "catalogue";
+  search(params);
+});
+$("cancel-search").addEventListener("click", () => searchController?.abort());
+
 function element(tag, text, className) {
   const node = document.createElement(tag);
   node.textContent = text;
@@ -83,6 +110,9 @@ function element(tag, text, className) {
   return node;
 }
 function reset() {
+  searchController?.abort();
+  clearSearchRecovery();
+  $("cancel-search").hidden = true;
   clearFieldErrors();
   generation++;
   page = [];
@@ -805,6 +835,12 @@ form.addEventListener("input", (event) => {
   if (event.target.hasAttribute("aria-invalid")) clearFieldErrors();
 });
 async function search(params, trail = [], updateURL = true) {
+  searchController?.abort();
+  clearSearchRecovery();
+  searchController = new AbortController();
+  const controller = searchController;
+  $("cancel-search").hidden = true;
+  const previous = { page, next, lastQuery, pageHistory, searchGeography };
   clearFieldErrors();
   if (updateURL) {
     const url = new URL(location.href);
@@ -838,8 +874,9 @@ async function search(params, trail = [], updateURL = true) {
   $("next-top").hidden = true;
   $("export").disabled = true;
   $("status").textContent = "Searching the archive…";
+  $("cancel-search").hidden = false;
   try {
-    const data = await api(`/api/search?${params}`);
+    const data = await api(`/api/search?${params}`, { signal: controller.signal });
     if (id !== generation) return;
     $("edit-search").hidden = false;
     lastQuery = new URLSearchParams(params);
@@ -866,13 +903,27 @@ async function search(params, trail = [], updateURL = true) {
     }
   } catch (error) {
     if (id !== generation) return;
-    page = [];
-    next = "";
-    $("items").replaceChildren();
-    $("status").textContent = error.message;
-    fieldError(error, updateURL);
+    if (previous.lastQuery && previous.page.length) {
+      ({ page, next, lastQuery, pageHistory, searchGeography } = previous);
+      render();
+      renderFilters(lastQuery);
+      explainSearch(lastQuery, page.length, Boolean(next));
+      for (const name of ["next", "previous", "previous-top", "next-top"]) $(name).hidden = true;
+    } else {
+      page = []; next = ""; $("items").replaceChildren();
+    }
+    $("status").textContent = controller.signal.aborted ? "Search cancelled. Edit your filters or search again." : error.message;
+    if (previous.lastQuery && previous.page.length) $("status").append(" Previous results are shown; they are not results for the failed search.");
+    if (!controller.signal.aborted) {
+      if (error.requestId) $("status").append(element("span", ` Reference: ${error.requestId}`, "note"));
+      searchRecovery(error, params, trail);
+      fieldError(error, updateURL);
+    }
   } finally {
-    if (id === generation) $("submit").disabled = false;
+    if (id === generation) {
+      $("submit").disabled = false;
+      $("cancel-search").hidden = true;
+    }
   }
 }
 form.addEventListener("submit", (event) => {
@@ -936,11 +987,7 @@ $("export").addEventListener("click", async () => {
   $("export").disabled = true;
   try {
     // Preserve raw source JSON bytes; browser number parsing can round large integers.
-    const response = await fetch(`/api/export?${lastQuery}`);
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || "Export unavailable.");
-    }
+    const response = await api(`/api/export?${lastQuery}`, { format: "response" });
     if ($("export-format").value === "csv") {
       const rows = (await response.text())
         .trim()
