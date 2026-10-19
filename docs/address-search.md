@@ -112,3 +112,15 @@ A matching street/location tuple does not establish a shared household or identi
 
 See the [complete-edition measurements](research/address-index.md) for the retained
 layout, storage, query experiments and benchmark limits.
+
+## Selective names with address filters
+
+For name/business-name searches with at most 128 source candidates across the selected
+editions, the API checks addresses directly from the lossless record blocks using the
+same displayed-field projection as the address index. This avoids expanding an entire
+town's address postings for a small set of names, especially on HDD storage.
+
+The API first probes for 129 candidates. If that extra candidate exists, it retains
+the indexed address intersection; 128 is a plan-selection threshold, not a result cap.
+Address-index readiness, prefix/exact matching, grouping, ordering and cursor pagination
+retain their existing rules. No new index, source re-import or timeout increase is needed.

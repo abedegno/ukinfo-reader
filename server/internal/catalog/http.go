@@ -389,6 +389,7 @@ type candidateFilters struct {
 	args                 []any
 	conditions, termCTEs []string
 	missing, areaOnly    bool
+	addressMatched       bool
 	geography            *GeographySearch
 	nearbyIDs            []int32
 	radiusArg            int
@@ -588,7 +589,11 @@ func (a *API) candidateFilters(ctx context.Context, q query) (candidateFilters, 
 		conditions = append(conditions, "EXISTS(SELECT 1 FROM research_keys r WHERE "+strings.Join(clauses, " AND ")+fence+")")
 	}
 
-	return candidateFilters{q: q, datasetKeys: datasetKeys, datasetIDs: datasetIDs, args: args, conditions: conditions, termCTEs: termCTEs, missing: missing, areaOnly: areaOnly, geography: geography, nearbyIDs: nearbyIDs, radiusArg: radiusArg, distances: distances}, 200, nil
+	f := candidateFilters{q: q, datasetKeys: datasetKeys, datasetIDs: datasetIDs, args: args, conditions: conditions, termCTEs: termCTEs, missing: missing, areaOnly: areaOnly, geography: geography, nearbyIDs: nearbyIDs, radiusArg: radiusArg, distances: distances}
+	if err = a.matchSelectiveAddresses(ctx, &f); err != nil {
+		return candidateFilters{}, 503, errors.New("Selective address search unavailable or timed out")
+	}
+	return f, 200, nil
 }
 func (a *API) searchCandidates(ctx context.Context, q query) (searchResult, int, error) {
 	f, status, err := a.candidateFilters(ctx, q)
@@ -660,7 +665,7 @@ func (a *API) searchCandidates(ctx context.Context, q query) (searchResult, int,
 		for _, dataset := range datasetIDs {
 			args = append(args, dataset)
 			datasetArg := len(args)
-			if q.hasAddress() {
+			if q.hasAddress() && !f.addressMatched {
 				predicate := addressPredicate(q, &args)
 				args = append(args, afterID)
 				afterArg := len(args)

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Avoid whole-town address expansion for selective name/business searches by checking
+  the complete small candidate set against preserved address fields. Retain full
+  indexed searches above the threshold, with unchanged grouping and pagination.
+
 - Add bounded public API quotas, explicit Cloudflare tunnel-peer trust and additional
   browser security headers for anonymous hosted deployments.
 - Reorganise the README and documentation around web, desktop, Python and preservation

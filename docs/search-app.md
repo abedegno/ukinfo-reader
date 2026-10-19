@@ -257,7 +257,7 @@ and follow PostgreSQL recovery procedures. Preserve the password file with its c
   contributes at most `limit+1` indexed candidates before the global page is selected.
   Postcode-prefix and nearby searches order by postcode code before name codes to use the existing
   postcode index efficiently. This order is stable, **not alphabetical or chronological**.
-  With the research index, `sort=name`, `sort=edition` and `sort=distance` provide
+  With the research index, `sort=name`, `sort=edition` and `sort=nearest` provide
   explicit ordering; distance requires a nearby centre. See [ordering rules](research-index.md#ordering-and-classifications).
   Old-version cursors may be invalid after upgrading or a catalogue change. Edition labels use cover-disc dates,
   not verified electoral-roll dates.

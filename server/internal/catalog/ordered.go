@@ -81,7 +81,7 @@ func (a *API) orderedCandidates(ctx context.Context, q query) (searchResult, []o
 	conditions := append([]string(nil), f.conditions...)
 
 	base := "SELECT * FROM entries WHERE " + strings.Join(conditions, " AND ")
-	if q.hasAddress() {
+	if q.hasAddress() && !f.addressMatched {
 		predicate := addressPredicate(q, &args)
 		f.termCTEs = append(f.termCTEs, "ordered_addresses AS MATERIALIZED (SELECT m.dataset_id,unnest(m.ids) AS id FROM address_members m JOIN address_locations l ON l.id=m.location_id WHERE m.dataset_id=ANY($1::smallint[]) AND "+predicate+")")
 		if q.Surname != "" || q.First != "" || q.Organisation != "" || q.Postcode != "" || q.Near != "" || q.hasBusinessFilters() {
