@@ -50,7 +50,9 @@ fail before building a candidate; there is no unsigned fallback in this workflow
    validates the ticket, verifies nested signatures, and checks Gatekeeper assessment.
    Stapling/validation retries only the observed connection-loss error (exit 68 plus
    `NSURLErrorDomain Code=-1005`), at most four attempts with 2/4/8-second waits. The
-   packager uses the same ticket check. Invalid tickets, signature failures and persistent
+   standalone packager uses the same ticket check. The signed workflow uses
+   `package_desktop_release.py --notarize`: it executes the full Apple gate and then
+   archives that same app in one process; the flag never substitutes for validation. Invalid tickets, signature failures and persistent
    transport failures remain fatal; notarization acceptance is never inferred from a retry.
 6. Creates source-data-free ZIPs, SHA-256 files and manifests identifying the result
    as Developer ID signed, notarized and stapled. The manifest checks the actual app

@@ -10,14 +10,40 @@ import tarfile
 from pathlib import Path
 
 if __package__:
-    from .macos_signing import ticket_check
+    from .macos_signing import notarize, ticket_check
 else:
-    from macos_signing import ticket_check
+    from macos_signing import notarize, ticket_check
+
+
+def macos_signing_state(app, submit):
+    """Verify this app before archiving; submission performs the full Apple gate."""
+    subprocess.run(["codesign", "--verify", "--deep", "--strict", str(app)], check=True)
+    result = subprocess.run(
+        ["codesign", "-dv", "--verbose=4", str(app)], capture_output=True, text=True, check=True
+    )
+    developer_id = "Authority=Developer ID Application:" in result.stderr
+    if submit and not developer_id:
+        raise RuntimeError("Notarization requires a Developer ID signed app")
+    if developer_id:
+        if submit:
+            # This call requires Accepted, stapling, ticket validation, strict
+            # signatures and Gatekeeper. No flag/previous-step status substitutes
+            # for those checks. Archive this same app immediately afterwards.
+            notarize(app)
+        else:
+            ticket_check(["xcrun", "stapler", "validate", str(app)])
+        return "Developer ID, notarized and stapled"
+    return "ad-hoc, not notarized"
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=Path("dist/releases"))
+    parser.add_argument(
+        "--notarize",
+        action="store_true",
+        help="Run the complete Apple acceptance/ticket/signature/Gatekeeper gate before archiving",
+    )
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     version = json.loads((root / "desktop/package.json").read_text())["version"]
@@ -29,6 +55,8 @@ def main():
     )
     if not system or not arch:
         parser.error("unsupported native platform")
+    if args.notarize and system != "darwin":
+        parser.error("notarization requires macOS")
     bundle = root / f"dist/desktop/UK-Info Archive-{system}-{arch}"
     if not bundle.is_dir():
         parser.error("run the packaged app check before creating its release archive")
@@ -56,9 +84,10 @@ def main():
     args.output.mkdir(parents=True, exist_ok=True)
     label = f"ukinfo-archive-{version}-{system}-{arch}"
     archive = args.output / (label + (".zip" if system == "darwin" else ".tar.gz"))
+    signing = "unsigned"
     if system == "darwin":
         app = bundle / "UK-Info Archive.app"
-        subprocess.run(["codesign", "--verify", "--deep", "--strict", str(app)], check=True)
+        signing = macos_signing_state(app, args.notarize)
         subprocess.run(
             [
                 "ditto",
@@ -76,16 +105,6 @@ def main():
         with tarfile.open(archive, "w:gz") as target:
             target.add(bundle, arcname=bundle.name)
         runtime = bundle / "resources/runtime"
-    signing = "unsigned"
-    if system == "darwin":
-        result = subprocess.run(
-            ["codesign", "-dv", "--verbose=4", str(app)], capture_output=True, text=True, check=True
-        )
-        if "Authority=Developer ID Application:" in result.stderr:
-            ticket_check(["xcrun", "stapler", "validate", str(app)])
-            signing = "Developer ID, notarized and stapled"
-        else:
-            signing = "ad-hoc, not notarized"
     manifest = {
         "version": version,
         "commit": subprocess.check_output(
