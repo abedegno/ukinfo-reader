@@ -227,7 +227,8 @@ The production NAS's networking, HEC provisioning and secrets are managed in hom
 The application emits fixed `HTTP request completed` records for searches/exports
 and unsuccessful API responses. Fields contain only normalized route/method/query
 class, numeric status/duration, a structured failure reason and the server-generated
-request ID. OTLP carries trace/span IDs, including for unsampled requests; a trace
+request ID. The HEC exporter maps severity text to Splunk’s `severity` field.
+OTLP carries trace/span IDs, including for unsampled requests; a trace
 link has a stored trace only when that trace was sampled. Health successes do not
 produce log noise. Query strings, bodies, results, raw errors and standard stderr
 are never bridged into this pipeline.

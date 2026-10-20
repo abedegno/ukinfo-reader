@@ -102,6 +102,8 @@ exporters:
     source: ukinfo-server
     sourcetype: otel
     profiling_data_enabled: false
+    otel_to_hec_fields:
+      severity_text: severity
     timeout: 5s
     tls:
       ca_file: /etc/otelcol/splunk-ca.pem

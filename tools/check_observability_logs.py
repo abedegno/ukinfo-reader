@@ -40,6 +40,7 @@ for _ in range(100):
 assert len(received)==2,'Expected two sanitized events and one dropped raw event'
 for item in received:
  assert item['index']=='ukinfo_dev' and item['sourcetype']=='otel'
+ assert item['fields']['severity']=='ERROR','Splunk severity mapping missing'
 wire=json.dumps(received)
 assert '11111111111111111111111111111111' in wire and '2222222222222222' in wire,'Trace correlation lost'
 assert 'ERROR' in wire,'Severity not normalized'
