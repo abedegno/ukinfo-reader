@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Expand required CI with skewed invented search-plan and paginated API matrices;
+  retain aggregate timing/work artifacts and add a private read-only plan benchmark.
+- Add pool-wait and structured API failure counters, request p95/error/wait charts
+  and missing-telemetry detection; export latency histograms with delta temporality.
+
 - Add optional online hosted covering indexes for name/given-name searches with
   postcode filters, avoiding national heap reads on HDD storage; verify index
   creation, compatibility guards and unchanged results in required CI.

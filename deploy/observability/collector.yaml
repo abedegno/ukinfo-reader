@@ -49,6 +49,12 @@ processors:
       - context: datapoint
         statements:
           - keep_keys(attributes, ["route", "status", "class", "plan", "result", "le", "reason"])
+  # Prometheus histograms are cumulative; Splunk percentiles need delta buckets.
+  cumulativetodelta/latency:
+    include:
+      metrics: [ukinfo_api_request_duration_seconds]
+      match_type: strict
+    initial_value: drop
   batch:
     timeout: 10s
     send_batch_size: 256
@@ -83,5 +89,5 @@ service:
       exporters: [otlphttp/splunk]
     metrics:
       receivers: [prometheus]
-      processors: [memory_limiter, filter/metrics, transform/privacy, batch]
+      processors: [memory_limiter, filter/metrics, transform/privacy, cumulativetodelta/latency, batch]
       exporters: [otlphttp/splunk]

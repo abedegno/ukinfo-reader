@@ -2,12 +2,119 @@
 """Check online hosted covering indexes in a disposable PostgreSQL 18 instance."""
 
 import json
+import os
 import subprocess
 import time
 import uuid
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def check_plan_matrix(sql):
+    """Candidate SQL shapes: fixed work budgets, both cached-plan modes.
+
+    The fixture deliberately has a dominant surname, rare names, 1,970 given-name
+    variants, 727 postcode terms, businesses and two overlapping editions.
+    SQL timings describe a small cached fixture, not production HDD capacity.
+    """
+    cases = [
+        ("common-name-district", [1], 0, [3], list(range(1970)), list(range(100))),
+        ("rare-name-district", [1], 0, [9], list(range(1970)), list(range(100))),
+        ("given-name-variants", [1], 0, [3], list(range(3, 1970, 10)), list(range(727))),
+        ("full-postcode", [1], 0, [3], list(range(1970)), [3]),
+        ("postcode-sector", [1], 0, [3], list(range(1970)), list(range(10))),
+        ("business-district", [1, 2], 1, [3], list(range(1970)), list(range(100))),
+        ("all-editions", [1, 2], 0, [3], list(range(1970)), list(range(100))),
+    ]
+    rows = []
+    for label, editions, kind, names, firsts, postcodes in cases:
+        for page in [0, 1]:
+            query = """SELECT dataset_id,id,name_id,first_id,postcode_id FROM entries
+WHERE dataset_id=ANY($1) AND kind=$2 AND name_id=ANY($3)
+AND first_id=ANY($4) AND postcode_id=ANY($5)
+AND (postcode_id,name_id,first_id,id,dataset_id)>($6,$7,$8,$9,$10)
+ORDER BY postcode_id,name_id,first_id,id,dataset_id LIMIT 51"""
+            # Page two starts at the independently evaluated page-one boundary.
+            args = [editions, kind, names, firsts, postcodes, -1, -1, -1, -1, -1]
+
+            def literal(value):
+                return "ARRAY" + str(value) if isinstance(value, list) else str(value)
+
+            def expanded():
+                text = query
+                for i in range(len(args), 0, -1):
+                    text = text.replace("$" + str(i), literal(args[i - 1]))
+                return text
+
+            if page:
+                boundary = sql(expanded().replace("LIMIT 51", "LIMIT 50")).stdout.splitlines()
+                if len(boundary) < 50:
+                    continue
+                d, identity, name, first, postcode = map(int, boundary[-1].split("|"))
+                args[5:] = [postcode, name, first, identity, d]
+            # Independent result reference with index access disabled.
+            reference = sql(
+                "BEGIN; SET LOCAL enable_indexscan=off; SET LOCAL enable_indexonlyscan=off; SET LOCAL enable_bitmapscan=off; "
+                + expanded()
+                + "; ROLLBACK;"
+            ).stdout
+            for mode in ["force_custom_plan", "force_generic_plan"]:
+                prepare = (
+                    "BEGIN; SET LOCAL plan_cache_mode="
+                    + mode
+                    + "; PREPARE matrix(smallint[],smallint,integer[],integer[],integer[],integer,integer,integer,integer,smallint) AS "
+                    + query
+                    + "; "
+                )
+                execute = "EXECUTE matrix(" + ",".join(map(literal, args)) + ")"
+                assert sql(prepare + execute + "; ROLLBACK;").stdout == reference, (
+                    label + ": result/order mismatch"
+                )
+                plan = json.loads(
+                    sql(
+                        prepare + "EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) " + execute + "; ROLLBACK;"
+                    ).stdout
+                )[0]
+                nodes = []
+
+                def walk(node):
+                    nodes.append(node)
+                    for child in node.get("Plans", []):
+                        walk(child)
+
+                walk(plan["Plan"])
+                scans = [n for n in nodes if n.get("Relation Name", "").startswith("entries_d")]
+                assert scans and all(
+                    n["Node Type"] == "Index Only Scan" and n.get("Heap Fetches") == 0
+                    for n in scans
+                ), label + ": heap/sequence scan regression"
+                blocks = plan["Plan"].get("Shared Hit Blocks", 0) + plan["Plan"].get(
+                    "Shared Read Blocks", 0
+                )
+                assert blocks < 1500, label + ": candidate buffer budget exceeded"
+                rows.append(
+                    {
+                        "case": label,
+                        "page": page + 1,
+                        "mode": mode,
+                        "milliseconds": plan["Execution Time"],
+                        "shared_blocks": blocks,
+                        "shared_read_blocks": plan["Plan"].get("Shared Read Blocks", 0),
+                        "heap_fetches": sum(n.get("Heap Fetches", 0) for n in scans),
+                    }
+                )
+    report = {
+        "fixture_entries": 50000,
+        "conditions": "cached disposable PostgreSQL; not a cold-disk or capacity benchmark",
+        "plans": rows,
+    }
+    if output := os.environ.get("UKINFO_PLAN_REPORT"):
+        Path(output).parent.mkdir(parents=True, exist_ok=True)
+        Path(output).write_text(json.dumps(report, indent=2) + "\n")
+    print(
+        f"Search plan matrix passed: {len(rows)} custom/generic page plans; exact results, zero heap fetches and bounded buffers."
+    )
 
 
 def main():
@@ -71,7 +178,7 @@ CREATE TABLE entries_d1 PARTITION OF entries FOR VALUES IN (1);
 CREATE TABLE entries_d2 PARTITION OF entries FOR VALUES IN (2);
 CREATE INDEX entries_name ON entries(dataset_id,kind,name_id,first_id,id);
 CREATE INDEX entries_postcode ON entries(dataset_id,kind,postcode_id,name_id,first_id,id);
-INSERT INTO entries SELECT d,0,i%10,i%1970,i,i%727 FROM generate_series(1,25000) i CROSS JOIN generate_series(1,2) d;
+INSERT INTO entries SELECT d,CASE WHEN i%20=0 THEN 1 ELSE 0 END,CASE WHEN i%10<7 THEN 3 ELSE i%10 END,i%1970,i,i%727 FROM generate_series(1,25000) i CROSS JOIN generate_series(1,2) d;
 VACUUM (ANALYZE) entries;
 """)
         query = "SELECT dataset_id,id,name_id,first_id,postcode_id FROM entries WHERE dataset_id=1 AND kind=0 AND name_id=3 AND first_id=ANY(ARRAY[3,13,23,33,43,53,63]) AND postcode_id=ANY(ARRAY(SELECT generate_series(0,726))) ORDER BY postcode_id,name_id,first_id,id,dataset_id LIMIT 101"
@@ -125,6 +232,7 @@ VACUUM (ANALYZE) entries;
             and n.get("Heap Fetches") == 0
             for n in nodes
         ), "Prepared generic plan did not use heap-free covering scan"
+        check_plan_matrix(sql)
         sql(
             "DROP INDEX nas_entries_d1_name_postcode_cover; CREATE INDEX nas_entries_d1_name_postcode_cover ON entries_d1(id);"
         )

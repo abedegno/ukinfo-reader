@@ -624,7 +624,7 @@ func (a *API) buildCandidateFilters(ctx context.Context, q query) (candidateFilt
 
 	f := candidateFilters{q: q, datasetKeys: datasetKeys, datasetIDs: datasetIDs, args: args, conditions: conditions, termCTEs: termCTEs, missing: missing, areaOnly: areaOnly, geography: geography, nearbyIDs: nearbyIDs, radiusArg: radiusArg, distances: distances}
 	if err = a.matchSelectiveAddresses(ctx, &f); err != nil {
-		return candidateFilters{}, 503, errors.New("Selective address search unavailable or timed out")
+		return candidateFilters{}, 503, searchReadError(err)
 	}
 	return f, 200, nil
 }
@@ -744,7 +744,7 @@ func (a *API) searchCandidates(ctx context.Context, q query) (searchResult, int,
 		}
 		if e != nil {
 			log.Printf("Search query failed: %v", e)
-			return searchResult{}, 503, errors.New("Search unavailable or timed out; narrow the search")
+			return searchResult{}, 503, searchReadError(e)
 		}
 		for rows.Next() {
 			var id, name, first, postcode int32
@@ -769,7 +769,7 @@ func (a *API) searchCandidates(ctx context.Context, q query) (searchResult, int,
 		rows.Close()
 		finish()
 		if err != nil {
-			return searchResult{}, 503, errors.New("Search timed out; narrow the search")
+			return searchResult{}, 503, searchReadError(err)
 		}
 		if next != "" || !areaOnly || batchStart >= len(nearbyIDs) {
 			break

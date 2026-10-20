@@ -29,6 +29,8 @@ class Metrics(http.server.BaseHTTPRequestHandler):
     def log_message(self, *args): pass
     def do_GET(self):
         self.send_response(200); self.end_headers()
+        latency = '# TYPE ukinfo_api_request_duration_seconds histogram\nukinfo_api_request_duration_seconds_bucket{le="1"} 2\nukinfo_api_request_duration_seconds_bucket{le="+Inf"} 3\nukinfo_api_request_duration_seconds_count 3\nukinfo_api_request_duration_seconds_sum 2\n'
+        self.wfile.write(latency.encode())
         self.wfile.write(b'# TYPE ukinfo_pool_acquired gauge\nukinfo_pool_acquired{route="/api/search",private="SECRET_LABEL"} 2\n# TYPE ukinfo_record_blocks_decoded_total counter\nukinfo_record_blocks_decoded_total 12\n# TYPE invented_private gauge\ninvented_private 42\n')
 threading.Thread(target=http.server.HTTPServer(('127.0.0.1',9091), Metrics).serve_forever, daemon=True).start()
 payload = {'resourceSpans':[{'resource':{'attributes':[{'key':'private','value':{'stringValue':'SECRET_RESOURCE'}}]},'scopeSpans':[{'spans':[{'traceId':'11111111111111111111111111111111','spanId':'2222222222222222','name':'HTTP /api/search','kind':2,'startTimeUnixNano':str(time.time_ns()-1000000),'endTimeUnixNano':str(time.time_ns()),'attributes':[{'key':'http.route','value':{'stringValue':'/api/search'}},{'key':'url.full','value':{'stringValue':'SECRET_QUERY'}}]}]}]}]}
@@ -41,7 +43,7 @@ else: raise SystemExit('OTLP receiver did not start')
 for attempt in range(100):
     try:
         text=open('/out/signals.json').read()
-        if 'ukinfo_pool_acquired' in text and 'HTTP /api/search' in text and received == {'/v1/metrics', '/v1/traces'}: break
+        if 'ukinfo_pool_acquired' in text and 'HTTP /api/search' in text and 'ukinfo_api_request_duration_seconds' in text and received == {'/v1/metrics', '/v1/traces'}: break
     except OSError: pass
     time.sleep(.2)
 else: raise SystemExit('Collector did not export both signals')
@@ -137,6 +139,17 @@ def main():
             }
             assert "ukinfo_record_blocks_decoded_total" in names, (
                 f"Unexpected counter translation: {names}"
+            )
+            histograms = [
+                metric["histogram"]
+                for item in signals
+                for resource in item.get("resourceMetrics", [])
+                for scope in resource.get("scopeMetrics", [])
+                for metric in scope.get("metrics", [])
+                if metric["name"] == "ukinfo_api_request_duration_seconds"
+            ]
+            assert histograms and all(h["aggregationTemporality"] == 1 for h in histograms), (
+                "Latency histogram must export delta temporality"
             )
             print(
                 "Collector passed: OTLP traces, Prometheus metrics, privacy filtering, counter names and authenticated HTTP export; no egress."

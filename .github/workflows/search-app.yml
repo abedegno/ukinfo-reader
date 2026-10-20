@@ -18,6 +18,8 @@ jobs:
           --health-interval 2s --health-timeout 2s --health-retries 30
     env:
       DATABASE_URL: postgres://ukinfo:ci-only@127.0.0.1:5432/ukinfo?sslmode=disable
+      UKINFO_PLAN_REPORT: ${{ github.workspace }}/build/performance/plans.json
+      UKINFO_PERFORMANCE_REPORT_DIR: ${{ github.workspace }}/build/performance
       UKINFO_TEST_DATABASE_URL: postgres://ukinfo:ci-only@127.0.0.1:5432/ukinfo?sslmode=disable
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -70,3 +72,11 @@ jobs:
           done
           cd desktop
           npm run test:ui
+      - name: Search performance evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: search-performance
+          path: build/performance/*.json
+          if-no-files-found: warn
+          retention-days: 30

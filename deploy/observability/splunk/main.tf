@@ -53,6 +53,30 @@ locals {
       name    = "Search 503 responses / second"
       program = "data('ukinfo_query_requests_total', filter=filter('status', '503'), rollup='rate').sum().publish(label='503 responses/s')"
     }
+    latency = {
+      name    = "API p95 latency by route (seconds, bucket estimate)"
+      program = "histogram('ukinfo_api_request_duration_seconds').percentile(pct=95, by=['route']).publish(label='p95 seconds')"
+    }
+    errors = {
+      name    = "Search error percentage"
+      program = "total = data('ukinfo_query_requests_total', rollup='rate').sum()\nfailed = data('ukinfo_query_requests_total', filter=filter('status', '5*'), rollup='rate').sum().fill(0)\n(100 * failed / total).publish(label='Search errors %')"
+    }
+    timeouts = {
+      name    = "Classified API failures / second"
+      program = "data('ukinfo_api_failures_total', rollup='rate').sum(by=['reason']).publish(label='Failures/s')"
+    }
+    waits = {
+      name    = "Pool waits and canceled acquisitions / second"
+      program = "data('ukinfo_pool_waits_total', rollup='rate').sum().publish(label='Successful waited acquires/s')\ndata('ukinfo_pool_canceled_acquires_total', rollup='rate').sum().publish(label='Canceled acquires/s')"
+    }
+    wait_latency = {
+      name    = "Mean successful pool wait (seconds)"
+      program = "seconds = data('ukinfo_pool_wait_seconds_total', rollup='rate').sum()\nwaits = data('ukinfo_pool_waits_total', rollup='rate').sum()\n(seconds / waits).publish(label='Mean waited acquire seconds')"
+    }
+    heartbeat = {
+      name    = "Telemetry heartbeat (expected pool size)"
+      program = "data('ukinfo_pool_max', extrapolation='null').sum().publish(label='Pool maximum')"
+    }
     decoded = {
       name    = "Decoded record blocks / second"
       program = "data('ukinfo_record_blocks_decoded_total', rollup='rate').sum().publish(label='Decoded blocks/s')"
@@ -95,4 +119,19 @@ resource "signalfx_detector" "pool" {
 }
 output "dashboard_id" {
   value = signalfx_dashboard.ukinfo.id
+}
+
+resource "signalfx_detector" "telemetry" {
+  name         = "UK-Info telemetry stopped"
+  description  = "No pool heartbeat for five minutes after a stream has been observed. Does not distinguish API, Collector, network or NAS failure."
+  program_text = <<-SIGNALFLOW
+    from signalfx.detectors.not_reporting import not_reporting
+    heartbeat = data('ukinfo_pool_max', extrapolation='null')
+    not_reporting.detector(heartbeat, duration=duration('5m')).publish('Missing telemetry')
+  SIGNALFLOW
+  rule {
+    detect_label  = "Missing telemetry"
+    severity      = "Critical"
+    notifications = var.notifications
+  }
 }
