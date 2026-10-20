@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add opt-in upstream OpenTelemetry request, database pool/query, record-loading
+  and address-selection traces; private Collector configuration for Splunk OTLP,
+  versioned Terraform dashboard/detector, and invented-data privacy checks in CI.
+
 - Extend adaptive address searches to postcode/nearby/classification anchors, compact
   address candidate sets and source-block budgets rather than a 128-entry cutoff.
 - Reuse decoded source blocks and candidate plans within a bounded HTTP request;

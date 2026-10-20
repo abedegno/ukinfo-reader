@@ -177,3 +177,9 @@ Apply it with `gh api --method PUT repos/OWNER/REPO/branches/main/protection --i
 .github/branch-protection.json` and verify the server response. The file alone does
 not activate protection. Dependabot configuration likewise does not establish that
 repository vulnerability alerts/security update settings are enabled.
+
+## Optional OpenTelemetry backend
+
+[OpenTelemetry and Splunk setup](observability.md) adds a private, resource-limited
+Collector and versioned dashboards. Existing health checks and `/metrics` remain
+available. Export is disabled by default and desktop telemetry stays disabled.

@@ -49,3 +49,11 @@ test-results/
 *.log
 /ukinfo-server
 /server/ukinfo-server
+
+# Observability deployment secrets and Terraform state
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+!*.tfvars.example
