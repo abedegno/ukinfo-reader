@@ -36,6 +36,7 @@ jobs:
           python3 ../tools/check_web_assets.py
           python3 ../tools/test_monitor.py
           python3 ../tools/check_observability.py
+          python3 ../tools/check_covering_search_indexes.py
           python3 ../tools/check_serving_role.py
           test -z "$(gofmt -l .)"
           go vet ./...
