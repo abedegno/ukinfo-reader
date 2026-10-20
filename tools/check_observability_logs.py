@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """Exercise the deployed Collector log privacy policy with invented OTLP/HEC data."""
-import json,subprocess,tempfile,uuid
+
+import subprocess
+import tempfile
+import uuid
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[1]
-IMAGE='otel/opentelemetry-collector-contrib:0.163.1@sha256:1175b03003053962012f5a231f5567f66a3e8fdb960c7835c0e48f7aa1555806'
-FIXTURE=r'''
+
+ROOT = Path(__file__).resolve().parents[1]
+IMAGE = "otel/opentelemetry-collector-contrib:0.163.1@sha256:1175b03003053962012f5a231f5567f66a3e8fdb960c7835c0e48f7aa1555806"
+FIXTURE = r"""
 import gzip,http.server,json,threading,time,urllib.request
 received=[]
 class HEC(http.server.BaseHTTPRequestHandler):
@@ -40,20 +44,77 @@ wire=json.dumps(received)
 assert '11111111111111111111111111111111' in wire and '2222222222222222' in wire,'Trace correlation lost'
 assert 'ERROR' in wire,'Severity not normalized'
 open('/out/receipt.json','w').write(json.dumps({'safe_events':len(received),'raw_event_dropped':True,'privacy_canaries_absent':True,'trace_context_preserved':True}))
-'''
+"""
 
-def run(*args,**kwargs):return subprocess.run(args,check=True,capture_output=True,text=True,**kwargs)
+
+def run(*args, **kwargs):
+    return subprocess.run(args, check=True, capture_output=True, text=True, **kwargs)
+
+
 def main():
- name='ukinfo-log-check-'+uuid.uuid4().hex[:10]
- with tempfile.TemporaryDirectory(prefix='ukinfo-log-check-') as tmp:
-  root=Path(tmp);root.chmod(0o755);out=root/'out';out.mkdir(mode=0o777);out.chmod(0o777)
-  config=(ROOT/'deploy/observability/collector.logs.yaml').read_text().replace('${env:SPLUNK_HEC_ENDPOINT}','http://127.0.0.1:18088/services/collector').replace('    tls:\n      ca_file: /etc/otelcol/splunk-ca.pem\n','')
-  (root/'collector.yaml').write_text(config);(root/'hec-token').write_text('invented-hec-token');(root/'ingest-token').write_text('invented-ingest-token')
-  try:
-   run('docker','run','-d','--name',name,'--network','none','--read-only','--cap-drop=ALL','--security-opt=no-new-privileges','--memory=128m','--cpus=0.25','--env','SPLUNK_REALM=eu0','--volume',str(root/'collector.yaml')+':/etc/otelcol/config.yaml:ro','--volume',str(root/'hec-token')+':/run/secrets/splunk_hec_token:ro','--volume',str(root/'ingest-token')+':/run/secrets/splunk_ingest_token:ro',IMAGE,'--config=/etc/otelcol/config.yaml')
-   run('docker','run','--rm','--network','container:'+name,'--volume',str(out)+':/out','python:3.13-slim','python','-c',FIXTURE,timeout=40)
-   print((out/'receipt.json').read_text())
-  except subprocess.CalledProcessError as error:
-   print(error.stderr[-2500:]);print(run('docker','logs',name).stderr[-3500:]);raise
-  finally:subprocess.run(['docker','rm','-f',name],capture_output=True)
-if __name__=='__main__':main()
+    name = "ukinfo-log-check-" + uuid.uuid4().hex[:10]
+    with tempfile.TemporaryDirectory(prefix="ukinfo-log-check-") as tmp:
+        root = Path(tmp)
+        root.chmod(0o755)
+        out = root / "out"
+        out.mkdir(mode=0o777)
+        out.chmod(0o777)
+        config = (
+            (ROOT / "deploy/observability/collector.logs.yaml")
+            .read_text()
+            .replace("${env:SPLUNK_HEC_ENDPOINT}", "http://127.0.0.1:18088/services/collector")
+            .replace("    tls:\n      ca_file: /etc/otelcol/splunk-ca.pem\n", "")
+        )
+        (root / "collector.yaml").write_text(config)
+        (root / "hec-token").write_text("invented-hec-token")
+        (root / "ingest-token").write_text("invented-ingest-token")
+        try:
+            run(
+                "docker",
+                "run",
+                "-d",
+                "--name",
+                name,
+                "--network",
+                "none",
+                "--read-only",
+                "--cap-drop=ALL",
+                "--security-opt=no-new-privileges",
+                "--memory=128m",
+                "--cpus=0.25",
+                "--env",
+                "SPLUNK_REALM=eu0",
+                "--volume",
+                str(root / "collector.yaml") + ":/etc/otelcol/config.yaml:ro",
+                "--volume",
+                str(root / "hec-token") + ":/run/secrets/splunk_hec_token:ro",
+                "--volume",
+                str(root / "ingest-token") + ":/run/secrets/splunk_ingest_token:ro",
+                IMAGE,
+                "--config=/etc/otelcol/config.yaml",
+            )
+            run(
+                "docker",
+                "run",
+                "--rm",
+                "--network",
+                "container:" + name,
+                "--volume",
+                str(out) + ":/out",
+                "python:3.13-slim",
+                "python",
+                "-c",
+                FIXTURE,
+                timeout=40,
+            )
+            print((out / "receipt.json").read_text())
+        except subprocess.CalledProcessError as error:
+            print(error.stderr[-2500:])
+            print(run("docker", "logs", name).stderr[-3500:])
+            raise
+        finally:
+            subprocess.run(["docker", "rm", "-f", name], capture_output=True)
+
+
+if __name__ == "__main__":
+    main()
