@@ -56,7 +56,12 @@ def main():
             "postgres:18.6-alpine",
         )
         for _ in range(60):
-            if docker("exec", name, "pg_isready", "-h", "127.0.0.1", "-U", "ukinfo", check=False).returncode == 0:
+            if (
+                docker(
+                    "exec", name, "pg_isready", "-h", "127.0.0.1", "-U", "ukinfo", check=False
+                ).returncode
+                == 0
+            ):
                 break
             time.sleep(0.2)
         else:
@@ -96,6 +101,30 @@ VACUUM (ANALYZE) entries;
             and n.get("Heap Fetches") == 0
             for n in nodes
         ), "Candidate search did not use heap-free covering scan"
+        generic = (
+            query.replace("dataset_id=1", "dataset_id=$1")
+            .replace("kind=0", "kind=$2")
+            .replace("name_id=3", "name_id=$3")
+            .replace("ARRAY[3,13,23,33,43,53,63]", "$4")
+            .replace("ARRAY(SELECT generate_series(0,726))", "$5")
+        )
+        generic_plan = json.loads(
+            sql(
+                "BEGIN; SET LOCAL plan_cache_mode=force_generic_plan; PREPARE fixture(smallint,smallint,integer,integer[],integer[]) AS "
+                + generic
+                + "; EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) EXECUTE fixture(1,0,3,ARRAY[3,13,23,33,43,53,63],ARRAY"
+                + str(list(range(727)))
+                + "); ROLLBACK;"
+            ).stdout
+        )[0]
+        nodes.clear()
+        walk(generic_plan["Plan"])
+        assert any(
+            n.get("Index Name") == "nas_entries_d1_name_postcode_cover"
+            and n["Node Type"] == "Index Only Scan"
+            and n.get("Heap Fetches") == 0
+            for n in nodes
+        ), "Prepared generic plan did not use heap-free covering scan"
         sql(
             "DROP INDEX nas_entries_d1_name_postcode_cover; CREATE INDEX nas_entries_d1_name_postcode_cover ON entries_d1(id);"
         )
@@ -105,7 +134,7 @@ VACUUM (ANALYZE) entries;
         )
         assert sql(query).stdout == before, "Guard changed existing data"
         print(
-            "Covering index checks passed: concurrent build, idempotency, exact results/order, index-only plan and incompatible-index guard."
+            "Covering index checks passed: concurrent build, idempotency, exact results/order, custom/generic index-only plans and incompatible-index guard."
         )
     except subprocess.CalledProcessError as error:
         print(error.stderr)
