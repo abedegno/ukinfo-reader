@@ -5,7 +5,9 @@ provider "registry.terraform.io/splunk-terraform/signalfx" {
   version     = "9.35.1"
   constraints = "9.35.1"
   hashes = [
+    "h1:EAn0RXCnyRUV0kqkfin8iSVXBmC2y9POCd2A2zrR8GI=",
     "h1:StZqHYSpeWc3wZd5Mi3qEY8WPn/zIdcxeMOSlEnJSgE=",
+    "h1:iB7foNdptwTaE79QFYKCFf4LFkZ6U4qyt0H07U7KlXA=",
     "zh:123ffbf2c1b7b28887b317a1932fe3e1bdf6593d23b2833618f2ed25c57d433b",
     "zh:254443515ea5a27049375495e32dc2c59d41b0a8a2ae30bf4935c574776a981c",
     "zh:277fa6ebbf7b32517158b304722cbeb6fa465f5c2a6576253659ff9a641fe0c2",
