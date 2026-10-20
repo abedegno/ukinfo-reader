@@ -15,6 +15,16 @@ IMAGE = "otel/opentelemetry-collector-contrib:0.163.1@sha256:1175b03003053962012
 
 FIXTURE = r"""
 import http.server, json, threading, time, urllib.request
+received = set()
+class Sink(http.server.BaseHTTPRequestHandler):
+    def log_message(self, *args): pass
+    def do_POST(self):
+        body = self.rfile.read(int(self.headers.get('Content-Length', 0)))
+        assert self.headers.get('X-SF-Token') == 'invented-test-token', 'Invalid auth header'
+        assert body, 'Empty export payload'
+        received.add(self.path)
+        self.send_response(200); self.send_header('Content-Type', 'application/x-protobuf'); self.end_headers()
+threading.Thread(target=http.server.HTTPServer(('127.0.0.1',14318), Sink).serve_forever, daemon=True).start()
 class Metrics(http.server.BaseHTTPRequestHandler):
     def log_message(self, *args): pass
     def do_GET(self):
@@ -31,7 +41,7 @@ else: raise SystemExit('OTLP receiver did not start')
 for attempt in range(100):
     try:
         text=open('/out/signals.json').read()
-        if 'ukinfo_pool_acquired' in text and 'HTTP /api/search' in text: break
+        if 'ukinfo_pool_acquired' in text and 'HTTP /api/search' in text and received == {'/v1/metrics', '/v1/traces'}: break
     except OSError: pass
     time.sleep(.2)
 else: raise SystemExit('Collector did not export both signals')
@@ -51,18 +61,27 @@ def main():
         output.mkdir(mode=0o777)
         output.chmod(0o777)
         config = (ROOT / "deploy/observability/collector.yaml").read_text()
-        start = config.index("exporters:\n")
-        end = config.index("service:\n", start)
-        config = (
-            config[:start]
-            + "exporters:\n  file/test:\n    path: /out/signals.json\n"
-            + config[end:]
+        # Keep the real HTTP exporter and file-provider authentication path.
+        # Add a file exporter in parallel to inspect the filtered signal contents.
+        config = config.replace(
+            "exporters:\n", "exporters:\n  file/test:\n    path: /out/signals.json\n", 1
         )
         config = (
-            config.replace("[otlphttp/splunk]", "[file/test]")
+            config.replace("[otlphttp/splunk]", "[otlphttp/splunk, file/test]")
             .replace("scrape_interval: 60s", "scrape_interval: 2s")
             .replace("timeout: 10s", "timeout: 1s")
+            .replace(
+                "https://ingest.${env:SPLUNK_REALM}.observability.splunkcloud.com/v2/trace/otlp",
+                "http://127.0.0.1:14318/v1/traces",
+            )
+            .replace(
+                "https://ingest.${env:SPLUNK_REALM}.observability.splunkcloud.com/v2/datapoint/otlp",
+                "http://127.0.0.1:14318/v1/metrics",
+            )
         )
+        # The file provider preserves bytes, including newlines. HTTP headers
+        # require exactly the token value with no trailing line ending.
+        (directory / "token").write_bytes(b"invented-test-token")
         (directory / "config.yaml").write_text(config)
         try:
             run(
@@ -82,6 +101,8 @@ def main():
                 f"{directory}/config.yaml:/etc/otelcol/config.yaml:ro",
                 "--volume",
                 f"{output}:/out",
+                "--volume",
+                f"{directory}/token:/run/secrets/splunk_ingest_token:ro",
                 IMAGE,
                 "--config=/etc/otelcol/config.yaml",
             )
@@ -118,7 +139,7 @@ def main():
                 f"Unexpected counter translation: {names}"
             )
             print(
-                "Collector passed: OTLP traces, Prometheus metrics, privacy filtering and counter names; no egress."
+                "Collector passed: OTLP traces, Prometheus metrics, privacy filtering, counter names and authenticated HTTP export; no egress."
             )
         except subprocess.CalledProcessError as exc:
             print(exc.stderr)

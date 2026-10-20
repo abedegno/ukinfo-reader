@@ -1,5 +1,5 @@
 # Upstream Collector; backend-specific configuration is confined to exporters.
-# Token file contains one YAML scalar (the raw ingest token), readable by UID 10001.
+# Token file contains exact raw token bytes with NO trailing newline; readable by UID 10001.
 receivers:
   otlp:
     protocols:
