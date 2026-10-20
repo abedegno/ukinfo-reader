@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add optional online hosted covering indexes for name/given-name searches with
+  postcode filters, avoiding national heap reads on HDD storage; verify index
+  creation, compatibility guards and unchanged results in required CI.
+
 - Add opt-in upstream OpenTelemetry request, database pool/query, record-loading
   and address-selection traces; private Collector configuration for Splunk OTLP,
   versioned Terraform dashboard/detector, and invented-data privacy checks in CI.

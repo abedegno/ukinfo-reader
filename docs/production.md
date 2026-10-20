@@ -183,3 +183,42 @@ repository vulnerability alerts/security update settings are enabled.
 [OpenTelemetry and Splunk setup](observability.md) adds a private, resource-limited
 Collector and versioned dashboards. Existing health checks and `/metrics` remain
 available. Export is disabled by default and desktop telemetry stays disabled.
+
+## Cover selective name searches on HDD storage
+
+A common surname, a given name with many stored middle-initial variants, and a
+postcode district can still produce a poor cold-storage plan. The compact name
+index lacks `postcode_id`, so a name-driven plan must fetch national candidate
+rows from the table to reject those outside the district. Thousands of random
+heap reads can exceed the existing search deadline on rotational storage even
+when the final result has one row. Warm-cache timings hide this problem.
+
+For large HDD-hosted catalogues, the optional owner-run
+[`covering-search-indexes.sql`](../deploy/production/covering-search-indexes.sql)
+adds `(dataset_id,kind,name_id,first_id,id) INCLUDE (postcode_id)` indexes to each
+existing `entries` partition. It preserves the compact indexes and source data;
+no application update, query semantics, cursor order or timeout change is needed.
+The planner can filter postcodes directly in the name index. Check visibility-map
+coverage and run normal VACUUM maintenance where needed: index-only scans still
+fetch the heap for pages that are not all-visible.
+
+Run with `psql -X -v ON_ERROR_STOP=1 -U OWNER -d DATABASE -f covering-search-indexes.sql`,
+outside a transaction. The script builds one partition at a time with
+`CREATE INDEX CONCURRENTLY`, 256 MiB maintenance memory and no parallel maintenance
+workers. It allows serving traffic to continue, but still consumes I/O, CPU, temporary
+space and WAL. Estimate space from edition row counts and existing index sizes;
+allow headroom for the new indexes, sorting and retained WAL before starting.
+Use `pg_stat_progress_create_index` to monitor progress. Do not clear production
+caches to manufacture a cold benchmark. Compare plans, heap fetches and buffer reads.
+
+A rerun skips valid managed indexes. An invalid or incompatible pre-existing
+managed index name causes a failure before any new build; inspect it and repair
+only the failed managed index before retrying. An interrupted concurrent build
+can leave an invalid index. The script never drops existing indexes or changes
+catalogue rows. After importing a new partition, rerun the script if this hosted
+optimisation is needed. Include it in the host's restore commissioning process.
+The ordinary portable/desktop catalogue keeps its smaller default representation.
+
+Required search CI checks concurrent creation, safe reapplication, exact query
+results/order, a heap-free covering plan after VACUUM, and rejection of an
+incompatible managed index using invented data in a disposable PostgreSQL instance.
