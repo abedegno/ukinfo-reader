@@ -34,16 +34,19 @@ account includes the Infrastructure Monitoring/custom metrics and APM entitlemen
 you intend to use, along with retention and ingestion allowances. A free account's
 limits are account-specific; this repository does not assume unlimited ingestion.
 
-Use two separate credentials:
+Prefer two separate credentials:
 
 - **Collector:** an organisation token scoped to **Ingest**, stored outside Git in
   a file readable by container UID/GID `10001:10001`. For example, install it as
   owner `10001:10001`, mode `0400`, inside a private directory. Do not print it or
-  place it in a Compose command line. The file contains one YAML string scalar
-  (a normal raw Splunk token is sufficient); the Collector's file provider reads it.
+  place it in a Compose command line. The file must contain the exact raw token bytes with **no trailing newline**;
+  the Collector's file provider preserves line endings, which make HTTP headers
+  invalid. Write it with `printf '%s' "$SPLUNK_ACCESS_TOKEN"` redirected to the
+  private token file, rather than a line-oriented writer.
 - **Terraform:** an API-authentication token with permissions to manage dashboards
   and detectors. Supply it through `TF_VAR_api_token` in the local process environment
-  or a CI secret. Do not give this management token to the application or Collector.
+  or a CI secret. An explicitly authorised token with both scopes can serve both roles, but a
+  dedicated ingest-only token reduces the Collector's privileges.
 
 No credential values belong in `.env.example`, `.tfvars`, plans, documentation,
 issues or CI logs. Environment files, Terraform state and plans are ignored by Git.
@@ -164,7 +167,8 @@ python3 tools/check_observability.py
 Go tests inspect actual OTLP protobuf exports using invented SQL, parameters,
 errors and resource canaries. Request tests cover arbitrary paths and public
 headers. The real Collector test verifies OTLP reception, Prometheus translation,
-filtering and export without external network access. Required search CI runs both. A separate workflow validates Terraform against the
+filtering and authenticated OTLP/HTTP export without external network access,
+including loading the token through the production file-provider configuration. Required search CI runs both. A separate workflow validates Terraform against the
 locked provider without account credentials; no CI job applies infrastructure.
 
 For live rollout: enable the Collector, verify invented/local smoke telemetry in
