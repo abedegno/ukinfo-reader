@@ -2,6 +2,7 @@ package catalog
 
 import (
 	"fmt"
+	"github.com/abedegno/ukinfo-reader/server/internal/telemetry"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -146,6 +147,7 @@ func (m *apiMetrics) wrap(next http.Handler) http.Handler {
 			if status >= 500 {
 				span.SetStatus(codes.Error, "Request failed")
 			}
+			telemetry.LogRequest(r.Context(), route, method, queryClass(r), w.Header().Get("X-Request-ID"), writer.failure, status, time.Since(started))
 			span.End()
 			m.mu.Lock()
 			defer m.mu.Unlock()
