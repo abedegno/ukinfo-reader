@@ -25,11 +25,14 @@ class Sink(http.server.BaseHTTPRequestHandler):
         received.add(self.path)
         self.send_response(200); self.send_header('Content-Type', 'application/x-protobuf'); self.end_headers()
 threading.Thread(target=http.server.HTTPServer(('127.0.0.1',14318), Sink).serve_forever, daemon=True).start()
+scrapes = 0
 class Metrics(http.server.BaseHTTPRequestHandler):
     def log_message(self, *args): pass
     def do_GET(self):
         self.send_response(200); self.end_headers()
-        latency = '# TYPE ukinfo_api_request_duration_seconds histogram\nukinfo_api_request_duration_seconds_bucket{le="1"} 2\nukinfo_api_request_duration_seconds_bucket{le="+Inf"} 3\nukinfo_api_request_duration_seconds_count 3\nukinfo_api_request_duration_seconds_sum 2\n'
+        global scrapes
+        scrapes += 1
+        latency = f'# TYPE ukinfo_api_request_duration_seconds histogram\nukinfo_api_request_duration_seconds_bucket{{le="1"}} {2*scrapes}\nukinfo_api_request_duration_seconds_bucket{{le="+Inf"}} {3*scrapes}\nukinfo_api_request_duration_seconds_count {3*scrapes}\nukinfo_api_request_duration_seconds_sum {2*scrapes}\n' 
         self.wfile.write(latency.encode())
         self.wfile.write(b'# TYPE ukinfo_pool_acquired gauge\nukinfo_pool_acquired{route="/api/search",private="SECRET_LABEL"} 2\n# TYPE ukinfo_record_blocks_decoded_total counter\nukinfo_record_blocks_decoded_total 12\n# TYPE invented_private gauge\ninvented_private 42\n')
 threading.Thread(target=http.server.HTTPServer(('127.0.0.1',9091), Metrics).serve_forever, daemon=True).start()
@@ -151,6 +154,11 @@ def main():
             assert histograms and all(h["aggregationTemporality"] == 1 for h in histograms), (
                 "Latency histogram must export delta temporality"
             )
+            points = [point for histogram in histograms for point in histogram["dataPoints"]]
+            assert points and all(
+                int(point["count"]) == 3 and list(map(int, point["bucketCounts"])) == [2, 1]
+                for point in points
+            ), "Delta histogram did not preserve interval counts"
             print(
                 "Collector passed: OTLP traces, Prometheus metrics, privacy filtering, counter names and authenticated HTTP export; no egress."
             )
