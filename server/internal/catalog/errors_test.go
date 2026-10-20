@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -24,6 +25,28 @@ func TestSourceFailureCategories(t *testing.T) {
 			t.Fatal(err)
 		}
 		if body["code"] != tc.code || len(body["request_id"]) != 24 || strings.Contains(w.Body.String(), "private") {
+			t.Fatal(w.Body.String())
+		}
+	}
+}
+
+func TestSearchFailureCategories(t *testing.T) {
+	for _, tc := range []struct {
+		err  error
+		code string
+	}{
+		{context.DeadlineExceeded, "query_timeout"},
+		{fmt.Errorf("wrapped: %w", &pgconn.PgError{Code: "57014"}), "query_timeout"},
+		{errors.New("private network detail"), "unavailable"},
+		{context.Canceled, "unavailable"},
+	} {
+		w := httptest.NewRecorder()
+		failError(w, 503, searchReadError(tc.err))
+		var body map[string]string
+		if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
+			t.Fatal(err)
+		}
+		if body["code"] != tc.code || strings.Contains(w.Body.String(), "private") {
 			t.Fatal(w.Body.String())
 		}
 	}

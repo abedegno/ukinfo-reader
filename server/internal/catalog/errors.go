@@ -16,9 +16,18 @@ var errRecordIntegrity = errors.New("source record integrity failure")
 type responseError struct{ code, message string }
 
 func (e *responseError) Error() string { return e.message }
-func sourceReadError(err error) error {
+func isQueryTimeout(err error) bool {
 	var pgErr *pgconn.PgError
-	if errors.Is(err, context.DeadlineExceeded) || pgconn.Timeout(err) || (errors.As(err, &pgErr) && pgErr.Code == "57014") {
+	return errors.Is(err, context.DeadlineExceeded) || pgconn.Timeout(err) || (errors.As(err, &pgErr) && pgErr.Code == "57014")
+}
+func searchReadError(err error) error {
+	if isQueryTimeout(err) {
+		return &responseError{"query_timeout", "Search timed out; narrow the search"}
+	}
+	return &responseError{"unavailable", "Search temporarily unavailable; retry shortly"}
+}
+func sourceReadError(err error) error {
+	if isQueryTimeout(err) {
 		return &responseError{"query_timeout", "Source reading timed out. Retry or narrow the search."}
 	}
 	if errors.Is(err, errRecordIntegrity) {
@@ -35,6 +44,9 @@ func failError(w http.ResponseWriter, status int, err error) {
 	fail(w, status, err.Error())
 }
 func writeFailure(w http.ResponseWriter, status int, code, message string) {
+	if observer, ok := w.(interface{ setFailureCode(string) }); ok {
+		observer.setFailureCode(code)
+	}
 	payload := map[string]string{"error": message, "code": code}
 	if id := w.Header().Get("X-Request-ID"); id != "" {
 		payload["request_id"] = id

@@ -22,7 +22,9 @@ func TestMetricsExcludeQueriesAndUnboundedLabels(t *testing.T) {
 	}
 	defer pool.Close()
 	api := NewAPI(pool)
-	handler := api.metrics.wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(503) }))
+	handler := api.metrics.wrap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		failError(w, 503, searchReadError(context.DeadlineExceeded))
+	}))
 	for _, path := range []string{"/api/search?surname=PRIVATE_NAME", "/PRIVATE_PATH?source_id=PRIVATE_SOURCE"} {
 		handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", path, nil))
 	}
@@ -31,6 +33,14 @@ func TestMetricsExcludeQueriesAndUnboundedLabels(t *testing.T) {
 	body := response.Body.String()
 	if strings.Contains(body, "PRIVATE") || !strings.Contains(body, `route="/api/search",status="503"`) || !strings.Contains(body, `route="other"`) || !strings.Contains(body, "ukinfo_api_active 0") {
 		t.Fatal(body)
+	}
+	for _, required := range []string{
+		`ukinfo_api_failures_total{route="/api/search",reason="query_timeout"} 1`,
+		"ukinfo_pool_waits_total 0", "ukinfo_pool_wait_seconds_total 0",
+	} {
+		if !strings.Contains(body, required) {
+			t.Fatalf("missing %s", required)
+		}
 	}
 	denied := httptest.NewRecorder()
 	api.Metrics().ServeHTTP(denied, httptest.NewRequest("GET", "/api/search", nil))

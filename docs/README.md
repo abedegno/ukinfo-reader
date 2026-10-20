@@ -57,4 +57,5 @@ research and measurement records, rather than promises about every deployment:
 
 [Back to the project](../README.md)
 
+- [Search performance checks](search-performance.md) — invented CI matrices, work budgets and private HDD diagnostics.
 - [Production deployment, monitoring and recovery](production.md) — separate serving credentials, TLS ingress, backups and isolated restore checks.

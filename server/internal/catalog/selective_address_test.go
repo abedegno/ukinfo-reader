@@ -8,8 +8,10 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -110,9 +112,28 @@ func TestSelectiveAddressIntegration(t *testing.T) {
 	if _, err = db.Exec(ctx, "INSERT INTO terms(key) SELECT 'jaaa'||lpad(i::text,5,'0') FROM generate_series(0,8192) i ON CONFLICT DO NOTHING"); err != nil {
 		t.Fatal(err)
 	}
+	// Invented coordinate reference: nearby tests never depend on live geocoding.
+	if _, err = db.Exec(ctx, `INSERT INTO geography_releases(release,source_url,sha256,scope,entries,located,excluded_ni,excluded_other) VALUES('2026-08','https://example.org/invented','invented','GB',3,3,0,0);
+CREATE TABLE postcode_locations_matrix PARTITION OF postcode_locations FOR VALUES IN ('2026-08');
+INSERT INTO postcode_locations(release,postcode,introduced,terminated,country,quality,latitude,longitude) VALUES
+('2026-08','AA11AA','198001','','E92000001',1,51,-1),
+('2026-08','BB11BB','198001','','E92000001',1,52,-1),
+('2026-08','CC11CC','198001','','E92000001',1,53,-1);
+INSERT INTO geography_active VALUES(true,'2026-08'); ANALYZE;`); err != nil {
+		t.Fatal(err)
+	}
 	testRequestBlockReuse(t, db)
+	type measurement struct {
+		Case      int     `json:"case"`
+		Query     string  `json:"invented_query"`
+		Pages     int     `json:"pages"`
+		Results   int     `json:"results"`
+		FirstMS   float64 `json:"first_page_ms"`
+		MaxNextMS float64 `json:"max_next_page_ms"`
+	}
+	observations := []measurement{}
 	a := NewAPI(db)
-	for _, tc := range []struct {
+	for caseIndex, tc := range []struct {
 		raw       string
 		selective bool
 		count     int
@@ -133,8 +154,15 @@ func TestSelectiveAddressIntegration(t *testing.T) {
 		{"dataset=all&street=Invented+Road&town=Invented+Town", true, 270},
 		{"dataset=large-address&surname=Scatteredbudget&town=Large+Town", false, 132},
 		{"dataset=all&surname=Smallmatch&first_name=J*&middle_initial=A&town=Invented+Town", true, 12},
+		{"dataset=all&surname=Widebudget&first_name=June&first_match=given&postcode=BB1", false, 4200},
+		{"dataset=all&surname=Wide*&postcode=CC1+1", false, 300},
+		{"dataset=all&surname=Smallmatch&postcode=AA11AA", false, 24},
+		{"dataset=all&surname=Smallmatch&near=AA1&radius_m=1000", false, 24},
+		{"dataset=all&kind=business&organisation=Smallmatch*&postcode=AA1", false, 8},
+		{"dataset=all&surname=Missingmatch&postcode=BB1", false, 0},
 	} {
-		t.Run(tc.raw, func(t *testing.T) {
+		t.Run(fmt.Sprintf("case-%02d", caseIndex), func(t *testing.T) {
+			observation := measurement{Case: caseIndex, Query: tc.raw}
 			q, err := parse(mustValues(tc.raw))
 			if err != nil {
 				t.Fatal(err)
@@ -155,7 +183,15 @@ func TestSelectiveAddressIntegration(t *testing.T) {
 					t.Fatal("endless pagination")
 				}
 				w := httptest.NewRecorder()
+				started := time.Now()
 				a.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/search?"+tc.raw+fmt.Sprintf("&limit=%d&cursor=", pageLimit)+url.QueryEscape(cursor), nil))
+				elapsed := float64(time.Since(started)) / float64(time.Millisecond)
+				observation.Pages++
+				if page == 0 {
+					observation.FirstMS = elapsed
+				} else if elapsed > observation.MaxNextMS {
+					observation.MaxNextMS = elapsed
+				}
 				if w.Code != 200 {
 					t.Fatal(w.Code, w.Body.String())
 				}
@@ -169,7 +205,7 @@ func TestSelectiveAddressIntegration(t *testing.T) {
 						t.Fatal("duplicate page entry", identity)
 					}
 					seen[identity] = true
-					if !strings.Contains(string(r.Record), "Invented Town") && !strings.Contains(string(r.Record), "Large Town") {
+					if q.Town != "" && !strings.Contains(string(r.Record), "Invented Town") && !strings.Contains(string(r.Record), "Large Town") {
 						t.Fatal("wrong town")
 					}
 				}
@@ -182,7 +218,21 @@ func TestSelectiveAddressIntegration(t *testing.T) {
 			if total != tc.count {
 				t.Fatalf("got %d entries, want %d", total, tc.count)
 			}
+			observation.Results = total
+			observations = append(observations, observation)
 		})
+	}
+	if output := os.Getenv("UKINFO_PERFORMANCE_REPORT_DIR"); output != "" {
+		if err := os.MkdirAll(output, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		raw, err := json.MarshalIndent(map[string]any{"fixture_entries": 22546, "conditions": "cached invented corpus; handler and JSON included; HTTP transport excluded; race instrumentation may be enabled", "passed": !t.Failed(), "cases": observations}, "", "  ")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(output, "search-matrix.json"), append(raw, '\n'), 0o644); err != nil {
+			t.Fatal(err)
+		}
 	}
 	testOrderedSurnameWindows(t, db)
 }

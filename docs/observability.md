@@ -142,9 +142,30 @@ terraform apply private.tfplan
 ```
 
 The dashboard includes request concurrency, pool utilisation, search rates by
-category, 503 rates and decoded block rates. Use Splunk APM for request/operation
-latency breakdowns. The detector warns when pool utilisation exceeds 80% for five
-minutes. Notifications default to an empty list; add only approved destinations
+category, error percentage, classified timeout/error rates, decoded block rates,
+successful pool wait rate/mean, canceled acquisitions and a telemetry heartbeat.
+The p95 chart uses the request histogram, aggregated by route, rather than taking
+percentiles of counter values. Its seven finite bucket boundaries give an estimate;
+use APM for individual sampled request/operation breakdowns. The Collector converts
+cumulative Prometheus latency histograms to delta buckets; it drops the first
+observation after startup and needs a second scrape before exporting that histogram.
+Counters retain their original cumulative temporality.
+
+`ukinfo_pool_wait_seconds_total` and `ukinfo_pool_waits_total` measure **successful**
+acquisitions that encountered an empty pool. Their ratio gives the mean waited
+acquisition time; canceled waits are counted separately and do not enter that mean.
+`ukinfo_api_failures_total` uses bounded structured reasons (`query_timeout`,
+`catalogue_integrity`, `unavailable`). Search, ordered/selective-address candidate and
+source-read errors classify PostgreSQL cancellation/deadline errors from the actual
+error type. Other legacy failure paths still count as `unavailable`; this metric
+must not be interpreted as exhaustive timeout diagnosis for every endpoint. Quiet
+series may be absent until their first event; a zero denominator produces a chart
+gap rather than a fabricated zero-latency or zero-error observation.
+
+Detectors warn about pool utilisation above 80% for five minutes and missing pool
+heartbeat for five minutes. Missing telemetry is evaluated after the first observed
+stream; it cannot detect a service that has never reported. It does not identify
+whether the API, Collector, network or NAS failed. Notifications default to an empty list; add only approved destinations
 through `notifications`. A dashboard and detector require the account's applicable
 entitlements. Terraform validation does not prove that live ingestion or SignalFlow
 queries work with your account; verify incoming names/dimensions and chart values

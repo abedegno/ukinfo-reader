@@ -180,7 +180,7 @@ func (a *API) orderedCandidates(ctx context.Context, q query) (searchResult, []o
 	rows, finish, err := a.orderedRows(ctx, sql, args)
 	defer finish()
 	if err != nil {
-		return searchResult{}, nil, 503, errors.New("Ordered search unavailable or timed out; narrow the search")
+		return searchResult{}, nil, 503, searchReadError(err)
 	}
 	for rows.Next() {
 		var c orderCursor
@@ -202,7 +202,7 @@ func (a *API) orderedCandidates(ctx context.Context, q query) (searchResult, []o
 	rows.Close()
 	finish()
 	if err != nil {
-		return searchResult{}, nil, 503, errors.New("Ordered search unavailable or timed out; narrow the search")
+		return searchResult{}, nil, 503, searchReadError(err)
 	}
 	type member struct {
 		dataset  int16
