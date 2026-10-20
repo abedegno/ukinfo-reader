@@ -2,6 +2,10 @@ package catalog
 
 import (
 	"fmt"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"log"
 	"net/http"
 	"sync"
@@ -98,6 +102,20 @@ func (w *metricWriter) Write(b []byte) (int, error) {
 func (m *apiMetrics) wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		started := time.Now()
+		// Use only allowlisted route/class values. Deliberately ignore incoming
+		// traceparent and baggage: public visitors cannot force sampling or inject data.
+		route := metricRoute(r.URL.Path)
+		method := r.Method
+		switch method {
+		case "GET", "POST", "HEAD", "OPTIONS":
+		default:
+			method = "OTHER"
+		}
+		ctx, span := otel.Tracer("ukinfo/http").Start(r.Context(), "HTTP "+route, trace.WithNewRoot(), trace.WithSpanKind(trace.SpanKindServer), trace.WithAttributes(attribute.String("http.route", route), attribute.String("http.request.method", method)))
+		if route == "/api/search" || route == "/api/export" {
+			span.SetAttributes(attribute.String("ukinfo.query.class", queryClass(r)))
+		}
+		r = r.WithContext(ctx)
 		writer := &metricWriter{ResponseWriter: w}
 		m.mu.Lock()
 		m.active++
@@ -108,6 +126,11 @@ func (m *apiMetrics) wrap(next http.Handler) http.Handler {
 			if status == 0 {
 				status = 200
 			}
+			span.SetAttributes(attribute.Int("http.response.status_code", status))
+			if status >= 500 {
+				span.SetStatus(codes.Error, "Request failed")
+			}
+			span.End()
 			m.mu.Lock()
 			defer m.mu.Unlock()
 			m.active--

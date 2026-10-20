@@ -1,0 +1,25 @@
+# This file is maintained automatically by "terraform init".
+# Manual edits may be lost in future updates.
+
+provider "registry.terraform.io/splunk-terraform/signalfx" {
+  version     = "9.35.1"
+  constraints = "9.35.1"
+  hashes = [
+    "h1:EAn0RXCnyRUV0kqkfin8iSVXBmC2y9POCd2A2zrR8GI=",
+    "h1:StZqHYSpeWc3wZd5Mi3qEY8WPn/zIdcxeMOSlEnJSgE=",
+    "h1:iB7foNdptwTaE79QFYKCFf4LFkZ6U4qyt0H07U7KlXA=",
+    "zh:123ffbf2c1b7b28887b317a1932fe3e1bdf6593d23b2833618f2ed25c57d433b",
+    "zh:254443515ea5a27049375495e32dc2c59d41b0a8a2ae30bf4935c574776a981c",
+    "zh:277fa6ebbf7b32517158b304722cbeb6fa465f5c2a6576253659ff9a641fe0c2",
+    "zh:29a5d1f187ebba783a30f173420fa593e46582d2a1961848a77543f897fe681d",
+    "zh:398ce062e3237402c5ac4034e7f56c3ba01ba89a2f7eb49747f42b527aa7f867",
+    "zh:46965e66d1979b3c6dd1b10dcf0ba9cc08ae33e807cb88a302a4ed96cdb97ee4",
+    "zh:4b3bfab86302c4de8ed1f8d53ede9c65894dced43d167ad486d9a79ffa49e22f",
+    "zh:57cceb6272ca19d1a923009e117556b73df5394a10d1aa5bf0cdbd2c1e2bacf1",
+    "zh:71849d07f1d73799a2ecc7b47bf2c943b0413ec224f88ad2bad7e94cb6547fa1",
+    "zh:832f4162466c5898561200f8719fbd774268f0d199062795c8f63af0a5a29208",
+    "zh:989ff7cfc158ab7e590441d76d6752d5ebaaf27c21240526fe415f72e612b122",
+    "zh:9fae56678ad22d3c5016776b4bf211c7410332f59a1e2471794b69d092c65678",
+    "zh:afdb8977d4878c11a99f88693451fd7d0a5da0b82ebe4573dcbb378a680b6c64",
+  ]
+}

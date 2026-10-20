@@ -27,6 +27,7 @@ for your task; dated investigation reports describe the evidence at the time.
 ## Manage and operate an archive
 
 - [Catalogue inventory, removal, backup and restore](catalogue-management.md)
+- [OpenTelemetry and Splunk backend setup](observability.md)
 - [Desktop diagnostics and safe issue reports](diagnostics.md)
 - [Desktop packaging and release gates](desktop-releases.md)
 - [macOS signing and notarization](macos-signing.md)

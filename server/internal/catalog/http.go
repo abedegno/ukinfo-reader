@@ -17,6 +17,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/abedegno/ukinfo-reader/server/internal/telemetry"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/klauspost/compress/zstd"
@@ -808,7 +809,9 @@ func (a *API) searchCandidates(ctx context.Context, q query) (searchResult, int,
 	return searchResult{Items: items, Next: next, Geography: geography, positions: positions}, 200, nil
 }
 
-func (a *API) loadRecords(ctx context.Context, dataset int16, ids []int32) ([]result, error) {
+func (a *API) loadRecords(ctx context.Context, dataset int16, ids []int32) (out []result, loadErr error) {
+	ctx, span := telemetry.Operation(ctx, "records.load")
+	defer func() { telemetry.End(span, loadErr) }()
 	resultRows := make([]result, 0, len(ids))
 	if len(ids) == 0 {
 		return resultRows, nil

@@ -1,0 +1,17 @@
+name: Observability configuration
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    container:
+      image: hashicorp/terraform:1.14.6@sha256:47767069b0be3969e5dfaf1c5b01030ce4510002dec43b68380ba7c0799c7f31
+    defaults:
+      run:
+        working-directory: deploy/observability/splunk
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - run: terraform fmt -check
+      - run: terraform init -backend=false -input=false -lockfile=readonly
+      - run: terraform validate

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/abedegno/ukinfo-reader/server/internal/telemetry"
 	"sort"
 	"strings"
 )
@@ -15,6 +16,8 @@ const selectiveAddressBlocks = 128
 const selectivePostingsLimit = 1024
 
 func (a *API) matchSelectiveAddresses(ctx context.Context, f *candidateFilters) (err error) {
+	ctx, span := telemetry.Operation(ctx, "address.select")
+	defer func() { telemetry.End(span, err) }()
 	q := f.q
 	if f.missing || !q.hasAddress() {
 		return nil

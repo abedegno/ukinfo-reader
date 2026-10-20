@@ -1,0 +1,28 @@
+# Opt in with --profile observability. No telemetry ports are published.
+services:
+  api:
+    environment:
+      UKINFO_OTEL_ENABLED: ${UKINFO_OTEL_ENABLED:-false}
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://127.0.0.1:4318/v1/traces
+      UKINFO_OTEL_SAMPLE_RATIO: '${UKINFO_OTEL_SAMPLE_RATIO:-0.1}'
+  collector:
+    profiles: [observability]
+    image: otel/opentelemetry-collector-contrib:0.163.1@sha256:1175b03003053962012f5a231f5567f66a3e8fdb960c7835c0e48f7aa1555806
+    command: ['--config=/etc/otelcol/config.yaml']
+    network_mode: service:api
+    depends_on: {api: {condition: service_healthy, restart: true}}
+    environment:
+      SPLUNK_REALM: ${SPLUNK_REALM:?Set the Splunk Observability realm}
+      GOMEMLIMIT: 100MiB
+    volumes:
+      - ./observability/collector.yaml:/etc/otelcol/config.yaml:ro
+      - ${UKINFO_SPLUNK_TOKEN_FILE:?Set the absolute path to an ingest token file}:/run/secrets/splunk_ingest_token:ro
+    user: '10001:10001'
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    cpus: 0.25
+    mem_limit: 128m
+    pids_limit: 64
+    restart: unless-stopped
+    logging: {driver: json-file, options: {max-size: 1m, max-file: '3'}}

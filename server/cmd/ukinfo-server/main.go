@@ -25,6 +25,7 @@ import (
 	"github.com/abedegno/ukinfo-reader/server/internal/catalog"
 	"github.com/abedegno/ukinfo-reader/server/internal/desktop"
 	"github.com/abedegno/ukinfo-reader/server/internal/publichttp"
+	"github.com/abedegno/ukinfo-reader/server/internal/telemetry"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -111,6 +112,18 @@ func run() error {
 	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		return fmt.Errorf("invalid database configuration")
+	}
+	if command == "serve" && *data == "" {
+		shutdown, e := telemetry.Configure(ctx)
+		if e != nil {
+			return e
+		}
+		defer func() {
+			flush, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			defer cancel()
+			_ = shutdown(flush)
+		}()
+		config.ConnConfig.Tracer = telemetry.DBTracer{}
 	}
 	config.MaxConns = 8
 	config.MinConns = 1
