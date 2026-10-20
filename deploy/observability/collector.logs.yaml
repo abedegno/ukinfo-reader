@@ -1,0 +1,151 @@
+# Upstream Collector; backend-specific configuration is confined to exporters.
+# Token file contains exact raw token bytes with NO trailing newline; readable by UID 10001.
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 127.0.0.1:4318
+        max_request_body_size: 1048576
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: ukinfo
+          scrape_interval: 60s
+          sample_limit: 2000
+          static_configs:
+            - targets: ['127.0.0.1:9091']
+          metric_relabel_configs:
+            - source_labels: [__name__]
+              regex: 'ukinfo_.*'
+              action: keep
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 80
+    spike_limit_mib: 20
+  filter/metrics:
+    error_mode: propagate
+    metrics:
+      metric:
+        - 'not IsMatch(name, "^ukinfo_")'
+  filter/logs:
+    error_mode: propagate
+    logs:
+      log_record:
+        - 'body != "HTTP request completed"'
+        - 'attributes["event.name"] != "ukinfo.http.request"'
+        - 'not IsInt(attributes["http.response.status_code"])'
+        - 'not IsInt(attributes["duration_ms"])'
+  transform/privacy:
+    error_mode: propagate
+    trace_statements:
+      - context: resource
+        statements:
+          - keep_keys(attributes, ["service.name"])
+          - set(attributes["service.name"], "ukinfo-server")
+      - context: span
+        statements:
+          - keep_keys(attributes, ["http.route", "http.request.method", "http.response.status_code", "ukinfo.query.class"])
+      - context: spanevent
+        statements:
+          - keep_keys(attributes, [])
+    log_statements:
+      - context: resource
+        statements:
+          - keep_keys(attributes, [])
+          - set(attributes["service.name"], "ukinfo-server")
+      - context: log
+        statements:
+          - keep_keys(attributes, ["event.name", "http.route", "http.request.method", "http.response.status_code", "duration_ms", "ukinfo.query.class", "ukinfo.failure.reason", "request_id"])
+          - set(body, "HTTP request completed")
+          - set(scope.name, "ukinfo/http")
+          - set(scope.version, "")
+          - keep_keys(scope.attributes, [])
+          - set(attributes["http.route"], "other") where not IsMatch(attributes["http.route"], "^(/api/(research|group|search|export|record|address|map|datasets|addresses|geography|health)|other)$")
+          - set(attributes["http.request.method"], "OTHER") where not IsMatch(attributes["http.request.method"], "^(GET|POST|HEAD|OPTIONS|OTHER)$")
+          - set(attributes["ukinfo.query.class"], "other") where not IsMatch(attributes["ukinfo.query.class"], "^(name|postcode|address|nearby|ordered|grouped|other)$")
+          - set(attributes["ukinfo.failure.reason"], "none") where not IsMatch(attributes["ukinfo.failure.reason"], "^(query_timeout|catalogue_integrity|unavailable|none)$")
+          - delete_key(attributes, "request_id") where attributes["request_id"] != nil and not IsMatch(attributes["request_id"], "^[0-9a-f]{24}$")
+          - set(severity_text, "INFO")
+          - set(severity_number, SEVERITY_NUMBER_INFO)
+          - set(severity_text, "WARN") where attributes["http.response.status_code"] >= 400
+          - set(severity_number, SEVERITY_NUMBER_WARN) where attributes["http.response.status_code"] >= 400
+          - set(severity_text, "ERROR") where attributes["http.response.status_code"] >= 500
+          - set(severity_number, SEVERITY_NUMBER_ERROR) where attributes["http.response.status_code"] >= 500
+    metric_statements:
+      - context: resource
+        statements:
+          - keep_keys(attributes, [])
+          - set(attributes["service.name"], "ukinfo-server")
+      - context: datapoint
+        statements:
+          - keep_keys(attributes, ["route", "status", "class", "plan", "result", "le", "reason"])
+  # Prometheus histograms are cumulative; Splunk percentiles need delta buckets.
+  cumulativetodelta/latency:
+    include:
+      metrics: [ukinfo_api_request_duration_seconds]
+      match_type: strict
+    initial_value: drop
+  batch:
+    timeout: 10s
+    send_batch_size: 256
+    send_batch_max_size: 512
+  batch/logs:
+    timeout: 5s
+    send_batch_size: 128
+    send_batch_max_size: 256
+exporters:
+  splunk_hec/enterprise:
+    endpoint: ${env:SPLUNK_HEC_ENDPOINT}
+    token: ${file:/run/secrets/splunk_hec_token}
+    index: ukinfo_dev
+    source: ukinfo-server
+    sourcetype: otel
+    profiling_data_enabled: false
+    timeout: 5s
+    tls:
+      ca_file: /etc/otelcol/splunk-ca.pem
+    sending_queue:
+      enabled: true
+      num_consumers: 1
+      queue_size: 32
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 120s
+  otlphttp/splunk:
+    traces_endpoint: https://ingest.${env:SPLUNK_REALM}.observability.splunkcloud.com/v2/trace/otlp
+    metrics_endpoint: https://ingest.${env:SPLUNK_REALM}.observability.splunkcloud.com/v2/datapoint/otlp
+    headers:
+      X-SF-Token: ${file:/run/secrets/splunk_ingest_token}
+    timeout: 5s
+    compression: gzip
+    sending_queue:
+      enabled: true
+      num_consumers: 1
+      queue_size: 32
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 120s
+service:
+  telemetry:
+    logs:
+      level: error
+    metrics:
+      level: none
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, filter/logs, transform/privacy, batch/logs]
+      exporters: [splunk_hec/enterprise]
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, transform/privacy, batch]
+      exporters: [otlphttp/splunk]
+    metrics:
+      receivers: [prometheus]
+      processors: [memory_limiter, filter/metrics, transform/privacy, cumulativetodelta/latency, batch]
+      exporters: [otlphttp/splunk]

@@ -63,8 +63,15 @@ func Configure(ctx context.Context) (func(context.Context) error, error) {
 		sdktrace.WithRawSpanLimits(sdktrace.SpanLimits{AttributeCountLimit: 8, AttributeValueLengthLimit: 128, EventCountLimit: 0, LinkCountLimit: 0}),
 		sdktrace.WithBatcher(privateExporter{exporter}, sdktrace.WithMaxQueueSize(512), sdktrace.WithMaxExportBatchSize(128), sdktrace.WithBatchTimeout(5*time.Second), sdktrace.WithExportTimeout(2*time.Second)),
 	)
+	stopLogs, err := configureLogs(ctx)
+	if err != nil {
+		_ = provider.Shutdown(ctx)
+		return noop, err
+	}
 	otel.SetTracerProvider(provider)
-	return provider.Shutdown, nil
+	return func(ctx context.Context) error {
+		return errors.Join(provider.Shutdown(ctx), stopLogs(ctx))
+	}, nil
 }
 
 // Operation accepts only fixed operation names. Caller-controlled values and

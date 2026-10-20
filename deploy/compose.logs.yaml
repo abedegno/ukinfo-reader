@@ -1,0 +1,13 @@
+# Add after compose.observability.yaml to opt into private Splunk HEC log export.
+services:
+  api:
+    environment:
+      OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: http://127.0.0.1:4318/v1/logs
+  collector:
+    command: ['--config=/etc/otelcol/logs.yaml']
+    environment:
+      SPLUNK_HEC_ENDPOINT: ${SPLUNK_HEC_ENDPOINT:?Set a private HTTPS HEC endpoint}
+    volumes:
+      - ./observability/collector.logs.yaml:/etc/otelcol/logs.yaml:ro
+      - ${UKINFO_SPLUNK_HEC_TOKEN_FILE:?Set the private HEC token file}:/run/secrets/splunk_hec_token:ro
+      - ${UKINFO_SPLUNK_HEC_CA_FILE:?Set the HEC CA certificate file}:/etc/otelcol/splunk-ca.pem:ro

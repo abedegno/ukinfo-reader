@@ -4,7 +4,9 @@ Hosted UK-Info can export sampled backend traces through standard OpenTelemetry
 OTLP/HTTP. A private upstream Collector also scrapes the existing Prometheus
 metrics and forwards both signals to Splunk Observability Cloud. Application code
 contains no Splunk SDK or endpoint. Replace the Collector exporter to change backend.
-Dashboards and detector query languages remain specific to the backend.
+Dashboards and detector query languages remain specific to the backend. Optional
+structured application logs can go to private Splunk Enterprise HEC through the
+same Collector; see [log configuration](#private-splunk-enterprise-logs).
 
 **Default:** no export. The desktop app (`--data-dir`) and maintenance commands do
 not configure telemetry, even when telemetry environment variables are present.
@@ -122,7 +124,9 @@ pipeline for arbitrary applications.
 - Collector: 128 MiB container limit, 80 MiB memory limiter, 0.25 CPU, queue 32 batches
   and retries bounded to two minutes. Telemetry can be dropped under pressure or
   outage. No catalogue writes or search failures depend on successful export.
-- No logs, profiling, host discovery or browser telemetry are uploaded.
+- The base overlay exports traces and metrics. The separate logs overlay below
+  adds approved application events. Neither configuration exports profiling, host
+  discovery or browser telemetry.
 
 Check Splunk's actual usage after enabling the service. Sampling bounds a fraction
 of traffic, not a fixed bill or monthly quota. Lower the ratio or disable traces
@@ -207,3 +211,45 @@ cannot report a whole-NAS outage. Alert delivery needs a configured destination.
 - [Splunk OTLP/HTTP endpoints](https://help.splunk.com/en/splunk-observability-cloud/manage-data/splunk-distribution-of-the-opentelemetry-collector/get-started-with-the-splunk-distribution-of-the-opentelemetry-collector/collector-components/exporters/otlphttp-exporter)
 - [Splunk organisation token scopes](https://help.splunk.com/en/splunk-observability-cloud/administer/authentication-and-security/authentication-tokens/org-access-tokens)
 - [Splunk Terraform provider](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest)
+
+
+## Private Splunk Enterprise logs
+
+The optional `compose.logs.yaml` overlay adds OTLP logs to the existing Collector
+and exports them to a private Splunk HEC endpoint. Apply it after
+`compose.observability.yaml`, set `SPLUNK_HEC_ENDPOINT` to an HTTPS HEC URL and
+provide `UKINFO_SPLUNK_HEC_TOKEN_FILE` and `UKINFO_SPLUNK_HEC_CA_FILE`. The token
+must contain only raw token bytes, without a newline, and be readable by UID 10001.
+Keep port 8088 private and scope the token to the configured `ukinfo_dev` index.
+The deployment network must permit the Collector to reach that private endpoint.
+The production NAS's networking, HEC provisioning and secrets are managed in homelab.
+
+The application emits fixed `HTTP request completed` records for searches/exports
+and unsuccessful API responses. Fields contain only normalized route/method/query
+class, numeric status/duration, a structured failure reason and the server-generated
+request ID. OTLP carries trace/span IDs, including for unsampled requests; a trace
+link has a stored trace only when that trace was sampled. Health successes do not
+produce log noise. Query strings, bodies, results, raw errors and standard stderr
+are never bridged into this pipeline.
+
+`OTEL_EXPORTER_OTLP_LOGS_ENDPOINT` opts the application into log export and follows
+the same explicit HTTPS-or-loopback rule as tracing. Ambient
+`OTEL_RESOURCE_ATTRIBUTES` and `OTEL_SERVICE_NAME` are rejected when log export is
+enabled, because the SDK merges environment resources before export. Service identity
+is explicitly `ukinfo-server`. The Collector independently drops non-operational
+records, removes unknown attributes/resources/scope metadata, normalizes allowed
+field values and reconstructs severity from numeric HTTP status. Invalid shapes
+fail closed. `collector.logs.yaml` is the full three-signal configuration; the
+original `collector.yaml` remains the trace/metrics-only configuration.
+
+SDK queues, Collector batches and export queues are bounded and memory-backed.
+They are not an audit trail: restarts, sustained endpoint outages or queue overflow
+can lose logs. HEC uses a dedicated ingest-only token, independently of the Log
+Observer search account. Neither credential is embedded in configuration or images.
+
+CI runs `tools/check_observability_logs.py` against the pinned real Collector with
+an isolated invented HEC sink. It checks authentication, index selection, raw-log
+rejection, privacy canaries and trace/span correlation. No private records or real
+credentials are used. The Go wire tests cover application logging and unsampled
+trace context. Live commissioning should also verify an actual application request
+appears in Splunk/Log Observer before claiming ingestion is operational.
