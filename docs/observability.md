@@ -4,7 +4,9 @@ Hosted UK-Info can export sampled backend traces through standard OpenTelemetry
 OTLP/HTTP. A private upstream Collector also scrapes the existing Prometheus
 metrics and forwards both signals to Splunk Observability Cloud. Application code
 contains no Splunk SDK or endpoint. Replace the Collector exporter to change backend.
-Dashboards and detector query languages remain specific to the backend.
+Dashboards and detector query languages remain specific to the backend. Optional
+structured application logs can go to private Splunk Enterprise HEC through the
+same Collector; see [log configuration](#private-splunk-enterprise-logs).
 
 **Default:** no export. The desktop app (`--data-dir`) and maintenance commands do
 not configure telemetry, even when telemetry environment variables are present.
@@ -122,7 +124,9 @@ pipeline for arbitrary applications.
 - Collector: 128 MiB container limit, 80 MiB memory limiter, 0.25 CPU, queue 32 batches
   and retries bounded to two minutes. Telemetry can be dropped under pressure or
   outage. No catalogue writes or search failures depend on successful export.
-- No logs, profiling, host discovery or browser telemetry are uploaded.
+- The base overlay exports traces and metrics. The separate logs overlay below
+  adds approved application events. Neither configuration exports profiling, host
+  discovery or browser telemetry.
 
 Check Splunk's actual usage after enabling the service. Sampling bounds a fraction
 of traffic, not a fixed bill or monthly quota. Lower the ratio or disable traces
