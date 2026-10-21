@@ -103,9 +103,10 @@ class Modern2003Database(ModernDatabase):
             place["place_warning"] = "missing_source_locality"
         else:
             place = self._cached_location(place_id)
-        full = re.fullmatch(r"(?:GIR0AA|[A-Z]{1,2}[0-9][A-Z0-9]?[0-9][A-Z]{2})", postcode)
+        compact = "".join(postcode.split())
+        full = re.fullmatch(r"(?:GIR0AA|[A-Z]{1,2}[0-9][A-Z0-9]?[0-9][A-Z]{2})", compact)
         result = dict(
-            postcode=postcode[:-3] + " " + postcode[-3:] if full else postcode,
+            postcode=compact[:-3] + " " + compact[-3:] if full else postcode,
             postcode_raw=postcode,
             postcode_x_raw=int.from_bytes(raw[5:8], "little"),
             postcode_y_raw=int.from_bytes(raw[8:11], "little"),

@@ -134,6 +134,21 @@ class Modern2003Tests(unittest.TestCase):
             self.assertEqual(row["postcode"], "GIR 0AA")
             self.assertNotIn("partial_postcode_source", row["source_warning"])
 
+    def test_spaced_source_prefixes_keep_full_precision_and_raw_text(self):
+        for prefix, displayed, raw in (
+            (b"Z1 1", "Z1 1AA", "Z1 1AA"),
+            (b"ZZ1 1", "ZZ1 1AA", "ZZ1 1AA"),
+            (b"GIR 0", "GIR 0AA", "GIR 0AA"),
+        ):
+            with self.subTest(prefix=prefix), old_source(prefix) as root, Database(root) as db:
+                row = next(db.search(entry_type="electoral"))
+                self.assertEqual(row["postcode"], displayed)
+                self.assertEqual(row["postcode_raw"], raw)
+                self.assertNotIn("partial_postcode_source", row["source_warning"])
+                business = next(db.search(entry_type="business"))
+                self.assertEqual(business["postcode"], displayed)
+                self.assertNotIn("partial_postcode_source", business["source_warning"])
+
     def test_catalogue_protocol_preserves_both_entry_types_and_terminal_count(self):
         from ukinfo_reader.search_export import emit
 

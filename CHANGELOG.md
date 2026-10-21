@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Correct 2003 SE postcode precision detection for prefixes containing spaces; preserve raw text and avoid false partial-postcode warnings.
+
 - Add the verified DPCS0104DVD release of UK-Info 2003 SE: residential, telephone and
   business search/export, ISO extraction, prefix-table address joins and whole-source
   validation. Preserve source defects and missing industry descriptions explicitly.
