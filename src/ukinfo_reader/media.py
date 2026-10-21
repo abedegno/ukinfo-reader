@@ -177,7 +177,7 @@ def iso_profile(members):
         # Modern cover discs store large base files beside InstallShield tables.
         matches = []
         for edition in SUPPORTED_EDITIONS:
-            if edition.format != "modern":
+            if edition.format not in ("modern", "modern2003"):
                 continue
             anchor_size = next(size for name, size, _ in edition.files if name == "uk.dat")
             for anchor, size in members:

@@ -29,6 +29,10 @@ class Database:
                 from .pcf78 import PCF78Database
 
                 return PCF78Database(directory)
+            if format_name == "modern2003":
+                from .modern2003 import Modern2003Database
+
+                return Modern2003Database(directory)
             if format_name == "modern":
                 from .modern_reader import ModernDatabase
 

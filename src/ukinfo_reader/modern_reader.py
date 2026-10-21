@@ -109,6 +109,10 @@ def entry_codes(record, deleted=False):
 
 
 class ResidenceStream:
+    postcode_table = "d6new"
+    decode = staticmethod(decode_residence)
+    length = staticmethod(residential_length)
+
     def __init__(self, mapped, suffix):
         self.name = "update" if suffix else "base"
         self.data = mapped["ukupd.dat" if suffix else "uk.dat"]
@@ -118,7 +122,7 @@ class ResidenceStream:
                 ("surname", "d2"),
                 ("name", "d3"),
                 ("house", "d4"),
-                ("postcode", "d6new"),
+                ("postcode", self.postcode_table),
                 ("subbuilding", "d8"),
             ]
         }
@@ -166,6 +170,8 @@ class ModernDatabase:
     """Read joined residential and available business entries."""
 
     format = "modern"
+    residence_stream = ResidenceStream
+    allow_unknown_names = False
     fields = [
         dict(name=name)
         for name in (
@@ -219,8 +225,7 @@ class ModernDatabase:
         self._cached_location = lru_cache(maxsize=32768)(self._location)
         try:
             self.edition = identify_edition(directory)
-            self.name_mask = 0x3FFFFF if self.edition.id.startswith("se2004") else 0x1FFFFF
-            self.legacy_phone = self.edition.id.startswith("se2004")
+            self.name_mask, self.legacy_phone = self.variant(self.edition.id)
             self.mapped = {}
             for name, _, _ in self.edition.files:
                 stream = self._resources.enter_context((Path(directory) / name).open("rb"))
@@ -229,20 +234,27 @@ class ModernDatabase:
                 )
             self.places = ModernFixedTable(self.mapped["d1.dat"])
             self.streets = self.mapped["d7.dat"]
-            self.streams = [ResidenceStream(self.mapped, "")]
+            self.streams = [self.residence_stream(self.mapped, "")]
             if "ukupd.dat" in self.mapped:
-                self.streams.append(ResidenceStream(self.mapped, "upd"))
-            from .modern_business import BusinessStream
-
-            self.business_streams = []
-            if "bus.dat" in self.mapped:
-                self.business_streams = [
-                    BusinessStream(self.mapped, ""),
-                    BusinessStream(self.mapped, "upd"),
-                ]
+                self.streams.append(self.residence_stream(self.mapped, "upd"))
+            self.business_streams = self.open_business_streams(self.mapped)
         except BaseException:
             self.close()
             raise
+
+    @staticmethod
+    def variant(edition_id):
+        return (0x3FFFFF, True) if edition_id.startswith("se2004") else (0x1FFFFF, False)
+
+    @staticmethod
+    def open_business_streams(mapped):
+        from .modern_business import BusinessStream
+
+        return (
+            [BusinessStream(mapped, ""), BusinessStream(mapped, "upd")]
+            if "bus.dat" in mapped
+            else []
+        )
 
     def _word(self, stream_index, field, source_id):
         if not source_id:
@@ -331,10 +343,12 @@ class ModernDatabase:
             row_warnings = list(warnings)
             name_id = code & self.name_mask
             if name_id > stream.tables["name"].count:
-                if code != 0xFFFFFF:
+                if code != 0xFFFFFF and not self.allow_unknown_names:
                     raise FormatError("Invalid modern telephone name reference")
                 first = ""
-                row_warnings.append("unknown_telephone_name")
+                row_warnings.append(
+                    "unknown_telephone_name" if code == 0xFFFFFF else "invalid_name_reference"
+                )
             else:
                 first = self._cached_word(stream_index, "name", name_id)
             if any(
@@ -435,7 +449,7 @@ class ModernDatabase:
                 )
                 offset = start
                 while offset < end:
-                    length = residential_length(stream.data, offset)
+                    length = stream.length(stream.data, offset)
                     if offset + length > end:
                         raise FormatError("Surname group ends inside residential record")
                     pc_id = (
@@ -452,7 +466,7 @@ class ModernDatabase:
                         ):
                             offset += length
                             continue
-                    record = decode_residence(stream.data, offset)
+                    record = stream.decode(stream.data, offset)
                     for row in self._joined(stream_index, offset, surname_id, record):
                         visible_pc = row["postcode"].replace(" ", "").casefold()
                         if target_pc and visible_pc != target_pc:

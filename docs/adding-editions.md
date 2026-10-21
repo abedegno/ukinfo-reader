@@ -1,9 +1,9 @@
 # Adding support for another edition
 
-Currently, **PC Format 78 (January 1998)** and **SE 4.0 from PC Format 94 (April 1999)**
-are supported. The reader rejects
-unknown database sizes and verifies exact source hashes on request. This prevents a familiar
-filename or a partly readable table from being mistaken for established compatibility.
+Five exact distributions are supported: the 1998 SE, 1999 SE 4.0, 2003 SE,
+2004 SE and V10.5 SE (2005) releases listed in [supported editions](editions.md).
+Unknown file sizes are rejected and source fingerprints are verified on request.
+Matching product names or a partly readable table do not establish compatibility.
 
 ## 1. Establish the source
 

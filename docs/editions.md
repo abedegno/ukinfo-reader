@@ -4,12 +4,26 @@
 |---|---|---|---|
 | `se-pcf78-1998-01` | UK-Info Disk SE | PC Format issue 78, January 1998 | Supported; entire database validated with documented source defects |
 | `se4-pcf94-1999-04` | UK-Info Disk SE 4.0 | PC Format issue 94, April 1999 | Supported; entire database validated |
+| `se2003-dpcs0104` | UK-Info 2003 SE | Supplied DPCS0104DVD image | Supported residential and business searches/exports; source anomalies documented |
 | `se2004-pcp218-2004-07` | UK-Info 2004 SE | PC Plus issue 218, July 2004 | Supported residential searches/exports; source anomalies documented |
 | `se2005-pcf175-2005-06` | UK-Info Disk V10.5 SE | PC Format issue 175, June 2005 | Supported residential and business searches/exports, including updates/deletions |
 
 **Other editions and Standard/Pro releases are not supported.** Matching product
 names or familiar filenames do not establish format compatibility. To propose another
 release, follow [Adding editions](adding-editions.md).
+
+## 2003 SE — DPCS0104DVD
+
+The supplied image's installer identifies this product as **UK-Info 2003 SE** and
+`CDID.TXT` contains `DPCS0104DVD`. Its distinct layout is dispatched explicitly;
+it is not treated as a renamed 2004/2005 database. See the [format and extraction
+guide](formats/2003-se.md), [whole-source report](validation/se2003-dpcs0104.json)
+and [original-decoder comparisons](validation/se2003-dpcs0104-reference-comparison.json).
+The reader validates **59,886,841 source entries**, including **2,471,038 businesses**.
+Seventeen unresolved name references are flagged with raw codes retained. The source
+omits its industry-description dictionary: business names, addresses, telephone/fax
+and SIC codes are available, while missing descriptions are explicitly flagged.
+No public archive source has been verified for this particular supplied image.
 
 ## 2004 SE and V10.5 SE (2005)
 

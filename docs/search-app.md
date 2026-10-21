@@ -30,7 +30,7 @@ all desktop releases remain drafts.
 
 - Go 1.26+ (tested with 1.26.9), PostgreSQL **18**, Python 3.10+ for importing discs.
 - Node 22.12+ and npm for desktop development/browser tests, not hosted serving.
-- All four [verified release profiles](editions.md) can be imported. Each import is
+- All five [verified release profiles](editions.md) can be imported. Each import is
   searchable individually or together. All **189,064,266** occurrences in the complete supported sources
   have passed PostgreSQL record/projection verification. Modern entries retain their
   electoral/telephone/business types.

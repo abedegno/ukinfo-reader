@@ -4,7 +4,6 @@ from collections import Counter
 
 from . import __version__
 from .codecs import FormatError
-from .modern import decode_residence
 from .modern_reader import entry_codes
 
 
@@ -57,7 +56,7 @@ def validate_database(db, directory, progress=None):
         counts, flags, warnings = Counter(), Counter(), Counter()
         offset = 0
         while offset < len(stream.data):
-            record = decode_residence(stream.data, offset)
+            record = stream.decode(stream.data, offset)
             counts["physical_records"] += 1
             flags[str(record.kind)] += 1
             indexed = offset >= stream.starts[0]
@@ -69,7 +68,7 @@ def validate_database(db, directory, progress=None):
                 if record.kind not in (3, 4, 5):
                     raise FormatError("Deletion targets a record without a telephone entry")
             for code in record.name_codes:
-                if code & db.name_mask > stream.tables["name"].count:
+                if code & db.name_mask > stream.tables["name"].count and not db.allow_unknown_names:
                     raise FormatError("Primary residential name reference exceeds dictionary")
             if record.postcode_id > stream.tables["postcode"].count:
                 raise FormatError("Residential postcode reference exceeds dictionary")
@@ -94,11 +93,15 @@ def validate_database(db, directory, progress=None):
                 for entry_type, _, code in entry_codes(record, offset in stream.deleted):
                     name_id = code & db.name_mask
                     if name_id > stream.tables["name"].count:
-                        if code != 0xFFFFFF:
+                        if code != 0xFFFFFF and not db.allow_unknown_names:
                             raise FormatError(
                                 f"Telephone name reference exceeds dictionary at {offset}"
                             )
-                        warnings["unknown_telephone_name"] += 1
+                        warnings[
+                            "unknown_telephone_name"
+                            if code == 0xFFFFFF
+                            else "invalid_name_reference"
+                        ] += 1
                     counts[entry_type + "_entries"] += 1
                     counts["entries"] += 1
             else:
@@ -138,13 +141,17 @@ def validate_database(db, directory, progress=None):
         )
         report["business_streams"] = validate_business(db, business_progress)
         report["scope"] = "residential-and-business"
+        if any(not getattr(stream, "industry_available", True) for stream in db.business_streams):
+            report["limitations"].append(
+                "The source omits the industry description dictionary; raw industry references are retained and descriptions are unavailable."
+            )
         business_total = sum(s["counts"]["entries"] for s in report["business_streams"].values())
         report["totals"]["business_entries"] = business_total
         report["totals"]["entries"] += business_total
         report["checks"].extend(
             [
                 "business_record_boundaries",
-                "business_word_and_industry_references",
+                "business_word_and_available_industry_references",
                 "business_address_phone_fax_joins",
                 "business_deletion_selection",
             ]

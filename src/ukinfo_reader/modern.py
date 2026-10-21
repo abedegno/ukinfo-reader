@@ -28,7 +28,7 @@ class ModernLeafIndex:
         self.compression = data[57]
         self.fill = bytes([data[60]])
         if (
-            self.page_size not in (4096, 16384)
+            self.page_size not in (1024, 4096, 16384)
             or not 1 <= self.key_size <= 255
             or self.compression not in (4, 12)
             or data[64] != 1
@@ -114,6 +114,10 @@ class ModernFixedTable:
 
 def residential_length(data, offset=0):
     """Return the physical record length; reject invalid counts and truncation."""
+    return _residential_length(data, offset, precision=True)
+
+
+def _residential_length(data, offset, *, precision):
     if offset < 0 or offset + 9 > len(data):
         raise FormatError("Truncated modern residential record")
     flags, pc_flags = data[offset], data[offset + 6]
@@ -128,7 +132,7 @@ def residential_length(data, offset=0):
         + (3 if kind in (2, 5) else 0)
         + (3 if 1 <= kind <= 6 else 0)
         + (2 if pc_flags & 32 else 0)
-        + (1 if pc_flags & 128 else 0)
+        + (1 if precision and pc_flags & 128 else 0)
     )
     if offset + length > len(data):
         raise FormatError("Truncated modern residential record")
@@ -161,7 +165,13 @@ class PhysicalResidence:
 
 def decode_residence(data, offset=0):
     """Decode a physical record without applying dictionary joins or deletion rules."""
-    length = residential_length(data, offset)
+    return _decode_residence(
+        data, offset, precision=True, house_extension=False, building_extension=True
+    )
+
+
+def _decode_residence(data, offset, *, precision, house_extension, building_extension):
+    length = _residential_length(data, offset, precision=precision)
     flags, pc_flags = data[offset], data[offset + 6]
     count, kind = flags & 7, (flags >> 3) & 7
     names = [int.from_bytes(data[offset + 1 : offset + 4], "little")]
@@ -178,13 +188,13 @@ def decode_residence(data, offset=0):
     names.extend(take(3) for _ in range(count - 1))
     a = take(3, flags & 128)
     # An additional high bit comes from the postcode flag byte, not an extra byte.
-    if a is not None and pc_flags & 64:
+    if building_extension and a is not None and pc_flags & 64:
         a |= 1 << 24
     b = take(2, flags & 64)
     c = take(3, kind in (2, 5))
     d = take(3, 1 <= kind <= 6)
     e = take(2, pc_flags & 32)
-    f = take(1, pc_flags & 128)
+    f = take(1, precision and pc_flags & 128)
     return PhysicalResidence(
         offset,
         length,
@@ -193,7 +203,8 @@ def decode_residence(data, offset=0):
         tuple(names),
         int.from_bytes(data[offset + 4 : offset + 7], "little") & 0x1FFFFF,
         pc_flags & 0xE0,
-        int.from_bytes(data[offset + 7 : offset + 9], "little"),
+        int.from_bytes(data[offset + 7 : offset + 9], "little")
+        | (0x10000 if house_extension and pc_flags & 128 else 0),
         a,
         b,
         c,
@@ -227,6 +238,10 @@ class PhysicalBusiness:
 
 def decode_business(data, offset=0):
     """Decode the V10.5 business stream, checking every optional field's bounds."""
+    return _decode_business(data, offset, precision=True, building_extension=True)
+
+
+def _decode_business(data, offset, *, precision, building_extension):
     if offset < 0 or offset + 10 > len(data):
         raise FormatError("Truncated modern business record")
     flags, control = data[offset : offset + 2]
@@ -247,14 +262,14 @@ def decode_business(data, offset=0):
     lob = take(3, flags & 1)
     sic = take(2, flags & 2)
     building = take(3, flags & 4)
-    if building is not None and control & 64:
+    if building_extension and building is not None and control & 64:
         building |= 1 << 24
     flat = take(2, flags & 8)
     phone = take(3, flags & 16)
     area = take(2, flags & 32)
     fax_area = take(3, flags & 64)
     fax = take(3, flags & 128)
-    precision = take(1, control & 128) or 0
+    precision = take(1, precision and control & 128) or 0
     return PhysicalBusiness(
         offset,
         cursor - offset,

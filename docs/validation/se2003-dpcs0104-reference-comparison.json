@@ -1,0 +1,21 @@
+{
+  "edition": "se2003-dpcs0104",
+  "method": "Original 2003 field readers and length callbacks executed locally with invented inputs; original numeric formatter compared independently. Only allocation and array-runtime functions were stubbed.",
+  "residential_length_and_house_extension_cases": 1280,
+  "business_length_cases": 65536,
+  "telephone_numeric_cases": 2009,
+  "business_all_field_value_cases": 1536,
+  "mismatches": 0,
+  "decoder_sha256": "610a3cfb4297d6e4786136b5698b809bf1faadd3069052ee4737586e7a490927",
+  "original_addresses": {
+    "residential_length": "0x1000e7d0",
+    "business_length": "0x10001560",
+    "field_reader": "0x10015850",
+    "numeric_formatter": "0x10001c00",
+    "business_record_parser": "0x10016240"
+  },
+  "limitations": [
+    "Length checks do not independently establish all dictionary joins.",
+    "The source omits its line-of-business description dictionary."
+  ]
+}

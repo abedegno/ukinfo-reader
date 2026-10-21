@@ -88,6 +88,15 @@ does not emit a `household_id`. Queries exclude the one known mismatched index p
 unindexed physical records. A source note is printed to stderr. See [format details and
 source defects](formats/pcf78.md#source-defects-and-validation-limits).
 
+## 2003 SE output fields
+
+The 2003 source shares the joined residential/business fields below. It uses a
+distinct postcode-prefix join and has no trailing precision byte. Additional fields
+`postcode_flags`, `postcode_x_raw` and `postcode_y_raw` preserve source codes; the raw
+grid values are not converted into map coordinates. `invalid_name_reference`,
+`missing_source_locality` and `industry_dictionary_missing` identify documented
+source limitations. See the [2003 format guide](formats/2003-se.md).
+
 ## 2004/2005 residential output fields
 
 Use the same search/export options after [extracting all required files](formats/modern-se.md#source-extraction).
