@@ -231,7 +231,10 @@ incompatible managed index using invented data in a disposable PostgreSQL instan
 Town searches combined with selective names can otherwise expand hundreds of
 thousands of street postings. New complete address imports build a reverse lookup:
 one array of up to 128 location IDs per source block. Selective source candidates
-are checked through this index before expanding town postings. Overflow retains
+are checked through this index before expanding town postings. Reads are batched
+by edition and block order to reduce scattered HDD I/O even while an active import
+prevents index-only visibility. Missing or damaged published blocks fail explicitly.
+Overflow retains
 the complete existing search; pagination and refinements still apply.
 
 For an existing catalogue, run the owner-only maintenance script
