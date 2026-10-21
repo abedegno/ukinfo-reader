@@ -54,6 +54,7 @@ type queryCase struct {
 	DigestMode string `json:"digest_mode,omitempty"`
 }
 type observation struct {
+	digest       string
 	Case         int     `json:"case"`
 	Round        int     `json:"round,omitempty"`
 	Family       string  `json:"family"`
@@ -238,13 +239,15 @@ func (e *engine) request(index, round int, at time.Time) (observation, bool) {
 		}
 	case !validResponse(body, response.Header.Get("Content-Type")):
 		o.Outcome = "invalid_json"
-	case e.cases[index].SHA256 == "":
-		o.Outcome = "unverified"
 	default:
 		digest, err := responseDigest(body, e.cases[index].DigestMode)
 		if err != nil {
 			o.Outcome = "invalid_json"
+		} else if e.cases[index].SHA256 == "" {
+			o.digest = digest
+			o.Outcome = "unverified"
 		} else if digest == strings.ToLower(e.cases[index].SHA256) {
+			o.digest = digest
 			o.Outcome = "ok"
 		} else {
 			o.Outcome = "hash_mismatch"
@@ -275,6 +278,7 @@ func main() {
 func run(args []string, stdout io.Writer) error {
 	f := flag.NewFlagSet("search-load", flag.ContinueOnError)
 	f.SetOutput(io.Discard)
+	compare := f.String("compare-url", "", "optional baseline API for balanced sequential paired observations; requires probe-only")
 	host := f.String("url", "http://127.0.0.1:8080", "base API URL")
 	duration := f.Duration("duration", 10*time.Second, "duration per closed-loop stage, at most five minutes")
 	rate := f.Int("rate", 100, "scheduled requests per second; zero skips this stage")
@@ -298,6 +302,12 @@ func run(args []string, stdout io.Writer) error {
 	if err != nil || u.Hostname() == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" || (u.Path != "" && u.Path != "/") || (u.Scheme != "http" && u.Scheme != "https") {
 		return errors.New("base URL must use HTTP(S) without credentials, path, query or fragment")
 	}
+	if *compare != "" {
+		v, err := url.Parse(*compare)
+		if err != nil || v.Hostname() == "" || v.User != nil || v.RawQuery != "" || v.Fragment != "" || (v.Path != "" && v.Path != "/") || (v.Scheme != "http" && v.Scheme != "https") || !*probe {
+			return errors.New("paired comparison requires probe-only and a valid credential-free baseline URL")
+		}
+	}
 	if *output == "" || *duration <= 0 || *duration > 5*time.Minute || *rate < 0 || *rate > 1000 || *arrivals <= 0 || *arrivals > 5*time.Minute || *timeout <= 0 || *timeout > time.Minute || *maxDuration <= 0 || *maxDuration > 30*time.Minute || *maxRequests < 1 || *maxRequests > 100000 || *rounds < 1 || *rounds > 10 {
 		return errors.New("invalid benchmark budgets")
 	}
@@ -306,7 +316,11 @@ func run(args []string, stdout io.Writer) error {
 		return errors.New("cannot read private workload")
 	}
 	var cases []queryCase
-	if json.Unmarshal(raw, &cases) != nil || len(cases) == 0 || len(cases) > 10000 || int64(len(cases)**rounds) > *maxRequests {
+	factor := int64(1)
+	if *compare != "" {
+		factor = 2
+	}
+	if json.Unmarshal(raw, &cases) != nil || len(cases) == 0 || len(cases) > 10000 || factor*int64(len(cases)**rounds) > *maxRequests {
 		return errors.New("invalid workload or insufficient request budget for observations")
 	}
 	unverified := 0
@@ -340,6 +354,9 @@ func run(args []string, stdout io.Writer) error {
 	ctx, cancel := context.WithTimeout(context.Background(), *maxDuration)
 	defer cancel()
 	e := &engine{ctx: ctx, client: &http.Client{Transport: transport, Timeout: *timeout, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}, base: strings.TrimRight(*host, "/"), cases: cases, max: *maxRequests}
+	if *compare != "" {
+		return e.compare(*compare, *rounds, *output, stdout)
+	}
 	result := map[string]any{"schema_version": 2, "cases": len(cases), "case_classes": classes, "unverified_cases": unverified, "request_timeout_seconds": timeout.Seconds(), "max_requests": *maxRequests, "max_duration_seconds": maxDuration.Seconds(), "closed_loop": map[string]stageReport{}, "notes": []string{"Initial observations precede any warm-up by this runner. Cache state is otherwise unchanged and is not necessarily cold.", "HTTP transfer, JSON validation and hashing are timed; failed attempts are included in percentiles.", "Only reference-hashed cases may enter load stages. Probe-only unverified successes do not establish result correctness.", "Reports exclude URLs, query values, response records, hashes and raw errors.", "cursor-neutral-v1 compares full response content while replacing opaque next-page tokens with page availability; pagination traversal requires separate verification.", "Document corpus, build, hardware, quotas, import activity and storage/cache conditions alongside this report."}}
 	initial := &recorder{}
 	start := time.Now()

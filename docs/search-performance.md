@@ -98,6 +98,8 @@ does not execute them twice. Plans retain node/index names, estimates and work
 counters only; predicates, output expressions, SQL, parameters and response records
 are omitted. Estimated plans are not evidence of actual rows, disk reads or spills.
 The default slow threshold is 100 ms. Limit workloads to 100 cases and 15 minutes.
+The profiler retains failed requests and continues; inspect `failed_requests`.
+Use the HTTP runner when failures must also fail an availability gate.
 
 The API exposes `ukinfo_search_phase_duration_seconds{phase,outcome}` for vocabulary,
 source/address probes, address blocks/dictionary, candidates, ordered candidates,
@@ -137,3 +139,22 @@ interleaved dictionary terms, and verifies both grouped and ordinary pages. A
 one-item page must expand only its two needed pairs, rather than all 128 candidates.
 Anchored business filters seek one record's classification before applying a
 national industry/SIC prefix; classification-only searches keep range access.
+
+### Prepare an imported hosted edition
+
+After import and full verification transactions release their snapshots, run the
+owner-only maintenance script before publishing the edition:
+
+```sh
+psql "$DATABASE_URL" -v dataset='exact-complete-edition-key' \
+  -f deploy/production/prepare-search-catalogue.sql
+```
+
+The script checks one complete edition's source/research partitions, then runs
+ordinary VACUUM/ANALYZE on those partitions and shared dictionary/address lookups.
+It uses bounded maintenance memory, lock waits, statement time and vacuum cost.
+It requires the complete hosted research/address projections; it is not a desktop
+import prerequisite. Inspect visibility coverage after completion. A valid
+covering index alone does not guarantee zero heap reads while snapshots prevent
+pages becoming all-visible. Schedule backups and index builds separately from
+representative interactive latency measurements.

@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -51,6 +53,7 @@ func testClassificationProbeWork(t *testing.T, db *pgxpool.Pool) {
 		t.Fatal("unexpected fixture bindings")
 	}
 	postcode := f.args[2].([]int32)[0]
+	observations := []map[string]any{}
 	for _, mode := range []string{"force_custom_plan", "force_generic_plan"} {
 		conn, err := db.Acquire(ctx)
 		if err != nil {
@@ -119,9 +122,22 @@ func testClassificationProbeWork(t *testing.T, db *pgxpool.Pool) {
 				}
 			}
 			walk(root)
+			observations = append(observations, map[string]any{"mode": mode, "execution_ms": plans[0]["Execution Time"], "shared_blocks": blocks, "results": count, "heap_fetches": 0})
 			if scans != 1 {
 				t.Fatal("expected one pruned classification partition", scans)
 			}
 		}()
+	}
+	if dir := os.Getenv("UKINFO_PERFORMANCE_REPORT_DIR"); dir != "" {
+		if err := os.MkdirAll(dir, 0700); err != nil {
+			t.Fatal(err)
+		}
+		data, err := json.MarshalIndent(map[string]any{"fixture_entries": 50000, "conditions": "Cached invented PostgreSQL fixture; not HDD capacity", "plans": observations}, "", "  ")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err = os.WriteFile(filepath.Join(dir, "classification-plans.json"), append(data, '\n'), 0600); err != nil {
+			t.Fatal(err)
+		}
 	}
 }

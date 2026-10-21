@@ -148,8 +148,8 @@ terraform apply private.tfplan
 The dashboard includes request concurrency, pool utilisation, search rates by
 category, error percentage, classified timeout/error rates, decoded block rates,
 successful pool wait rate/mean, canceled acquisitions and a telemetry heartbeat.
-The p95 chart uses the request histogram, aggregated by route, rather than taking
-percentiles of counter values. Its seven finite bucket boundaries give an estimate;
+The p95 charts use request and search-stage histograms, aggregated by route or
+phase, rather than taking percentiles of counter values. Its seven finite bucket boundaries give an estimate;
 use APM for individual sampled request/operation breakdowns. The Collector converts
 cumulative Prometheus latency histograms to delta buckets; it drops the first
 observation after startup and needs a second scrape before exporting that histogram.

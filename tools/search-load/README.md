@@ -60,3 +60,29 @@ Record corpus size, sample selection, versions, hardware, index/visibility state
 client/server CPU and memory quotas, pool size, background imports and cache history.
 A repeated small workload does not establish whole-catalogue Internet capacity.
 The runner never flushes caches or restarts PostgreSQL.
+
+## Paired API comparison
+
+Use two private APIs on the **same fixed catalogue generation** to check an adverse
+result under similar storage conditions:
+
+```sh
+go run . --url http://candidate:8080 --compare-url http://baseline:8080 \
+  --probe-only --cases /path/to/private-cases.json --output /path/to/paired.json \
+  --repeats 2 --max-requests 400 --max-duration 15m
+```
+
+This mode runs baseline/candidate sequentially for each case and alternates which
+goes first by case and round. The request budget includes both servers. It compares
+both successful responses using the case digest mode and retains mismatches,
+before-only/after-only successes, failures and incomplete pairs. Missing reference
+hashes are permitted; matching implementations do not establish independent
+correctness. Existing expected hashes are still enforced for each response.
+The command fails on candidate errors, content mismatches or incomplete work.
+
+Schema 3 includes per-pair observations and baseline/candidate summaries, without
+URLs, query values, response records or hashes. Summary request rates divide by
+the entire paired run, including the other server's work; they are not independent
+capacity measurements. Alternating order reduces cache/order confounding but does
+not isolate changing background I/O. Keep corpus generation and resource limits
+fixed, record maintenance, and investigate differences before deployment.
