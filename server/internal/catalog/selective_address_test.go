@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -110,6 +112,7 @@ func TestSelectiveAddressIntegration(t *testing.T) {
 		t.Fatal(err)
 	}
 	testAddressLookupIntegrity(t, db)
+	testAddressLookupDictionaryPlan(t, db)
 	if _, err = db.Exec(ctx, "INSERT INTO terms(key) SELECT 'jaaa'||lpad(i::text,5,'0') FROM generate_series(0,8192) i ON CONFLICT DO NOTHING"); err != nil {
 		t.Fatal(err)
 	}
@@ -377,5 +380,96 @@ func testOrderedSurnameWindows(t *testing.T, db *pgxpool.Pool) {
 		if len(seen) != 360 {
 			t.Fatal("truncated surname windows", len(seen))
 		}
+	}
+}
+
+// Use a wide, mostly unrelated dictionary so a sparse ID-driven heap probe is
+// observably more work than the town covering range, even on a cached CI runner.
+func testAddressLookupDictionaryPlan(t *testing.T, db *pgxpool.Pool) {
+	t.Helper()
+	ctx := context.Background()
+	if _, err := db.Exec(ctx, `INSERT INTO address_locations(key,street,street_2,locality,locality_2,town,county)
+ SELECT 'lookup-plan:'||i,repeat('invented ',32)||i,'','','',
+ CASE WHEN i%5=0 THEN 'invented plan town' ELSE 'unrelated plan town' END,'invented plan county'
+ FROM generate_series(1,20000) i`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(ctx, "VACUUM (ANALYZE) address_locations"); err != nil {
+		t.Fatal(err)
+	}
+	var candidates, expected []int32
+	if err := db.QueryRow(ctx, `SELECT array_agg(id ORDER BY id) FROM address_locations
+ WHERE key LIKE 'lookup-plan:%' AND id%7=0`).Scan(&candidates); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.QueryRow(ctx, `SELECT array_agg(id ORDER BY id) FROM address_locations
+ WHERE town='invented plan town' AND id=ANY($1::integer[])`, candidates).Scan(&expected); err != nil {
+		t.Fatal(err)
+	}
+	args := []any{candidates}
+	sql := addressLocationLookupSQL(query{Town: "invented plan town"}, &args)
+	rows, err := db.Query(ctx, sql, args...)
+	if err != nil {
+		t.Fatal(err)
+	}
+	actual := []int32{}
+	for rows.Next() {
+		var id int32
+		if err = rows.Scan(&id); err != nil {
+			rows.Close()
+			t.Fatal(err)
+		}
+		actual = append(actual, id)
+	}
+	err = rows.Err()
+	rows.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	sort.Slice(actual, func(i, j int) bool { return actual[i] < actual[j] })
+	if !slices.Equal(actual, expected) {
+		t.Fatal("dictionary intersection changed results")
+	}
+	var raw []byte
+	if err = db.QueryRow(ctx, "EXPLAIN (ANALYZE,BUFFERS,TIMING OFF,FORMAT JSON) "+sql, args...).Scan(&raw); err != nil {
+		t.Fatal(err)
+	}
+	var plan []map[string]any
+	if err = json.Unmarshal(raw, &plan); err != nil {
+		t.Fatal(err)
+	}
+	top := plan[0]["Plan"].(map[string]any)
+	blocks := func(n map[string]any, k string) float64 {
+		if v, ok := n[k].(float64); ok {
+			return v
+		}
+		return 0
+	}
+	if blocks(top, "Shared Hit Blocks")+blocks(top, "Shared Read Blocks") > 500 {
+		t.Fatal("dictionary lookup exceeded buffer budget")
+	}
+	var inspect func(map[string]any)
+	inspect = func(n map[string]any) {
+		if n["Relation Name"] == "address_locations" && (n["Node Type"] != "Index Only Scan" || blocks(n, "Heap Fetches") != 0) {
+			t.Fatal("dictionary lookup fetched address heaps")
+		}
+		if children, ok := n["Plans"].([]any); ok {
+			for _, child := range children {
+				inspect(child.(map[string]any))
+			}
+		}
+	}
+	inspect(top)
+	// An existing index with the right name but wrong key order must fail closed.
+	tx, err := db.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tx.Rollback(ctx)
+	if _, err = tx.Exec(ctx, `DROP INDEX address_record_block_ids; CREATE INDEX address_record_block_ids ON address_record_blocks(block_id,dataset_id)`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = tx.Exec(ctx, addressLookupSchema); err == nil || !strings.Contains(err.Error(), "Incompatible or incomplete") {
+		t.Fatalf("incorrect lookup index accepted: %v", err)
 	}
 }

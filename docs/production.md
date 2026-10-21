@@ -233,7 +233,10 @@ thousands of street postings. New complete address imports build a reverse looku
 one array of up to 128 location IDs per source block. Selective source candidates
 are checked through this index before expanding town postings. Reads are batched
 by edition and block order to reduce scattered HDD I/O even while an active import
-prevents index-only visibility. Missing or damaged published blocks fail explicitly.
+prevents index-only visibility. A small key-only block index avoids wide-index plus
+heap reads in that case. Town/county dictionary ranges are materialized before
+intersecting source location IDs, preventing scattered primary-key heap probes.
+Missing or damaged published blocks fail explicitly.
 Overflow retains
 the complete existing search; pagination and refinements still apply.
 

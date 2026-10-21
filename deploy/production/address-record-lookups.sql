@@ -8,6 +8,11 @@ SET statement_timeout=0;
 SET work_mem='128MB';
 SET maintenance_work_mem='256MB';
 SET max_parallel_maintenance_workers=0;
+-- Existing catalogues get the small key index online. A fresh schema creates it
+-- on the empty table inside address_lookup.sql instead.
+SELECT 'CREATE INDEX CONCURRENTLY IF NOT EXISTS address_record_block_ids ON address_record_blocks(dataset_id,block_id)'
+WHERE to_regclass('address_record_blocks') IS NOT NULL
+\gexec
 \ir address_lookup.sql
 SELECT 'GRANT SELECT ON address_record_blocks,address_record_indexes TO ukinfo_search'
 WHERE EXISTS (SELECT FROM pg_roles WHERE rolname='ukinfo_search')
