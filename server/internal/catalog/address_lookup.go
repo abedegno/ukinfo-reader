@@ -10,9 +10,8 @@ import (
 //go:embed address_lookup.sql
 var addressLookupSchema string
 
-// Match a bounded national name/postcode candidate set using compact location
-// arrays. A broad town never expands into every occurrence in that town here.
-// Legacy catalogues without this optional projection keep the existing fallback.
+// addressLookupReady requires complete coverage and serving permissions. Legacy
+// catalogues without this optional projection retain the complete fallback.
 func (a *API) addressLookupReady(ctx context.Context, datasets []int16) (bool, error) {
 	var available bool
 	if err := a.DB.QueryRow(ctx, `SELECT COALESCE(
@@ -30,6 +29,8 @@ func (a *API) addressLookupReady(ctx context.Context, datasets []int16) (bool, e
 	return ready == len(datasets), nil
 }
 
+// indexedAddressCandidates filters bounded source candidates through compact
+// address arrays, without expanding every occurrence in a broad town.
 func (a *API) indexedAddressCandidates(ctx context.Context, q query, candidates map[int16][]int32) (map[int16][]int32, bool, error) {
 	datasets := []int16{}
 	for dataset, ids := range candidates {
@@ -45,24 +46,84 @@ func (a *API) indexedAddressCandidates(ctx context.Context, q query, candidates 
 	if err != nil || !available {
 		return nil, false, err
 	}
-	sourceDatasets := []int16{}
-	sourceIDs := []int32{}
+	// Read each edition's blocks in one bounded batch. Individual lateral index
+	// probes alternate index/heap reads on HDDs while a long import prevents the
+	// visibility map from marking newly built lookups all-visible.
+	type sourceLocation struct {
+		dataset  int16
+		id       int32
+		location int32
+	}
+	sources := []sourceLocation{}
+	locationIDs := []int32{}
 	for _, dataset := range datasets {
+		byBlock := map[int32][]int32{}
 		for _, id := range candidates[dataset] {
-			sourceDatasets = append(sourceDatasets, dataset)
-			sourceIDs = append(sourceIDs, id)
+			byBlock[(id-1)/blockRows] = append(byBlock[(id-1)/blockRows], id)
+		}
+		blocks := make([]int32, 0, len(byBlock))
+		for block := range byBlock {
+			blocks = append(blocks, block)
+		}
+		sort.Slice(blocks, func(i, j int) bool { return blocks[i] < blocks[j] })
+		rows, err := a.DB.Query(ctx, `SELECT block_id,location_ids FROM address_record_blocks
+ WHERE dataset_id=$1 AND block_id=ANY($2::integer[]) ORDER BY block_id`, dataset, blocks)
+		if err != nil {
+			return nil, true, err
+		}
+		seen := 0
+		for rows.Next() {
+			var block int32
+			var locations []int32
+			if err = rows.Scan(&block, &locations); err != nil {
+				rows.Close()
+				return nil, true, err
+			}
+			seen++
+			for _, id := range byBlock[block] {
+				slot := int((id - 1) % blockRows)
+				if slot >= len(locations) || locations[slot] < 1 {
+					rows.Close()
+					return nil, true, fmt.Errorf("incomplete address record lookup")
+				}
+				sources = append(sources, sourceLocation{dataset, id, locations[slot]})
+				locationIDs = append(locationIDs, locations[slot])
+			}
+		}
+		err = rows.Err()
+		rows.Close()
+		if err != nil {
+			return nil, true, err
+		}
+		if seen != len(blocks) {
+			return nil, true, fmt.Errorf("incomplete address record lookup")
 		}
 	}
-	args := []any{sourceDatasets, sourceIDs}
+	args := []any{locationIDs}
 	predicate := addressPredicate(q, &args)
-	sql := fmt.Sprintf(`WITH sources AS MATERIALIZED (
-  SELECT * FROM unnest($1::smallint[],$2::integer[]) s(dataset_id,id)),
- locations AS MATERIALIZED (SELECT l.id FROM address_locations l WHERE %s)
- SELECT s.dataset_id,s.id FROM sources s
- CROSS JOIN LATERAL (SELECT b.location_ids[(s.id-1)%%128+1] AS location_id
-  FROM address_record_blocks b WHERE b.dataset_id=s.dataset_id
-   AND b.block_id=(s.id-1)/128 OFFSET 0) b
- JOIN locations l ON l.id=b.location_id`, predicate)
-	matched, _, err := a.addressPlanCandidates(ctx, sql, args)
-	return matched, true, err
+	rows, err := a.DB.Query(ctx, "SELECT l.id FROM address_locations l WHERE l.id=ANY($1::integer[]) AND "+predicate, args...)
+	if err != nil {
+		return nil, true, err
+	}
+	locations := map[int32]bool{}
+	for rows.Next() {
+		var id int32
+		if err = rows.Scan(&id); err != nil {
+			rows.Close()
+			return nil, true, err
+		}
+		locations[id] = true
+	}
+	err = rows.Err()
+	rows.Close()
+	if err != nil {
+		return nil, true, err
+	}
+	matched := map[int16][]int32{}
+	for _, source := range sources {
+		if locations[source.location] {
+			matched[source.dataset] = append(matched[source.dataset], source.id)
+		}
+	}
+	return matched, true, nil
 }

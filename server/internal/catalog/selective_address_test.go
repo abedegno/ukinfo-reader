@@ -291,6 +291,33 @@ func testAddressLookupIntegrity(t *testing.T, db *pgxpool.Pool) {
  SELECT id,1,entries,(entries+127)/128 FROM datasets WHERE key='large-address'`); err != nil {
 		t.Fatal(err)
 	}
+	var dataset int16
+	var original []int32
+	if err = db.QueryRow(ctx, `SELECT b.dataset_id,b.location_ids FROM address_record_blocks b
+ JOIN datasets d ON d.id=b.dataset_id WHERE d.key='large-address' AND b.block_id=0`).Scan(&dataset, &original); err != nil {
+		t.Fatal(err)
+	}
+	restore := func() {
+		if _, e := db.Exec(ctx, `INSERT INTO address_record_blocks(dataset_id,block_id,location_ids)
+ VALUES($1,0,$2) ON CONFLICT(dataset_id,block_id) DO UPDATE SET location_ids=EXCLUDED.location_ids`, dataset, original); e != nil {
+			t.Fatal(e)
+		}
+	}
+	defer restore()
+	for _, mutation := range []string{
+		"DELETE FROM address_record_blocks WHERE dataset_id=$1 AND block_id=0",
+		"UPDATE address_record_blocks SET location_ids=location_ids[1:1] WHERE dataset_id=$1 AND block_id=0",
+		"UPDATE address_record_blocks SET location_ids[128]=0 WHERE dataset_id=$1 AND block_id=0",
+	} {
+		if _, err = db.Exec(ctx, mutation, dataset); err != nil {
+			t.Fatal(err)
+		}
+		if _, available, e := a.indexedAddressCandidates(ctx, q, map[int16][]int32{dataset: {1, 128}}); !available || e == nil {
+			t.Fatalf("damaged published lookup silently accepted: available=%v err=%v", available, e)
+		}
+		restore()
+	}
+
 }
 
 func testOrderedSurnameWindows(t *testing.T, db *pgxpool.Pool) {

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Batch compact address-block reads by edition and source order, reducing scattered
+  HDD reads while imports prevent index-only visibility; reject damaged published
+  lookup blocks rather than silently omitting results.
+
 - Add compact record-to-address lookups for selective names in large towns, avoiding
   whole-town posting expansion when candidates span many compressed blocks. Keep
   complete pagination, refinements and legacy fallback; add integrity/cleanup tests
