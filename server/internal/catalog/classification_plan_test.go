@@ -107,7 +107,8 @@ func testClassificationProbeWork(t *testing.T, db *pgxpool.Pool) {
 				if n["Relation Name"] == researchTable {
 					scans++
 					condition, _ := n["Index Cond"].(string)
-					if n["Node Type"] != "Index Only Scan" || n["Heap Fetches"] != float64(0) || !idCondition.MatchString(condition) || strings.Contains(condition, "industry") || strings.Contains(condition, "sic") {
+					filter, _ := n["Filter"].(string)
+					if n["Node Type"] != "Index Only Scan" || n["Heap Fetches"] != float64(0) || !idCondition.MatchString(condition) || strings.Contains(condition, "industry") || strings.Contains(condition, "sic") || strings.Contains(filter, "industry") || strings.Contains(filter, "sic") {
 						t.Fatal("classification probe must seek a covered source ID before testing its classification", mode)
 					}
 				}
