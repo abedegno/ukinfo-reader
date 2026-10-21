@@ -36,17 +36,19 @@ type apiMetrics struct {
 	requests      map[metricKey]requestMetric
 	active        int
 	plans         map[string]uint64
+	phases        map[phaseKey]requestMetric
 	classes       map[queryMetricKey]uint64
 	failures      map[failureMetricKey]uint64
 	cacheHits     atomic.Uint64
 	cacheMisses   atomic.Uint64
 	decodedBlocks atomic.Uint64
+	orderedPairs  atomic.Uint64
 }
 
 var latencyBounds = [...]float64{0.05, 0.1, 0.25, 0.5, 1, 2, 5}
 
 func newAPIMetrics() *apiMetrics {
-	return &apiMetrics{requests: make(map[metricKey]requestMetric), plans: map[string]uint64{}, classes: map[queryMetricKey]uint64{}, failures: map[failureMetricKey]uint64{}}
+	return &apiMetrics{requests: make(map[metricKey]requestMetric), plans: map[string]uint64{}, phases: map[phaseKey]requestMetric{}, classes: map[queryMetricKey]uint64{}, failures: map[failureMetricKey]uint64{}}
 }
 func metricRoute(path string) string {
 	switch path {
@@ -204,6 +206,15 @@ func (a *API) Metrics() http.Handler {
 			fmt.Fprintf(w, "ukinfo_api_request_duration_seconds_count{route=%q,status=%q} %d\n", key.Route, fmt.Sprint(key.Status), item.Count)
 			fmt.Fprintf(w, "ukinfo_api_request_duration_seconds_sum{route=%q,status=%q} %g\n", key.Route, fmt.Sprint(key.Status), item.Seconds)
 		}
+		fmt.Fprintln(w, "# TYPE ukinfo_search_phase_duration_seconds histogram")
+		for key, item := range a.metrics.phases {
+			for i, bound := range latencyBounds {
+				fmt.Fprintf(w, "ukinfo_search_phase_duration_seconds_bucket{phase=%q,outcome=%q,le=%q} %d\n", key.Name, key.Outcome, fmt.Sprint(bound), item.Buckets[i])
+			}
+			fmt.Fprintf(w, "ukinfo_search_phase_duration_seconds_bucket{phase=%q,outcome=%q,le=\"+Inf\"} %d\n", key.Name, key.Outcome, item.Count)
+			fmt.Fprintf(w, "ukinfo_search_phase_duration_seconds_count{phase=%q,outcome=%q} %d\n", key.Name, key.Outcome, item.Count)
+			fmt.Fprintf(w, "ukinfo_search_phase_duration_seconds_sum{phase=%q,outcome=%q} %g\n", key.Name, key.Outcome, item.Seconds)
+		}
 		fmt.Fprintln(w, "# TYPE ukinfo_query_requests_total counter")
 		for key, count := range a.metrics.classes {
 			fmt.Fprintf(w, "ukinfo_query_requests_total{class=%q,status=%q} %d\n", key.Class, fmt.Sprint(key.Status), count)
@@ -217,6 +228,7 @@ func (a *API) Metrics() http.Handler {
 			fmt.Fprintf(w, "ukinfo_address_plans_total{plan=%q} %d\n", plan, count)
 		}
 		fmt.Fprintf(w, "# TYPE ukinfo_record_block_cache_lookups_total counter\nukinfo_record_block_cache_lookups_total{result=\"hit\"} %d\nukinfo_record_block_cache_lookups_total{result=\"miss\"} %d\n", a.metrics.cacheHits.Load(), a.metrics.cacheMisses.Load())
+		fmt.Fprintf(w, "# TYPE ukinfo_ordered_pairs_expanded_total counter\nukinfo_ordered_pairs_expanded_total %d\n", a.metrics.orderedPairs.Load())
 		fmt.Fprintf(w, "# TYPE ukinfo_record_blocks_decoded_total counter\nukinfo_record_blocks_decoded_total %d\n", a.metrics.decodedBlocks.Load())
 		stats := a.DB.Stat()
 		// Successful acquisitions that had to wait, plus separately canceled waits.

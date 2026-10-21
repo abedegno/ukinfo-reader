@@ -57,6 +57,10 @@ locals {
       name    = "API p95 latency by route (seconds, bucket estimate)"
       program = "histogram('ukinfo_api_request_duration_seconds').percentile(pct=95, by=['route']).publish(label='p95 seconds')"
     }
+    phase_latency = {
+      name    = "Search p95 stage latency (seconds, bucket estimate)"
+      program = "histogram('ukinfo_search_phase_duration_seconds').percentile(pct=95, by=['phase']).publish(label='Stage p95 seconds')"
+    }
     errors = {
       name    = "Search error percentage"
       program = "total = data('ukinfo_query_requests_total', rollup='rate').sum()\nfailed = data('ukinfo_query_requests_total', filter=filter('status', '5*'), rollup='rate').sum().fill(0)\n(100 * failed / total).publish(label='Search errors %')"

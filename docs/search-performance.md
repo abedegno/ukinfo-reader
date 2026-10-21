@@ -2,12 +2,14 @@
 
 ## Required CI gates
 
-The required `search` job runs two complementary matrices and retains the
+The required `search` job runs complementary matrices and retains the
 `search-performance` JSON artifact for 30 days:
 
 | Layer | Fixture and coverage | What fails CI |
 | --- | --- | --- |
 | PostgreSQL candidate plans | 50,000 invented entries in two editions; 70% dominant surname, rare names, 1,970 first-name terms, 727 postcode terms, 5% businesses; full postcode, sector/district, given-name variants, all editions and page-two cursors | Results/order differ from a sequential reference; any candidate heap fetch or non-index-only scan; 1,500 or more shared buffer accesses per plan |
+| Business classification probes | 50,000 invented business projections; a broad industry prefix and 50 selected postcode records; actual API predicates under forced custom/generic plans | Wrong IDs/order; classification range used as the per-record index condition; non-index-only research access or heap fetches; 800 or more shared buffers |
+| Group representatives | 50,000 invented research keys; earliest-edition identity with reversed edition input; actual representative SQL under forced custom/generic plans | Wrong representative; unnecessary later-edition requests; wrong/unpruned research partition; heap fetches; more than one row per exact group probe; 100 or more shared buffers for three probes |
 | Search API | 22,546 invented entries in three editions; selective/broad/scattered names, given-name/wildcard/middle initial, street/town/county/house, full/partial postcode, nearby district centre, businesses, grouped/ordered results and complete pagination | Wrong counts, duplicate pages, wrong address/strategy, HTTP errors, truncated or endless pagination |
 
 The SQL matrix exercises forced custom and generic prepared plans and validates
@@ -77,3 +79,96 @@ with independently verified private response hashes. Include errors, drops and
 scheduled-arrival latency; do not run an unbounded load test against the public NAS.
 The [observability dashboard](observability.md) complements these tests with
 production latency, failures and pool waits without recording search values.
+
+## Full-catalogue profiling
+
+The operator-only profiler runs a private workload through the actual API handler
+using a read-only pool and the usual request/statement deadlines:
+
+```sh
+cd server
+# DATABASE_URL must be supplied privately, preferably using the serving role.
+go run ./cmd/ukinfo-profile-search --cases ../private/profile-cases.json \
+  --output ../private/profile-report.json --max-cases 20 --max-duration 5m
+```
+
+Cases use the HTTP runner's `path` and `query` fields. The profiler exports case
+numbers, HTTP status, end-to-end and per-query timings, fixed stages, and aggregate
+API metrics. Slow/failed SELECTs receive **EXPLAIN without ANALYZE**, so profiling
+does not execute them twice. Plans retain node/index names, estimates and work
+counters only; predicates, output expressions, SQL, parameters and response records
+are omitted. Estimated plans are not evidence of actual rows, disk reads or spills.
+The default slow threshold is 100 ms. Limit workloads to 100 cases and 15 minutes.
+The profiler retains failed requests and continues; inspect `failed_requests`.
+Use the HTTP runner when failures must also fail an availability gate.
+
+The API exposes `ukinfo_search_phase_duration_seconds{phase,outcome}` for vocabulary,
+source/address probes, address blocks/dictionary, candidates, ordered candidates,
+group members and record loading. Labels come from fixed allowlists. A phase may
+occur more than once per request or edition; phase histograms are not request
+latency distributions. Query phases include row consumption and transaction/pool
+cleanup; record phases also include decoding and manifest reads. OTel spans use
+the same fixed stage names and never include search values.
+
+Hosted dictionary covering indexes support both prefix-to-ID expansion and
+ID-to-label resolution during sorting/grouping. The concurrent build script checks
+both index shapes before accepting an existing managed name. CI verifies both
+lookup directions under custom and generic plans, zero fixture heap fetches,
+result ordering and bounded shared-buffer work.
+
+### Concurrent index recovery
+
+The build script uses a five-second lock timeout and refuses an existing invalid
+index. A concurrent build can finish scanning yet time out while waiting for old
+snapshots; long import or verification transactions can cause that wait. Inspect
+`pg_stat_progress_create_index`, snapshot ages and `pg_index.indisvalid/indisready`
+before retrying. An invalid index is not a successfully deployed optimization.
+
+For the specifically verified, correctly shaped invalid dictionary index, an
+operator can use `REINDEX INDEX CONCURRENTLY public.nas_terms_id_key_cover` in a
+maintenance session with a suitably bounded statement timeout. Its lock-wait
+budget must allow existing snapshots to finish. Keep serving-role and request
+budgets unchanged, and monitor the operation. Do not drop source constraints,
+terminate imports or silently accept an invalid managed name to bypass the guard.
+See PostgreSQL's [REINDEX documentation](https://www.postgresql.org/docs/18/sql-reindex.html)
+and [progress phases](https://www.postgresql.org/docs/18/progress-reporting.html#CREATE-INDEX-PROGRESS-REPORTING).
+
+Name-ordered pages enumerate eligible name/first-name pairs, then expand only the
+pairs needed for a complete page plus lookahead. This applies to source-name and
+postcode anchors. The API suite traverses 360 invented pairs, inserts unused
+interleaved dictionary terms, and verifies both grouped and ordinary pages. A
+one-item sparse page must expand only its two needed pairs. Sparse pairs batch up
+to four per transaction; dense pairs remain scalar. A sparse 100-item page uses
+27 ordered queries instead of 102.
+Anchored business filters seek one record's classification before applying a
+national industry/SIC prefix; classification-only searches keep range access.
+
+### Prepare an imported hosted edition
+
+After import and full verification transactions release their snapshots, run the
+owner-only maintenance script before publishing the edition:
+
+```sh
+psql "$DATABASE_URL" -v dataset='exact-complete-edition-key' \
+  -f deploy/production/prepare-search-catalogue.sql
+```
+
+The script checks one complete edition's source/research partitions, then runs
+ordinary VACUUM/ANALYZE on those partitions and shared dictionary/address lookups.
+It uses bounded maintenance memory, lock waits, statement time and vacuum cost.
+It requires the complete hosted research/address projections; it is not a desktop
+import prerequisite. Inspect visibility coverage after completion. A valid
+covering index alone does not guarantee zero heap reads while snapshots prevent
+pages becoming all-visible. Schedule backups and index builds separately from
+representative interactive latency measurements.
+
+Grouped pages resolve one representative per listing by probing selected editions
+in ascending ID order and removing resolved groups from subsequent probes. Exact
+group-key/scalar-edition probes stop at the lowest ordinal; occurrence counts and
+edition lists still cover every selected edition. `group-member-plans.json` records
+custom/generic timings, buffers and heap fetches alongside classification plans.
+
+`ukinfo_ordered_pairs_expanded_total` counts name/first-name pairs submitted for
+expansion, including failed attempts. It complements stage latency and request
+counts without recording names. Batches use exact eligible occurrence counts to
+avoid expanding adjacent dense pairs merely to reduce transaction count.

@@ -77,7 +77,7 @@ func (a *API) orderedCandidates(ctx context.Context, q query) (searchResult, []o
 		return out, positions, 200, nil
 	}
 	args := f.args
-	pairPlan := !q.hasAddress() && q.Near == "" && q.Postcode == "" && (q.Surname != "" || q.Organisation != "") && (q.Sort == "name" || (q.Group != "" && q.Sort == ""))
+	pairPlan := !q.hasAddress() && q.Near == "" && (q.Surname != "" || q.Organisation != "" || q.Postcode != "") && (q.Sort == "name" || (q.Group != "" && q.Sort == ""))
 	conditions := append([]string(nil), f.conditions...)
 
 	base := "SELECT * FROM entries WHERE " + strings.Join(conditions, " AND ")
@@ -94,8 +94,9 @@ func (a *API) orderedCandidates(ctx context.Context, q query) (searchResult, []o
 	// joins. Otherwise an order-preserving plan can walk the entire name dictionary
 	// and probe a filtered source millions of times before reaching one surname.
 	if pairPlan {
-		base = "SELECT DISTINCT name_id,first_id FROM (" + base + ") eligible"
+		base = "SELECT name_id,first_id,count(*) AS occurrences FROM (" + base + ") eligible GROUP BY name_id,first_id"
 	}
+	pairPrefix := append([]string(nil), f.termCTEs...)
 	f.termCTEs = append(f.termCTEs, "ordered_candidates AS MATERIALIZED ("+base+")")
 	joins := " CROSS JOIN LATERAL (SELECT key FROM terms WHERE id=e.name_id OFFSET 0) n CROSS JOIN LATERAL (SELECT key FROM terms WHERE id=e.first_id OFFSET 0) t JOIN datasets d ON d.id=e.dataset_id"
 	distance := "0::double precision"
@@ -160,85 +161,56 @@ func (a *API) orderedCandidates(ctx context.Context, q query) (searchResult, []o
 	}
 	args = append(args, q.Limit+1)
 
+	pairQuery, pairInner := "", ""
 	if pairPlan {
 		// At most one pair can be exhausted by the incoming cursor. 128 pairs therefore
 		// provide lookahead for every supported page size (<=100), without truncating
 		// the search. Subsequent requests seek from the last returned name/pair/key.
-		f.termCTEs = append(f.termCTEs, "ordered_pairs AS MATERIALIZED (SELECT p.name_id,p.first_id,n.key AS name,t.key AS first FROM ordered_candidates p CROSS JOIN LATERAL (SELECT key FROM terms WHERE id=p.name_id OFFSET 0) n CROSS JOIN LATERAL (SELECT key FROM terms WHERE id=p.first_id OFFSET 0) t"+pairAfter+" ORDER BY n.key,t.key LIMIT 128)")
+		pairQuery = "SELECT p.name_id,p.first_id,n.key AS name,t.key AS first,p.occurrences FROM ordered_candidates p CROSS JOIN LATERAL (SELECT key FROM terms WHERE id=p.name_id OFFSET 0) n CROSS JOIN LATERAL (SELECT key FROM terms WHERE id=p.first_id OFFSET 0) t" + pairAfter + " ORDER BY n.key,t.key LIMIT 128"
 		source := "SELECT * FROM entries WHERE " + strings.Join(conditions, " AND ") + " AND name_id=p.name_id AND first_id=p.first_id"
 		inner := "SELECT ''::bytea AS g," + edition + " AS edition,0::double precision AS distance,e.dataset_id,e.id,e.postcode_id FROM (" + source + ") e JOIN datasets d ON d.id=e.dataset_id" + pairRowAfter + " ORDER BY e.dataset_id,e.id"
 		if q.Group != "" {
 			inner = "SELECT k.group_key AS g,max(" + edition + ") AS edition,0::double precision AS distance,0::smallint AS dataset_id,0::integer AS id,min(e.postcode_id) AS postcode_id FROM (" + source + ") e JOIN datasets d ON d.id=e.dataset_id CROSS JOIN LATERAL (SELECT group_key FROM research_keys WHERE dataset_id=e.dataset_id AND id=e.id OFFSET 0) k WHERE true" + pairRowAfter + " GROUP BY k.group_key ORDER BY k.group_key"
 		}
 		inner += fmt.Sprintf(" LIMIT $%d", len(args))
-		projection = "SELECT selected.g,p.name,p.first,selected.edition,selected.distance,selected.dataset_id,selected.id,selected.postcode_id FROM ordered_pairs p CROSS JOIN LATERAL (" + inner + ") selected"
+		pairInner = inner
 	}
 	sql := "SELECT name,first,edition,distance,g,dataset_id,id,postcode_id FROM (" + projection + ") ordered" + after + " ORDER BY " + order + fmt.Sprintf(" LIMIT $%d", len(args))
 	if len(f.termCTEs) > 0 {
 		sql = "WITH " + strings.Join(f.termCTEs, ",") + " " + sql
 	}
-	rows, finish, err := a.orderedRows(ctx, sql, args)
-	defer finish()
+	if pairPlan {
+		// Sorting a lateral expansion for all 128 pairs executes every pair before
+		// LIMIT, even when the first pair fills the page. Read labels first, then
+		// expand pairs in lexical order only until the page and lookahead are full.
+		positions, err = a.orderedPairPositions(ctx, q, f.termCTEs, pairPrefix, pairQuery, pairInner, after, args)
+	} else {
+		positions, err = a.readOrderedPositions(ctx, q, sql, args, q.Limit+1)
+	}
 	if err != nil {
 		return searchResult{}, nil, 503, searchReadError(err)
 	}
-	for rows.Next() {
-		var c orderCursor
-		var g []byte
-		if err = rows.Scan(&c.Name, &c.First, &c.Edition, &c.Distance, &g, &c.Dataset, &c.ID, &c.Postcode); err != nil {
-			break
-		}
-		c.Query = q.fingerprint()
-		c.Group = hex.EncodeToString(g)
-		if len(positions) == q.Limit {
-			out.Next = encodeOrder(positions[len(positions)-1])
-			break
-		}
-		positions = append(positions, c)
+	if len(positions) > q.Limit {
+		positions = positions[:q.Limit]
+		out.Next = encodeOrder(positions[len(positions)-1])
 	}
-	if err == nil {
-		err = rows.Err()
-	}
-	rows.Close()
-	finish()
-	if err != nil {
-		return searchResult{}, nil, 503, searchReadError(err)
-	}
-	type member struct {
-		dataset  int16
-		id       int32
-		count    int64
-		editions []string
-	}
-	members := make(map[string]member)
+
+	members := make(map[string]listingMember)
 	if q.Group != "" && len(positions) > 0 {
 		groups := [][]byte{}
 		for _, c := range positions {
 			g, _ := hex.DecodeString(c.Group)
 			groups = append(groups, g)
 		}
-		rows, e := a.DB.Query(ctx, "SELECT DISTINCT ON (group_key) group_key,dataset_id,id FROM research_keys WHERE group_key=ANY($1::bytea[]) AND dataset_id=ANY($2::smallint[]) ORDER BY group_key,dataset_id,id", groups, f.datasetIDs)
+		var e error
+		members, e = a.groupRepresentatives(ctx, f.datasetIDs, groups)
 		if e != nil {
-			return searchResult{}, nil, 503, errors.New("Grouped sources unavailable")
+			return searchResult{}, nil, 503, sourceReadError(e)
 		}
-		for rows.Next() {
-			var g []byte
-			var m member
-			if e = rows.Scan(&g, &m.dataset, &m.id); e != nil {
-				break
-			}
-			members[hex.EncodeToString(g)] = m
-		}
-		if e == nil {
-			e = rows.Err()
-		}
-		rows.Close()
+
+		rows, e := a.searchRows(ctx, "group_members", "SELECT k.group_key,count(*),array_agg(DISTINCT d.key ORDER BY d.key) FROM research_keys k JOIN datasets d ON d.id=k.dataset_id WHERE k.group_key=ANY($1::bytea[]) AND k.dataset_id=ANY($2::smallint[]) GROUP BY k.group_key", []any{groups, f.datasetIDs}, false)
 		if e != nil {
-			return searchResult{}, nil, 503, e
-		}
-		rows, e = a.DB.Query(ctx, "SELECT k.group_key,count(*),array_agg(DISTINCT d.key ORDER BY d.key) FROM research_keys k JOIN datasets d ON d.id=k.dataset_id WHERE k.group_key=ANY($1::bytea[]) AND k.dataset_id=ANY($2::smallint[]) GROUP BY k.group_key", groups, f.datasetIDs)
-		if e != nil {
-			return searchResult{}, nil, 503, errors.New("Group membership unavailable")
+			return searchResult{}, nil, 503, searchReadError(e)
 		}
 		for rows.Next() {
 			var g []byte
@@ -309,6 +281,93 @@ func (a *API) orderedCandidates(ctx context.Context, q query) (searchResult, []o
 	}
 
 	return out, positions, 200, nil
+}
+
+// readOrderedPositions preserves the database order and releases the private
+// ordered transaction before record loading or another pair query begins.
+func (a *API) readOrderedPositions(ctx context.Context, q query, sql string, args []any, limit int) ([]orderCursor, error) {
+	rows, err := a.searchRows(ctx, "ordered", sql, args, false)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	positions := []orderCursor{}
+	for len(positions) < limit && rows.Next() {
+		var c orderCursor
+		var g []byte
+		if err = rows.Scan(&c.Name, &c.First, &c.Edition, &c.Distance, &g, &c.Dataset, &c.ID, &c.Postcode); err != nil {
+			return nil, err
+		}
+		c.Query = q.fingerprint()
+		c.Group = hex.EncodeToString(g)
+		positions = append(positions, c)
+	}
+	return positions, rows.Err()
+}
+func (a *API) orderedPairPositions(ctx context.Context, q query, ctes, prefix []string, pairs, inner, after string, args []any) ([]orderCursor, error) {
+	pairArgs := args[:len(args)-1]
+	if q.Cursor != "" {
+		pairArgs = args[:len(args)-4]
+	}
+	rows, err := a.searchRows(ctx, "ordered", "WITH "+strings.Join(ctes, ",")+" "+pairs, pairArgs, false)
+	if err != nil {
+		return nil, err
+	}
+	type pair struct {
+		nameID, firstID int32
+		name, first     string
+		count           int64
+	}
+	selected := []pair{}
+	for rows.Next() {
+		var p pair
+		if err = rows.Scan(&p.nameID, &p.firstID, &p.name, &p.first, &p.count); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		selected = append(selected, p)
+	}
+	err = rows.Err()
+	rows.Close()
+	if err != nil {
+		return nil, err
+	}
+	positions := []orderCursor{}
+	for start := 0; start < len(selected); {
+		remaining := q.Limit + 1 - len(positions)
+		width := 1
+		count := selected[start].count
+		// Batch sparse pairs to avoid one transaction per returned record. Never
+		// speculate into another dense pair: it could fill the entire page itself.
+		for width < 4 && start+width < len(selected) && count < int64(remaining) && selected[start+width].count < int64(remaining) {
+			count += selected[start+width].count
+			width++
+		}
+		bound := append([]any(nil), args...)
+		bound[len(args)-1] = remaining
+		values := []string{}
+		for _, p := range selected[start : start+width] {
+			n := len(bound)
+			values = append(values, fmt.Sprintf("($%d::integer,$%d::integer,$%d::text COLLATE \"C\",$%d::text COLLATE \"C\")", n+1, n+2, n+3, n+4))
+			bound = append(bound, p.nameID, p.firstID, p.name, p.first)
+		}
+		sql := "SELECT * FROM (SELECT p.name,p.first,s.edition,s.distance,s.g,s.dataset_id,s.id,s.postcode_id FROM (VALUES " + strings.Join(values, ",") + ") p(name_id,first_id,name,first) CROSS JOIN LATERAL (" + inner + ") s) ordered" + after + " ORDER BY name,first,g,dataset_id,id" + fmt.Sprintf(" LIMIT $%d", len(args))
+		if len(prefix) > 0 {
+			sql = "WITH " + strings.Join(prefix, ",") + " " + sql
+		}
+		a.metrics.orderedPairs.Add(uint64(width))
+		batch, e := a.readOrderedPositions(ctx, q, sql, bound, remaining)
+		if e != nil {
+			return nil, e
+		}
+		positions = append(positions, batch...)
+		if len(positions) > q.Limit {
+			break
+		}
+		start += width
+	}
+
+	return positions, nil
 }
 func (a *API) researchAvailability(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)

@@ -23,6 +23,7 @@ func (a *API) matchSelectiveAddresses(ctx context.Context, f *candidateFilters) 
 		return nil
 	}
 	plan := "fallback"
+	sourceOverflow := false
 	defer func() {
 		if err != nil {
 			a.metrics.plan("error")
@@ -42,11 +43,12 @@ func (a *API) matchSelectiveAddresses(ctx context.Context, f *candidateFilters) 
 			if len(f.termCTEs) > 0 {
 				sourceSQL = "WITH " + strings.Join(f.termCTEs, ",") + " " + sourceSQL
 			}
-			candidates, count, err := a.addressPlanCandidates(ctx, sourceSQL, f.args)
+			candidates, count, err := a.addressPlanCandidates(ctx, "source_probe", sourceSQL, f.args)
 			if err != nil {
 				return err
 			}
-			if count <= selectiveAddressLimit {
+			sourceOverflow = count > selectiveAddressLimit
+			if !sourceOverflow {
 				matched, available, err := a.indexedAddressCandidates(ctx, q, candidates)
 				if err != nil {
 					return err
@@ -64,7 +66,7 @@ func (a *API) matchSelectiveAddresses(ctx context.Context, f *candidateFilters) 
 	args := []any{f.datasetIDs}
 	predicate := addressPredicate(q, &args)
 	sql := fmt.Sprintf("SELECT m.dataset_id,candidate FROM address_locations l JOIN address_members m ON m.location_id=l.id CROSS JOIN LATERAL unnest(m.ids) candidate WHERE m.dataset_id=ANY($1::smallint[]) AND %s LIMIT %d", predicate, selectivePostingsLimit+1)
-	candidates, count, err := a.addressPlanCandidates(ctx, sql, args)
+	candidates, count, err := a.addressPlanCandidates(ctx, "address_probe", sql, args)
 	if err != nil {
 		return err
 	}
@@ -79,11 +81,16 @@ func (a *API) matchSelectiveAddresses(ctx context.Context, f *candidateFilters) 
 	if !f.addressMatched && q.Surname == "" && q.Organisation == "" && q.Postcode == "" && q.Near == "" && !q.hasBusinessFilters() {
 		return nil
 	}
+	// The first source probe already proved overflow. Only repeat it if a
+	// complete address set has changed its predicate; otherwise it is identical.
+	if sourceOverflow && !f.addressMatched {
+		return nil
+	}
 	sql = "SELECT dataset_id,id FROM entries WHERE " + strings.Join(f.conditions, " AND ") + fmt.Sprintf(" LIMIT %d", selectiveAddressLimit+1)
 	if len(f.termCTEs) > 0 {
 		sql = "WITH " + strings.Join(f.termCTEs, ",") + " " + sql
 	}
-	candidates, count, err = a.addressPlanCandidates(ctx, sql, f.args)
+	candidates, count, err = a.addressPlanCandidates(ctx, "source_probe", sql, f.args)
 	if err != nil || count > selectiveAddressLimit {
 		return err
 	}
@@ -143,8 +150,8 @@ func (a *API) matchSelectiveAddresses(ctx context.Context, f *candidateFilters) 
 	return nil
 }
 
-func (a *API) addressPlanCandidates(ctx context.Context, sql string, args []any) (map[int16][]int32, int, error) {
-	rows, err := a.DB.Query(ctx, sql, args...)
+func (a *API) addressPlanCandidates(ctx context.Context, phase, sql string, args []any) (map[int16][]int32, int, error) {
+	rows, err := a.searchRows(ctx, phase, sql, args, false)
 	if err != nil {
 		return nil, 0, err
 	}

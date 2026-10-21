@@ -71,6 +71,10 @@ func TestWireExportExcludesSQLValuesAndErrors(t *testing.T) {
 	tracer.TraceQueryEnd(query, nil, pgx.TraceQueryEndData{Err: errors.New("SECRET_DATABASE_ERROR")})
 	_, child := Operation(ctx, "SECRET_OPERATION")
 	End(child, errors.New("SECRET_RECORD"))
+	for _, name := range []string{"search.vocabulary", "search.address_dictionary"} {
+		_, stage := Operation(ctx, name)
+		End(stage, nil)
+	}
 	root.End()
 	flush, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -102,8 +106,8 @@ func TestWireExportExcludesSQLValuesAndErrors(t *testing.T) {
 				}
 			}
 		}
-		if count != 4 {
-			t.Fatalf("got %d spans, expected request, pool, query and operation", count)
+		if count != 6 {
+			t.Fatalf("got %d spans, expected request, pool, query, operation and two search stages", count)
 		}
 	case <-time.After(3 * time.Second):
 		t.Fatal("no OTLP export")

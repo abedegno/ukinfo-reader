@@ -1,0 +1,9 @@
+FROM golang:1.26.9-alpine AS build
+WORKDIR /src
+COPY . ./
+RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /search-load .
+FROM alpine:3.23
+RUN apk add --no-cache ca-certificates
+COPY --from=build /search-load /usr/local/bin/search-load
+USER 1000:10
+ENTRYPOINT ["search-load"]

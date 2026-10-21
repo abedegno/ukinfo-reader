@@ -11,6 +11,7 @@ Short warm tests do not establish cold-storage or public-service capacity.
 - [Compact PostgreSQL catalogue and full-edition measurements](compact-catalogue.md)
 - [Address index](address-index.md)
 - [Broad-prefix pagination](broad-prefix-pagination.md)
+- [Full-catalogue query workloads, stage costs and capacity](query-workload-2026-10-21.md)
 - [Adaptive query-planning review](query-planning-2026-10-19.md)
 - [Feature validation and national-query limits](review-validation.md)
 

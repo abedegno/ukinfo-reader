@@ -1,0 +1,4213 @@
+{
+  "schema": 1,
+  "date": "2026-10-21",
+  "visible_entries": 248951107,
+  "editions": 5,
+  "API_cpu": 1,
+  "API_memory_mib": 512,
+  "API_pool": 8,
+  "PostgreSQL_cpu": 2,
+  "PostgreSQL_memory_mib": 6144,
+  "PostgreSQL_shared_buffers_mib": 1024,
+  "client_cpu": 0.5,
+  "client_memory_mib": 256,
+  "conditions": [
+    "Shared HDD array with source verification/import maintenance",
+    "Private API; no Cloudflare or public per-client quotas",
+    "No cache flush; sequential observations have different cache histories",
+    "Warm capacity uses a systematic repeated 64-case subset; not whole-catalogue capacity",
+    "Original edge runner misclassified 16 HTTP-200 NDJSON exports as invalid JSON; compare HTTP status failures",
+    "Reference digests preserve content/order and next-page availability; opaque cursor bytes are neutralized; traversal is checked separately in CI"
+  ],
+  "runs": {
+    "original_references": {
+      "schema_version": 2,
+      "cases": 814,
+      "requests_attempted": 814,
+      "budget_exhausted": false,
+      "passed": false,
+      "initial": {
+        "requests": 814,
+        "errors": 26,
+        "median_ms": 280.573521,
+        "p95_ms": 1673.030986,
+        "p99_ms": 2001.150395,
+        "max_ms": 2002.056625,
+        "wall_seconds": 394.624221599,
+        "requests_per_second": 2.062721838770331,
+        "outcomes": {
+          "http_error": 26,
+          "ok": 788
+        },
+        "statuses": {
+          "200": 788,
+          "503": 26
+        }
+      },
+      "families": {
+        "business": {
+          "requests": 14,
+          "errors": 0,
+          "median_ms": 142.362362,
+          "p95_ms": 368.659603,
+          "p99_ms": 368.659603,
+          "max_ms": 368.659603,
+          "wall_seconds": 394.624221599,
+          "requests_per_second": 0.03547678838179931
+        },
+        "name": {
+          "requests": 533,
+          "errors": 9,
+          "median_ms": 208.871144,
+          "p95_ms": 1147.257837,
+          "p99_ms": 2001.094749,
+          "max_ms": 2001.46596,
+          "wall_seconds": 394.624221599,
+          "requests_per_second": 1.3506520148213594
+        },
+        "postcode": {
+          "requests": 267,
+          "errors": 17,
+          "median_ms": 682.169094,
+          "p95_ms": 2000.7218,
+          "p99_ms": 2001.514107,
+          "max_ms": 2002.056625,
+          "wall_seconds": 394.624221599,
+          "requests_per_second": 0.6765930355671725
+        }
+      },
+      "closed_loop": {}
+    },
+    "original_edges": {
+      "schema_version": 2,
+      "cases": 83,
+      "requests_attempted": 166,
+      "budget_exhausted": false,
+      "passed": false,
+      "initial": {
+        "requests": 166,
+        "errors": 59,
+        "median_ms": 249.592564,
+        "p95_ms": 4309.189008,
+        "p99_ms": 5001.409008,
+        "max_ms": 5001.803207,
+        "wall_seconds": 197.297087317,
+        "requests_per_second": 0.8413707584708814,
+        "outcomes": {
+          "http_error": 43,
+          "invalid_json": 16,
+          "unverified": 107
+        },
+        "statuses": {
+          "200": 123,
+          "503": 43
+        }
+      },
+      "families": {
+        "address": {
+          "requests": 62,
+          "errors": 13,
+          "median_ms": 179.597605,
+          "p95_ms": 4309.189008,
+          "p99_ms": 5001.803207,
+          "max_ms": 5001.803207,
+          "wall_seconds": 197.297087317,
+          "requests_per_second": 0.31424690979032915
+        },
+        "export": {
+          "requests": 16,
+          "errors": 16,
+          "median_ms": 10.196745,
+          "p95_ms": 13.176689,
+          "p99_ms": 13.176689,
+          "max_ms": 13.176689,
+          "wall_seconds": 197.297087317,
+          "requests_per_second": 0.08109597672008495
+        },
+        "grouped": {
+          "requests": 18,
+          "errors": 18,
+          "median_ms": 4029.600016,
+          "p95_ms": 5001.409008,
+          "p99_ms": 5001.409008,
+          "max_ms": 5001.409008,
+          "wall_seconds": 197.297087317,
+          "requests_per_second": 0.09123297381009557
+        },
+        "ordered": {
+          "requests": 24,
+          "errors": 4,
+          "median_ms": 509.806431,
+          "p95_ms": 4022.50962,
+          "p99_ms": 4210.411509,
+          "max_ms": 4210.411509,
+          "wall_seconds": 197.297087317,
+          "requests_per_second": 0.12164396508012743
+        },
+        "postcode": {
+          "requests": 46,
+          "errors": 8,
+          "median_ms": 86.196998,
+          "p95_ms": 2277.728641,
+          "p99_ms": 3657.768379,
+          "max_ms": 3657.768379,
+          "wall_seconds": 197.297087317,
+          "requests_per_second": 0.23315093307024423
+        }
+      },
+      "closed_loop": {}
+    },
+    "lazy_pairs_and_id_first_edges": {
+      "schema_version": 2,
+      "cases": 83,
+      "requests_attempted": 166,
+      "budget_exhausted": false,
+      "passed": false,
+      "initial": {
+        "requests": 166,
+        "errors": 23,
+        "median_ms": 57.633011,
+        "p95_ms": 4074.976015,
+        "p99_ms": 4734.988422,
+        "max_ms": 5001.117916,
+        "wall_seconds": 140.75194614,
+        "requests_per_second": 1.1793797851639425,
+        "outcomes": {
+          "http_error": 23,
+          "unverified": 143
+        },
+        "statuses": {
+          "200": 143,
+          "503": 23
+        }
+      },
+      "families": {
+        "address": {
+          "requests": 62,
+          "errors": 8,
+          "median_ms": 43.464215,
+          "p95_ms": 4179.65642,
+          "p99_ms": 4614.745805,
+          "max_ms": 4614.745805,
+          "wall_seconds": 140.75194614,
+          "requests_per_second": 0.4404912450612315
+        },
+        "export": {
+          "requests": 16,
+          "errors": 0,
+          "median_ms": 10.020157,
+          "p95_ms": 12.413467,
+          "p99_ms": 12.413467,
+          "max_ms": 12.413467,
+          "wall_seconds": 140.75194614,
+          "requests_per_second": 0.11367516001580168
+        },
+        "grouped": {
+          "requests": 18,
+          "errors": 10,
+          "median_ms": 3408.091715,
+          "p95_ms": 5001.117916,
+          "p99_ms": 5001.117916,
+          "max_ms": 5001.117916,
+          "wall_seconds": 140.75194614,
+          "requests_per_second": 0.1278845550177769
+        },
+        "ordered": {
+          "requests": 24,
+          "errors": 2,
+          "median_ms": 491.73747,
+          "p95_ms": 4037.065574,
+          "p99_ms": 4039.695721,
+          "max_ms": 4039.695721,
+          "wall_seconds": 140.75194614,
+          "requests_per_second": 0.17051274002370254
+        },
+        "postcode": {
+          "requests": 46,
+          "errors": 3,
+          "median_ms": 56.198643,
+          "p95_ms": 2003.777458,
+          "p99_ms": 2076.383998,
+          "max_ms": 2076.383998,
+          "wall_seconds": 140.75194614,
+          "requests_per_second": 0.32681608504542986
+        }
+      },
+      "closed_loop": {}
+    },
+    "independent_edge_references": {
+      "schema_version": 2,
+      "cases": 62,
+      "requests_attempted": 62,
+      "budget_exhausted": false,
+      "passed": false,
+      "initial": {
+        "requests": 62,
+        "errors": 3,
+        "median_ms": 368.367713,
+        "p95_ms": 2536.935199,
+        "p99_ms": 4020.309218,
+        "max_ms": 4020.309218,
+        "wall_seconds": 48.455301746,
+        "requests_per_second": 1.2795297473329246,
+        "outcomes": {
+          "http_error": 3,
+          "ok": 59
+        },
+        "statuses": {
+          "200": 59,
+          "503": 3
+        }
+      },
+      "families": {
+        "address": {
+          "requests": 21,
+          "errors": 1,
+          "median_ms": 47.466133,
+          "p95_ms": 3383.413229,
+          "p99_ms": 4020.309218,
+          "max_ms": 4020.309218,
+          "wall_seconds": 48.455301746,
+          "requests_per_second": 0.43338910796760344
+        },
+        "grouped": {
+          "requests": 9,
+          "errors": 0,
+          "median_ms": 2133.110588,
+          "p95_ms": 3511.42135,
+          "p99_ms": 3511.42135,
+          "max_ms": 3511.42135,
+          "wall_seconds": 48.455301746,
+          "requests_per_second": 0.1857381891289729
+        },
+        "ordered": {
+          "requests": 11,
+          "errors": 0,
+          "median_ms": 227.603982,
+          "p95_ms": 1263.173313,
+          "p99_ms": 1263.173313,
+          "max_ms": 1263.173313,
+          "wall_seconds": 48.455301746,
+          "requests_per_second": 0.22701334226874467
+        },
+        "postcode": {
+          "requests": 21,
+          "errors": 2,
+          "median_ms": 391.387527,
+          "p95_ms": 2025.640019,
+          "p99_ms": 2507.91341,
+          "max_ms": 2507.91341,
+          "wall_seconds": 48.455301746,
+          "requests_per_second": 0.43338910796760344
+        }
+      },
+      "closed_loop": {}
+    },
+    "warm_capacity_import_active": {
+      "schema_version": 2,
+      "cases": 64,
+      "requests_attempted": 4576,
+      "budget_exhausted": false,
+      "passed": false,
+      "initial": {
+        "requests": 64,
+        "errors": 1,
+        "median_ms": 131.717299,
+        "p95_ms": 970.107837,
+        "p99_ms": 3028.433938,
+        "max_ms": 3028.433938,
+        "wall_seconds": 22.965115398000002,
+        "requests_per_second": 2.786835549956508,
+        "outcomes": {
+          "http_error": 1,
+          "ok": 63
+        },
+        "statuses": {
+          "200": 63,
+          "503": 1
+        }
+      },
+      "families": {
+        "address": {
+          "requests": 4,
+          "errors": 0,
+          "median_ms": 41.064749,
+          "p95_ms": 73.940892,
+          "p99_ms": 73.940892,
+          "max_ms": 73.940892,
+          "wall_seconds": 22.965115398000002,
+          "requests_per_second": 0.17417722187228174
+        },
+        "grouped": {
+          "requests": 3,
+          "errors": 1,
+          "median_ms": 1898.651372,
+          "p95_ms": 3028.433938,
+          "p99_ms": 3028.433938,
+          "max_ms": 3028.433938,
+          "wall_seconds": 22.965115398000002,
+          "requests_per_second": 0.1306329164042113
+        },
+        "name": {
+          "requests": 33,
+          "errors": 0,
+          "median_ms": 79.511947,
+          "p95_ms": 765.620146,
+          "p99_ms": 861.917326,
+          "max_ms": 861.917326,
+          "wall_seconds": 22.965115398000002,
+          "requests_per_second": 1.4369620804463243
+        },
+        "ordered": {
+          "requests": 2,
+          "errors": 0,
+          "median_ms": 970.107837,
+          "p95_ms": 970.107837,
+          "p99_ms": 970.107837,
+          "max_ms": 970.107837,
+          "wall_seconds": 22.965115398000002,
+          "requests_per_second": 0.08708861093614087
+        },
+        "postcode": {
+          "requests": 22,
+          "errors": 0,
+          "median_ms": 376.427094,
+          "p95_ms": 761.783923,
+          "p99_ms": 940.439578,
+          "max_ms": 940.439578,
+          "wall_seconds": 22.965115398000002,
+          "requests_per_second": 0.9579747202975496
+        }
+      },
+      "closed_loop": {
+        "1": {
+          "requests": 640,
+          "errors": 0,
+          "median_ms": 5.58276,
+          "p95_ms": 43.124835,
+          "p99_ms": 417.390066,
+          "max_ms": 570.122814,
+          "wall_seconds": 10.477149794,
+          "requests_per_second": 61.085315432495946,
+          "outcomes": {
+            "ok": 640
+          },
+          "statuses": {
+            "200": 640
+          }
+        },
+        "2": {
+          "requests": 1139,
+          "errors": 0,
+          "median_ms": 5.632369,
+          "p95_ms": 50.695348,
+          "p99_ms": 512.596491,
+          "max_ms": 588.226532,
+          "wall_seconds": 10.168616585,
+          "requests_per_second": 112.01130364971864,
+          "outcomes": {
+            "ok": 1139
+          },
+          "statuses": {
+            "200": 1139
+          }
+        },
+        "4": {
+          "requests": 1327,
+          "errors": 0,
+          "median_ms": 9.593226,
+          "p95_ms": 98.945684,
+          "p99_ms": 720.091225,
+          "max_ms": 846.454176,
+          "wall_seconds": 10.297531122,
+          "requests_per_second": 128.8658401978462,
+          "outcomes": {
+            "ok": 1327
+          },
+          "statuses": {
+            "200": 1327
+          }
+        },
+        "8": {
+          "requests": 1346,
+          "errors": 0,
+          "median_ms": 21.416625,
+          "p95_ms": 217.063809,
+          "p99_ms": 890.867347,
+          "max_ms": 1040.437837,
+          "wall_seconds": 10.421266456,
+          "requests_per_second": 129.1589660127197,
+          "outcomes": {
+            "ok": 1346
+          },
+          "statuses": {
+            "200": 1346
+          }
+        }
+      },
+      "scheduled_arrivals": {
+        "budget_skips": 0,
+        "load_generator_drops": 0,
+        "rate_per_second": 2,
+        "scheduled_requests": 60,
+        "stats": {
+          "requests": 60,
+          "errors": 0,
+          "median_ms": 7.007922,
+          "p95_ms": 50.070144,
+          "p99_ms": 87.364473,
+          "max_ms": 87.364473,
+          "wall_seconds": 29.513554743,
+          "requests_per_second": 2.032964192977491,
+          "outcomes": {
+            "ok": 60
+          },
+          "statuses": {
+            "200": 60
+          }
+        }
+      }
+    },
+    "final_references": {
+      "schema_version": 2,
+      "cases": 876,
+      "requests_attempted": 876,
+      "budget_exhausted": false,
+      "passed": false,
+      "initial": {
+        "requests": 876,
+        "errors": 42,
+        "median_ms": 266.688003,
+        "p95_ms": 2000.779336,
+        "p99_ms": 3868.562219,
+        "max_ms": 5004.07975,
+        "wall_seconds": 477.270721622,
+        "requests_per_second": 1.8354362845114873,
+        "outcomes": {
+          "http_error": 42,
+          "ok": 834
+        },
+        "statuses": {
+          "200": 834,
+          "503": 42
+        }
+      },
+      "families": {
+        "address": {
+          "requests": 21,
+          "errors": 7,
+          "median_ms": 2134.557535,
+          "p95_ms": 5001.643958,
+          "p99_ms": 5004.07975,
+          "max_ms": 5004.07975,
+          "wall_seconds": 477.270721622,
+          "requests_per_second": 0.044000184902672636
+        },
+        "business": {
+          "requests": 14,
+          "errors": 0,
+          "median_ms": 101.722614,
+          "p95_ms": 497.554669,
+          "p99_ms": 497.554669,
+          "max_ms": 497.554669,
+          "wall_seconds": 477.270721622,
+          "requests_per_second": 0.02933345660178176
+        },
+        "grouped": {
+          "requests": 9,
+          "errors": 3,
+          "median_ms": 3355.935031,
+          "p95_ms": 5000.631006,
+          "p99_ms": 5000.631006,
+          "max_ms": 5000.631006,
+          "wall_seconds": 477.270721622,
+          "requests_per_second": 0.01885722210114542
+        },
+        "name": {
+          "requests": 533,
+          "errors": 8,
+          "median_ms": 190.686495,
+          "p95_ms": 1448.892418,
+          "p99_ms": 2000.976927,
+          "max_ms": 2001.496634,
+          "wall_seconds": 477.270721622,
+          "requests_per_second": 1.116766597767834
+        },
+        "ordered": {
+          "requests": 11,
+          "errors": 0,
+          "median_ms": 334.40435,
+          "p95_ms": 1701.723909,
+          "p99_ms": 1701.723909,
+          "max_ms": 1701.723909,
+          "wall_seconds": 477.270721622,
+          "requests_per_second": 0.023047715901399955
+        },
+        "postcode": {
+          "requests": 288,
+          "errors": 24,
+          "median_ms": 591.507438,
+          "p95_ms": 2001.02084,
+          "p99_ms": 2035.521468,
+          "max_ms": 3608.953617,
+          "wall_seconds": 477.270721622,
+          "requests_per_second": 0.6034311072366534
+        }
+      },
+      "closed_loop": {}
+    },
+    "final_dictionary_edges": {
+      "schema_version": 2,
+      "cases": 83,
+      "requests_attempted": 166,
+      "budget_exhausted": false,
+      "passed": false,
+      "initial": {
+        "requests": 166,
+        "errors": 77,
+        "median_ms": 2016.904172,
+        "p95_ms": 5001.24916,
+        "p99_ms": 5003.745843,
+        "max_ms": 5004.564215,
+        "wall_seconds": 379.564848679,
+        "requests_per_second": 0.4373429219742818,
+        "outcomes": {
+          "http_error": 77,
+          "unverified": 89
+        },
+        "statuses": {
+          "200": 89,
+          "503": 77
+        }
+      },
+      "families": {
+        "address": {
+          "requests": 62,
+          "errors": 25,
+          "median_ms": 2016.057564,
+          "p95_ms": 5001.085397,
+          "p99_ms": 5004.564215,
+          "max_ms": 5004.564215,
+          "wall_seconds": 379.564848679,
+          "requests_per_second": 0.16334494676147876
+        },
+        "export": {
+          "requests": 16,
+          "errors": 1,
+          "median_ms": 28.950938,
+          "p95_ms": 2000.910817,
+          "p99_ms": 2000.910817,
+          "max_ms": 2000.910817,
+          "wall_seconds": 379.564848679,
+          "requests_per_second": 0.042153534648123554
+        },
+        "grouped": {
+          "requests": 18,
+          "errors": 18,
+          "median_ms": 5000.87041,
+          "p95_ms": 5001.404009,
+          "p99_ms": 5001.404009,
+          "max_ms": 5001.404009,
+          "wall_seconds": 379.564848679,
+          "requests_per_second": 0.047422726479139
+        },
+        "ordered": {
+          "requests": 24,
+          "errors": 9,
+          "median_ms": 3704.348217,
+          "p95_ms": 5001.540868,
+          "p99_ms": 5001.778513,
+          "max_ms": 5001.778513,
+          "wall_seconds": 379.564848679,
+          "requests_per_second": 0.06323030197218532
+        },
+        "postcode": {
+          "requests": 46,
+          "errors": 24,
+          "median_ms": 2000.910107,
+          "p95_ms": 3539.058429,
+          "p99_ms": 4479.504634,
+          "max_ms": 4479.504634,
+          "wall_seconds": 379.564848679,
+          "requests_per_second": 0.12119141211335521
+        }
+      },
+      "closed_loop": {}
+    },
+    "paired_before_representative_fix": {
+      "schema_version": 3,
+      "mode": "paired_api",
+      "cases": 83,
+      "rounds": 1,
+      "outcomes": {
+        "after_only_ok": 1,
+        "before_only_ok": 6,
+        "both_failed": 11,
+        "both_ok_same": 65
+      },
+      "requests_attempted": 166,
+      "budget_exhausted": false,
+      "passed": false,
+      "before": {
+        "requests": 83,
+        "errors": 12,
+        "median_ms": 44.017084,
+        "p95_ms": 4087.087477,
+        "p99_ms": 5001.131573,
+        "max_ms": 5001.131573,
+        "wall_seconds": 143.74292645,
+        "requests_per_second": 0.5774197176156073,
+        "outcomes": {
+          "http_error": 12,
+          "unverified": 71
+        },
+        "statuses": {
+          "200": 71,
+          "503": 12
+        }
+      },
+      "after": {
+        "requests": 83,
+        "errors": 17,
+        "median_ms": 35.928966,
+        "p95_ms": 4136.449531,
+        "p99_ms": 5002.033843,
+        "max_ms": 5002.033843,
+        "wall_seconds": 143.74292645,
+        "requests_per_second": 0.5774197176156073,
+        "outcomes": {
+          "http_error": 17,
+          "unverified": 66
+        },
+        "statuses": {
+          "200": 66,
+          "503": 17
+        }
+      },
+      "families": {
+        "before": {
+          "address": {
+            "requests": 31,
+            "errors": 4,
+            "median_ms": 41.432818,
+            "p95_ms": 4089.707043,
+            "p99_ms": 5001.131573,
+            "max_ms": 5001.131573,
+            "wall_seconds": 143.74292645,
+            "requests_per_second": 0.21566278609739548
+          },
+          "export": {
+            "requests": 8,
+            "errors": 0,
+            "median_ms": 10.258781,
+            "p95_ms": 11.99306,
+            "p99_ms": 11.99306,
+            "max_ms": 11.99306,
+            "wall_seconds": 143.74292645,
+            "requests_per_second": 0.05565491254126335
+          },
+          "grouped": {
+            "requests": 9,
+            "errors": 5,
+            "median_ms": 3546.274308,
+            "p95_ms": 5001.101651,
+            "p99_ms": 5001.101651,
+            "max_ms": 5001.101651,
+            "wall_seconds": 143.74292645,
+            "requests_per_second": 0.06261177660892127
+          },
+          "ordered": {
+            "requests": 12,
+            "errors": 1,
+            "median_ms": 368.761696,
+            "p95_ms": 4027.113099,
+            "p99_ms": 4027.113099,
+            "max_ms": 4027.113099,
+            "wall_seconds": 143.74292645,
+            "requests_per_second": 0.08348236881189502
+          },
+          "postcode": {
+            "requests": 23,
+            "errors": 2,
+            "median_ms": 36.043243,
+            "p95_ms": 2006.682354,
+            "p99_ms": 2007.470406,
+            "max_ms": 2007.470406,
+            "wall_seconds": 143.74292645,
+            "requests_per_second": 0.16000787355613214
+          }
+        },
+        "after": {
+          "address": {
+            "requests": 31,
+            "errors": 5,
+            "median_ms": 36.606041,
+            "p95_ms": 4210.351693,
+            "p99_ms": 4288.307135,
+            "max_ms": 4288.307135,
+            "wall_seconds": 143.74292645,
+            "requests_per_second": 0.21566278609739548
+          },
+          "export": {
+            "requests": 8,
+            "errors": 0,
+            "median_ms": 10.070583,
+            "p95_ms": 11.647721,
+            "p99_ms": 11.647721,
+            "max_ms": 11.647721,
+            "wall_seconds": 143.74292645,
+            "requests_per_second": 0.05565491254126335
+          },
+          "grouped": {
+            "requests": 9,
+            "errors": 9,
+            "median_ms": 3010.748245,
+            "p95_ms": 5002.033843,
+            "p99_ms": 5002.033843,
+            "max_ms": 5002.033843,
+            "wall_seconds": 143.74292645,
+            "requests_per_second": 0.06261177660892127
+          },
+          "ordered": {
+            "requests": 12,
+            "errors": 1,
+            "median_ms": 435.186059,
+            "p95_ms": 4170.584499,
+            "p99_ms": 4170.584499,
+            "max_ms": 4170.584499,
+            "wall_seconds": 143.74292645,
+            "requests_per_second": 0.08348236881189502
+          },
+          "postcode": {
+            "requests": 23,
+            "errors": 2,
+            "median_ms": 17.289651,
+            "p95_ms": 2010.376881,
+            "p99_ms": 2011.306477,
+            "max_ms": 2011.306477,
+            "wall_seconds": 143.74292645,
+            "requests_per_second": 0.16000787355613214
+          }
+        }
+      }
+    },
+    "paired_after_representative_fix": {
+      "schema_version": 3,
+      "mode": "paired_api",
+      "cases": 83,
+      "rounds": 1,
+      "outcomes": {
+        "after_only_ok": 2,
+        "both_failed": 6,
+        "both_ok_same": 75
+      },
+      "requests_attempted": 166,
+      "budget_exhausted": false,
+      "passed": false,
+      "before": {
+        "requests": 83,
+        "errors": 8,
+        "median_ms": 57.830249,
+        "p95_ms": 4020.661127,
+        "p99_ms": 4318.051765,
+        "max_ms": 4318.051765,
+        "wall_seconds": 113.33255688,
+        "requests_per_second": 0.7323579586039248,
+        "outcomes": {
+          "http_error": 8,
+          "unverified": 75
+        },
+        "statuses": {
+          "200": 75,
+          "503": 8
+        }
+      },
+      "after": {
+        "requests": 83,
+        "errors": 6,
+        "median_ms": 31.73896,
+        "p95_ms": 4075.359219,
+        "p99_ms": 4769.490138,
+        "max_ms": 4769.490138,
+        "wall_seconds": 113.33255688,
+        "requests_per_second": 0.7323579586039248,
+        "outcomes": {
+          "http_error": 6,
+          "unverified": 77
+        },
+        "statuses": {
+          "200": 77,
+          "503": 6
+        }
+      },
+      "families": {
+        "before": {
+          "address": {
+            "requests": 31,
+            "errors": 5,
+            "median_ms": 61.492128,
+            "p95_ms": 4231.02944,
+            "p99_ms": 4318.051765,
+            "max_ms": 4318.051765,
+            "wall_seconds": 113.33255688,
+            "requests_per_second": 0.2735312857436346
+          },
+          "export": {
+            "requests": 8,
+            "errors": 0,
+            "median_ms": 9.54192,
+            "p95_ms": 12.022803,
+            "p99_ms": 12.022803,
+            "max_ms": 12.022803,
+            "wall_seconds": 113.33255688,
+            "requests_per_second": 0.07058871890158312
+          },
+          "grouped": {
+            "requests": 9,
+            "errors": 1,
+            "median_ms": 2346.330952,
+            "p95_ms": 4018.44463,
+            "p99_ms": 4018.44463,
+            "max_ms": 4018.44463,
+            "wall_seconds": 113.33255688,
+            "requests_per_second": 0.07941230876428101
+          },
+          "ordered": {
+            "requests": 12,
+            "errors": 1,
+            "median_ms": 358.094155,
+            "p95_ms": 4020.661127,
+            "p99_ms": 4020.661127,
+            "max_ms": 4020.661127,
+            "wall_seconds": 113.33255688,
+            "requests_per_second": 0.10588307835237468
+          },
+          "postcode": {
+            "requests": 23,
+            "errors": 1,
+            "median_ms": 22.972989,
+            "p95_ms": 1576.505692,
+            "p99_ms": 2009.749148,
+            "max_ms": 2009.749148,
+            "wall_seconds": 113.33255688,
+            "requests_per_second": 0.20294256684205148
+          }
+        },
+        "after": {
+          "address": {
+            "requests": 31,
+            "errors": 4,
+            "median_ms": 65.891537,
+            "p95_ms": 4151.640145,
+            "p99_ms": 4179.131651,
+            "max_ms": 4179.131651,
+            "wall_seconds": 113.33255688,
+            "requests_per_second": 0.2735312857436346
+          },
+          "export": {
+            "requests": 8,
+            "errors": 0,
+            "median_ms": 9.717246,
+            "p95_ms": 12.278782,
+            "p99_ms": 12.278782,
+            "max_ms": 12.278782,
+            "wall_seconds": 113.33255688,
+            "requests_per_second": 0.07058871890158312
+          },
+          "grouped": {
+            "requests": 9,
+            "errors": 0,
+            "median_ms": 3575.552262,
+            "p95_ms": 4769.490138,
+            "p99_ms": 4769.490138,
+            "max_ms": 4769.490138,
+            "wall_seconds": 113.33255688,
+            "requests_per_second": 0.07941230876428101
+          },
+          "ordered": {
+            "requests": 12,
+            "errors": 1,
+            "median_ms": 290.689448,
+            "p95_ms": 4031.388611,
+            "p99_ms": 4031.388611,
+            "max_ms": 4031.388611,
+            "wall_seconds": 113.33255688,
+            "requests_per_second": 0.10588307835237468
+          },
+          "postcode": {
+            "requests": 23,
+            "errors": 1,
+            "median_ms": 20.557681,
+            "p95_ms": 797.260279,
+            "p99_ms": 2026.761024,
+            "max_ms": 2026.761024,
+            "wall_seconds": 113.33255688,
+            "requests_per_second": 0.20294256684205148
+          }
+        }
+      }
+    },
+    "paired_final_two_rounds": {
+      "schema_version": 3,
+      "mode": "paired_api",
+      "cases": 83,
+      "rounds": 2,
+      "outcomes": {
+        "after_only_ok": 4,
+        "before_only_ok": 3,
+        "both_failed": 7,
+        "both_ok_same": 152
+      },
+      "requests_attempted": 332,
+      "budget_exhausted": false,
+      "passed": false,
+      "before": {
+        "requests": 166,
+        "errors": 11,
+        "median_ms": 21.285552,
+        "p95_ms": 4018.997519,
+        "p99_ms": 4182.492535,
+        "max_ms": 4343.091394,
+        "wall_seconds": 158.812322374,
+        "requests_per_second": 1.0452589416145754,
+        "outcomes": {
+          "http_error": 11,
+          "unverified": 155
+        },
+        "statuses": {
+          "200": 155,
+          "503": 11
+        }
+      },
+      "after": {
+        "requests": 166,
+        "errors": 10,
+        "median_ms": 27.263995,
+        "p95_ms": 4021.762236,
+        "p99_ms": 4222.989943,
+        "max_ms": 5001.458964,
+        "wall_seconds": 158.812322374,
+        "requests_per_second": 1.0452589416145754,
+        "outcomes": {
+          "http_error": 10,
+          "unverified": 156
+        },
+        "statuses": {
+          "200": 156,
+          "503": 10
+        }
+      },
+      "families": {
+        "before": {
+          "address": {
+            "requests": 62,
+            "errors": 5,
+            "median_ms": 44.232818,
+            "p95_ms": 4101.303325,
+            "p99_ms": 4343.091394,
+            "max_ms": 4343.091394,
+            "wall_seconds": 158.812322374,
+            "requests_per_second": 0.39039791795243184
+          },
+          "export": {
+            "requests": 16,
+            "errors": 0,
+            "median_ms": 10.28461,
+            "p95_ms": 14.736188,
+            "p99_ms": 14.736188,
+            "max_ms": 14.736188,
+            "wall_seconds": 158.812322374,
+            "requests_per_second": 0.10074784979417595
+          },
+          "grouped": {
+            "requests": 18,
+            "errors": 4,
+            "median_ms": 320.268924,
+            "p95_ms": 4126.250431,
+            "p99_ms": 4126.250431,
+            "max_ms": 4126.250431,
+            "wall_seconds": 158.812322374,
+            "requests_per_second": 0.11334133101844794
+          },
+          "ordered": {
+            "requests": 24,
+            "errors": 2,
+            "median_ms": 15.750178,
+            "p95_ms": 4025.944448,
+            "p99_ms": 4049.13562,
+            "max_ms": 4049.13562,
+            "wall_seconds": 158.812322374,
+            "requests_per_second": 0.15112177469126392
+          },
+          "postcode": {
+            "requests": 46,
+            "errors": 0,
+            "median_ms": 15.396928,
+            "p95_ms": 405.126065,
+            "p99_ms": 1643.043676,
+            "max_ms": 1643.043676,
+            "wall_seconds": 158.812322374,
+            "requests_per_second": 0.2896500681582559
+          }
+        },
+        "after": {
+          "address": {
+            "requests": 62,
+            "errors": 6,
+            "median_ms": 41.748696,
+            "p95_ms": 4087.353995,
+            "p99_ms": 4222.989943,
+            "max_ms": 4222.989943,
+            "wall_seconds": 158.812322374,
+            "requests_per_second": 0.39039791795243184
+          },
+          "export": {
+            "requests": 16,
+            "errors": 0,
+            "median_ms": 9.187343,
+            "p95_ms": 12.117128,
+            "p99_ms": 12.117128,
+            "max_ms": 12.117128,
+            "wall_seconds": 158.812322374,
+            "requests_per_second": 0.10074784979417595
+          },
+          "grouped": {
+            "requests": 18,
+            "errors": 1,
+            "median_ms": 290.345617,
+            "p95_ms": 5001.458964,
+            "p99_ms": 5001.458964,
+            "max_ms": 5001.458964,
+            "wall_seconds": 158.812322374,
+            "requests_per_second": 0.11334133101844794
+          },
+          "ordered": {
+            "requests": 24,
+            "errors": 2,
+            "median_ms": 35.617081,
+            "p95_ms": 4021.762236,
+            "p99_ms": 4184.46793,
+            "max_ms": 4184.46793,
+            "wall_seconds": 158.812322374,
+            "requests_per_second": 0.15112177469126392
+          },
+          "postcode": {
+            "requests": 46,
+            "errors": 1,
+            "median_ms": 18.862772,
+            "p95_ms": 822.982003,
+            "p99_ms": 2003.680267,
+            "max_ms": 2003.680267,
+            "wall_seconds": 158.812322374,
+            "requests_per_second": 0.2896500681582559
+          }
+        }
+      }
+    }
+  },
+  "profile_after_queries": {
+    "cases": 14,
+    "failed": 4,
+    "requests": [
+      {
+        "case": 0,
+        "status": 200,
+        "milliseconds": 355.854362,
+        "queries": [
+          {
+            "phase": "metadata",
+            "milliseconds": 25.733283,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 19.778492,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 20.628352,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 1.550437,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 5.559773,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 1.729374,
+            "failed": false
+          },
+          {
+            "phase": "vocabulary",
+            "milliseconds": 1.658655,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 13.017735,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.169927,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.142553,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 3.381577,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.296985,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.096725,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.075517,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 74.345776,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.372366,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.125992,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.083722,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 3.045992,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.366807,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.093309,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.068403,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.929549,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.361485,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.111459,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.091339,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.947607,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.386653,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.109869,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.078819,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.669228,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.273779,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.081691,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.061587,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 10.456988,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.280841,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.086922,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.042414,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.52105,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.263717,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.056048,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.038727,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.549445,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.265229,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.050567,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.040171,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.61352,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.248863,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.04863,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.038344,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.78405,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.2614,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.054752,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.040248,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.679409,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.253284,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.051009,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.039048,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.808487,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.292596,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.075243,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.059982,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.669875,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.265433,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.052591,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.039193,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.64129,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.253246,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.050945,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.038228,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.460001,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.23484,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.052796,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.039904,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.659072,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.228437,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.056415,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.036646,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 1.664552,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.170155,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.042422,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.033897,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 1.827346,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.191284,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.064681,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.11805,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 8.947818,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.309888,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.094124,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.065349,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.742192,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.288501,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.077907,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.060601,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.628671,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.259796,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.07316,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.070198,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.852771,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.316439,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.080667,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.110043,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 5.756446,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.23765,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.056091,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.040167,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 1.950744,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.331441,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.088594,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.069291,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 3.650114,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.305835,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.100591,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.080219,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.733716,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.295275,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.122193,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.083595,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.695738,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.45391,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.090174,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.072262,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.719451,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.274214,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.082439,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.066347,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.570958,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.268602,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.08292,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.06888,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.670674,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.294205,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.201413,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.092444,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.36914,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.210395,
+            "failed": false
+          },
+          {
+            "phase": "group_members",
+            "milliseconds": 10.769948,
+            "failed": false
+          },
+          {
+            "phase": "group_members",
+            "milliseconds": 2.56269,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 1.773687,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.378035,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 23.333536,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.457063,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 1.093366,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.18683,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 1.895346,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.215422,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 1.403654,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.211733,
+            "failed": false
+          }
+        ]
+      },
+      {
+        "case": 1,
+        "status": 200,
+        "milliseconds": 109.190804,
+        "queries": [
+          {
+            "phase": "metadata",
+            "milliseconds": 0.197513,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.524241,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.08934,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.066272,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.055654,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.054362,
+            "failed": false
+          },
+          {
+            "phase": "vocabulary",
+            "milliseconds": 0.113252,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.307776,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.051778,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.03309,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.131705,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.163341,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.039837,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.038212,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 1.596723,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.178866,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.042029,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.030356,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 1.627723,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.173777,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.039743,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.030976,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 1.671108,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.166511,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.06371,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.121443,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.609636,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.338447,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.121005,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.061498,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.580806,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.306107,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.11476,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.067626,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.337705,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.236577,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.09186,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.059641,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.539629,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.26612,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.101686,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.07422,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 1.972034,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.28189,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.067937,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.071494,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.558946,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.276096,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.0981,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.05564,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.774054,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.304775,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.07543,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.109108,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.051505,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.273984,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.072657,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.082306,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.979993,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.293695,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.076752,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.065173,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.888023,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.330534,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.081397,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.063476,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.552035,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.28117,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.147227,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.163359,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.830603,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.283069,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.076717,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.058571,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.588636,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.258803,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.070954,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.088891,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.661089,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.292938,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.108825,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.064877,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.918311,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.295915,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.071913,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.091728,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.724623,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.368699,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.11131,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.10215,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.55877,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.276129,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.08972,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.092216,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.553698,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.265094,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.068828,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.058596,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.789899,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.291474,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.070466,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.05874,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.796444,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.284791,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.074945,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.060736,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.505578,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.306111,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.098744,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.066886,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.878442,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.301913,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.076415,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.062272,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.689769,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.299886,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.095241,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.062121,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.772922,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.287031,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.072959,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.059613,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.572923,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.264399,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.067711,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.058377,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.545258,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.275556,
+            "failed": false
+          },
+          {
+            "phase": "group_members",
+            "milliseconds": 6.292196,
+            "failed": false
+          },
+          {
+            "phase": "group_members",
+            "milliseconds": 3.217979,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 1.437398,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.434816,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 1.300547,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.177227,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 1.953458,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.189467,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 1.108849,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.182021,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 1.075713,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.120108,
+            "failed": false
+          }
+        ]
+      },
+      {
+        "case": 2,
+        "status": 200,
+        "milliseconds": 190.888047,
+        "queries": [
+          {
+            "phase": "metadata",
+            "milliseconds": 0.259878,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.171492,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.138936,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.141346,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.126919,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.124538,
+            "failed": false
+          },
+          {
+            "phase": "vocabulary",
+            "milliseconds": 0.190976,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.546514,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.077673,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.05633,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 1.969006,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.264084,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.114844,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.066084,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 10.139296,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.301898,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.074762,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.060477,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.614711,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.321043,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.079308,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.128697,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 18.943268,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.361926,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.138581,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.087646,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.604927,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.280289,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.085966,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.059566,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.586785,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.293601,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.116168,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.100534,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.677618,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.277899,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.113962,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.096412,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.649329,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.296453,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.095523,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.070537,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.760566,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.305448,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.177673,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.07641,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.623012,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.296804,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.084637,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.070381,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.71422,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.290616,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.077216,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.059947,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.480527,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.30479,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.10891,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.051364,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 1.740657,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.239595,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.087999,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.041698,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 1.791155,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.224507,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.08447,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.058918,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 1.74645,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.192753,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.059435,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.056939,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 1.714869,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.199949,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.062463,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.048294,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 1.792851,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.197377,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.060778,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.063944,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 32.982545,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.423615,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.341575,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.082631,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.845019,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.189324,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.044815,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.034133,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 1.666994,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.171249,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.040111,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.030808,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 31.747752,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.296008,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.089159,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.067011,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.613607,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.274267,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.125572,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.084249,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.467539,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.206691,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.048027,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.034377,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 1.779334,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.24862,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.064271,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.10492,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.468492,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.185003,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.043089,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.033335,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 1.80546,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.314891,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.064105,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.046867,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.565922,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.218215,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.080276,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.05919,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.39312,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.195107,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.042426,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.104696,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 1.982623,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.193107,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.054342,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.046363,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.386082,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.228649,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.047165,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.034367,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 1.754514,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.189086,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.043147,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.03389,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 1.647024,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.173891,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.041483,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.032536,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 1.729401,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.181913,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.042071,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.031663,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 1.6547,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.187811,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.065696,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.087423,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 1.833106,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.19417,
+            "failed": false
+          },
+          {
+            "phase": "group_members",
+            "milliseconds": 4.11157,
+            "failed": false
+          },
+          {
+            "phase": "group_members",
+            "milliseconds": 2.68305,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 1.266998,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.187214,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 1.088928,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.170767,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.671873,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.091903,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.463269,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.079784,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.482279,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.078881,
+            "failed": false
+          }
+        ]
+      },
+      {
+        "case": 3,
+        "status": 503,
+        "milliseconds": 2034.621684,
+        "queries": [
+          {
+            "phase": "metadata",
+            "milliseconds": 0.172455,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.110766,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.068796,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.057213,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.053102,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.055933,
+            "failed": false
+          },
+          {
+            "phase": "vocabulary",
+            "milliseconds": 30.268921,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.648379,
+            "failed": false
+          },
+          {
+            "phase": "candidates",
+            "milliseconds": 2002.89202,
+            "failed": true
+          }
+        ]
+      },
+      {
+        "case": 4,
+        "status": 200,
+        "milliseconds": 49.719894,
+        "queries": [
+          {
+            "phase": "metadata",
+            "milliseconds": 0.272113,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.191954,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.125836,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.111436,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.093889,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.156505,
+            "failed": false
+          },
+          {
+            "phase": "vocabulary",
+            "milliseconds": 0.735898,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.487668,
+            "failed": false
+          },
+          {
+            "phase": "candidates",
+            "milliseconds": 41.072589,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 5.50496,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.312905,
+            "failed": false
+          }
+        ]
+      },
+      {
+        "case": 5,
+        "status": 200,
+        "milliseconds": 26.945572,
+        "queries": [
+          {
+            "phase": "metadata",
+            "milliseconds": 0.244318,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.164114,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.122942,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.109029,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.104054,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.16651,
+            "failed": false
+          },
+          {
+            "phase": "vocabulary",
+            "milliseconds": 0.799385,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.596787,
+            "failed": false
+          },
+          {
+            "phase": "candidates",
+            "milliseconds": 12.004624,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 5.547801,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.324262,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 5.541179,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.22614,
+            "failed": false
+          }
+        ]
+      },
+      {
+        "case": 6,
+        "status": 503,
+        "milliseconds": 4177.072072,
+        "queries": [
+          {
+            "phase": "metadata",
+            "milliseconds": 0.297819,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 1.487378,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.27656,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.215051,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.235933,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.169889,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.235275,
+            "failed": false
+          },
+          {
+            "phase": "vocabulary",
+            "milliseconds": 0.247563,
+            "failed": false
+          },
+          {
+            "phase": "vocabulary",
+            "milliseconds": 1.55959,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 7.693877,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 16.209278,
+            "failed": false
+          },
+          {
+            "phase": "source_probe",
+            "milliseconds": 20.23096,
+            "failed": false
+          },
+          {
+            "phase": "address_probe",
+            "milliseconds": 4.614327,
+            "failed": false
+          },
+          {
+            "phase": "candidates",
+            "milliseconds": 0.094639,
+            "failed": false
+          },
+          {
+            "phase": "candidates",
+            "milliseconds": 0.058111,
+            "failed": false
+          },
+          {
+            "phase": "candidates",
+            "milliseconds": 4122.782901,
+            "failed": true
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.261117,
+            "failed": false
+          }
+        ]
+      },
+      {
+        "case": 7,
+        "status": 503,
+        "milliseconds": 4125.376452,
+        "queries": [
+          {
+            "phase": "metadata",
+            "milliseconds": 0.262302,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.526685,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.15406,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.256954,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.321032,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.200364,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.17354,
+            "failed": false
+          },
+          {
+            "phase": "vocabulary",
+            "milliseconds": 2.403602,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.112077,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.497437,
+            "failed": false
+          },
+          {
+            "phase": "source_probe",
+            "milliseconds": 38.856211,
+            "failed": false
+          },
+          {
+            "phase": "address_probe",
+            "milliseconds": 1.585483,
+            "failed": false
+          },
+          {
+            "phase": "candidates",
+            "milliseconds": 0.084865,
+            "failed": false
+          },
+          {
+            "phase": "candidates",
+            "milliseconds": 0.122776,
+            "failed": false
+          },
+          {
+            "phase": "candidates",
+            "milliseconds": 4079.009566,
+            "failed": true
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.368485,
+            "failed": false
+          }
+        ]
+      },
+      {
+        "case": 8,
+        "status": 200,
+        "milliseconds": 47.689728,
+        "queries": [
+          {
+            "phase": "metadata",
+            "milliseconds": 0.242869,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.578814,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.172311,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.122775,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.179557,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.075927,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.118526,
+            "failed": false
+          },
+          {
+            "phase": "address_probe",
+            "milliseconds": 3.991077,
+            "failed": false
+          },
+          {
+            "phase": "candidates",
+            "milliseconds": 0.094084,
+            "failed": false
+          },
+          {
+            "phase": "candidates",
+            "milliseconds": 0.063171,
+            "failed": false
+          },
+          {
+            "phase": "candidates",
+            "milliseconds": 32.736672,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.527446,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 1.384171,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.200163,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 2.976818,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.586754,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 1.196928,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.12564,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.756805,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.165306,
+            "failed": false
+          }
+        ]
+      },
+      {
+        "case": 9,
+        "status": 200,
+        "milliseconds": 1007.743981,
+        "queries": [
+          {
+            "phase": "metadata",
+            "milliseconds": 0.271615,
+            "failed": false
+          },
+          {
+            "phase": "vocabulary",
+            "milliseconds": 0.224444,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.094879,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.065866,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 988.283569,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 1.705901,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.104327,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.045467,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 2.625077,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.238695,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 2.881782,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.284084,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 8.707878,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 1.169795,
+            "failed": false
+          }
+        ]
+      },
+      {
+        "case": 10,
+        "status": 503,
+        "milliseconds": 4055.084695,
+        "queries": [
+          {
+            "phase": "metadata",
+            "milliseconds": 0.902115,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.667059,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 1.123204,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.251155,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.161117,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.167434,
+            "failed": false
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.158242,
+            "failed": false
+          },
+          {
+            "phase": "address_probe",
+            "milliseconds": 4.360643,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.12951,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 0.101585,
+            "failed": false
+          },
+          {
+            "phase": "ordered",
+            "milliseconds": 4046.509244,
+            "failed": true
+          },
+          {
+            "phase": "metadata",
+            "milliseconds": 0.196437,
+            "failed": false
+          }
+        ]
+      },
+      {
+        "case": 11,
+        "status": 200,
+        "milliseconds": 1077.955732,
+        "queries": [
+          {
+            "phase": "metadata",
+            "milliseconds": 0.509176,
+            "failed": false
+          },
+          {
+            "phase": "vocabulary",
+            "milliseconds": 8.764441,
+            "failed": false
+          },
+          {
+            "phase": "candidates",
+            "milliseconds": 16.850846,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 1050.490024,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.41434,
+            "failed": false
+          }
+        ]
+      },
+      {
+        "case": 12,
+        "status": 200,
+        "milliseconds": 990.756641,
+        "queries": [
+          {
+            "phase": "metadata",
+            "milliseconds": 0.244175,
+            "failed": false
+          },
+          {
+            "phase": "vocabulary",
+            "milliseconds": 15.428277,
+            "failed": false
+          },
+          {
+            "phase": "candidates",
+            "milliseconds": 20.75923,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 953.339405,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.188142,
+            "failed": false
+          }
+        ]
+      },
+      {
+        "case": 13,
+        "status": 200,
+        "milliseconds": 394.796035,
+        "queries": [
+          {
+            "phase": "metadata",
+            "milliseconds": 0.258726,
+            "failed": false
+          },
+          {
+            "phase": "vocabulary",
+            "milliseconds": 8.653554,
+            "failed": false
+          },
+          {
+            "phase": "candidates",
+            "milliseconds": 14.294834,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 370.817089,
+            "failed": false
+          },
+          {
+            "phase": "records",
+            "milliseconds": 0.21603,
+            "failed": false
+          }
+        ]
+      }
+    ]
+  },
+  "generic_representative_diagnostics": {
+    "before": {
+      "cases": 6,
+      "failed": 0,
+      "observations": [
+        {
+          "case": 0,
+          "status": 200,
+          "milliseconds": 1949.345874,
+          "group_member_query_ms": [
+            1264.223599,
+            3.493125
+          ]
+        },
+        {
+          "case": 1,
+          "status": 200,
+          "milliseconds": 1174.629349,
+          "group_member_query_ms": [
+            858.81298,
+            2.35214
+          ]
+        },
+        {
+          "case": 2,
+          "status": 200,
+          "milliseconds": 1627.019807,
+          "group_member_query_ms": [
+            719.247009,
+            2.133581
+          ]
+        },
+        {
+          "case": 3,
+          "status": 200,
+          "milliseconds": 1647.732868,
+          "group_member_query_ms": [
+            751.884047,
+            2.00439
+          ]
+        },
+        {
+          "case": 4,
+          "status": 200,
+          "milliseconds": 29.052523,
+          "group_member_query_ms": []
+        },
+        {
+          "case": 5,
+          "status": 200,
+          "milliseconds": 1656.045038,
+          "group_member_query_ms": []
+        }
+      ]
+    },
+    "after": {
+      "cases": 6,
+      "failed": 0,
+      "observations": [
+        {
+          "case": 0,
+          "status": 200,
+          "milliseconds": 95.079821,
+          "group_member_query_ms": [
+            2.158586,
+            0.646581,
+            0.546797,
+            0.391801,
+            0.291887,
+            4.130458
+          ]
+        },
+        {
+          "case": 1,
+          "status": 200,
+          "milliseconds": 38.05124,
+          "group_member_query_ms": [
+            0.636379,
+            0.415371,
+            0.458109,
+            0.279467,
+            0.262521,
+            2.329602
+          ]
+        },
+        {
+          "case": 2,
+          "status": 200,
+          "milliseconds": 42.393963,
+          "group_member_query_ms": [
+            0.603431,
+            0.49522,
+            0.375704,
+            0.282449,
+            0.185883,
+            2.123122
+          ]
+        },
+        {
+          "case": 3,
+          "status": 200,
+          "milliseconds": 49.834486,
+          "group_member_query_ms": [
+            0.565723,
+            0.450874,
+            0.287433,
+            0.200966,
+            0.160101,
+            2.194607
+          ]
+        },
+        {
+          "case": 4,
+          "status": 200,
+          "milliseconds": 28.434681,
+          "group_member_query_ms": []
+        },
+        {
+          "case": 5,
+          "status": 200,
+          "milliseconds": 375.307571,
+          "group_member_query_ms": []
+        }
+      ]
+    }
+  }
+}

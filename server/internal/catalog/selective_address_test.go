@@ -242,6 +242,9 @@ INSERT INTO geography_active VALUES(true,'2026-08'); ANALYZE;`); err != nil {
 		}
 	}
 	testOrderedSurnameWindows(t, db)
+	testSourceProbeReuse(t, db)
+	testSearchPhaseRows(t, db)
+	testClassificationProbeWork(t, db)
 }
 
 func testAddressLookupIntegrity(t *testing.T, db *pgxpool.Pool) {
@@ -345,7 +348,31 @@ func testOrderedSurnameWindows(t *testing.T, db *pgxpool.Pool) {
 		t.Fatal(err)
 	}
 	a := NewAPI(db)
-	for _, mode := range []string{"sort=name", "group=listing"} {
+	for _, mode := range []string{"surname=Surnamewindow*&sort=name", "surname=Surnamewindow*&group=listing", "postcode=AA1&sort=name", "postcode=AA1&group=listing"} {
+		probe := NewAPI(db)
+		w := httptest.NewRecorder()
+		probe.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/search?dataset=surname-windows&limit=1&"+mode, nil))
+		if w.Code != 200 {
+			t.Fatal(w.Code, w.Body.String())
+		}
+		var firstPage searchResult
+		if err := json.Unmarshal(w.Body.Bytes(), &firstPage); err != nil {
+			t.Fatal(err)
+		}
+		if len(firstPage.Items) != 1 || firstPage.Next == "" {
+			t.Fatal("missing ordered page/lookahead")
+		}
+		// One label query and one sparse two-pair batch. Remaining 126 pairs
+		// must not expand sources or groups only to be discarded after sorting.
+		if got := probe.metrics.phases[phaseKey{"ordered", "ok"}].Count; got != 2 || probe.metrics.orderedPairs.Load() != 2 {
+			t.Fatalf("ordered pair page work: got %d queries, want 2", got)
+		}
+		wide := NewAPI(db)
+		w = httptest.NewRecorder()
+		wide.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/search?dataset=surname-windows&limit=100&"+mode, nil))
+		if w.Code != 200 || wide.metrics.orderedPairs.Load() != 101 || wide.metrics.phases[phaseKey{"ordered", "ok"}].Count != 27 {
+			t.Fatal("sparse page transaction work", w.Code)
+		}
 		seen := map[string]bool{}
 		cursor := ""
 		last := ""
@@ -354,7 +381,7 @@ func testOrderedSurnameWindows(t *testing.T, db *pgxpool.Pool) {
 				t.Fatal("endless surname pages")
 			}
 			w := httptest.NewRecorder()
-			a.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/search?dataset=surname-windows&surname=Surnamewindow*&first_name=Name&first_match=given&limit=100&"+mode+"&cursor="+url.QueryEscape(cursor), nil))
+			a.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/search?dataset=surname-windows&first_name=Name&first_match=given&limit=100&"+mode+"&cursor="+url.QueryEscape(cursor), nil))
 			if w.Code != 200 {
 				t.Fatal(w.Code, w.Body.String())
 			}
@@ -381,6 +408,15 @@ func testOrderedSurnameWindows(t *testing.T, db *pgxpool.Pool) {
 			t.Fatal("truncated surname windows", len(seen))
 		}
 	}
+	for _, mode := range []string{"sort=name", "group=listing"} {
+		dense := NewAPI(db)
+		w := httptest.NewRecorder()
+		dense.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/search?dataset=large-address&postcode=BB1&limit=1&"+mode, nil))
+		if w.Code != 200 || dense.metrics.orderedPairs.Load() != 1 {
+			t.Fatal("dense pair expanded unnecessary neighbours", w.Code)
+		}
+	}
+
 }
 
 // Use a wide, mostly unrelated dictionary so a sparse ID-driven heap probe is
@@ -471,5 +507,102 @@ func testAddressLookupDictionaryPlan(t *testing.T, db *pgxpool.Pool) {
 	}
 	if _, err = tx.Exec(ctx, addressLookupSchema); err == nil || !strings.Contains(err.Error(), "Incompatible or incomplete") {
 		t.Fatalf("incorrect lookup index accepted: %v", err)
+	}
+}
+
+func testSourceProbeReuse(t *testing.T, db *pgxpool.Pool) {
+	t.Helper()
+	ctx := context.Background()
+	a := NewAPI(db)
+	q, err := parse(mustValues("dataset=large-address&surname=Widebudget&town=Large+Town"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	f, status, err := a.candidateFilters(ctx, q)
+	if err != nil || status != 200 || f.addressMatched {
+		t.Fatalf("wrong overflow fallback: %d %v", status, err)
+	}
+	if got := a.metrics.phases[phaseKey{"source_probe", "ok"}].Count; got != 1 {
+		t.Fatalf("identical overflow probe repeated: %d", got)
+	}
+	// At precisely limit+1 source records, a complete smaller address set changes
+	// the source predicate. That second (now bounded) probe must not be skipped.
+	var input bytes.Buffer
+	enc := json.NewEncoder(&input)
+	_ = enc.Encode(Manifest{Type: "manifest", Protocol: 1, Dataset: "probe-boundary", Edition: "probe-boundary", Title: "Invented probe boundary", Expected: 4097, SHA256: map[string]string{"invented": "invented"}})
+	for i := 0; i < 4097; i++ {
+		town := "Overflow Town"
+		if i < 128 {
+			town = "Tiny Boundary Town"
+		}
+		_ = enc.Encode(map[string]any{"type": "record", "source_id": fmt.Sprint(i), "record": map[string]any{"surname": "Boundaryprobe", "firstName": "June A", "town": town, "street": "Invented Road"}})
+	}
+	_ = enc.Encode(map[string]any{"type": "end", "count": 4097})
+	if _, err = Import(ctx, db, &input); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = IndexAddresses(ctx, db, "probe-boundary", AddressIndexOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	b := NewAPI(db)
+	q, err = parse(mustValues("dataset=probe-boundary&surname=Boundaryprobe&first_name=June&first_match=given&town=Tiny+Boundary+Town"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	f, status, err = b.candidateFilters(ctx, q)
+	if err != nil || status != 200 || !f.addressMatched {
+		t.Fatalf("changed predicate failed: %d %v", status, err)
+	}
+	if got := b.metrics.phases[phaseKey{"source_probe", "ok"}].Count; got != 2 {
+		t.Fatalf("changed source probe skipped: %d", got)
+	}
+	count := 0
+	cursor := ""
+	for i := 0; i < 10; i++ {
+		w := httptest.NewRecorder()
+		b.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/search?dataset=probe-boundary&surname=Boundaryprobe&first_name=June&first_match=given&town=Tiny+Boundary+Town&limit=17&cursor="+url.QueryEscape(cursor), nil))
+		if w.Code != 200 {
+			t.Fatal(w.Code, w.Body.String())
+		}
+		var r searchResult
+		if err = json.Unmarshal(w.Body.Bytes(), &r); err != nil {
+			t.Fatal(err)
+		}
+		count += len(r.Items)
+		cursor = r.Next
+		if cursor == "" {
+			break
+		}
+	}
+	if count != 128 || cursor != "" {
+		t.Fatalf("boundary lost complete pagination: count=%d", count)
+	}
+}
+
+func testSearchPhaseRows(t *testing.T, db *pgxpool.Pool) {
+	t.Helper()
+	ctx := context.Background()
+	a := NewAPI(db)
+	rows, err := a.searchRows(ctx, "candidates", "SELECT i FROM generate_series(1,3) i", nil, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !rows.Next() {
+		t.Fatal("no rows")
+	}
+	rows.Close()
+	rows.Close()
+	if db.Stat().AcquiredConns() != 0 || a.metrics.phases[phaseKey{"candidates", "ok"}].Count != 1 {
+		t.Fatal("early close leaked resources or double-counted")
+	}
+	rows, err = a.searchRows(ctx, "candidates", "SELECT 1/0", nil, false)
+	if err == nil {
+		for rows.Next() {
+		}
+		err = rows.Err()
+		rows.Close()
+	}
+	if err == nil || db.Stat().AcquiredConns() != 0 || a.metrics.phases[phaseKey{"candidates", "error"}].Count != 1 {
+		t.Fatal("query error leaked resources or disappeared")
 	}
 }
