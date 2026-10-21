@@ -196,10 +196,13 @@ when the final result has one row. Warm-cache timings hide this problem.
 For large HDD-hosted catalogues, the optional owner-run
 [`covering-search-indexes.sql`](../deploy/production/covering-search-indexes.sql)
 adds `(dataset_id,kind,name_id,first_id,id) INCLUDE (postcode_id)` indexes to each
-existing `entries` partition. It preserves the compact indexes and source data;
+existing `entries` partition. It also adds `terms(key) INCLUDE (id)` for name and
+postcode vocabulary expansion, which happens before record candidates are queried.
+An uncovered dictionary lookup can exceed its deadline on cold HDD even when the
+entry search is already covered. It preserves the compact indexes and source data;
 no application update, query semantics, cursor order or timeout change is needed.
 The planner can filter postcodes directly in the name index. Check visibility-map
-coverage and run normal VACUUM maintenance where needed: index-only scans still
+coverage for both `terms` and the entry partitions and run normal VACUUM maintenance where needed: index-only scans still
 fetch the heap for pages that are not all-visible.
 
 Run with `psql -X -v ON_ERROR_STOP=1 -U OWNER -d DATABASE -f covering-search-indexes.sql`,
