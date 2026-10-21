@@ -7,6 +7,7 @@
  DO $missing$ BEGIN RAISE EXCEPTION 'Set -v dataset to one complete edition key'; END $missing$;
 \endif
 SET application_name='ukinfo-prepare-search-catalogue';
+SET search_path=public;
 SET lock_timeout='5s';
 SET statement_timeout='20min';
 SET maintenance_work_mem='256MB';
@@ -14,7 +15,12 @@ SET max_parallel_maintenance_workers=0;
 SET vacuum_cost_delay='2ms';
 SET vacuum_cost_limit=1000;
 CREATE TEMP TABLE ukinfo_search_maintenance_datasets AS
- SELECT id FROM datasets WHERE key=:'dataset' AND entries>0;
+ SELECT d.id FROM datasets d
+ JOIN research_indexes r ON r.dataset_id=d.id AND r.version=1 AND r.entries=d.entries
+ JOIN address_indexes a ON a.dataset_id=d.id AND a.version=1 AND a.entries=d.entries
+ JOIN address_record_indexes b ON b.dataset_id=d.id AND b.version=1
+  AND b.entries=d.entries AND b.blocks=(d.entries+127)/128
+ WHERE d.key=:'dataset' AND d.entries>0;
 DO $check$
 BEGIN
  IF (SELECT count(*) FROM ukinfo_search_maintenance_datasets)<>1

@@ -12,12 +12,19 @@ The implemented changes are:
 
 - Expand name/first-name pairs in lexical order until the requested page and
   lookahead are full, instead of expanding all 128 pairs before sorting/limiting.
+  Batch up to four sparse pairs using exact occurrence counts; keep dense pairs
+  scalar to avoid speculative work. A 100-item sparse fixture page needs 27
+  ordered queries instead of 102.
   Apply this to postcode-based name sorting and listing grouping too.
 - Resolve an anchored business record's classification by source ID before testing
   industry/SIC. Fencing the complete EXISTS did not prevent the planner from
   choosing a national industry-range index for each record.
 - Skip a second identical overflowing source probe. Retain the second probe when
   a complete address intersection changes its predicate.
+- Resolve grouped representatives through exact per-edition group-key probes,
+  stopping at the lowest ordinal and skipping later editions once resolved. This
+  retains the original minimum `(dataset_id,id)` representative and complete
+  cross-edition counts while avoiding a costly all-edition DISTINCT lookup.
 - Add an optional ID-to-label dictionary covering index, alongside the existing
   label-to-ID covering index, with compatible-shape and validity guards.
 - Measure vocabulary, probes, address lookups, candidates, ordered candidates,
@@ -123,6 +130,46 @@ This is not a passing reliability result. The query changes reduce specific work
 and improve the feature probes, while first-observation record access and broad
 intersections still need attention. No reference hash was rebased to hide a failure.
 
+## Paired regression check and representative fix
+
+The first balanced, sequential baseline/candidate comparison on the same published
+catalogue completed 83 pairs: 65 identical successful responses, eleven failures
+on both APIs, one candidate-only success and six baseline-only successes. The
+candidate therefore had seventeen failures against twelve on the baseline, with
+zero content mismatches. Deployment was held. Four extra failures were grouped
+postcode searches, despite fresh diagnostic runs succeeding.
+
+A forced-generic diagnostic located expensive representative retrieval: the old
+all-edition DISTINCT lookup took 719–1,264 ms in the four grouped cases. The new
+per-edition exact-key probes took a few milliseconds in the follow-up diagnostic;
+all six selected cases completed successfully. These observations still have
+cache/background-load differences. The deterministic CI gate checks the actual
+query under both planning modes: three probes over 50,000 invented keys used ten
+shared buffers and zero heap fetches in each mode. Complete ordinary/grouped
+pagination and earliest-edition source identity also pass.
+
+## Final two-round paired result
+
+Both APIs were freshly started with identical production limits on the same fixed
+published catalogue. All 83 cases ran twice, with each API going first once per
+case: **166 pairs / 332 requests**, no budget exhaustion. There were 152 identical
+successful pairs, seven failures on both APIs, four candidate-only successes and
+three baseline-only successes. No successful response content differed.
+
+The baseline had eleven errors; the final candidate had ten. Median latency was
+21 versus 27 ms, and p95 was approximately four seconds on both. Grouped searches
+improved from four errors in eighteen attempts to one in eighteen, with median
+320 versus 290 ms. The three candidate-only failures occurred when the candidate
+went first in round one; all three matched successfully on both APIs in round
+two. This suggests first-observation/cache sensitivity, without establishing a
+causal explanation for each failure.
+
+The final candidate therefore avoids the earlier persistent grouped-lookup
+regression and preserves successful content, but **does not establish reliable
+low latency for arbitrary cold searches**. Shared broad address/classification
+and ordered-query failures remain. These outcomes, including candidate-only
+misses, are retained rather than replaced with a warm-only passing report.
+
 ## Controlled repeated-workload capacity
 
 A systematic subset used 48 evenly spaced original references plus 16 evenly
@@ -156,7 +203,9 @@ cache misses and broad intersections remain the practical risks.
 
 - Complete ordinary/grouped paging over 360 invented name pairs, with unused
   dictionary terms interleaved, for both name and postcode anchors.
-- A one-item ordered page expands only the two pairs needed for page/lookahead.
+- A one-item sparse page expands only its two needed pairs in one batch. A dense
+  first pair does not expand neighbouring pairs. Sparse full-page query work and
+  the submitted-pair counter are checked as hard gates.
 - Actual API business predicates over 50,000 invented projections: exact IDs/order,
   forced custom/generic plans, covered ID-first research access, classification
   filters outside the ID lookup, zero fixture heap fetches, fewer than 800 shared

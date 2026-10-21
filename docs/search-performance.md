@@ -9,6 +9,7 @@ The required `search` job runs complementary matrices and retains the
 | --- | --- | --- |
 | PostgreSQL candidate plans | 50,000 invented entries in two editions; 70% dominant surname, rare names, 1,970 first-name terms, 727 postcode terms, 5% businesses; full postcode, sector/district, given-name variants, all editions and page-two cursors | Results/order differ from a sequential reference; any candidate heap fetch or non-index-only scan; 1,500 or more shared buffer accesses per plan |
 | Business classification probes | 50,000 invented business projections; a broad industry prefix and 50 selected postcode records; actual API predicates under forced custom/generic plans | Wrong IDs/order; classification range used as the per-record index condition; non-index-only research access or heap fetches; 800 or more shared buffers |
+| Group representatives | 50,000 invented research keys; earliest-edition identity with reversed edition input; actual representative SQL under forced custom/generic plans | Wrong representative; unnecessary later-edition requests; wrong/unpruned research partition; heap fetches; more than one row per exact group probe; 100 or more shared buffers for three probes |
 | Search API | 22,546 invented entries in three editions; selective/broad/scattered names, given-name/wildcard/middle initial, street/town/county/house, full/partial postcode, nearby district centre, businesses, grouped/ordered results and complete pagination | Wrong counts, duplicate pages, wrong address/strategy, HTTP errors, truncated or endless pagination |
 
 The SQL matrix exercises forced custom and generic prepared plans and validates
@@ -136,7 +137,9 @@ Name-ordered pages enumerate eligible name/first-name pairs, then expand only th
 pairs needed for a complete page plus lookahead. This applies to source-name and
 postcode anchors. The API suite traverses 360 invented pairs, inserts unused
 interleaved dictionary terms, and verifies both grouped and ordinary pages. A
-one-item page must expand only its two needed pairs, rather than all 128 candidates.
+one-item sparse page must expand only its two needed pairs. Sparse pairs batch up
+to four per transaction; dense pairs remain scalar. A sparse 100-item page uses
+27 ordered queries instead of 102.
 Anchored business filters seek one record's classification before applying a
 national industry/SIC prefix; classification-only searches keep range access.
 
@@ -158,3 +161,14 @@ import prerequisite. Inspect visibility coverage after completion. A valid
 covering index alone does not guarantee zero heap reads while snapshots prevent
 pages becoming all-visible. Schedule backups and index builds separately from
 representative interactive latency measurements.
+
+Grouped pages resolve one representative per listing by probing selected editions
+in ascending ID order and removing resolved groups from subsequent probes. Exact
+group-key/scalar-edition probes stop at the lowest ordinal; occurrence counts and
+edition lists still cover every selected edition. `group-member-plans.json` records
+custom/generic timings, buffers and heap fetches alongside classification plans.
+
+`ukinfo_ordered_pairs_expanded_total` counts name/first-name pairs submitted for
+expansion, including failed attempts. It complements stage latency and request
+counts without recording names. Batches use exact eligible occurrence counts to
+avoid expanding adjacent dense pairs merely to reduce transaction count.

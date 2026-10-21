@@ -266,3 +266,7 @@ loading includes decoding. Multiple observations can belong to one HTTP request.
 The Collector preserves `phase`/`outcome` and converts this cumulative histogram to
 delta alongside the request histogram. Update a customized Collector configuration
 when upgrading the server.
+
+`ukinfo_ordered_pairs_expanded_total` counts pairs submitted for ordered expansion,
+including failed attempts. It provides a bounded work signal alongside stage
+latency: sparse pairs are batched; dense pairs are processed individually.

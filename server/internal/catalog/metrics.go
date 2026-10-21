@@ -42,6 +42,7 @@ type apiMetrics struct {
 	cacheHits     atomic.Uint64
 	cacheMisses   atomic.Uint64
 	decodedBlocks atomic.Uint64
+	orderedPairs  atomic.Uint64
 }
 
 var latencyBounds = [...]float64{0.05, 0.1, 0.25, 0.5, 1, 2, 5}
@@ -227,6 +228,7 @@ func (a *API) Metrics() http.Handler {
 			fmt.Fprintf(w, "ukinfo_address_plans_total{plan=%q} %d\n", plan, count)
 		}
 		fmt.Fprintf(w, "# TYPE ukinfo_record_block_cache_lookups_total counter\nukinfo_record_block_cache_lookups_total{result=\"hit\"} %d\nukinfo_record_block_cache_lookups_total{result=\"miss\"} %d\n", a.metrics.cacheHits.Load(), a.metrics.cacheMisses.Load())
+		fmt.Fprintf(w, "# TYPE ukinfo_ordered_pairs_expanded_total counter\nukinfo_ordered_pairs_expanded_total %d\n", a.metrics.orderedPairs.Load())
 		fmt.Fprintf(w, "# TYPE ukinfo_record_blocks_decoded_total counter\nukinfo_record_blocks_decoded_total %d\n", a.metrics.decodedBlocks.Load())
 		stats := a.DB.Stat()
 		// Successful acquisitions that had to wait, plus separately canceled waits.

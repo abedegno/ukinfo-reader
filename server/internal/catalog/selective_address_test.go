@@ -362,10 +362,16 @@ func testOrderedSurnameWindows(t *testing.T, db *pgxpool.Pool) {
 		if len(firstPage.Items) != 1 || firstPage.Next == "" {
 			t.Fatal("missing ordered page/lookahead")
 		}
-		// One label query and two single-row pairs. Remaining 126 pairs must not
-		// expand sources or research groups merely to discard them after sorting.
-		if got := probe.metrics.phases[phaseKey{"ordered", "ok"}].Count; got != 3 {
-			t.Fatalf("ordered pair page work: got %d queries, want 3", got)
+		// One label query and one sparse two-pair batch. Remaining 126 pairs
+		// must not expand sources or groups only to be discarded after sorting.
+		if got := probe.metrics.phases[phaseKey{"ordered", "ok"}].Count; got != 2 || probe.metrics.orderedPairs.Load() != 2 {
+			t.Fatalf("ordered pair page work: got %d queries, want 2", got)
+		}
+		wide := NewAPI(db)
+		w = httptest.NewRecorder()
+		wide.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/search?dataset=surname-windows&limit=100&"+mode, nil))
+		if w.Code != 200 || wide.metrics.orderedPairs.Load() != 101 || wide.metrics.phases[phaseKey{"ordered", "ok"}].Count != 27 {
+			t.Fatal("sparse page transaction work", w.Code)
 		}
 		seen := map[string]bool{}
 		cursor := ""
@@ -402,6 +408,15 @@ func testOrderedSurnameWindows(t *testing.T, db *pgxpool.Pool) {
 			t.Fatal("truncated surname windows", len(seen))
 		}
 	}
+	for _, mode := range []string{"sort=name", "group=listing"} {
+		dense := NewAPI(db)
+		w := httptest.NewRecorder()
+		dense.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/search?dataset=large-address&postcode=BB1&limit=1&"+mode, nil))
+		if w.Code != 200 || dense.metrics.orderedPairs.Load() != 1 {
+			t.Fatal("dense pair expanded unnecessary neighbours", w.Code)
+		}
+	}
+
 }
 
 // Use a wide, mostly unrelated dictionary so a sparse ID-driven heap probe is

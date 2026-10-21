@@ -74,7 +74,7 @@ func TestPairedRetainsIncompleteRequest(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { <-r.Context().Done() }))
 	defer s.Close()
 	cases, out := workload(t, []queryCase{{Query: "surname=SECRET_WAIT"}})
-	if err := run([]string{"--url", s.URL, "--compare-url", s.URL, "--probe-only", "--cases", cases, "--output", out, "--max-duration", "20ms"}, &bytes.Buffer{}); err == nil {
+	if err := run([]string{"--url", s.URL, "--compare-url", s.URL, "--probe-only", "--cases", cases, "--output", out, "--max-duration", "200ms"}, &bytes.Buffer{}); err == nil {
 		t.Fatal("incomplete pair accepted")
 	}
 	r := report(t, out)

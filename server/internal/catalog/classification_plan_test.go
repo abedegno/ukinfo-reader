@@ -28,7 +28,7 @@ func testClassificationProbeWork(t *testing.T, db *pgxpool.Pool) {
  CREATE TABLE %s PARTITION OF research_keys FOR VALUES IN (%d);
  INSERT INTO terms(key) VALUES('ZZ99ZZ') ON CONFLICT DO NOTHING;
  INSERT INTO entries SELECT i,%d,1,0,0,(SELECT id FROM terms WHERE key=CASE WHEN i<=50 THEN 'AA11AA' ELSE 'ZZ99ZZ' END) FROM generate_series(1,50000)i;
- INSERT INTO research_keys SELECT %d,i,decode(repeat('00',32),'hex'),decode(repeat('00',32),'hex'),'','wide invented industry '||(i%%1000) FROM generate_series(1,50000)i;
+ INSERT INTO research_keys SELECT %d,i,decode(repeat('00',32),'hex'),sha256(convert_to('invented group '||i,'UTF8')),'','wide invented industry '||(i%%1000) FROM generate_series(1,50000)i;
  INSERT INTO research_indexes(dataset_id,version,entries) VALUES(%d,1,50000);
  CREATE INDEX classification_work_cover ON %s(dataset_id,id) INCLUDE(industry,sic) WHERE industry<>'' OR sic<>'';`, entryTable, dataset, researchTable, dataset, dataset, dataset, dataset, researchTable)
 	if _, err := db.Exec(ctx, sql); err != nil {
@@ -140,4 +140,6 @@ func testClassificationProbeWork(t *testing.T, db *pgxpool.Pool) {
 			t.Fatal(err)
 		}
 	}
+	testGroupRepresentativePlans(t, db, dataset)
+
 }
