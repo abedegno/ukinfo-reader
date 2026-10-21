@@ -30,6 +30,35 @@ func (a *API) matchSelectiveAddresses(ctx context.Context, f *candidateFilters) 
 			a.metrics.plan(plan)
 		}
 	}()
+	// With a complete reverse lookup, try the independent indexed anchor before
+	// walking a broad city's street postings. Overflow retains the full fallback.
+	if q.Surname != "" || q.Organisation != "" || q.Postcode != "" || q.Near != "" || q.hasBusinessFilters() {
+		ready, err := a.addressLookupReady(ctx, f.datasetIDs)
+		if err != nil {
+			return err
+		}
+		if ready {
+			sourceSQL := "SELECT dataset_id,id FROM entries WHERE " + strings.Join(f.conditions, " AND ") + fmt.Sprintf(" LIMIT %d", selectiveAddressLimit+1)
+			if len(f.termCTEs) > 0 {
+				sourceSQL = "WITH " + strings.Join(f.termCTEs, ",") + " " + sourceSQL
+			}
+			candidates, count, err := a.addressPlanCandidates(ctx, sourceSQL, f.args)
+			if err != nil {
+				return err
+			}
+			if count <= selectiveAddressLimit {
+				matched, available, err := a.indexedAddressCandidates(ctx, q, candidates)
+				if err != nil {
+					return err
+				}
+				if available {
+					plan = "indexed_source"
+					f.useAddressCandidates(matched)
+					return nil
+				}
+			}
+		}
+	}
 	// First try the compact address side. LIMIT bounds the probe, never the result:
 	// only a completely exhausted probe may replace the address intersection.
 	args := []any{f.datasetIDs}
@@ -65,6 +94,14 @@ func (a *API) matchSelectiveAddresses(ctx context.Context, f *candidateFilters) 
 		}
 	}
 	if len(blocks) > selectiveAddressBlocks {
+		matched, available, err := a.indexedAddressCandidates(ctx, q, candidates)
+		if err != nil {
+			return err
+		}
+		if available {
+			plan = "indexed_source"
+			f.useAddressCandidates(matched)
+		}
 		return nil
 	}
 	matched := map[int16][]int32{}

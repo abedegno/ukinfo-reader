@@ -55,6 +55,11 @@ func testCatalogueManagement(t *testing.T, db *pgxpool.Pool) {
 	if err = db.QueryRow(ctx, "SELECT count(*) FROM address_members WHERE dataset_id=$1", target.ID).Scan(&count); err != nil || count != 0 {
 		t.Fatal("address membership retained", err)
 	}
+	for _, table := range []string{"address_record_blocks", "address_record_indexes"} {
+		if err = db.QueryRow(ctx, "SELECT count(*) FROM "+table+" WHERE dataset_id=$1", target.ID).Scan(&count); err != nil || count != 0 {
+			t.Fatalf("%s retained removed dataset: count=%d err=%v", table, count, err)
+		}
+	}
 	if err = db.QueryRow(ctx, "SELECT count(*) FROM datasets WHERE key='managed-keep'").Scan(&count); err != nil || count != 1 {
 		t.Fatal("other edition changed", err)
 	}

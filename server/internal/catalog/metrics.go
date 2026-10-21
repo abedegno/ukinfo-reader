@@ -79,7 +79,7 @@ func queryClass(r *http.Request) string {
 }
 func (m *apiMetrics) plan(name string) {
 	switch name {
-	case "address", "source", "fallback", "error":
+	case "address", "source", "indexed_source", "fallback", "error":
 	default:
 		return
 	}

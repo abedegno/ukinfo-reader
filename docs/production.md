@@ -225,3 +225,33 @@ The ordinary portable/desktop catalogue keeps its smaller default representation
 Required search CI checks concurrent creation, safe reapplication, exact query
 results/order, a heap-free covering plan after VACUUM, and rejection of an
 incompatible managed index using invented data in a disposable PostgreSQL instance.
+
+### Compact record-to-address lookup
+
+Town searches combined with selective names can otherwise expand hundreds of
+thousands of street postings. New complete address imports build a reverse lookup:
+one array of up to 128 location IDs per source block. Selective source candidates
+are checked through this index before expanding town postings. Overflow retains
+the complete existing search; pagination and refinements still apply.
+
+For an existing catalogue, run the owner-only maintenance script
+[`address-record-lookups.sql`](../deploy/production/address-record-lookups.sql),
+with [`address_lookup.sql`](../server/internal/catalog/address_lookup.sql) beside it:
+
+```sh
+psql -X -v ON_ERROR_STOP=1 -v dataset=all -U OWNER -d DATABASE -f address-record-lookups.sql
+```
+
+Each complete edition commits independently. The script adds covering town/county
+indexes concurrently, validates every source ordinal exactly once, vacuums the
+lookup, and grants the serving role SELECT on its two parent tables only. It does
+not change source records or increase request deadlines. Allow temporary sorting
+space and about 2.2 GiB of persistent lookup storage for 249 million occurrences.
+Take a normal catalogue backup afterward; rebuilding this derived index is also
+possible from complete address memberships. Do not delete its readiness metadata
+or edit its arrays manually.
+
+For a migrated desktop/owner catalogue, `ukinfo-server index-address-lookup
+--dataset KEY` backfills one edition. Legacy catalogues without this optional
+lookup remain searchable through the previous paths. Keep the lookup build in
+any staged edition publication procedure before swapping catalogue identities.

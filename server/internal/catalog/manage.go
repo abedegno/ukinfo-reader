@@ -105,6 +105,11 @@ func RemoveDataset(ctx context.Context, db *pgxpool.Pool, key string, expectedID
 	if id != expectedID || id < 1 {
 		return errors.New("edition changed since review; refresh the catalogue")
 	}
+	for _, table := range []string{"address_record_blocks", "address_record_indexes"} {
+		if _, err = tx.Exec(ctx, "DELETE FROM "+table+" WHERE dataset_id=$1", id); err != nil {
+			return err
+		}
+	}
 	for _, part := range []struct{ prefix, parent string }{{"entries_d", "entries"}, {"blocks_d", "record_blocks"}} {
 		name := fmt.Sprintf("%s%d", part.prefix, id)
 		var attached bool
