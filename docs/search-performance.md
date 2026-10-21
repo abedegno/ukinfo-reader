@@ -2,12 +2,13 @@
 
 ## Required CI gates
 
-The required `search` job runs two complementary matrices and retains the
+The required `search` job runs complementary matrices and retains the
 `search-performance` JSON artifact for 30 days:
 
 | Layer | Fixture and coverage | What fails CI |
 | --- | --- | --- |
 | PostgreSQL candidate plans | 50,000 invented entries in two editions; 70% dominant surname, rare names, 1,970 first-name terms, 727 postcode terms, 5% businesses; full postcode, sector/district, given-name variants, all editions and page-two cursors | Results/order differ from a sequential reference; any candidate heap fetch or non-index-only scan; 1,500 or more shared buffer accesses per plan |
+| Business classification probes | 50,000 invented business projections; a broad industry prefix and 50 selected postcode records; actual API predicates under forced custom/generic plans | Wrong IDs/order; classification range used as the per-record index condition; non-index-only research access or heap fetches; 800 or more shared buffers |
 | Search API | 22,546 invented entries in three editions; selective/broad/scattered names, given-name/wildcard/middle initial, street/town/county/house, full/partial postcode, nearby district centre, businesses, grouped/ordered results and complete pagination | Wrong counts, duplicate pages, wrong address/strategy, HTTP errors, truncated or endless pagination |
 
 The SQL matrix exercises forced custom and generic prepared plans and validates
@@ -128,3 +129,11 @@ budgets unchanged, and monitor the operation. Do not drop source constraints,
 terminate imports or silently accept an invalid managed name to bypass the guard.
 See PostgreSQL's [REINDEX documentation](https://www.postgresql.org/docs/18/sql-reindex.html)
 and [progress phases](https://www.postgresql.org/docs/18/progress-reporting.html#CREATE-INDEX-PROGRESS-REPORTING).
+
+Name-ordered pages enumerate eligible name/first-name pairs, then expand only the
+pairs needed for a complete page plus lookahead. This applies to source-name and
+postcode anchors. The API suite traverses 360 invented pairs, inserts unused
+interleaved dictionary terms, and verifies both grouped and ordinary pages. A
+one-item page must expand only its two needed pairs, rather than all 128 candidates.
+Anchored business filters seek one record's classification before applying a
+national industry/SIC prefix; classification-only searches keep range access.

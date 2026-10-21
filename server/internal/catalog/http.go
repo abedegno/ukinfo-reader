@@ -596,7 +596,8 @@ func (a *API) buildCandidateFilters(ctx context.Context, q query) (candidateFilt
 		}
 	}
 	if q.hasBusinessFilters() {
-		clauses := []string{"r.dataset_id=entries.dataset_id", "r.id=entries.id"}
+		identity := "r.dataset_id=entries.dataset_id AND r.id=entries.id"
+		clauses := []string{}
 		for _, filter := range []struct{ column, value string }{{"sic", q.SIC}, {"industry", q.Industry}} {
 			if filter.value == "" {
 				continue
@@ -610,15 +611,17 @@ func (a *API) buildCandidateFilters(ctx context.Context, q query) (candidateFilt
 			}
 			clauses = append(clauses, "r."+filter.column+"<>''", predicate)
 		}
-		// Keep a selective source anchor ahead of classification probes. Pulling
-		// this EXISTS up into a semi-join can start with a national industry prefix
-		// and do millions of random source-ID lookups for one postcode district.
-		// Classification-only searches retain their classification-driven plan.
-		fence := ""
+		// Fence the ID lookup itself. An OFFSET on the complete EXISTS still lets
+		// the planner choose a national industry-range index for each source ID.
+		// The explicit partial predicate enables the optional hosted covering probe;
+		// catalogues without it retain a correct primary-key lookup.
+		predicate := strings.Join(clauses, " AND ")
 		if q.Postcode != "" || q.Near != "" || q.Surname != "" || q.First != "" || q.Organisation != "" {
-			fence = " OFFSET 0"
+			conditions = append(conditions, "EXISTS(SELECT 1 FROM (SELECT r.industry,r.sic FROM research_keys r WHERE "+identity+" AND (r.industry<>'' OR r.sic<>'') OFFSET 0) r WHERE "+predicate+")")
+		} else {
+			conditions = append(conditions, "EXISTS(SELECT 1 FROM research_keys r WHERE "+identity+" AND "+predicate+")")
 		}
-		conditions = append(conditions, "EXISTS(SELECT 1 FROM research_keys r WHERE "+strings.Join(clauses, " AND ")+fence+")")
+
 	}
 
 	f := candidateFilters{q: q, datasetKeys: datasetKeys, datasetIDs: datasetIDs, args: args, conditions: conditions, termCTEs: termCTEs, missing: missing, areaOnly: areaOnly, geography: geography, nearbyIDs: nearbyIDs, radiusArg: radiusArg, distances: distances}

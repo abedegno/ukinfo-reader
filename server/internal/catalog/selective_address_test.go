@@ -244,6 +244,7 @@ INSERT INTO geography_active VALUES(true,'2026-08'); ANALYZE;`); err != nil {
 	testOrderedSurnameWindows(t, db)
 	testSourceProbeReuse(t, db)
 	testSearchPhaseRows(t, db)
+	testClassificationProbeWork(t, db)
 }
 
 func testAddressLookupIntegrity(t *testing.T, db *pgxpool.Pool) {
