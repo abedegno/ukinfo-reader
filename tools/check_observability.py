@@ -151,17 +151,23 @@ def main():
                 for resource in item.get("resourceMetrics", [])
                 for scope in resource.get("scopeMetrics", [])
                 for metric in scope.get("metrics", [])
-                if metric["name"] in {"ukinfo_api_request_duration_seconds", "ukinfo_search_phase_duration_seconds"}
+                if metric["name"]
+                in {"ukinfo_api_request_duration_seconds", "ukinfo_search_phase_duration_seconds"}
             ]
             assert "ukinfo_search_phase_duration_seconds" in names, "Search phase histogram missing"
-            phase_points = [point
-                for item in signals for resource in item.get("resourceMetrics", [])
-                for scope in resource.get("scopeMetrics", []) for metric in scope.get("metrics", [])
+            phase_points = [
+                point
+                for item in signals
+                for resource in item.get("resourceMetrics", [])
+                for scope in resource.get("scopeMetrics", [])
+                for metric in scope.get("metrics", [])
                 if metric["name"] == "ukinfo_search_phase_duration_seconds"
-                for point in metric["histogram"]["dataPoints"]]
+                for point in metric["histogram"]["dataPoints"]
+            ]
             assert phase_points and all(
-                {a["key"]:a["value"].get("stringValue") for a in point.get("attributes", [])}
-                == {"phase":"vocabulary","outcome":"ok"} for point in phase_points
+                {a["key"]: a["value"].get("stringValue") for a in point.get("attributes", [])}
+                == {"phase": "vocabulary", "outcome": "ok"}
+                for point in phase_points
             ), "Bounded search phase labels lost"
             assert histograms and all(h["aggregationTemporality"] == 1 for h in histograms), (
                 "Latency histogram must export delta temporality"

@@ -149,7 +149,9 @@ def check_vocabulary_plans(sql):
             start = (
                 "BEGIN; SET LOCAL plan_cache_mode="
                 + mode
-                + "; PREPARE vocabulary(" + types + ") AS "
+                + "; PREPARE vocabulary("
+                + types
+                + ") AS "
                 + query
                 + "; "
             )
@@ -185,7 +187,12 @@ def check_vocabulary_plans(sql):
             assert scans and all(
                 n["Node Type"] == "Index Only Scan"
                 and n.get("Heap Fetches") == 0
-                and n.get("Index Name") == ("nas_terms_id_key_cover" if label == "label-from-id" else "nas_terms_key_id_cover")
+                and n.get("Index Name")
+                == (
+                    "nas_terms_id_key_cover"
+                    if label == "label-from-id"
+                    else "nas_terms_key_id_cover"
+                )
                 for n in scans
             ), label + ": vocabulary heap-scan regression"
             assert plan["Plan"].get("Actual Rows", 0) > 0
@@ -336,9 +343,14 @@ VACUUM (ANALYZE) entries;
         ), "Incompatible vocabulary index was accepted"
         sql("DROP INDEX nas_terms_key_id_cover; DROP INDEX nas_entries_d1_name_postcode_cover;")
         sql(script)
-        sql("DROP INDEX nas_terms_id_key_cover; CREATE INDEX nas_terms_id_key_cover ON terms(key) INCLUDE(id);")
+        sql(
+            "DROP INDEX nas_terms_id_key_cover; CREATE INDEX nas_terms_id_key_cover ON terms(key) INCLUDE(id);"
+        )
         failure = sql(script, check=False)
-        assert failure.returncode and "reverse vocabulary covering index is invalid or incompatible" in failure.stderr, "Incompatible reverse vocabulary index was accepted"
+        assert (
+            failure.returncode
+            and "reverse vocabulary covering index is invalid or incompatible" in failure.stderr
+        ), "Incompatible reverse vocabulary index was accepted"
         print(
             "Covering index checks passed: concurrent build, idempotency, exact results/order, custom/generic index-only plans and incompatible-index guard."
         )
