@@ -89,11 +89,25 @@
       },
       "source_warnings": {
         "industry_dictionary_missing": 2093749,
-        "partial_postcode_source": 1396902,
+        "partial_postcode_source": 4144,
         "unterminated_place_text": 4262,
         "missing_source_locality": 455
       }
     }
   },
-  "elapsed_seconds": 152.7
+  "elapsed_seconds": 152.7,
+  "postcode_precision_correction": {
+    "reader_commit": "ae99d45",
+    "scope": "All postcode dictionary rows and complete business joins rechecked; original physical-boundary and count validation retained.",
+    "audit": {
+      "scope": "All 2003 postcode dictionary rows, not entry counts",
+      "counts": {
+        "postcode_rows": 1720480,
+        "full_postcode_rows": 1667472,
+        "genuine_partial_rows": 53008,
+        "formerly_mislabelled_full_rows": 878056
+      },
+      "false_partial_warnings": 0
+    }
+  }
 }
