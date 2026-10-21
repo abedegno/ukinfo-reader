@@ -15,6 +15,8 @@ CREATE INDEX IF NOT EXISTS address_locality ON address_locations(locality);
 CREATE INDEX IF NOT EXISTS address_locality_2 ON address_locations(locality_2);
 CREATE INDEX IF NOT EXISTS address_town ON address_locations(town);
 CREATE INDEX IF NOT EXISTS address_county ON address_locations(county);
+CREATE INDEX IF NOT EXISTS address_town_lookup ON address_locations(town,id);
+CREATE INDEX IF NOT EXISTS address_county_lookup ON address_locations(county,id);
 CREATE TABLE IF NOT EXISTS address_members (
  dataset_id smallint NOT NULL REFERENCES datasets(id),
  location_id integer NOT NULL REFERENCES address_locations(id),

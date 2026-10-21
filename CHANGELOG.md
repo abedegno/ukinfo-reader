@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add compact record-to-address lookups for selective names in large towns, avoiding
+  whole-town posting expansion when candidates span many compressed blocks. Keep
+  complete pagination, refinements and legacy fallback; add integrity/cleanup tests
+  and an online owner maintenance backfill.
+
 - Correct 2003 SE postcode precision detection for prefixes containing spaces; preserve raw text and avoid false partial-postcode warnings.
 
 - Add the verified DPCS0104DVD release of UK-Info 2003 SE: residential, telephone and

@@ -393,6 +393,9 @@ func IndexAddresses(ctx context.Context, db *pgxpool.Pool, key string, options A
 	if _, err = tx.Exec(ctx, "INSERT INTO address_indexes(dataset_id,version,entries,locations) VALUES($1,1,$2,$3)", dataset, report.Records, report.Locations); err != nil {
 		return report, err
 	}
+	if _, err = tx.Exec(ctx, "SELECT build_address_record_lookup($1)", key); err != nil {
+		return report, err
+	}
 	err = tx.Commit(ctx)
 	return report, err
 }

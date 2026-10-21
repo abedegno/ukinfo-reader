@@ -59,6 +59,9 @@ func Migrate(ctx context.Context, db *pgxpool.Pool) error {
 	if _, e = tx.Exec(ctx, addressSchema); e != nil {
 		return e
 	}
+	if _, e = tx.Exec(ctx, addressLookupSchema); e != nil {
+		return e
+	}
 	if _, e = tx.Exec(ctx, researchSchema); e != nil {
 		return e
 	}

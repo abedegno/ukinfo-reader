@@ -719,7 +719,7 @@ func (a *API) searchCandidates(ctx context.Context, q query) (searchResult, int,
 					// for every national name match defeats selective address intersection.
 					termCTEs = append(termCTEs, fmt.Sprintf(`%s AS MATERIALIZED (SELECT id FROM entries WHERE %s AND dataset_id=$%d)`, name, strings.Join(conditions, " AND "), datasetArg))
 					branches = append(branches, fmt.Sprintf(`(SELECT e.* FROM
-      (SELECT id FROM %s WHERE id IN (%s) ORDER BY id LIMIT $%d) chosen
+      (SELECT source.id FROM %s source JOIN (%s) address_ids ON address_ids.candidate=source.id ORDER BY source.id LIMIT $%d) chosen
       CROSS JOIN LATERAL (SELECT dataset_id,id,name_id,first_id,postcode_id FROM entries WHERE dataset_id=$%d AND id=chosen.id OFFSET 0) e
       ORDER BY chosen.id)`, name, addressIDs, limitArg, datasetArg))
 				}

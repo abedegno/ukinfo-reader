@@ -109,6 +109,7 @@ func TestSelectiveAddressIntegration(t *testing.T) {
 	if _, err = IndexResearch(ctx, db, "large-address", AddressIndexOptions{}); err != nil {
 		t.Fatal(err)
 	}
+	testAddressLookupIntegrity(t, db)
 	if _, err = db.Exec(ctx, "INSERT INTO terms(key) SELECT 'jaaa'||lpad(i::text,5,'0') FROM generate_series(0,8192) i ON CONFLICT DO NOTHING"); err != nil {
 		t.Fatal(err)
 	}
@@ -152,7 +153,7 @@ INSERT INTO geography_active VALUES(true,'2026-08'); ANALYZE;`); err != nil {
 		{"dataset=all&surname=Packedbudget&town=Large+Town", true, 510},
 		{"dataset=large-address&surname=Widebudget&town=Large+Town", false, 4500},
 		{"dataset=all&street=Invented+Road&town=Invented+Town", true, 270},
-		{"dataset=large-address&surname=Scatteredbudget&town=Large+Town", false, 132},
+		{"dataset=large-address&surname=Scatteredbudget&town=Large+Town", true, 132},
 		{"dataset=all&surname=Smallmatch&first_name=J*&middle_initial=A&town=Invented+Town", true, 12},
 		{"dataset=all&surname=Widebudget&first_name=June&first_match=given&postcode=BB1", false, 4200},
 		{"dataset=all&surname=Wide*&postcode=CC1+1", false, 300},
@@ -170,6 +171,9 @@ INSERT INTO geography_active VALUES(true,'2026-08'); ANALYZE;`); err != nil {
 			f, status, err := a.candidateFilters(ctx, q)
 			if err != nil || status != 200 || f.addressMatched != tc.selective {
 				t.Fatalf("plan: selective=%v status=%d err=%v", f.addressMatched, status, err)
+			}
+			if strings.Contains(tc.raw, "Scatteredbudget") && a.metrics.plans["indexed_source"] == 0 {
+				t.Fatal("scattered source candidates did not use the compact address lookup")
 			}
 			pageLimit := 3
 			if tc.count > 100 {
@@ -235,6 +239,58 @@ INSERT INTO geography_active VALUES(true,'2026-08'); ANALYZE;`); err != nil {
 		}
 	}
 	testOrderedSurnameWindows(t, db)
+}
+
+func testAddressLookupIntegrity(t *testing.T, db *pgxpool.Pool) {
+	t.Helper()
+	ctx := context.Background()
+	var wrong int
+	// Compare every slot, including block boundaries and the short last block,
+	// against the independently stored forward address memberships.
+	if err := db.QueryRow(ctx, `SELECT count(*) FROM address_members m
+ CROSS JOIN LATERAL unnest(m.ids) occurrence
+ LEFT JOIN address_record_blocks b ON b.dataset_id=m.dataset_id AND b.block_id=(occurrence-1)/128
+ WHERE b.location_ids[(occurrence-1)%128+1] IS DISTINCT FROM m.location_id`).Scan(&wrong); err != nil || wrong != 0 {
+		t.Fatalf("reverse address slots differ: %d, %v", wrong, err)
+	}
+	// A duplicate in a posting must reject the entire rebuild, not publish a
+	// shifted or incomplete array. Rollback also preserves the previous index.
+	tx, err := db.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tx.Rollback(ctx)
+	if _, err = tx.Exec(ctx, `DELETE FROM address_record_indexes WHERE dataset_id=(SELECT id FROM datasets WHERE key='large-address');
+ DELETE FROM address_record_blocks WHERE dataset_id=(SELECT id FROM datasets WHERE key='large-address');
+ UPDATE address_members SET ids=array_prepend(ids[1],ids)
+ WHERE (dataset_id,location_id)=(SELECT dataset_id,location_id FROM address_members
+ WHERE dataset_id=(SELECT id FROM datasets WHERE key='large-address') ORDER BY location_id LIMIT 1)`); err != nil {
+		t.Fatal(err)
+	}
+	_, err = tx.Exec(ctx, "SELECT build_address_record_lookup('large-address')")
+	if err == nil || !strings.Contains(err.Error(), "missing, duplicate or out-of-range") {
+		t.Fatalf("corrupt lookup accepted: %v", err)
+	}
+	_ = tx.Rollback(ctx)
+	// A catalogue upgraded before its optional lookup is backfilled must keep
+	// the legacy complete intersection instead of treating missing coverage as
+	// a negative match.
+	if _, err = db.Exec(ctx, "DELETE FROM address_record_indexes WHERE dataset_id=(SELECT id FROM datasets WHERE key='large-address')"); err != nil {
+		t.Fatal(err)
+	}
+	a := NewAPI(db)
+	q, err := parse(mustValues("dataset=large-address&surname=Scatteredbudget&town=Large+Town"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	f, status, err := a.candidateFilters(ctx, q)
+	if err != nil || status != 200 || f.addressMatched {
+		t.Fatalf("legacy fallback lost: matched=%v status=%d err=%v", f.addressMatched, status, err)
+	}
+	if _, err = db.Exec(ctx, `INSERT INTO address_record_indexes(dataset_id,version,entries,blocks)
+ SELECT id,1,entries,(entries+127)/128 FROM datasets WHERE key='large-address'`); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testOrderedSurnameWindows(t *testing.T, db *pgxpool.Pool) {
