@@ -10,7 +10,7 @@ from contextlib import ExitStack
 from pathlib import Path
 
 from .codecs import FormatError
-from .editions import UnsupportedEditionError
+from .editions import UnsupportedEditionError, identify_edition
 from .modern import ModernFixedTable, ModernLeafIndex, residential_length
 from .modern_sources import EXPERIMENTAL_EDITIONS
 
@@ -104,6 +104,14 @@ def inspect(directory):
     results. The 2005 base and update streams are reported separately.
     """
     directory = Path(directory)
+    try:
+        known = identify_edition(directory)
+    except UnsupportedEditionError:
+        known = None
+    if known is not None and known.format == "modern2003":
+        from .validation import validate
+
+        return validate(directory)
     edition = next(
         (
             e

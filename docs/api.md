@@ -44,8 +44,13 @@ the source stream. Do not count these rows as distinct people or merge their nam
 address automatically. See [output fields](usage.md#20042005-residential-output-fields)
 and [format/selection rules](formats/modern-se.md).
 
+The 2003 SE reader exposes the same joined interface through a distinct source
+layout. See [2003 fields, prefix joins and source limitations](formats/2003-se.md).
+It adds raw postcode flags/grid codes and preserves unresolved names explicitly.
+
 `ukinfo_reader.modern_inspect.inspect(directory)` remains available for structural-only
-reports using the smaller file profile. Its status is `structural-only`. Use
+reports for the 2004/2005 sources using the smaller file profile. Its status is
+`structural-only`; 2003 dispatches to the full validator. Use
 `ukinfo_reader.validation.validate(directory)` with all query files for complete
 residential checks. Low-level primitives in `ukinfo_reader.modern` retain physical values;
 `decode_residence()` does not apply joins or entry selection by itself.

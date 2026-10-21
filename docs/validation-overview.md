@@ -42,4 +42,11 @@ counts, fingerprints and source anomalies. All place joins were compared indepen
 with the original decoder routines.
 
 
+The supplied [2003 SE source](formats/2003-se.md) has been validated in full:
+59,886,841 entries, including 2,471,038 businesses. Its postcode-prefix joins and
+17-bit house IDs have a distinct decoder. Original decoder comparisons use invented
+inputs; source anomalies and the absent industry-description dictionary remain
+explicit in the [report](validation/se2003-dpcs0104.json).
+
+
 [Edition identities and provenance](editions.md) · [Binary format reference](../FORMAT.md)

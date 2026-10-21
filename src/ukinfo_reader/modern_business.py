@@ -8,6 +8,9 @@ from .modern_reader import subscriber_text, word
 
 
 class BusinessStream:
+    decode = staticmethod(decode_business)
+    allowed_kinds = (1, 2)
+
     def __init__(self, mapped, suffix):
         self.name = "update" if suffix else "base"
         self.data = mapped["bus" + suffix + ".dat"]
@@ -27,8 +30,8 @@ class BusinessStream:
     def physical_records(self):
         offset = 0
         while offset < len(self.data):
-            record = decode_business(self.data, offset)
-            if record.kind not in (1, 2):
+            record = self.decode(self.data, offset)
+            if record.kind not in self.allowed_kinds:
                 raise FormatError("Unverified business source kind")
             yield record
             offset += record.length
@@ -140,7 +143,7 @@ def validate_business(db, progress=None):
         pending = set(stream.deleted)
         counts, kinds, warnings = Counter(), Counter(), Counter()
         for record in stream.physical_records():
-            if record.kind not in (1, 2):
+            if record.kind not in stream.allowed_kinds:
                 raise FormatError("Unverified business source kind")
             row = joined_business(db, index, stream, record)
             kinds[str(record.kind)] += 1

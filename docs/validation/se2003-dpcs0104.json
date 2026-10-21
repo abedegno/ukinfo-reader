@@ -1,0 +1,99 @@
+{
+  "edition": "se2003-dpcs0104",
+  "reader_version": "0.5.0",
+  "scope": "residential-and-business",
+  "sha256": {
+    "uk.dat": "a5e0ce7ff755447e33bb42ddbca792bf092f54eddaa16f677e37eea417bea84f",
+    "d2.dat": "db382412b8f064f67a50fd575b9b3abc9a3f18acb6ffb8e85b62acbb5354febb",
+    "d3.dat": "e18dfd99e311ba793c9da5bf039c495b2e0a54e8443377a463e0df5f5e0cc1a5",
+    "d4.dat": "32e0c2fcc0aac78024d21fdd11d05dab76dd33b556941e062b4cf924b31044d0",
+    "d6.dat": "341f878e229fa5ac5f8ab1c2dd661ca929e1227862aa180075129b419ea5561a",
+    "d6pa.dat": "d8a14b8f397c4d7cb15a8f3c2ca8d58693487621532ebfe971e89a0cfec1619f",
+    "ukspos.idx": "151448f92c3bd072ac19f763fd4dbfceaf1d649d593a6d96c9a10192a4b138b5",
+    "d1.dat": "0737ebe3bc12b821e88978ebf8db56e9e46d48cfb3b959e25c519c2bba10b987",
+    "d5.dat": "b766b8d02d01ce42f00bfa126b6fc45f5463d5703816b05168d1cd001c0e2f2c",
+    "d7.dat": "170a95e07cc13fd20a2182f9f0007ed921aab4fbd43a9420d2df8893c2ecc95d",
+    "d8.dat": "1f03a48e6e5a6ba8f64a27fdb6f079b2e25f077926136e42e6faac065bf43618",
+    "dbbus.dat": "b17d08310dd30551fd077425632c5a4efb84744553f0295f45ef97a274a48284",
+    "dd.dat": "a28e96390a15fb1a894445a9d6e29f5958463c045eaa32da4823a95aa06bf1f3",
+    "dbsic.dat": "bc912bd8832783aaa65c8ef21d146ee8e1d3b4d8f32c41789bbe9fe03cc6cecc"
+  },
+  "streams": {
+    "base": {
+      "counts": {
+        "physical_records": 32036652,
+        "unindexed_physical_records": 5,
+        "indexed_physical_records": 32036647,
+        "electoral_entries": 44959860,
+        "entries": 57415803,
+        "telephone_entries": 12455943
+      },
+      "source_kinds": {
+        "3": 3527607,
+        "0": 19580704,
+        "4": 6605735,
+        "5": 2322606
+      },
+      "source_warnings": {
+        "building_reference_inside_string": 25,
+        "invalid_name_reference": 17
+      },
+      "surname_groups": 846040,
+      "unindexed_prefix_bytes": 60,
+      "building_fix_keys": 0
+    }
+  },
+  "totals": {
+    "entries": 59886841,
+    "electoral_entries": 44959860,
+    "telephone_entries": 12455943,
+    "business_entries": 2471038
+  },
+  "place_types": {
+    "T": 1524,
+    "V": 26247,
+    "v": 80,
+    "C": 107
+  },
+  "checks": [
+    "source_sha256",
+    "fixed_table_resources_and_bounds",
+    "dictionary_text",
+    "postcode_street_locality_joins",
+    "physical_record_boundaries",
+    "surname_range_boundaries",
+    "residential_name_references",
+    "building_and_subbuilding_references",
+    "telephone_only_deletion_selection",
+    "business_record_boundaries",
+    "business_word_and_available_industry_references",
+    "business_address_phone_fax_joins",
+    "business_deletion_selection",
+    "all_27958_locality_text_type_parent_records_identical_to_validated_2004_table"
+  ],
+  "limitations": [
+    "Entries are source occurrences, not deduplicated people or households.",
+    "Ambiguous building substrings are exposed as building_raw and flagged; building is null.",
+    "Source precision limits are retained; postcode_raw is the stored dictionary value.",
+    "The source omits the industry description dictionary; raw industry references are retained and descriptions are unavailable.",
+    "Seventeen source entry name references exceed the supplied dictionary; names are empty, raw codes retained and invalid_name_reference flagged."
+  ],
+  "business_streams": {
+    "base": {
+      "counts": {
+        "physical_records": 2471038,
+        "entries": 2471038
+      },
+      "source_kinds": {
+        "0": 2471038
+      },
+      "source_warnings": {
+        "industry_dictionary_missing": 2093749,
+        "partial_postcode_source": 1396902,
+        "unterminated_place_text": 4262,
+        "missing_source_locality": 455
+      }
+    }
+  },
+  "elapsed_seconds": 152.7
+}

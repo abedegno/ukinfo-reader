@@ -23,8 +23,8 @@ from ukinfo_reader.modern_inspect import inspect, inspect_stream
 from ukinfo_reader.modern_inspect import main as inspect_main
 
 
-def leaf_fixture(entries, compression=12, split=None):
-    size, width = 4096, 4
+def leaf_fixture(entries, compression=12, split=None, page_size=4096):
+    size, width = page_size, 4
     data = bytearray(size * 4)
     struct.pack_into("<I", data, 24, len(entries))
     struct.pack_into("<H", data, 42, size)

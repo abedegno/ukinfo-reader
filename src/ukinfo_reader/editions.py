@@ -64,11 +64,32 @@ PCF78 = Edition(
     ),
     format="pcf78",
 )
+SE2003_DPCS0104 = Edition(
+    id="se2003-dpcs0104",
+    title="UK-Info 2003 SE — DPCS0104DVD",
+    files=(
+        ("uk.dat", 402844921, "a5e0ce7ff755447e33bb42ddbca792bf092f54eddaa16f677e37eea417bea84f"),
+        ("d2.dat", 20320256, "db382412b8f064f67a50fd575b9b3abc9a3f18acb6ffb8e85b62acbb5354febb"),
+        ("d3.dat", 22720512, "e18dfd99e311ba793c9da5bf039c495b2e0a54e8443377a463e0df5f5e0cc1a5"),
+        ("d4.dat", 770048, "32e0c2fcc0aac78024d21fdd11d05dab76dd33b556941e062b4cf924b31044d0"),
+        ("d6.dat", 30973952, "341f878e229fa5ac5f8ab1c2dd661ca929e1227862aa180075129b419ea5561a"),
+        ("d6pa.dat", 3407872, "d8a14b8f397c4d7cb15a8f3c2ca8d58693487621532ebfe971e89a0cfec1619f"),
+        ("ukspos.idx", 5459968, "151448f92c3bd072ac19f763fd4dbfceaf1d649d593a6d96c9a10192a4b138b5"),
+        ("d1.dat", 1568768, "0737ebe3bc12b821e88978ebf8db56e9e46d48cfb3b959e25c519c2bba10b987"),
+        ("d5.dat", 15022790, "b766b8d02d01ce42f00bfa126b6fc45f5463d5703816b05168d1cd001c0e2f2c"),
+        ("d7.dat", 4820213, "170a95e07cc13fd20a2182f9f0007ed921aab4fbd43a9420d2df8893c2ecc95d"),
+        ("d8.dat", 135168, "1f03a48e6e5a6ba8f64a27fdb6f079b2e25f077926136e42e6faac065bf43618"),
+        ("dbbus.dat", 62261588, "b17d08310dd30551fd077425632c5a4efb84744553f0295f45ef97a274a48284"),
+        ("dd.dat", 5474910, "a28e96390a15fb1a894445a9d6e29f5958463c045eaa32da4823a95aa06bf1f3"),
+        ("dbsic.dat", 12288, "bc912bd8832783aaa65c8ef21d146ee8e1d3b4d8f32c41789bbe9fe03cc6cecc"),
+    ),
+    format="modern2003",
+)
 MODERN_EDITIONS = tuple(
     Edition(id=source_id, title=title, files=files, format="modern")
     for source_id, title, files in MODERN_PROFILE_DATA
 )
-SUPPORTED_EDITIONS = (SE4_PCF94, PCF78) + MODERN_EDITIONS
+SUPPORTED_EDITIONS = (SE4_PCF94, PCF78, SE2003_DPCS0104) + MODERN_EDITIONS
 
 
 def identify_edition(directory):

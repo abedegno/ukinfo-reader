@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Add the verified DPCS0104DVD release of UK-Info 2003 SE: residential, telephone and
+  business search/export, ISO extraction, prefix-table address joins and whole-source
+  validation. Preserve source defects and missing industry descriptions explicitly.
+- Cover shared dictionary IDs in the optional online hosted indexes, avoiding
+  vocabulary-stage heap reads for cold given-name and postcode-prefix lookups.
+
 - Expand required CI with skewed invented search-plan and paginated API matrices;
   retain aggregate timing/work artifacts and add a private read-only plan benchmark.
 - Add pool-wait and structured API failure counters, request p95/error/wait charts
