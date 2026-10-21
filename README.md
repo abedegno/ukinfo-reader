@@ -63,8 +63,9 @@ establish compatibility; use [edition identification and fingerprints](docs/edit
 | UK-Info Disk V10.5 SE · residential + business | PC Format 175 · June 2005 | 51,350,897 | [PC Format 175 DVDs](https://archive.org/details/pcf-175-dvd-1-06-05.7z) |
 
 **248,951,107 source occurrences** across the five validated editions. These are not distinct
-people. The public archive currently serves the four previously imported editions
-(189,064,266 entries); 2003 SE is supported for local import. Dates above identify cover discs, not verified electoral-roll reference dates.
+people. The public archive’s edition selector lists imports that are ready to search;
+operators can also check the [live catalogue](https://ukinfo.6153112.xyz/api/datasets).
+Dates above identify cover discs, not verified electoral-roll reference dates.
 The supplied 2004 SE media has no separate business listings.
 
 Select the matching file inside each Internet Archive item:
@@ -74,7 +75,7 @@ Select the matching file inside each Internet Archive item:
 - **2004:** `PCP218_DVD.iso`.
 - **2005:** `PCF175DVD2_06_05.7z`. UK-Info is on **DVD 2**, despite `dvd-1` in the item URL.
 
-All four source streams have complete validation reports. Known source defects and
+All five supported editions have complete validation reports. Known source defects and
 uncertain field meanings are documented in the [validation overview](docs/validation-overview.md)
 and [format references](FORMAT.md). Other editions, Standard and Pro releases need
 separate investigation and validation.
