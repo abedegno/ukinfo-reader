@@ -27,6 +27,20 @@ BEGIN
  ) THEN
   RAISE EXCEPTION 'Existing vocabulary covering index is invalid or incompatible; inspect before retrying';
  END IF;
+ existing := to_regclass('public.nas_terms_id_key_cover');
+ IF existing IS NOT NULL AND NOT EXISTS (
+  SELECT FROM pg_index idx JOIN pg_class ic ON ic.oid=idx.indexrelid
+   JOIN pg_am am ON am.oid=ic.relam
+  WHERE idx.indexrelid=existing AND idx.indrelid='public.terms'::regclass
+   AND idx.indisvalid AND idx.indisready AND NOT idx.indisunique
+   AND am.amname='btree' AND idx.indpred IS NULL AND idx.indexprs IS NULL
+   AND idx.indnkeyatts=1 AND idx.indnatts=2 AND idx.indcollation[0]=0
+   AND ARRAY(SELECT a.attname::text FROM unnest(idx.indkey) WITH ORDINALITY k(attnum,n)
+             JOIN pg_attribute a ON a.attrelid=idx.indrelid AND a.attnum=k.attnum ORDER BY k.n)
+       = ARRAY['id','key']
+ ) THEN
+  RAISE EXCEPTION 'Existing reverse vocabulary covering index is invalid or incompatible; inspect before retrying';
+ END IF;
  FOR partition IN
   SELECT c.oid,c.relname FROM pg_inherits i JOIN pg_class c ON c.oid=i.inhrelid
   WHERE i.inhparent='public.entries'::regclass
@@ -51,6 +65,10 @@ $check$;
 -- Keep the original unique constraint/index; this optional index avoids random
 -- vocabulary heap reads for names, postcodes and materialized broad expansions.
 CREATE INDEX CONCURRENTLY IF NOT EXISTS nas_terms_key_id_cover ON public.terms (key) INCLUDE (id);
+
+-- Sorting and grouping resolve IDs back to labels. The prefix index above
+-- cannot cover those probes; keep both directions without duplicating the heap.
+CREATE INDEX CONCURRENTLY IF NOT EXISTS nas_terms_id_key_cover ON public.terms (id) INCLUDE (key);
 
 SELECT format('CREATE INDEX CONCURRENTLY IF NOT EXISTS %I ON %s (dataset_id,kind,name_id,first_id,id) INCLUDE (postcode_id);',
               'nas_'||c.relname||'_name_postcode_cover',c.oid::regclass)

@@ -17,7 +17,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/abedegno/ukinfo-reader/server/internal/telemetry"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/klauspost/compress/zstd"
@@ -546,7 +545,7 @@ func (a *API) buildCandidateFilters(ctx context.Context, q query) (candidateFilt
 				termArgs = append(termArgs, q.PostcodeLength)
 			}
 		}
-		rows, e := a.DB.Query(ctx, sql, termArgs...)
+		rows, e := a.searchRows(ctx, "vocabulary", sql, termArgs, false)
 		if e != nil {
 			return candidateFilters{}, 503, errors.New("Search vocabulary unavailable")
 		}
@@ -734,14 +733,7 @@ func (a *API) searchCandidates(ctx context.Context, q query) (searchResult, int,
 		if len(termCTEs) > 0 {
 			sql = "WITH " + strings.Join(termCTEs, ", ") + " " + sql
 		}
-		var rows pgx.Rows
-		finish := func() {}
-		var e error
-		if q.hasAddress() {
-			rows, finish, e = a.addressRows(ctx, sql, args)
-		} else {
-			rows, e = a.DB.Query(ctx, sql, args...)
-		}
+		rows, e := a.searchRows(ctx, "candidates", sql, args, q.hasAddress())
 		if e != nil {
 			log.Printf("Search query failed: %v", e)
 			return searchResult{}, 503, searchReadError(e)
@@ -751,7 +743,6 @@ func (a *API) searchCandidates(ctx context.Context, q query) (searchResult, int,
 			var dataset int16
 			if err = rows.Scan(&dataset, &id, &name, &first, &postcode); err != nil {
 				rows.Close()
-				finish()
 				return searchResult{}, 503, errors.New("Search unavailable")
 			}
 			if len(ids) == q.Limit {
@@ -767,7 +758,6 @@ func (a *API) searchCandidates(ctx context.Context, q query) (searchResult, int,
 		}
 		err = rows.Err()
 		rows.Close()
-		finish()
 		if err != nil {
 			return searchResult{}, 503, searchReadError(err)
 		}
@@ -810,8 +800,8 @@ func (a *API) searchCandidates(ctx context.Context, q query) (searchResult, int,
 }
 
 func (a *API) loadRecords(ctx context.Context, dataset int16, ids []int32) (out []result, loadErr error) {
-	ctx, span := telemetry.Operation(ctx, "records.load")
-	defer func() { telemetry.End(span, loadErr) }()
+	ctx, end := a.searchPhase(ctx, "records")
+	defer func() { end(loadErr) }()
 	resultRows := make([]result, 0, len(ids))
 	if len(ids) == 0 {
 		return resultRows, nil

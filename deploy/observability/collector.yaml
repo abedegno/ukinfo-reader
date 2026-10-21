@@ -48,11 +48,11 @@ processors:
           - set(attributes["service.name"], "ukinfo-server")
       - context: datapoint
         statements:
-          - keep_keys(attributes, ["route", "status", "class", "plan", "result", "le", "reason"])
+          - keep_keys(attributes, ["route", "status", "class", "plan", "result", "le", "reason", "phase", "outcome"])
   # Prometheus histograms are cumulative; Splunk percentiles need delta buckets.
   cumulativetodelta/latency:
     include:
-      metrics: [ukinfo_api_request_duration_seconds]
+      metrics: [ukinfo_api_request_duration_seconds, ukinfo_search_phase_duration_seconds]
       match_type: strict
     initial_value: drop
   batch:

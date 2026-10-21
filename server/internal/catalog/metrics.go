@@ -36,6 +36,7 @@ type apiMetrics struct {
 	requests      map[metricKey]requestMetric
 	active        int
 	plans         map[string]uint64
+	phases        map[phaseKey]requestMetric
 	classes       map[queryMetricKey]uint64
 	failures      map[failureMetricKey]uint64
 	cacheHits     atomic.Uint64
@@ -46,7 +47,7 @@ type apiMetrics struct {
 var latencyBounds = [...]float64{0.05, 0.1, 0.25, 0.5, 1, 2, 5}
 
 func newAPIMetrics() *apiMetrics {
-	return &apiMetrics{requests: make(map[metricKey]requestMetric), plans: map[string]uint64{}, classes: map[queryMetricKey]uint64{}, failures: map[failureMetricKey]uint64{}}
+	return &apiMetrics{requests: make(map[metricKey]requestMetric), plans: map[string]uint64{}, phases: map[phaseKey]requestMetric{}, classes: map[queryMetricKey]uint64{}, failures: map[failureMetricKey]uint64{}}
 }
 func metricRoute(path string) string {
 	switch path {
@@ -203,6 +204,15 @@ func (a *API) Metrics() http.Handler {
 			fmt.Fprintf(w, "ukinfo_api_request_duration_seconds_bucket{route=%q,status=%q,le=\"+Inf\"} %d\n", key.Route, fmt.Sprint(key.Status), item.Count)
 			fmt.Fprintf(w, "ukinfo_api_request_duration_seconds_count{route=%q,status=%q} %d\n", key.Route, fmt.Sprint(key.Status), item.Count)
 			fmt.Fprintf(w, "ukinfo_api_request_duration_seconds_sum{route=%q,status=%q} %g\n", key.Route, fmt.Sprint(key.Status), item.Seconds)
+		}
+		fmt.Fprintln(w, "# TYPE ukinfo_search_phase_duration_seconds histogram")
+		for key, item := range a.metrics.phases {
+			for i, bound := range latencyBounds {
+				fmt.Fprintf(w, "ukinfo_search_phase_duration_seconds_bucket{phase=%q,outcome=%q,le=%q} %d\n", key.Name, key.Outcome, fmt.Sprint(bound), item.Buckets[i])
+			}
+			fmt.Fprintf(w, "ukinfo_search_phase_duration_seconds_bucket{phase=%q,outcome=%q,le=\"+Inf\"} %d\n", key.Name, key.Outcome, item.Count)
+			fmt.Fprintf(w, "ukinfo_search_phase_duration_seconds_count{phase=%q,outcome=%q} %d\n", key.Name, key.Outcome, item.Count)
+			fmt.Fprintf(w, "ukinfo_search_phase_duration_seconds_sum{phase=%q,outcome=%q} %g\n", key.Name, key.Outcome, item.Seconds)
 		}
 		fmt.Fprintln(w, "# TYPE ukinfo_query_requests_total counter")
 		for key, count := range a.metrics.classes {

@@ -98,7 +98,7 @@ explicitly using the deployment's Compose/Portainer lifecycle.
 ## Signals, privacy and cost controls
 
 Request spans contain only a fixed route, bounded HTTP method, response status and
-search category. Child operations are `db.pool.acquire`, `db.query`, `records.load`
+search category. Child operations are `db.pool.acquire`, `db.query`, `search.records`
 and `address.select`. Database spans measure duration without SQL text, parameters,
 connection details or error messages. Record loading includes decompression time;
 there is no per-record span or identifier.
@@ -254,3 +254,15 @@ rejection, privacy canaries and trace/span correlation. No private records or re
 credentials are used. The Go wire tests cover application logging and unsampled
 trace context. Live commissioning should also verify an actual application request
 appears in Splunk/Log Observer before claiming ingestion is operational.
+
+### Search stages
+
+`ukinfo_search_phase_duration_seconds{phase,outcome}` records unsampled timings for
+fixed stages: vocabulary, source/address probes, address blocks/dictionary,
+candidates, ordered candidates, group members and record loading. Matching
+`search.*` spans explain sampled requests. Labels exclude names, postcodes, edition
+keys, SQL and request IDs. Each stage includes row consumption and cleanup; record
+loading includes decoding. Multiple observations can belong to one HTTP request.
+The Collector preserves `phase`/`outcome` and converts this cumulative histogram to
+delta alongside the request histogram. Update a customized Collector configuration
+when upgrading the server.

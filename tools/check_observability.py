@@ -34,6 +34,8 @@ class Metrics(http.server.BaseHTTPRequestHandler):
         scrapes += 1
         latency = f'# TYPE ukinfo_api_request_duration_seconds histogram\nukinfo_api_request_duration_seconds_bucket{{le="1"}} {2*scrapes}\nukinfo_api_request_duration_seconds_bucket{{le="+Inf"}} {3*scrapes}\nukinfo_api_request_duration_seconds_count {3*scrapes}\nukinfo_api_request_duration_seconds_sum {2*scrapes}\n' 
         self.wfile.write(latency.encode())
+        phase = f'# TYPE ukinfo_search_phase_duration_seconds histogram\nukinfo_search_phase_duration_seconds_bucket{{phase="vocabulary",outcome="ok",private="SECRET_PHASE_LABEL",le="1"}} {2*scrapes}\nukinfo_search_phase_duration_seconds_bucket{{phase="vocabulary",outcome="ok",private="SECRET_PHASE_LABEL",le="+Inf"}} {3*scrapes}\nukinfo_search_phase_duration_seconds_count{{phase="vocabulary",outcome="ok",private="SECRET_PHASE_LABEL"}} {3*scrapes}\nukinfo_search_phase_duration_seconds_sum{{phase="vocabulary",outcome="ok",private="SECRET_PHASE_LABEL"}} {2*scrapes}\n'
+        self.wfile.write(phase.encode())
         self.wfile.write(b'# TYPE ukinfo_pool_acquired gauge\nukinfo_pool_acquired{route="/api/search",private="SECRET_LABEL"} 2\n# TYPE ukinfo_record_blocks_decoded_total counter\nukinfo_record_blocks_decoded_total 12\n# TYPE invented_private gauge\ninvented_private 42\n')
 threading.Thread(target=http.server.HTTPServer(('127.0.0.1',9091), Metrics).serve_forever, daemon=True).start()
 payload = {'resourceSpans':[{'resource':{'attributes':[{'key':'private','value':{'stringValue':'SECRET_RESOURCE'}}]},'scopeSpans':[{'spans':[{'traceId':'11111111111111111111111111111111','spanId':'2222222222222222','name':'HTTP /api/search','kind':2,'startTimeUnixNano':str(time.time_ns()-1000000),'endTimeUnixNano':str(time.time_ns()),'attributes':[{'key':'http.route','value':{'stringValue':'/api/search'}},{'key':'url.full','value':{'stringValue':'SECRET_QUERY'}}]}]}]}]}
@@ -149,8 +151,18 @@ def main():
                 for resource in item.get("resourceMetrics", [])
                 for scope in resource.get("scopeMetrics", [])
                 for metric in scope.get("metrics", [])
-                if metric["name"] == "ukinfo_api_request_duration_seconds"
+                if metric["name"] in {"ukinfo_api_request_duration_seconds", "ukinfo_search_phase_duration_seconds"}
             ]
+            assert "ukinfo_search_phase_duration_seconds" in names, "Search phase histogram missing"
+            phase_points = [point
+                for item in signals for resource in item.get("resourceMetrics", [])
+                for scope in resource.get("scopeMetrics", []) for metric in scope.get("metrics", [])
+                if metric["name"] == "ukinfo_search_phase_duration_seconds"
+                for point in metric["histogram"]["dataPoints"]]
+            assert phase_points and all(
+                {a["key"]:a["value"].get("stringValue") for a in point.get("attributes", [])}
+                == {"phase":"vocabulary","outcome":"ok"} for point in phase_points
+            ), "Bounded search phase labels lost"
             assert histograms and all(h["aggregationTemporality"] == 1 for h in histograms), (
                 "Latency histogram must export delta temporality"
             )

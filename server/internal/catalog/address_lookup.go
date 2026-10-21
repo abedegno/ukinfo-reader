@@ -66,8 +66,8 @@ func (a *API) indexedAddressCandidates(ctx context.Context, q query, candidates 
 			blocks = append(blocks, block)
 		}
 		sort.Slice(blocks, func(i, j int) bool { return blocks[i] < blocks[j] })
-		rows, err := a.DB.Query(ctx, `SELECT block_id,location_ids FROM address_record_blocks
- WHERE dataset_id=$1 AND block_id=ANY($2::integer[]) ORDER BY block_id`, dataset, blocks)
+		rows, err := a.searchRows(ctx, "address_blocks", `SELECT block_id,location_ids FROM address_record_blocks
+ WHERE dataset_id=$1 AND block_id=ANY($2::integer[]) ORDER BY block_id`, []any{dataset, blocks}, false)
 		if err != nil {
 			return nil, true, err
 		}
@@ -101,7 +101,7 @@ func (a *API) indexedAddressCandidates(ctx context.Context, q query, candidates 
 	}
 	args := []any{locationIDs}
 	sql := addressLocationLookupSQL(q, &args)
-	rows, err := a.DB.Query(ctx, sql, args...)
+	rows, err := a.searchRows(ctx, "address_dictionary", sql, args, false)
 	if err != nil {
 		return nil, true, err
 	}

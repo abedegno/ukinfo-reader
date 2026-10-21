@@ -78,7 +78,9 @@ func Configure(ctx context.Context) (func(context.Context) error, error) {
 // raw error messages must never become span names, attributes or events.
 func Operation(ctx context.Context, name string) (context.Context, trace.Span) {
 	switch name {
-	case "db.query", "db.pool.acquire", "records.load", "address.select":
+	case "db.query", "db.pool.acquire", "records.load", "address.select",
+		"search.vocabulary", "search.source_probe", "search.address_probe", "search.address_blocks",
+		"search.address_dictionary", "search.candidates", "search.ordered", "search.group_members", "search.records", "search.other":
 	default:
 		name = "operation"
 	}

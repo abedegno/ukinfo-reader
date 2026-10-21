@@ -77,3 +77,54 @@ with independently verified private response hashes. Include errors, drops and
 scheduled-arrival latency; do not run an unbounded load test against the public NAS.
 The [observability dashboard](observability.md) complements these tests with
 production latency, failures and pool waits without recording search values.
+
+## Full-catalogue profiling
+
+The operator-only profiler runs a private workload through the actual API handler
+using a read-only pool and the usual request/statement deadlines:
+
+```sh
+cd server
+# DATABASE_URL must be supplied privately, preferably using the serving role.
+go run ./cmd/ukinfo-profile-search --cases ../private/profile-cases.json \
+  --output ../private/profile-report.json --max-cases 20 --max-duration 5m
+```
+
+Cases use the HTTP runner's `path` and `query` fields. The profiler exports case
+numbers, HTTP status, end-to-end and per-query timings, fixed stages, and aggregate
+API metrics. Slow/failed SELECTs receive **EXPLAIN without ANALYZE**, so profiling
+does not execute them twice. Plans retain node/index names, estimates and work
+counters only; predicates, output expressions, SQL, parameters and response records
+are omitted. Estimated plans are not evidence of actual rows, disk reads or spills.
+The default slow threshold is 100 ms. Limit workloads to 100 cases and 15 minutes.
+
+The API exposes `ukinfo_search_phase_duration_seconds{phase,outcome}` for vocabulary,
+source/address probes, address blocks/dictionary, candidates, ordered candidates,
+group members and record loading. Labels come from fixed allowlists. A phase may
+occur more than once per request or edition; phase histograms are not request
+latency distributions. Query phases include row consumption and transaction/pool
+cleanup; record phases also include decoding and manifest reads. OTel spans use
+the same fixed stage names and never include search values.
+
+Hosted dictionary covering indexes support both prefix-to-ID expansion and
+ID-to-label resolution during sorting/grouping. The concurrent build script checks
+both index shapes before accepting an existing managed name. CI verifies both
+lookup directions under custom and generic plans, zero fixture heap fetches,
+result ordering and bounded shared-buffer work.
+
+### Concurrent index recovery
+
+The build script uses a five-second lock timeout and refuses an existing invalid
+index. A concurrent build can finish scanning yet time out while waiting for old
+snapshots; long import or verification transactions can cause that wait. Inspect
+`pg_stat_progress_create_index`, snapshot ages and `pg_index.indisvalid/indisready`
+before retrying. An invalid index is not a successfully deployed optimization.
+
+For the specifically verified, correctly shaped invalid dictionary index, an
+operator can use `REINDEX INDEX CONCURRENTLY public.nas_terms_id_key_cover` in a
+maintenance session with a suitably bounded statement timeout. Its lock-wait
+budget must allow existing snapshots to finish. Keep serving-role and request
+budgets unchanged, and monitor the operation. Do not drop source constraints,
+terminate imports or silently accept an invalid managed name to bypass the guard.
+See PostgreSQL's [REINDEX documentation](https://www.postgresql.org/docs/18/sql-reindex.html)
+and [progress phases](https://www.postgresql.org/docs/18/progress-reporting.html#CREATE-INDEX-PROGRESS-REPORTING).

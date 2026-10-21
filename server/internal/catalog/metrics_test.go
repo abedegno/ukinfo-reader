@@ -129,3 +129,27 @@ func TestQueryMetricsBoundedAndCacheReuse(t *testing.T) {
 		t.Fatal("source block leaked between requests")
 	}
 }
+
+func TestSearchPhaseMetricsBounded(t *testing.T) {
+	config, _ := pgxpool.ParseConfig("postgres://invented@127.0.0.1:1/invented?sslmode=disable")
+	config.MinConns = 0
+	pool, err := pgxpool.NewWithConfig(context.Background(), config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Close()
+	a := NewAPI(pool)
+	a.metrics.observePhase("PRIVATE_PHASE", .2, true)
+	a.metrics.observePhase("address_dictionary", .1, false)
+	w := httptest.NewRecorder()
+	a.Metrics().ServeHTTP(w, httptest.NewRequest("GET", "/metrics", nil))
+	body := w.Body.String()
+	for _, want := range []string{`ukinfo_search_phase_duration_seconds_count{phase="other",outcome="error"} 1`, `ukinfo_search_phase_duration_seconds_count{phase="address_dictionary",outcome="ok"} 1`, `ukinfo_search_phase_duration_seconds_bucket{phase="address_dictionary",outcome="ok",le="0.1"} 1`} {
+		if !strings.Contains(body, want) {
+			t.Fatal("missing bounded stage metric", want)
+		}
+	}
+	if strings.Contains(body, "PRIVATE") {
+		t.Fatal("arbitrary phase exported")
+	}
+}
