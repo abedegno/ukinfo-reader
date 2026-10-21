@@ -100,8 +100,8 @@ func (a *API) indexedAddressCandidates(ctx context.Context, q query, candidates 
 		}
 	}
 	args := []any{locationIDs}
-	predicate := addressPredicate(q, &args)
-	rows, err := a.DB.Query(ctx, "SELECT l.id FROM address_locations l WHERE l.id=ANY($1::integer[]) AND "+predicate, args...)
+	sql := addressLocationLookupSQL(q, &args)
+	rows, err := a.DB.Query(ctx, sql, args...)
 	if err != nil {
 		return nil, true, err
 	}
@@ -126,4 +126,17 @@ func (a *API) indexedAddressCandidates(ctx context.Context, q query, candidates 
 		}
 	}
 	return matched, true, nil
+}
+
+func addressLocationLookupSQL(q query, args *[]any) string {
+	predicate := addressPredicate(q, args)
+	sql := "SELECT l.id FROM address_locations l WHERE l.id=ANY($1::integer[]) AND " + predicate
+	if q.Street == "" && q.Locality == "" {
+		// Town/county covering indexes can read the complete dictionary range
+		// without scattered address heap fetches. Materialize before intersecting
+		// candidate IDs, otherwise the planner may prefer thousands of PK probes.
+		sql = "WITH locations AS MATERIALIZED (SELECT l.id FROM address_locations l WHERE " + predicate +
+			") SELECT id FROM locations WHERE id IN (SELECT unnest($1::integer[]))"
+	}
+	return sql
 }

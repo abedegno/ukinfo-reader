@@ -18,6 +18,24 @@ CREATE TABLE IF NOT EXISTS address_record_indexes (
  indexed_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- A long import can keep every newly built page non-all-visible. In that case
+-- batch reads need a small key index, rather than a wide covering index plus heap.
+CREATE INDEX IF NOT EXISTS address_record_block_ids ON address_record_blocks(dataset_id,block_id);
+DO $index_check$
+BEGIN
+ IF NOT EXISTS (SELECT FROM pg_index i JOIN pg_class c ON c.oid=i.indexrelid
+  JOIN pg_am am ON am.oid=c.relam
+  WHERE i.indexrelid='address_record_block_ids'::regclass
+   AND i.indrelid='address_record_blocks'::regclass AND am.amname='btree'
+   AND i.indisvalid AND i.indisready AND NOT i.indisunique
+   AND i.indnkeyatts=2 AND i.indnatts=2 AND i.indexprs IS NULL AND i.indpred IS NULL
+   AND pg_get_indexdef(i.indexrelid,1,true)='dataset_id'
+   AND pg_get_indexdef(i.indexrelid,2,true)='block_id') THEN
+  RAISE EXCEPTION 'Incompatible or incomplete address_record_block_ids index; inspect before rebuilding';
+ END IF;
+END
+$index_check$;
+
 -- Owner-only maintenance; each invocation publishes a complete edition in its
 -- caller's transaction. The dataset row lock also serializes deletion/replacement.
 CREATE OR REPLACE FUNCTION build_address_record_lookup(dataset_key text)

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Keep town/county candidate intersections on covering dictionary ranges and add a
+  small lookup key index for non-all-visible pages during long imports. Add a
+  required buffer/heap-work regression and reject incompatible lookup indexes.
+
 - Batch compact address-block reads by edition and source order, reducing scattered
   HDD reads while imports prevent index-only visibility; reject damaged published
   lookup blocks rather than silently omitting results.
