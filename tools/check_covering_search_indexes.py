@@ -117,6 +117,78 @@ ORDER BY postcode_id,name_id,first_id,id,dataset_id LIMIT 51"""
     )
 
 
+def check_vocabulary_plans(sql):
+    """Cover the dictionary stage, including bounded prefixes and broad expansion."""
+    for label, query, values in [
+        (
+            "given-prefix",
+            "SELECT id,key FROM terms WHERE key >= $1 AND key < $2 ORDER BY key LIMIT 8193",
+            "'fixturegiven','fixturegiven' || chr(1114111)",
+        ),
+        (
+            "postcode-district",
+            "SELECT id,key FROM terms WHERE key >= $1 AND key < $2 AND (length(key)=6 OR key=$1) ORDER BY key LIMIT 8193",
+            "'ZZ1','ZZ1' || chr(1114111)",
+        ),
+        (
+            "broad-expansion",
+            "SELECT array_agg(id) FROM terms WHERE key >= $1 AND key < $2",
+            "'fixturegiven','fixturegiven' || chr(1114111)",
+        ),
+    ]:
+        for mode in ("force_custom_plan", "force_generic_plan"):
+            start = (
+                "BEGIN; SET LOCAL plan_cache_mode="
+                + mode
+                + "; PREPARE vocabulary(text,text) AS "
+                + query
+                + "; "
+            )
+            execute = "EXECUTE vocabulary(" + values + ")"
+            reference = sql(
+                start
+                + "SET LOCAL enable_indexscan=off; SET LOCAL enable_indexonlyscan=off; SET LOCAL enable_bitmapscan=off; "
+                + execute
+                + "; ROLLBACK;"
+            ).stdout
+            # array_agg has no ordering contract; compare its members independently.
+            actual = sql(start + execute + "; ROLLBACK;").stdout
+            if label == "broad-expansion":
+                assert sorted(actual.strip().strip("{}").split(",")) == sorted(
+                    reference.strip().strip("{}").split(",")
+                )
+            else:
+                assert actual == reference, label + ": vocabulary results/order changed"
+            plan = json.loads(
+                sql(
+                    start + "EXPLAIN(ANALYZE,BUFFERS,FORMAT JSON) " + execute + "; ROLLBACK;"
+                ).stdout
+            )[0]
+            nodes = []
+
+            def walk(node):
+                nodes.append(node)
+                for child in node.get("Plans", []):
+                    walk(child)
+
+            walk(plan["Plan"])
+            scans = [n for n in nodes if n.get("Relation Name") == "terms"]
+            assert scans and all(
+                n["Node Type"] == "Index Only Scan"
+                and n.get("Heap Fetches") == 0
+                and n.get("Index Name") == "nas_terms_key_id_cover"
+                for n in scans
+            ), label + ": vocabulary heap-scan regression"
+            assert plan["Plan"].get("Actual Rows", 0) > 0
+            assert (
+                plan["Plan"].get("Shared Hit Blocks", 0) + plan["Plan"].get("Shared Read Blocks", 0)
+                < 512
+            ), label + ": vocabulary buffer budget exceeded"
+    print(
+        "Vocabulary plans passed: six custom/generic prefix and broad-expansion checks; exact results, zero heap fetches and bounded buffers."
+    )
+
+
 def main():
     name = "ukinfo-cover-check-" + uuid.uuid4().hex[:10]
 
@@ -173,7 +245,10 @@ def main():
             time.sleep(0.2)
         else:
             raise RuntimeError("Disposable PostgreSQL did not start")
-        sql("""CREATE TABLE entries (dataset_id smallint,kind smallint,name_id integer,first_id integer,id integer,postcode_id integer) PARTITION BY LIST(dataset_id);
+        sql("""CREATE TABLE terms(id integer PRIMARY KEY,key text COLLATE "C" NOT NULL UNIQUE);
+INSERT INTO terms SELECT i,CASE WHEN i%50=0 THEN 'ZZ1'||lpad((i/50)::text,3,'0') WHEN i%2=0 THEN 'fixturegiven '||lpad(i::text,5,'0') ELSE 'unrelated '||i::text END FROM generate_series(1,49999) i ORDER BY (i*7919)%50000;
+VACUUM(ANALYZE) terms;
+CREATE TABLE entries (dataset_id smallint,kind smallint,name_id integer,first_id integer,id integer,postcode_id integer) PARTITION BY LIST(dataset_id);
 CREATE TABLE entries_d1 PARTITION OF entries FOR VALUES IN (1);
 CREATE TABLE entries_d2 PARTITION OF entries FOR VALUES IN (2);
 CREATE INDEX entries_name ON entries(dataset_id,kind,name_id,first_id,id);
@@ -232,6 +307,7 @@ VACUUM (ANALYZE) entries;
             and n.get("Heap Fetches") == 0
             for n in nodes
         ), "Prepared generic plan did not use heap-free covering scan"
+        check_vocabulary_plans(sql)
         check_plan_matrix(sql)
         sql(
             "DROP INDEX nas_entries_d1_name_postcode_cover; CREATE INDEX nas_entries_d1_name_postcode_cover ON entries_d1(id);"
@@ -241,6 +317,14 @@ VACUUM (ANALYZE) entries;
             "Incompatible managed name was accepted"
         )
         assert sql(query).stdout == before, "Guard changed existing data"
+        sql(
+            "DROP INDEX nas_terms_key_id_cover; CREATE INDEX nas_terms_key_id_cover ON terms(id) INCLUDE(key);"
+        )
+        failure = sql(script, check=False)
+        assert (
+            failure.returncode
+            and "vocabulary covering index is invalid or incompatible" in failure.stderr
+        ), "Incompatible vocabulary index was accepted"
         print(
             "Covering index checks passed: concurrent build, idempotency, exact results/order, custom/generic index-only plans and incompatible-index guard."
         )
