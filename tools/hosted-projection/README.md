@@ -30,3 +30,25 @@ Repeat with concurrency 4 and 8 using the same corpus. Each case is assigned onc
 This spike compares **candidate queries ordered by source ID**, with exact first-name or prefix filters, postcodes, address fields and business classifications. It validates up to three successive 50-candidate pages by default, including a lookahead row and grouping-key identity, then compares decoded source records using the production block reader. Grouped/lexically sorted output, nearby searches and final record refinements (including given-name boundaries) are rejected. It does not replace the independent HTTP benchmark or establish equivalence for every API feature.
 
 The baseline reads the existing compact source, joining research keys only for classification filters and reverse-address blocks only for address filters. The candidate reads the combined table. Both use the same terms/address dictionaries and compressed record store. SQL latency and record retrieval latency are reported separately. Grouping keys for the bounded result/lookahead set are validated after the timed search/record path; their validation-only latency is reported separately. Ordinary candidate SQL selects IDs, allowing covering indexes without forcing grouping-key heap reads before LIMIT. This isolates the storage projection decision; it is not a claim that the baseline SQL reproduces every deployed API access path.
+
+## Visibility and allocation diagnostics
+
+`visibility.sql` samples only on-disk page headers for a complete immutable edition, returning aggregate flags. It requires the operator's server-file read permission and supports PostgreSQL 18 with 8-KiB pages, 1-GiB segments and little-endian layout version 4. Interpret flags only if `unsupported_header_layouts=0`.
+
+```sh
+psql "$DATABASE_URL" -X -v dataset=EDITION_KEY -f tools/hosted-projection/visibility.sql
+```
+
+Uninitialized allocation holes can lower the table's all-visible percentage even when sampled tuple pages are marked visible. Disk headers can lag buffers; this is not a full visibility-map audit or a substitute for actual query heap-fetch counts. It does not rewrite tables, flush caches or install extensions.
+
+`tune-classifications.sql` reproduces the one-time covering-index refinement on the initial measured prototype. New builds already use those covering definitions in `finish.sql`. The refinement is private-table DDL, not a production migration.
+
+## Remove the disposable projection
+
+After saving aggregate evidence, use the guarded cleanup to avoid including the experiment in full database backups:
+
+```sh
+psql "$DATABASE_URL" -X -v dataset=EDITION_KEY -f tools/hosted-projection/cleanup.sql
+```
+
+Cleanup requires matching complete edition metadata and an operator-owned experiment. It uses `RESTRICT`, not cascading deletion: external dependencies or additional schema objects make the transaction fail. The source catalogue is retained. The measured 22 October experiment was removed after its reports were collected.

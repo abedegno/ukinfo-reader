@@ -26,7 +26,7 @@ CI checks exact full pagination, source order, sparse/distant town ranges, mixed
 
 ## Projection query design and workload
 
-The first flat-SQL projection run used 36 cases: 88 page comparisons, 4 baseline failures and 15 projection failures, with zero mismatches among successful comparisons. It exposed order-driven primary-key walks and predicates that did not reliably enable partial classification indexes. This preliminary run is retained; it is not merged into final-run statistics.
+The first flat-SQL projection run used 36 cases: 88 page comparisons, 4 baseline failures and 15 projection failures, with zero mismatches among successful comparisons. Its query design allowed order-driven primary-key walks and did not explicitly establish the partial-index predicates. The tuning changes below were assessed together, not as separate causal experiments. This preliminary run is retained; it is not merged into final-run statistics.
 
 The corrected query establishes eligible IDs before ordering, includes explicit nonempty predicates for partial classification indexes and covers classification searches with the remaining source/address keys. PostgreSQL documents that partial-index predicates must be provable at planning time; a parameterized range alone may not establish that implication. [PostgreSQL 18 partial-index documentation](https://www.postgresql.org/docs/18/indexes-partial.html).
 
@@ -46,20 +46,29 @@ The final classification-covering indexes add 43,876,352 bytes (41.8 MiB), takin
 49.6 seconds to rebuild on the private table. Final table plus indexes is
 **14,328,815,616 bytes (13.34 GiB)**. Tuning WAL was not independently measured.
 
-| Workers | Page comparisons | Identical successful pairs | Compact errors | Projection errors | Compact median / p95 | Projection median / p95 |
-| --- | ---: | ---: | ---: | ---: | --- | --- |
-| 1 | 196 | 190 | 4 | 4 | 329 / 2,724 ms | 49 / 1,236 ms |
-| 4 | 184 | 170 | 13 | 3 | 360 / 4,036 ms | 38 / 965 ms |
-| 8 | 172 | 153 | 19 | 6 | 312 / 4,194 ms | 54 / 3,165 ms |
+The primary comparison uses the same **108 first-page attempts** at every stage.
+Numbers are nearest-rank p50/p95 and include failed attempts.
 
-These timings include candidate SQL plus record reads, including failures, and
-exclude validation-only identity reads. **All successful pairs matched exactly.**
-Page-comparison counts vary because a failed case stops its subsequent pages;
-these aggregate medians are not a fixed-population cross-concurrency comparison.
-The result artifact also reports the fixed 108 first-page attempts per stage.
+| Workers | Identical successful pairs | Compact errors | Projection errors | Compact p50 / p95 | Projection p50 / p95 |
+| --- | ---: | ---: | ---: | --- | --- |
+| 1 | 102 | 4 | 4 | 184 / 1,738 ms | 19 / 2,450 ms |
+| 4 | 99 | 8 | 3 | 105 / 4,149 ms | 16 / 3,418 ms |
+| 8 | 93 | 15 | 6 | 257 / 4,289 ms | 23 / 4,015 ms |
+| 1, post-maintenance repeat | 102 | 4 | 4 | 245 / 1,871 ms | 59 / 2,166 ms |
+
+These timings include candidate SQL plus record reads and exclude validation-only
+identity reads. **All successful pairs matched exactly.** The one-worker p95 was
+worse on the projection, both before and after maintenance, despite its better
+p50. At four/eight workers errors improved, but p95 remained several seconds.
+
+Including subsequent pages produced 196, 184 and 172 comparisons at 1/4/8 workers,
+plus 193 in the separate post-maintenance recheck. Counts differ because a failed
+case stops its subsequent pages. Those results are retained in the
+[aggregate artifact](hosted-projection-2026-10-22-results.json); they are not used
+as the fixed-population headline comparison.
 
 Business classifications show the clearest benefit. At four workers, classification
-plus address median fell from 1,474 to 166 ms, with errors falling from seven to
+plus address p50 fell from 1,408 to 125 ms, with errors falling from seven to
 one across 68 paired page attempts. Postcode-only queries were already fast and
 showed little consistent benefit. Address-only failures remain, and some mixed
 classification/address attempts regress. This is promising evidence for targeted
@@ -69,6 +78,11 @@ The 128-ID HTTP probe recheck had six failures on each API in 14 pairs. Seven
 pairs succeeded identically, one succeeded only on each API and five failed on
 both. Its median increased from 1,707 to 3,520 ms. **It remains disabled by default**;
 the public API continues to use its existing address strategy.
+
+Twenty independent address reference cases were also checked on both APIs. The
+baseline matched 19 reference responses with one HTTP failure; the experiment
+matched 18 with two failures. Seventeen pairs succeeded on both with no content
+mismatch. This also supports keeping the experiment off.
 
 ## Visibility check and maintenance
 
@@ -80,25 +94,32 @@ new projection. Those percentages alone did not establish a live-row deficit.
 A read-only page-header sample returned aggregate flags only: of 256 sampled
 source pages, 13 were uninitialized allocations and all 243 tuple-bearing pages
 were marked visible. Of 256 research pages, 15 were uninitialized and all 241
-tuple-bearing pages were visible. This supports unused allocation holes as an
+tuple-bearing pages carried the on-disk all-visible flag. This supports unused allocation holes as an
 explanation for the lower percentages; it is a sample, not a full visibility-map
-audit. No record bytes were returned and no compaction/rewrite was performed.
-The post-maintenance one-worker recheck is reported separately in the artifact.
+audit; disk headers can lag buffers. The flag/layout interpretation follows
+[PostgreSQL 18 page-header definitions](https://github.com/postgres/postgres/blob/REL_18_STABLE/src/include/storage/bufpage.h). No record bytes were returned and no compaction/rewrite was performed.
+The post-maintenance one-worker recheck remained mixed; it did not establish a maintenance-only fix.
 
 ## Decision
 
 Keep the compact catalogue as the serving format. Keep both experimental access
 paths opt-in/private. A production candidate should first remove the remaining
 address/classification regressions, cover grouped/lexical/geographic behaviour,
-and prove cold/scattered record reads and rotating-corpus capacity. A smaller
-business-classification projection is worth testing before adding a 13.34-GiB
-full-edition projection to every edition. No database-engine or backend-language
-change is supported by these measurements.
+and prove cold/scattered record reads and rotating-corpus capacity. Smaller place-level ID postings for town/county intersections and a business-only
+classification projection are worth testing before adding a 13.34-GiB full-edition
+projection to every edition. These are proposed follow-up experiments, not measured
+production improvements. No database-engine or backend-language change is supported by these measurements.
 
 ## Reproduction
 
 - [Build/finalization scripts and bounded operator benchmark](../../tools/hosted-projection/README.md)
 - [CI work gates and private diagnostics](../search-performance.md)
 - [HTTP paired runner](../../tools/search-load/README.md)
+
+After saving evidence, the private experiment tables were removed with guarded
+`RESTRICT` cleanup and all 12 temporary containers were removed. This removed
+13.34 GiB of temporary relations and avoids adding them to full database backups.
+All five published editions and 248,951,107 visible records were verified intact;
+the public image remains `hosted-2026-10-21.4`.
 
 The result artifact contains only aggregate measurements. Query values, reference hashes, original records and credentials remain private.
