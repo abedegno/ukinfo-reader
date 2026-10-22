@@ -98,6 +98,7 @@ func run(args []string) error {
 	limit := f.Int("max-cases", 20, "maximum cases (1-100)")
 	duration := f.Duration("max-duration", 5*time.Minute, "overall budget (up to 15 minutes)")
 	slow := f.Duration("plan-after", 100*time.Millisecond, "explain queries slower than this; failed reads always explained")
+	addressProbe := f.Bool("address-probe", false, "enable the opt-in address probe experiment")
 	if f.Parse(args) != nil || *limit < 1 || *limit > 100 || *duration <= 0 || *duration > 15*time.Minute || *slow < 0 || *output == "" {
 		return errors.New("invalid profiling configuration")
 	}
@@ -146,6 +147,7 @@ func run(args []string) error {
 	defer otel.SetTracerProvider(previous)
 	defer provider.Shutdown(context.Background())
 	api := catalog.NewAPI(db)
+	api.ExperimentalAddressProbe = *addressProbe
 	reports := []any{}
 	failed := 0
 	for i, c := range cases {
@@ -175,6 +177,9 @@ func run(args []string) error {
 		observations := []any{}
 		for _, q := range steps {
 			row := map[string]any{"phase": q.Phase, "milliseconds": q.Milliseconds, "failed": q.Failed}
+			if strings.Contains(q.SQL, ") source_batch ORDER BY id,dataset_id LIMIT") {
+				row["access_path"] = "reverse_address_batch"
+			}
 			text := strings.ToUpper(strings.TrimSpace(q.SQL))
 			if (q.Failed || q.Milliseconds >= float64(*slow)/float64(time.Millisecond)) && (strings.HasPrefix(text, "SELECT ") || strings.HasPrefix(text, "WITH ")) {
 				var raw []byte

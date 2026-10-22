@@ -23,14 +23,16 @@ import (
 )
 
 type API struct {
-	DB             *pgxpool.Pool
-	HealthDB       *pgxpool.Pool
-	metrics        *apiMetrics
-	slots          chan struct{}
-	decoder        *zstd.Decoder
-	geographyCache *geographyCache
-	geographySlots chan struct{}
-	addressSlots   chan struct{}
+	// Initialize before serving. Sparse-search regressions keep this opt-in.
+	ExperimentalAddressProbe bool
+	DB                       *pgxpool.Pool
+	HealthDB                 *pgxpool.Pool
+	metrics                  *apiMetrics
+	slots                    chan struct{}
+	decoder                  *zstd.Decoder
+	geographyCache           *geographyCache
+	geographySlots           chan struct{}
+	addressSlots             chan struct{}
 }
 
 func NewAPI(db *pgxpool.Pool) *API {
@@ -402,6 +404,7 @@ type candidateFilters struct {
 	conditions, termCTEs []string
 	missing, areaOnly    bool
 	addressMatched       bool
+	addressLookup        bool
 	geography            *GeographySearch
 	nearbyIDs            []int32
 	radiusArg            int
@@ -671,6 +674,17 @@ func (a *API) searchCandidates(ctx context.Context, q query) (searchResult, int,
 		nearbyIDs = nearbyIDs[sort.Search(len(nearbyIDs), func(i int) bool { return nearbyIDs[i] >= afterPostcode }):]
 		if len(nearbyIDs) == 0 {
 			missing = true
+		}
+	}
+	if q.hasAddress() && f.addressLookup && !f.addressMatched && !missing {
+		f.args, f.conditions = args, conditions
+		matched, proven, e := a.reverseAddressPage(ctx, f, q.Limit+1)
+		if e != nil {
+			return searchResult{}, 503, searchReadError(e)
+		}
+		if proven {
+			f.useAddressCandidates(matched)
+			args, conditions, missing = f.args, f.conditions, f.missing
 		}
 	}
 	ids := []int32{}

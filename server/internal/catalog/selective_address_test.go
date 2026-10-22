@@ -113,6 +113,8 @@ func TestSelectiveAddressIntegration(t *testing.T) {
 	}
 	testAddressLookupIntegrity(t, db)
 	testAddressLookupDictionaryPlan(t, db)
+	testReverseIntersectionPlans(t, db)
+	testProjectionBenchmark(t, db)
 	if _, err = db.Exec(ctx, "INSERT INTO terms(key) SELECT 'jaaa'||lpad(i::text,5,'0') FROM generate_series(0,8192) i ON CONFLICT DO NOTHING"); err != nil {
 		t.Fatal(err)
 	}
@@ -137,6 +139,7 @@ INSERT INTO geography_active VALUES(true,'2026-08'); ANALYZE;`); err != nil {
 	}
 	observations := []measurement{}
 	a := NewAPI(db)
+	a.ExperimentalAddressProbe = true
 	for caseIndex, tc := range []struct {
 		raw       string
 		selective bool
@@ -243,6 +246,7 @@ INSERT INTO geography_active VALUES(true,'2026-08'); ANALYZE;`); err != nil {
 	}
 	testOrderedSurnameWindows(t, db)
 	testSourceProbeReuse(t, db)
+	testBusinessAddressIntersection(t, db)
 	testSearchPhaseRows(t, db)
 	testClassificationProbeWork(t, db)
 }
