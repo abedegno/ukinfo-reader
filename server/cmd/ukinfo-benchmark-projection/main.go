@@ -1,4 +1,4 @@
-// Private, owner-operated benchmark; never runs from the public HTTP service.
+// Private, operator-run benchmark; never runs from the public HTTP service.
 package main
 
 import (
@@ -25,6 +25,7 @@ func run() error {
 	dataset := flag.String("dataset", "", "full edition key")
 	rounds := flag.Int("rounds", 2, "rounds (1-4)")
 	pages := flag.Int("pages", 3, "pages (1-10)")
+	businessOnly := flag.Bool("business-only", false, "compare the private classification-only business projection")
 	workers := flag.Int("concurrency", 1, "bounded concurrent workers (1-8)")
 	duration := flag.Duration("max-duration", 10*time.Minute, "whole-run budget (max 30m)")
 	flag.Parse()
@@ -71,7 +72,11 @@ func run() error {
 			for i := worker; i < len(cases); i += *workers {
 				subset = append(subset, cases[i])
 			}
-			results[worker], errors[worker] = catalog.BenchmarkProjection(ctx, db, subset, *dataset, *rounds, *pages)
+			benchmark := catalog.BenchmarkProjection
+			if *businessOnly {
+				benchmark = catalog.BenchmarkBusinessProjection
+			}
+			results[worker], errors[worker] = benchmark(ctx, db, subset, *dataset, *rounds, *pages)
 			for i := range results[worker].Observations {
 				results[worker].Observations[i].Case = results[worker].Observations[i].Case**workers + worker
 			}
@@ -93,11 +98,12 @@ func run() error {
 	}
 	envelope := struct {
 		SchemaVersion int     `json:"schema_version"`
+		BusinessOnly  bool    `json:"business_only"`
 		Concurrency   int     `json:"concurrency"`
 		WallSeconds   float64 `json:"wall_seconds"`
 		SetupFailures int     `json:"setup_failures"`
 		catalog.ProjectionReport
-	}{1, *workers, time.Since(started).Seconds(), setupFailures, report}
+	}{1, *businessOnly, *workers, time.Since(started).Seconds(), setupFailures, report}
 	raw, err := json.MarshalIndent(envelope, "", "  ")
 	if err != nil {
 		return err

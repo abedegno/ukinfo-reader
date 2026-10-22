@@ -1,0 +1,234 @@
+{
+  "date": "2026-10-22",
+  "edition": "2003 SE, DPCS0104",
+  "source_entries": 59886841,
+  "quantiles": "nearest rank, including failures",
+  "place_postings": {
+    "bytes": 969195520,
+    "build_seconds": 364.279919,
+    "chunk_rows": 8192,
+    "api_cases": 62,
+    "max_pages": 3,
+    "runs": [
+      {
+        "stage": "initial",
+        "budget_exhausted": false,
+        "wall_seconds": 232.828653353,
+        "first_pages": {
+          "comparisons": 62,
+          "outcomes": {
+            "both_ok_same": 36,
+            "after_only_ok": 12,
+            "both_failed": 3,
+            "before_only_ok": 11
+          },
+          "before": {
+            "errors": 15,
+            "p50_ms": 1323.324,
+            "p95_ms": 4332.556
+          },
+          "after": {
+            "errors": 14,
+            "p50_ms": 465.814,
+            "p95_ms": 4027.848
+          }
+        },
+        "all_pages": {
+          "comparisons": 100,
+          "outcomes": {
+            "both_ok_same": 71,
+            "after_only_ok": 15,
+            "both_failed": 3,
+            "before_only_ok": 11
+          },
+          "before": {
+            "errors": 18,
+            "p50_ms": 998.945,
+            "p95_ms": 4135.029
+          },
+          "after": {
+            "errors": 14,
+            "p50_ms": 242.094,
+            "p95_ms": 4022.284
+          }
+        }
+      },
+      {
+        "stage": "business-anchor-refinement",
+        "budget_exhausted": false,
+        "wall_seconds": 228.043314264,
+        "first_pages": {
+          "comparisons": 62,
+          "outcomes": {
+            "both_ok_same": 55,
+            "before_only_ok": 5,
+            "after_only_ok": 2
+          },
+          "before": {
+            "errors": 2,
+            "p50_ms": 426.384,
+            "p95_ms": 2634.095
+          },
+          "after": {
+            "errors": 5,
+            "p50_ms": 216.086,
+            "p95_ms": 4003.513
+          }
+        },
+        "all_pages": {
+          "comparisons": 133,
+          "outcomes": {
+            "both_ok_same": 120,
+            "after_only_ok": 8,
+            "before_only_ok": 5
+          },
+          "before": {
+            "errors": 8,
+            "p50_ms": 712.528,
+            "p95_ms": 4007.251
+          },
+          "after": {
+            "errors": 5,
+            "p50_ms": 294.566,
+            "p95_ms": 2533.617
+          }
+        }
+      }
+    ]
+  },
+  "business_projection": {
+    "source_business_rows": 2471038,
+    "table_bytes": 230121472,
+    "index_bytes": 204701696,
+    "total_bytes": 434823168,
+    "build_seconds": 73.444178,
+    "classification_cases": 39,
+    "guaranteed_positive_cases": 18,
+    "max_pages": 3,
+    "rounds": 2,
+    "runs": [
+      {
+        "workers": 1,
+        "complete": true,
+        "setup_failures": 0,
+        "mismatches": 0,
+        "wall_seconds": 122.29299991,
+        "first_pages": {
+          "comparisons": 78,
+          "equal_successes": 78,
+          "baseline": {
+            "errors": 0,
+            "p50_ms": 243.017,
+            "p95_ms": 1564.484
+          },
+          "projection": {
+            "errors": 0,
+            "p50_ms": 47.814,
+            "p95_ms": 368.551
+          }
+        },
+        "guaranteed_positive_first_pages": {
+          "comparisons": 36,
+          "equal_successes": 36,
+          "baseline": {
+            "errors": 0,
+            "p50_ms": 315.093,
+            "p95_ms": 1564.484
+          },
+          "projection": {
+            "errors": 0,
+            "p50_ms": 53.57,
+            "p95_ms": 200.219
+          }
+        },
+        "all_pages": {
+          "comparisons": 148,
+          "equal_successes": 148,
+          "baseline": {
+            "errors": 0,
+            "p50_ms": 515.137,
+            "p95_ms": 2786.785
+          },
+          "projection": {
+            "errors": 0,
+            "p50_ms": 56.008,
+            "p95_ms": 208.76
+          }
+        }
+      },
+      {
+        "workers": 4,
+        "complete": true,
+        "setup_failures": 0,
+        "mismatches": 0,
+        "wall_seconds": 64.401753914,
+        "first_pages": {
+          "comparisons": 78,
+          "equal_successes": 71,
+          "baseline": {
+            "errors": 7,
+            "p50_ms": 168.731,
+            "p95_ms": 4095.352
+          },
+          "projection": {
+            "errors": 0,
+            "p50_ms": 81.488,
+            "p95_ms": 611.945
+          }
+        },
+        "guaranteed_positive_first_pages": {
+          "comparisons": 36,
+          "equal_successes": 32,
+          "baseline": {
+            "errors": 4,
+            "p50_ms": 765.851,
+            "p95_ms": 4101.861
+          },
+          "projection": {
+            "errors": 0,
+            "p50_ms": 165.897,
+            "p95_ms": 781.166
+          }
+        },
+        "all_pages": {
+          "comparisons": 131,
+          "equal_successes": 121,
+          "baseline": {
+            "errors": 10,
+            "p50_ms": 1101.767,
+            "p95_ms": 4037.087
+          },
+          "projection": {
+            "errors": 0,
+            "p50_ms": 98.302,
+            "p95_ms": 599.77
+          }
+        }
+      }
+    ]
+  },
+  "public_deployment_changed": false,
+  "limits": [
+    "One full edition only; public APIs unchanged.",
+    "Private HTTP APIs use an inherited restricted serving role with identical published visibility; no public ports.",
+    "Initial HTTP run overlapped briefly with an owner aggregate sizing query; refined repeat had no operator build or sizing query overlap.",
+    "OS cache, checkpoints and unrelated NAS activity were uncontrolled; runs are not cold-capacity tests.",
+    "First-page cohorts are fixed; later-page populations depend on earlier success.",
+    "Business runs compare SQL and original record retrieval, not full HTTP handlers or standalone throughput.",
+    "Eighteen guaranteed-positive business cases are reported separately; 2003 industry descriptions are unavailable.",
+    "No query values, source records, source IDs, cursors, hashes or credentials are exported."
+  ],
+  "cleanup": {
+    "private_schemas_removed": 2,
+    "temporary_role_removed": true,
+    "temporary_containers_removed": 6,
+    "database_reported_size": "153 GB",
+    "published_editions": 5,
+    "published_entries": 248951107,
+    "public_probe_statuses": [
+      200,
+      200,
+      200
+    ]
+  }
+}

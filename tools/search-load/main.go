@@ -55,6 +55,7 @@ type queryCase struct {
 }
 type observation struct {
 	digest       string
+	next         string
 	Case         int     `json:"case"`
 	Round        int     `json:"round,omitempty"`
 	Family       string  `json:"family"`
@@ -240,6 +241,11 @@ func (e *engine) request(index, round int, at time.Time) (observation, bool) {
 	case !validResponse(body, response.Header.Get("Content-Type")):
 		o.Outcome = "invalid_json"
 	default:
+		var pagination struct {
+			Next string `json:"next_cursor"`
+		}
+		_ = json.Unmarshal(body, &pagination)
+		o.next = pagination.Next
 		digest, err := responseDigest(body, e.cases[index].DigestMode)
 		if err != nil {
 			o.Outcome = "invalid_json"
@@ -278,6 +284,7 @@ func main() {
 func run(args []string, stdout io.Writer) error {
 	f := flag.NewFlagSet("search-load", flag.ContinueOnError)
 	f.SetOutput(io.Discard)
+	comparePages := f.Int("compare-pages", 1, "maximum pages per paired case, from 1 to 10")
 	compare := f.String("compare-url", "", "optional baseline API for balanced sequential paired observations; requires probe-only")
 	host := f.String("url", "http://127.0.0.1:8080", "base API URL")
 	duration := f.Duration("duration", 10*time.Second, "duration per closed-loop stage, at most five minutes")
@@ -293,6 +300,9 @@ func run(args []string, stdout io.Writer) error {
 	maxDuration := f.Duration("max-duration", 5*time.Minute, "whole-run time budget, including queue drain")
 	if err := f.Parse(args); err != nil {
 		return errors.New("invalid benchmark flags")
+	}
+	if *comparePages < 1 || *comparePages > 10 || (*comparePages != 1 && *compare == "") {
+		return errors.New("compare-pages requires paired comparison and a value from 1 to 10")
 	}
 	levels, err := parseConcurrency(*concurrency)
 	if err != nil {
@@ -355,7 +365,7 @@ func run(args []string, stdout io.Writer) error {
 	defer cancel()
 	e := &engine{ctx: ctx, client: &http.Client{Transport: transport, Timeout: *timeout, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}, base: strings.TrimRight(*host, "/"), cases: cases, max: *maxRequests}
 	if *compare != "" {
-		return e.compare(*compare, *rounds, *output, stdout)
+		return e.compare(*compare, *rounds, *comparePages, *output, stdout)
 	}
 	result := map[string]any{"schema_version": 2, "cases": len(cases), "case_classes": classes, "unverified_cases": unverified, "request_timeout_seconds": timeout.Seconds(), "max_requests": *maxRequests, "max_duration_seconds": maxDuration.Seconds(), "closed_loop": map[string]stageReport{}, "notes": []string{"Initial observations precede any warm-up by this runner. Cache state is otherwise unchanged and is not necessarily cold.", "HTTP transfer, JSON validation and hashing are timed; failed attempts are included in percentiles.", "Only reference-hashed cases may enter load stages. Probe-only unverified successes do not establish result correctness.", "Reports exclude URLs, query values, response records, hashes and raw errors.", "cursor-neutral-v1 compares full response content while replacing opaque next-page tokens with page availability; pagination traversal requires separate verification.", "Document corpus, build, hardware, quotas, import activity and storage/cache conditions alongside this report."}}
 	initial := &recorder{}

@@ -49,6 +49,7 @@ func run() error {
 	metricsListen := flags.String("metrics-listen", "", "optional private loopback metrics listener (127.0.0.1:9091)")
 	origin := flags.String("public-origin", "", "public origin behind a TLS reverse proxy (https://example.org)")
 	publicLimits := flags.Bool("public-limits", false, "bound anonymous API rates, exports and concurrent work")
+	placePostings := flags.Bool("experimental-place-postings", false, "private town/county posting experiment; disabled by default")
 	addressProbe := flags.Bool("experimental-address-probe", false, "opt-in bounded address probe experiment; disabled by default")
 	trustedProxy := flags.String("trusted-proxy", "", "public-limits: comma-separated socket peer CIDRs trusted for CF-Connecting-IP; never trust arbitrary forwarded headers")
 	data := flags.String("data-dir", "", "desktop: app-managed data directory")
@@ -318,6 +319,7 @@ func run() error {
 	})
 	api := catalog.NewAPI(db)
 	api.ExperimentalAddressProbe = *addressProbe
+	api.ExperimentalPlacePostings = *placePostings
 	healthConfig := config.Copy()
 	healthConfig.MaxConns, healthConfig.MinConns = 1, 0
 	healthConfig.ConnConfig.RuntimeParams["statement_timeout"] = "1000"

@@ -86,3 +86,13 @@ the entire paired run, including the other server's work; they are not independe
 capacity measurements. Alternating order reduces cache/order confounding but does
 not isolate changing background I/O. Keep corpus generation and resource limits
 fixed, record maintenance, and investigate differences before deployment.
+
+### Paired pagination
+
+Add `--compare-pages 3` (range 1–10, default 1) to a paired, probe-only run to
+follow each server's own cursor. Paging stops on exhaustion, mismatch or failure.
+Later pages compare complete response digests without reusing a first-page
+reference hash. Query strings, cursors, records and hashes stay private. The
+report adds a `page` number and `max_pages`; compare the fixed first-page cohort
+separately from the variable number of successful later pages. Include later
+pages in the total request/time budget.

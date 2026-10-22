@@ -205,3 +205,24 @@ single complete edition in a private schema, including record retrieval, seek
 pages, disk/build cost and bounded concurrency. It adds no public format switch
 or serving-role grants. See the [dated results](research/hosted-projection-2026-10-22.md)
 for measured benefits and limitations.
+
+## Smaller private projections
+
+The [town/county and business-only experiments](research/place-business-spike-2026-10-22.md)
+measure alternatives to copying the full search catalogue. Town/county ID lists
+are range-chunked and available only with `serve --experimental-place-postings`;
+the default remains off after first-page timeout regressions. Absent permissions,
+incomplete editions, street/locality and grouped/lexical searches keep the
+existing complete path. No public deployment enables the flag.
+
+`ukinfo-benchmark-projection --business-only` compares a smaller, private
+classified-business table with the compact source schema, including original
+record retrieval, lookahead, pages and grouping-identity checks. It rejects
+unclassified queries and people; it installs no serving switch. The
+[build/cleanup instructions](../tools/business-projection/README.md) require
+operator access and bounded resource settings. Neither experiment increases
+HTTP or database query budgets.
+
+The paired HTTP workload runner supports `--compare-pages 1..10` (default 1),
+following each server's own cursor and keeping query/record/hash/cursor values
+private. Compare fixed first-page attempts separately from variable later pages.

@@ -56,6 +56,20 @@ type projectionRead struct {
 // projection, then uses the same production block decoder for both. It is not an
 // HTTP capacity test. Raw query values, records, IDs and digests stay in memory.
 func BenchmarkProjection(ctx context.Context, db *pgxpool.Pool, cases []ProjectionCase, dataset string, rounds, pages int) (ProjectionReport, error) {
+	return benchmarkProjection(ctx, db, cases, dataset, rounds, pages, false)
+}
+
+// BenchmarkBusinessProjection is restricted to classified business searches. Its
+// smaller private table deliberately omits people and general name indexes.
+func BenchmarkBusinessProjection(ctx context.Context, db *pgxpool.Pool, cases []ProjectionCase, dataset string, rounds, pages int) (ProjectionReport, error) {
+	return benchmarkProjection(ctx, db, cases, dataset, rounds, pages, true)
+}
+
+func benchmarkProjection(ctx context.Context, db *pgxpool.Pool, cases []ProjectionCase, dataset string, rounds, pages int, businessOnly bool) (ProjectionReport, error) {
+	schema := "ukinfo_projection_spike"
+	if businessOnly {
+		schema = "ukinfo_business_spike"
+	}
 	report := ProjectionReport{Observations: []ProjectionObservation{}, Complete: true}
 	if len(cases) < 1 || len(cases) > 100 || rounds < 1 || rounds > 4 || pages < 1 || pages > 10 {
 		return report, fmt.Errorf("invalid projection workload budget")
@@ -64,7 +78,7 @@ func BenchmarkProjection(ctx context.Context, db *pgxpool.Pool, cases []Projecti
 	var edition int16
 	var complete bool
 	if err := db.QueryRow(ctx, `SELECT d.id,b.finished_at IS NOT NULL AND b.expected=d.entries
- FROM datasets d JOIN ukinfo_projection_spike.build b ON b.dataset_id=d.id WHERE d.key=$1`, dataset).Scan(&edition, &complete); err != nil || !complete {
+ FROM datasets d JOIN `+schema+`.build b ON b.dataset_id=d.id WHERE d.key=$1`, dataset).Scan(&edition, &complete); err != nil || !complete {
 		return report, fmt.Errorf("complete projection unavailable")
 	}
 	for round := 0; round < rounds; round++ {
@@ -79,6 +93,9 @@ func BenchmarkProjection(ctx context.Context, db *pgxpool.Pool, cases []Projecti
 			q, err := parse(values)
 			if err != nil {
 				return report, fmt.Errorf("unsupported private case %d", index)
+			}
+			if businessOnly && (q.Kind != "business" || !q.hasBusinessFilters()) {
+				return report, fmt.Errorf("business-only projection requires classification filters in case %d", index)
 			}
 			if q.Near != "" || q.hasRefinements() || q.Group != "" || q.Sort != "" {
 				return report, fmt.Errorf("unsupported private case %d", index)
@@ -134,7 +151,7 @@ func BenchmarkProjection(ctx context.Context, db *pgxpool.Pool, cases []Projecti
 			if q.hasBusinessFilters() {
 				baselineFrom += ` JOIN research_keys r USING(dataset_id,id)`
 			}
-			projectionFrom := `ukinfo_projection_spike.entries entries`
+			projectionFrom := schema + `.entries entries`
 			if q.hasAddress() {
 				predicate := addressPredicate(q, &args)
 				conditions = append(conditions, predicate)
@@ -221,7 +238,7 @@ func BenchmarkProjection(ctx context.Context, db *pgxpool.Pool, cases []Projecti
 						defer done()
 						identitySQL := "SELECT id,group_key FROM research_keys WHERE dataset_id=$1 AND id=ANY($2::integer[])"
 						if projected {
-							identitySQL = "SELECT id,group_key FROM ukinfo_projection_spike.entries WHERE dataset_id=$1 AND id=ANY($2::integer[])"
+							identitySQL = "SELECT id,group_key FROM " + schema + ".entries WHERE dataset_id=$1 AND id=ANY($2::integer[])"
 						}
 						start = time.Now()
 						groups := map[int32]string{}

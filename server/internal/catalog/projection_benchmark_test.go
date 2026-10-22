@@ -75,4 +75,27 @@ func testPositiveProjectionBenchmark(t *testing.T, db *pgxpool.Pool) {
 			t.Fatal("classification result cardinality changed", o.Case, o.Rows)
 		}
 	}
+	if _, err = db.Exec(ctx, `CREATE SCHEMA ukinfo_business_spike;
+ CREATE TABLE ukinfo_business_spike.build AS TABLE ukinfo_projection_spike.build;
+ CREATE TABLE ukinfo_business_spike.entries AS SELECT * FROM ukinfo_projection_spike.entries WHERE kind=1;`); err != nil {
+		t.Fatal(err)
+	}
+	defer db.Exec(ctx, "DROP SCHEMA ukinfo_business_spike CASCADE")
+	business, err := BenchmarkBusinessProjection(ctx, db, cases, "business-address-work", 2, 3)
+	if err != nil || !business.Complete || business.Failures != 0 || business.Mismatches != 0 || len(business.Observations) != 16 {
+		t.Fatal("business-only comparison failed", err, business.Failures, business.Mismatches)
+	}
+	for _, bad := range []ProjectionCase{{"kind=person&sic=9999"}, {"kind=business&postcode=AA1"}} {
+		if _, err = BenchmarkBusinessProjection(ctx, db, []ProjectionCase{bad}, "business-address-work", 1, 1); err == nil {
+			t.Fatal("unsupported business projection scope accepted")
+		}
+	}
+	if _, err = db.Exec(ctx, "UPDATE ukinfo_business_spike.entries SET sic='missing' WHERE sic='9999'"); err != nil {
+		t.Fatal(err)
+	}
+	broken, err := BenchmarkBusinessProjection(ctx, db, cases[:1], "business-address-work", 1, 1)
+	if err != nil || broken.Mismatches != 1 {
+		t.Fatal("incorrect business projection accepted", err)
+	}
+
 }

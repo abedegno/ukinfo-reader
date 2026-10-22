@@ -23,6 +23,15 @@ func (a *API) matchSelectiveAddresses(ctx context.Context, f *candidateFilters) 
 	if f.missing || !q.hasAddress() {
 		return nil
 	}
+	ready, readyErr := a.placePostingsReady(ctx, *f)
+	if readyErr != nil {
+		return readyErr
+	}
+	if ready {
+		f.placePostings = true
+		a.metrics.plan("place_postings")
+		return nil
+	}
 	plan := "fallback"
 	sourceOverflow := false
 	defer func() {
