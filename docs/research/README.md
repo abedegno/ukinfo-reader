@@ -12,6 +12,7 @@ Short warm tests do not establish cold-storage or public-service capacity.
 - [Address index](address-index.md)
 - [Broad-prefix pagination](broad-prefix-pagination.md)
 - [Full-catalogue query workloads, stage costs and capacity](query-workload-2026-10-21.md)
+- [Bounded address probes and the full 2003 hosted projection](hosted-projection-2026-10-22.md)
 - [Adaptive query-planning review](query-planning-2026-10-19.md)
 - [Feature validation and national-query limits](review-validation.md)
 

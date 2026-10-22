@@ -32,6 +32,10 @@ func (a *API) addressLookupReady(ctx context.Context, datasets []int16) (bool, e
 // indexedAddressCandidates filters bounded source candidates through compact
 // address arrays, without expanding every occurrence in a broad town.
 func (a *API) indexedAddressCandidates(ctx context.Context, q query, candidates map[int16][]int32) (map[int16][]int32, bool, error) {
+	return a.filterIndexedAddressCandidates(ctx, q, candidates, false)
+}
+
+func (a *API) filterIndexedAddressCandidates(ctx context.Context, q query, candidates map[int16][]int32, knownReady bool) (map[int16][]int32, bool, error) {
 	datasets := []int16{}
 	for dataset, ids := range candidates {
 		if len(ids) > 0 {
@@ -42,9 +46,11 @@ func (a *API) indexedAddressCandidates(ctx context.Context, q query, candidates 
 	if len(datasets) == 0 {
 		return map[int16][]int32{}, true, nil
 	}
-	available, err := a.addressLookupReady(ctx, datasets)
-	if err != nil || !available {
-		return nil, false, err
+	if !knownReady {
+		available, err := a.addressLookupReady(ctx, datasets)
+		if err != nil || !available {
+			return nil, false, err
+		}
 	}
 	// Read each edition's blocks in one bounded batch. Individual lateral index
 	// probes alternate index/heap reads on HDDs while a long import prevents the

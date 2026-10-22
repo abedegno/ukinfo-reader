@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Add a guarded full-edition hosted projection spike, paired query/record checks,
+  bounded concurrency measurements and aggregate-only findings. Keep the compact
+  serving format while remaining regressions are investigated.
+- Keep the bounded reverse-address page probe explicitly opt-in after mixed NAS
+  results. Add sparse fallback, mixed business-classification pagination, source
+  work-budget and projection-integrity regression coverage.
+
 - Keep town/county candidate intersections on covering dictionary ranges and add a
   small lookup key index for non-all-visible pages during long imports. Add a
   required buffer/heap-work regression and reject incompatible lookup indexes.

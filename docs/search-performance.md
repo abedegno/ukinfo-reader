@@ -10,6 +10,9 @@ The required `search` job runs complementary matrices and retains the
 | PostgreSQL candidate plans | 50,000 invented entries in two editions; 70% dominant surname, rare names, 1,970 first-name terms, 727 postcode terms, 5% businesses; full postcode, sector/district, given-name variants, all editions and page-two cursors | Results/order differ from a sequential reference; any candidate heap fetch or non-index-only scan; 1,500 or more shared buffer accesses per plan |
 | Business classification probes | 50,000 invented business projections; a broad industry prefix and 50 selected postcode records; actual API predicates under forced custom/generic plans | Wrong IDs/order; classification range used as the per-record index condition; non-index-only research access or heap fetches; 800 or more shared buffers |
 | Group representatives | 50,000 invented research keys; earliest-edition identity with reversed edition input; actual representative SQL under forced custom/generic plans | Wrong representative; unnecessary later-edition requests; wrong/unpruned research partition; heap fetches; more than one row per exact group probe; 100 or more shared buffers for three probes |
+| Bounded address pages | 4,500 selected sources plus 100,000 invented distinct-name projections; actual source-batch SQL under forced custom/generic plans | More than 128 returned IDs; wrong order; unselective source walks, covering-index heap fetches, lossy bitmap or more than 64 bitmap heap pages; 1,000 or more shared buffers |
+| Business/address pagination | 5,000 invented businesses with industry/SIC prefixes and separated town ranges | Missing or duplicate occurrences across complete default, name-sorted and grouped pagination |
+| Hosted projection comparison | Full 22,000-row invented edition; source/address/classification combinations, lookahead and successive pages; deliberately corrupted projection | Differences in IDs, grouping keys or decoded records; accepting the corrupted projection; private values in aggregate reports |
 | Search API | 22,546 invented entries in three editions; selective/broad/scattered names, given-name/wildcard/middle initial, street/town/county/house, full/partial postcode, nearby district centre, businesses, grouped/ordered results and complete pagination | Wrong counts, duplicate pages, wrong address/strategy, HTTP errors, truncated or endless pagination |
 
 The SQL matrix exercises forced custom and generic prepared plans and validates
@@ -172,3 +175,33 @@ custom/generic timings, buffers and heap fetches alongside classification plans.
 expansion, including failed attempts. It complements stage latency and request
 counts without recording names. Batches use exact eligible occurrence counts to
 avoid expanding adjacent dense pairs merely to reduce transaction count.
+
+## Bounded address intersections and hosted projection spike
+
+The reverse-probe experiment is **disabled by default** after mixed NAS results.
+Enable it explicitly with `serve --experimental-address-probe` or profiler
+`--address-probe` for private comparisons. It is not enabled on the public service.
+
+For experimental ordinary source-ID-ordered searches with a complete reverse address lookup,
+an overflowing name/postcode/classification anchor is probed using at most 128
+source IDs. Each probe reads only its distinct reverse address blocks. A page
+plus lookahead, or complete source exhaustion, proves the result prefix. Otherwise
+the complete posting intersection remains in use: sparse source batches must not
+turn a cheap county range into thousands of reverse lookups. Subsequent requests
+seek from the last returned `(id,dataset_id)`. There is no total match cap or
+truncated success. Missing lookup blocks fail closed. Older catalogues retain
+posting joins.
+
+The source predicate is materialized before ID ordering, avoiding an order-driven
+primary-key walk for rare filters. This still reads the matching source index
+range: very broad source predicates, empty intersections, grouped/lexically sorted
+results and scattered compressed record reads can remain expensive. No request
+budget or dataset permissions are increased. The fixed `reverse_intersection`
+address-plan metric and profiler's `reverse_address_batch` access-path label
+identify this path without recording query values.
+
+The [hosted projection experiment](../tools/hosted-projection/README.md) compares a
+single complete edition in a private schema, including record retrieval, seek
+pages, disk/build cost and bounded concurrency. It adds no public format switch
+or serving-role grants. See the [dated results](research/hosted-projection-2026-10-22.md)
+for measured benefits and limitations.

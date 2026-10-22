@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/abedegno/ukinfo-reader/server/internal/telemetry"
+	"github.com/jackc/pgx/v5"
 	"sort"
 	"strings"
 )
@@ -28,6 +29,9 @@ func (a *API) matchSelectiveAddresses(ctx context.Context, f *candidateFilters) 
 		if err != nil {
 			a.metrics.plan("error")
 		} else {
+			if plan == "fallback" && f.addressLookup && !f.addressMatched && q.Group == "" && q.Sort == "" {
+				plan = "reverse_intersection"
+			}
 			a.metrics.plan(plan)
 		}
 	}()
@@ -39,6 +43,7 @@ func (a *API) matchSelectiveAddresses(ctx context.Context, f *candidateFilters) 
 			return err
 		}
 		if ready {
+			f.addressLookup = a.ExperimentalAddressProbe
 			sourceSQL := "SELECT dataset_id,id FROM entries WHERE " + strings.Join(f.conditions, " AND ") + fmt.Sprintf(" LIMIT %d", selectiveAddressLimit+1)
 			if len(f.termCTEs) > 0 {
 				sourceSQL = "WITH " + strings.Join(f.termCTEs, ",") + " " + sourceSQL
@@ -155,13 +160,17 @@ func (a *API) addressPlanCandidates(ctx context.Context, phase, sql string, args
 	if err != nil {
 		return nil, 0, err
 	}
+	return readAddressCandidates(rows)
+}
+
+func readAddressCandidates(rows pgx.Rows) (map[int16][]int32, int, error) {
 	defer rows.Close()
 	candidates := map[int16][]int32{}
 	count := 0
 	for rows.Next() {
 		var dataset int16
 		var id int32
-		if err = rows.Scan(&dataset, &id); err != nil {
+		if err := rows.Scan(&dataset, &id); err != nil {
 			return nil, 0, err
 		}
 		candidates[dataset] = append(candidates[dataset], id)
