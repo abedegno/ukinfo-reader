@@ -36,7 +36,7 @@ The final fixed workload contains 54 private cases. Eighteen added cases exercis
 
 Each run alternates baseline/projection execution order, uses two rounds and up to three consecutive 50-candidate pages, validates the lookahead IDs and grouping keys, and compares decoded original records. SQL has a four-second budget; search plus record retrieval has a five-second budget. Validation-only identity reads are measured separately. Errors and incomplete runs fail the operator command and remain in the report.
 
-The baseline uses the compact source tables, research keys for classification filters and reverse arrays for address filters. It is a decomposed SQL comparator, **not a replay of every deployed API strategy**. The candidate uses the combined table. Both use the same dictionaries and production record decoder. These are candidate-query/record-read measurements, not HTTP capacity or proof of grouped/nearby/lexical-order equivalence. Source-ID-ordered pages can have substantially better compressed-block locality than lexical UI results; the low warm record-read medians here do not resolve the earlier cold/scattered record-I/O costs.
+The baseline uses the compact source tables, research keys for classification filters and reverse arrays for address filters. Operator SQL runs used catalogue-owner authentication with read-only sessions because the serving role had no access to the private schema. Both models target the same published edition, but these SQL timings exclude serving-role row-security overhead. The paired HTTP probe tests used the normal serving role. It is a decomposed SQL comparator, **not a replay of every deployed API strategy**. The candidate uses the combined table. Both use the same dictionaries and production record decoder. These are candidate-query/record-read measurements, not HTTP capacity or proof of grouped/nearby/lexical-order equivalence. Source-ID-ordered pages can have substantially better compressed-block locality than lexical UI results; the low warm record-read medians here do not resolve the earlier cold/scattered record-I/O costs.
 
 Concurrency runs use the same fixed corpus at 1, 4 and 8 workers sharing an eight-connection pool. Baseline and projection queries are interleaved within each run; their combined throughput is not independent API capacity. PostgreSQL retains its two-CPU/six-GiB limit and one-GiB shared buffers. The client has one CPU and 512 MiB. No import, backup or projection build overlaps the final workload runs; OS caches, checkpoints and other NAS activity remain uncontrolled. Later runs are increasingly warm.
 
@@ -123,3 +123,6 @@ All five published editions and 248,951,107 visible records were verified intact
 the public image remains `hosted-2026-10-21.4`.
 
 The result artifact contains only aggregate measurements. Query values, reference hashes, original records and credentials remain private.
+
+Post-cleanup smoke checks of the three previously reported searches returned HTTP
+200 in 107–135 ms. These are availability observations, not cold-search guarantees.

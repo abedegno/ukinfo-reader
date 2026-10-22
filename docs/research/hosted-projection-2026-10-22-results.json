@@ -39,7 +39,9 @@
     "experiment_removed_after_measurement": true,
     "temporary_containers_removed": 12,
     "published_editions_after_cleanup": 5,
-    "published_entries_after_cleanup": 248951107
+    "published_entries_after_cleanup": 248951107,
+    "sql_authentication": "catalogue_owner_readonly_sessions",
+    "http_probe_authentication": "existing_serving_role"
   },
   "projection_runs": {
     "flat_sql_preliminary": {
@@ -1390,6 +1392,24 @@
     "Counts of later pages vary after failures; fixed first-page cohorts are provided.",
     "Caches, checkpoints and other NAS activity were uncontrolled; later runs are warmer.",
     "Paired interleaving is not independent throughput or public HTTP capacity.",
-    "Disk headers may lag buffers and are not a full visibility-map audit."
+    "Disk headers may lag buffers and are not a full visibility-map audit.",
+    "SQL layout runs exclude serving-role row-security overhead."
+  ],
+  "public_smoke_after_cleanup": [
+    {
+      "status": 200,
+      "items": 8,
+      "milliseconds": 120
+    },
+    {
+      "status": 200,
+      "items": 1,
+      "milliseconds": 107
+    },
+    {
+      "status": 200,
+      "items": 2,
+      "milliseconds": 135
+    }
   ]
 }
