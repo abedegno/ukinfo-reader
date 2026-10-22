@@ -1,0 +1,126 @@
+{
+  "date": "2026-10-22",
+  "published_editions": 5,
+  "published_entries": 248951107,
+  "business_rows": 8623334,
+  "partition_bytes": 1598152704,
+  "http_cases": 109,
+  "maximum_pages": 3,
+  "paired_budget_exhausted": false,
+  "first_pages": {
+    "pairs": 109,
+    "outcomes": {
+      "both_ok_same": 88,
+      "after_only_ok": 21
+    },
+    "before": {
+      "errors": 21,
+      "p50_ms": 420.395,
+      "p95_ms": 4416.039
+    },
+    "after": {
+      "errors": 0,
+      "p50_ms": 59.17,
+      "p95_ms": 710.188
+    }
+  },
+  "all_pages": {
+    "pairs": 189,
+    "outcomes": {
+      "both_ok_same": 164,
+      "after_only_ok": 25
+    },
+    "before": {
+      "errors": 25,
+      "p50_ms": 420.395,
+      "p95_ms": 4119.368
+    },
+    "after": {
+      "errors": 0,
+      "p50_ms": 82.308,
+      "p95_ms": 659.352
+    }
+  },
+  "positive_2003_first_pages": {
+    "pairs": 18,
+    "outcomes": {
+      "after_only_ok": 2,
+      "both_ok_same": 16
+    },
+    "before": {
+      "errors": 2,
+      "p50_ms": 466.354,
+      "p95_ms": 4416.039
+    },
+    "after": {
+      "errors": 0,
+      "p50_ms": 71.787,
+      "p95_ms": 273.335
+    }
+  },
+  "all_editions_first_pages": {
+    "pairs": 39,
+    "outcomes": {
+      "after_only_ok": 16,
+      "both_ok_same": 23
+    },
+    "before": {
+      "errors": 16,
+      "p50_ms": 1473.589,
+      "p95_ms": 5003.272
+    },
+    "after": {
+      "errors": 0,
+      "p50_ms": 147.533,
+      "p95_ms": 825.421
+    }
+  },
+  "positive_2005_first_pages": {
+    "pairs": 18,
+    "outcomes": {
+      "both_ok_same": 17,
+      "after_only_ok": 1
+    },
+    "before": {
+      "errors": 1,
+      "p50_ms": 448.394,
+      "p95_ms": 4311.115
+    },
+    "after": {
+      "errors": 0,
+      "p50_ms": 58.28,
+      "p95_ms": 478.892
+    }
+  },
+  "concurrent_http": {
+    "independent_positive_reference_cases": 24,
+    "seconds_per_stage": 8,
+    "passed": true,
+    "budget_exhausted": false,
+    "requests_attempted": 444,
+    "stages": {
+      "4": {
+        "requests": 208,
+        "errors": 0,
+        "median_ms": 112.406966,
+        "p95_ms": 450.118448,
+        "requests_per_second": 25.504004584113325
+      },
+      "8": {
+        "requests": 212,
+        "errors": 0,
+        "median_ms": 286.389151,
+        "p95_ms": 568.503532,
+        "requests_per_second": 25.56188638087361
+      }
+    }
+  },
+  "limits": [
+    "Private baseline/candidate APIs used the same serving role, source database, CPU/memory/pool limits and request/SQL budgets.",
+    "Builds and reference capture completed before measured load stages; caches were uncontrolled and generally warm.",
+    "Fixed first-page cohorts are primary; later-page populations depend on preceding success.",
+    "Concurrent tests used independent current-API hashes for positive 2003 and 2005 cases, with no source records exported.",
+    "Short warm stages do not establish cold HDD capacity, public Internet throughput or long-term SLOs.",
+    "No query values, source IDs, response records, cursors, hashes or credentials are exported."
+  ]
+}

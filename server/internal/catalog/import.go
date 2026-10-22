@@ -65,6 +65,9 @@ func Migrate(ctx context.Context, db *pgxpool.Pool) error {
 	if _, e = tx.Exec(ctx, researchSchema); e != nil {
 		return e
 	}
+	if _, e = tx.Exec(ctx, businessSearchSchema); e != nil {
+		return e
+	}
 	return tx.Commit(ctx)
 }
 

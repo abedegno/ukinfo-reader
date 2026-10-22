@@ -256,4 +256,5 @@ func testBusinessAddressIntersection(t *testing.T, db *pgxpool.Pool) {
 		}
 	}
 	testPositiveProjectionBenchmark(t, db)
+	testBusinessSearch(t, db)
 }

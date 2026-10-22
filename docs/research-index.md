@@ -125,3 +125,36 @@ anchor a search without a business name. No modern SIC labels or fuzzy categorie
 inferred. Missing/ambiguous industry descriptions remain unknown and are excluded by
 an industry filter. The 2004 SE disc has no business file. See the
 [modern business format evidence](formats/modern-se.md#v105-business-layout-and-selection).
+
+## Optional business search projection
+
+For ordinary SIC/industry searches, operators can add a smaller projection of
+business search keys, classifications and canonical address references. Original
+records, source references and grouping keys remain authoritative. Build after
+complete research and address indexes:
+
+```sh
+ukinfo-server index-business-search --dataset se2003-dpcs0104
+```
+
+`deploy/production/business-search.sql` provides the equivalent owner-only,
+resource-bounded PostgreSQL procedure. It verifies the source prerequisites and
+business row count, attaches a new edition partition, then publishes matching
+versioned metadata atomically. Cancellation rolls back the unfinished partition.
+Ordinary VACUUM follows commit for covering index reads. The builder is idempotent;
+an incompatible or unexpected relation is rejected. Check both database volume
+headroom and the CLI's temporary filesystem; the CLI retains its 5 GiB guard.
+Only the owner may call the SQL builder. The serving role needs SELECT on
+`business_search` and `business_search_indexes`.
+
+The API automatically uses the projection only when every relevant selected
+edition has a complete matching build. Missing tables, grants or edition metadata
+retain the current complete search path. Street, locality, town, county, name,
+postcode and displayed-field refinements retain their existing meaning and cursor
+format. Grouped, specially ordered and nearby searches retain their current path.
+No total-match cap or extra public export route is introduced.
+
+For controlled comparisons or rollback, use `serve --disable-business-search`.
+Removing an edition also removes its verified business partition and metadata.
+Archives without this optional index remain supported; this does not change the
+research-index requirement for classification filters.
