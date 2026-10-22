@@ -84,3 +84,52 @@ func TestPairedRetainsIncompleteRequest(t *testing.T) {
 		t.Fatal("lost incomplete attempt")
 	}
 }
+
+func TestPairedFollowsEachServersCursor(t *testing.T) {
+	server := func(token string) *httptest.Server {
+		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			page, next := 1, token
+			if c := r.URL.Query().Get("cursor"); c != "" {
+				if c != token {
+					t.Error("wrong server cursor")
+					w.WriteHeader(400)
+					return
+				}
+				page, next = 2, ""
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{"items": []int{page}, "next_cursor": next})
+		}))
+	}
+	b, a := server("SECRET_BEFORE"), server("SECRET_AFTER")
+	defer b.Close()
+	defer a.Close()
+	cases, out := workload(t, []queryCase{{Query: "surname=SECRET_NAME", DigestMode: "cursor-neutral-v1"}})
+	if err := run([]string{"--url", a.URL, "--compare-url", b.URL, "--compare-pages", "3", "--probe-only", "--cases", cases, "--output", out}, &bytes.Buffer{}); err != nil {
+		t.Fatal(err)
+	}
+	r := report(t, out)
+	var pairs []pairedObservation
+	if err := json.Unmarshal(r["pairs"], &pairs); err != nil || len(pairs) != 2 || pairs[1].Page != 2 {
+		t.Fatal("missing later page")
+	}
+	if strings.Contains(string(r["pairs"]), "SECRET") {
+		t.Fatal("private cursor exported")
+	}
+}
+
+func TestPairedPagingBudgetCannotClaimCompletion(t *testing.T) {
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"items":[1],"next_cursor":"SECRET_NEXT"}`))
+	}))
+	defer s.Close()
+	cases, out := workload(t, []queryCase{{Query: "surname=SECRET_NAME", DigestMode: "cursor-neutral-v1"}})
+	if err := run([]string{"--url", s.URL, "--compare-url", s.URL, "--compare-pages", "3", "--probe-only", "--max-requests", "2", "--cases", cases, "--output", out}, &bytes.Buffer{}); err == nil {
+		t.Fatal("unfinished pages accepted")
+	}
+	r := report(t, out)
+	if string(r["budget_exhausted"]) != "true" || string(r["requests_attempted"]) != "2" {
+		t.Fatal("paging budget was not retained")
+	}
+}

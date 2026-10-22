@@ -115,6 +115,7 @@ func TestSelectiveAddressIntegration(t *testing.T) {
 	testAddressLookupDictionaryPlan(t, db)
 	testReverseIntersectionPlans(t, db)
 	testProjectionBenchmark(t, db)
+	testPlacePostings(t, db)
 	if _, err = db.Exec(ctx, "INSERT INTO terms(key) SELECT 'jaaa'||lpad(i::text,5,'0') FROM generate_series(0,8192) i ON CONFLICT DO NOTHING"); err != nil {
 		t.Fatal(err)
 	}

@@ -23,16 +23,17 @@ import (
 )
 
 type API struct {
-	// Initialize before serving. Sparse-search regressions keep this opt-in.
-	ExperimentalAddressProbe bool
-	DB                       *pgxpool.Pool
-	HealthDB                 *pgxpool.Pool
-	metrics                  *apiMetrics
-	slots                    chan struct{}
-	decoder                  *zstd.Decoder
-	geographyCache           *geographyCache
-	geographySlots           chan struct{}
-	addressSlots             chan struct{}
+	// Private access-path experiments. Initialize before serving; default off.
+	ExperimentalAddressProbe  bool
+	ExperimentalPlacePostings bool
+	DB                        *pgxpool.Pool
+	HealthDB                  *pgxpool.Pool
+	metrics                   *apiMetrics
+	slots                     chan struct{}
+	decoder                   *zstd.Decoder
+	geographyCache            *geographyCache
+	geographySlots            chan struct{}
+	addressSlots              chan struct{}
 }
 
 func NewAPI(db *pgxpool.Pool) *API {
@@ -405,6 +406,7 @@ type candidateFilters struct {
 	missing, areaOnly    bool
 	addressMatched       bool
 	addressLookup        bool
+	placePostings        bool
 	geography            *GeographySearch
 	nearbyIDs            []int32
 	radiusArg            int
@@ -715,6 +717,11 @@ func (a *API) searchCandidates(ctx context.Context, q query) (searchResult, int,
 			args = append(args, dataset)
 			datasetArg := len(args)
 			if q.hasAddress() && !f.addressMatched {
+				if f.placePostings {
+					args = append(args, afterID)
+					branches = append(branches, placePostingBranchSQL(f, dataset, datasetArg, len(args), limitArg, conditions, &args, &termCTEs))
+					continue
+				}
 				predicate := addressPredicate(q, &args)
 				args = append(args, afterID)
 				afterArg := len(args)

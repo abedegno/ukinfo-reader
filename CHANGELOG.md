@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Measure compact town/county postings and a classified-business projection with
+  guarded private builders, cleanup and aggregate evidence. Keep experimental
+  serving paths off while first-page tail latency remains unresolved.
+- Add bounded paired HTTP pagination with independent server cursors, full-body
+  equality checks and private cursor/hash handling.
+
 - Add a guarded full-edition hosted projection spike, paired query/record checks,
   bounded concurrency measurements and aggregate-only findings. Keep the compact
   serving format while remaining regressions are investigated.
