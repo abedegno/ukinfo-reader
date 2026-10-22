@@ -15,6 +15,12 @@ func testCatalogueManagement(t *testing.T, db *pgxpool.Pool) {
 			t.Fatal(err)
 		}
 	}
+	if _, err := IndexResearch(ctx, db, "managed-remove", AddressIndexOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := IndexBusinessSearch(ctx, db, "managed-remove", nil); err != nil {
+		t.Fatal(err)
+	}
 	before, err := CatalogueInventory(ctx, db)
 	if err != nil {
 		t.Fatal(err)
@@ -55,7 +61,7 @@ func testCatalogueManagement(t *testing.T, db *pgxpool.Pool) {
 	if err = db.QueryRow(ctx, "SELECT count(*) FROM address_members WHERE dataset_id=$1", target.ID).Scan(&count); err != nil || count != 0 {
 		t.Fatal("address membership retained", err)
 	}
-	for _, table := range []string{"address_record_blocks", "address_record_indexes"} {
+	for _, table := range []string{"address_record_blocks", "address_record_indexes", "business_search_indexes", "business_search"} {
 		if err = db.QueryRow(ctx, "SELECT count(*) FROM "+table+" WHERE dataset_id=$1", target.ID).Scan(&count); err != nil || count != 0 {
 			t.Fatalf("%s retained removed dataset: count=%d err=%v", table, count, err)
 		}

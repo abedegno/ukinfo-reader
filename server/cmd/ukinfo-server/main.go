@@ -50,6 +50,7 @@ func run() error {
 	origin := flags.String("public-origin", "", "public origin behind a TLS reverse proxy (https://example.org)")
 	publicLimits := flags.Bool("public-limits", false, "bound anonymous API rates, exports and concurrent work")
 	placePostings := flags.Bool("experimental-place-postings", false, "private town/county posting experiment; disabled by default")
+	disableBusiness := flags.Bool("disable-business-search", false, "use the legacy classification path for comparison or rollback")
 	addressProbe := flags.Bool("experimental-address-probe", false, "opt-in bounded address probe experiment; disabled by default")
 	trustedProxy := flags.String("trusted-proxy", "", "public-limits: comma-separated socket peer CIDRs trusted for CF-Connecting-IP; never trust arbitrary forwarded headers")
 	data := flags.String("data-dir", "", "desktop: app-managed data directory")
@@ -57,7 +58,7 @@ func run() error {
 	desktopControl := flags.Bool("desktop-control", false, "enable capability-protected desktop ingestion on a separate loopback port")
 	legacyData := flags.String("source-data-dir", "", "repack-v1: app-managed schema-1 source directory; it remains unchanged")
 	addressBlocks := flags.Int("address-blocks", 0, "index-addresses: rollback-only pilot with this many evenly spaced source blocks per edition; zero builds the full index")
-	datasetKey := flags.String("dataset", "", "dataset key for verify, index-addresses, index-address-lookup or index-research")
+	datasetKey := flags.String("dataset", "", "dataset key for verification or index commands")
 	onspd := flags.String("onspd-zip", "", "import-onspd: local official ZIP (no extraction)")
 	geoRelease := flags.String("release", catalog.ONSPDRelease, "ONSPD release YYYY-MM")
 	geoSHA := flags.String("sha256", catalog.ONSPDSHA256, "expected ONSPD ZIP SHA-256")
@@ -73,8 +74,8 @@ func run() error {
 	if *trustedProxy != "" && !*publicLimits {
 		return errors.New("trusted-proxy requires public-limits")
 	}
-	if command != "serve" && command != "migrate" && command != "import" && command != "verify" && command != "repack-v1" && command != "stats" && command != "import-onspd" && command != "index-addresses" && command != "index-address-lookup" && command != "lock-archive" && command != "index-research" {
-		return fmt.Errorf("command must be serve, migrate, import, verify, stats, repack-v1, import-onspd, index-addresses, index-address-lookup or index-research")
+	if command != "serve" && command != "migrate" && command != "import" && command != "verify" && command != "repack-v1" && command != "stats" && command != "import-onspd" && command != "index-addresses" && command != "index-address-lookup" && command != "lock-archive" && command != "index-research" && command != "index-business-search" {
+		return fmt.Errorf("command must be serve, migrate, import, verify, stats, repack-v1, import-onspd, index-addresses, index-address-lookup, index-research or index-business-search")
 	}
 	if *desktopControl {
 		host, _, e := net.SplitHostPort(*listen)
@@ -139,7 +140,7 @@ func run() error {
 		return fmt.Errorf("database configuration failed")
 	}
 	defer db.Close()
-	if command == "migrate" || command == "import-onspd" || command == "index-address-lookup" || (command == "index-addresses" || command == "index-research") || *data != "" {
+	if command == "migrate" || command == "import-onspd" || command == "index-address-lookup" || command == "index-business-search" || (command == "index-addresses" || command == "index-research") || *data != "" {
 		if err = catalog.Migrate(ctx, db); err != nil {
 			return err
 		}
@@ -194,6 +195,19 @@ func run() error {
 		}
 		fmt.Fprintf(os.Stderr, "Imported %d entries\n", n)
 		return nil
+	}
+	if command == "index-business-search" {
+		if *datasetKey == "" {
+			return errors.New("index-business-search requires --dataset")
+		}
+		if err := checkAddressResources(); err != nil {
+			return err
+		}
+		n, e := catalog.IndexBusinessSearch(ctx, db, *datasetKey, checkAddressResources)
+		if e != nil {
+			return e
+		}
+		return json.NewEncoder(os.Stdout).Encode(map[string]any{"dataset": *datasetKey, "businesses": n})
 	}
 	if command == "index-research" {
 		if *datasetKey == "" {
@@ -320,6 +334,7 @@ func run() error {
 	api := catalog.NewAPI(db)
 	api.ExperimentalAddressProbe = *addressProbe
 	api.ExperimentalPlacePostings = *placePostings
+	api.DisableBusinessSearch = *disableBusiness
 	healthConfig := config.Copy()
 	healthConfig.MaxConns, healthConfig.MinConns = 1, 0
 	healthConfig.ConnConfig.RuntimeParams["statement_timeout"] = "1000"

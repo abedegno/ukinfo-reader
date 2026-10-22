@@ -20,6 +20,10 @@ func (a *API) matchSelectiveAddresses(ctx context.Context, f *candidateFilters) 
 	ctx, span := telemetry.Operation(ctx, "address.select")
 	defer func() { telemetry.End(span, err) }()
 	q := f.q
+	if f.businessSearch {
+		a.metrics.plan("business_projection")
+		return nil
+	}
 	if f.missing || !q.hasAddress() {
 		return nil
 	}

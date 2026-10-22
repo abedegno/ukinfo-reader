@@ -14,6 +14,7 @@ Short warm tests do not establish cold-storage or public-service capacity.
 - [Full-catalogue query workloads, stage costs and capacity](query-workload-2026-10-21.md)
 - [Bounded address probes and the full 2003 hosted projection](hosted-projection-2026-10-22.md)
 - [Town/county postings and business-only classification projection](place-business-spike-2026-10-22.md)
+- [Business classification API integration and full HTTP acceptance](business-api-2026-10-22.md)
 - [Adaptive query-planning review](query-planning-2026-10-19.md)
 - [Feature validation and national-query limits](review-validation.md)
 

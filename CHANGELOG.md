@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Integrate a complete, optional business-classification search projection with
+  canonical address joins, original record retrieval, unchanged pagination and
+  refinements, mixed-edition fallback, owner-only indexing and a rollback flag.
+- Require address-index coverage only for editions containing the requested
+  listing type, avoiding false failures on people-only editions in business searches.
+
 - Measure compact town/county postings and a classified-business projection with
   guarded private builders, cleanup and aggregate evidence. Keep experimental
   serving paths off while first-page tail latency remains unresolved.

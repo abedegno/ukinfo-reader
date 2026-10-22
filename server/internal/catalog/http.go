@@ -26,6 +26,7 @@ type API struct {
 	// Private access-path experiments. Initialize before serving; default off.
 	ExperimentalAddressProbe  bool
 	ExperimentalPlacePostings bool
+	DisableBusinessSearch     bool
 	DB                        *pgxpool.Pool
 	HealthDB                  *pgxpool.Pool
 	metrics                   *apiMetrics
@@ -407,6 +408,7 @@ type candidateFilters struct {
 	addressMatched       bool
 	addressLookup        bool
 	placePostings        bool
+	businessSearch       bool
 	geography            *GeographySearch
 	nearbyIDs            []int32
 	radiusArg            int
@@ -466,13 +468,6 @@ func (a *API) buildCandidateFilters(ctx context.Context, q query) (candidateFilt
 	if len(datasetIDs) == 0 {
 		return candidateFilters{}, 404, errors.New("Edition not imported")
 	}
-	if q.hasAddress() {
-		var indexed int
-		err = a.DB.QueryRow(ctx, "SELECT count(*) FROM address_indexes i JOIN datasets d ON d.id=i.dataset_id AND d.entries=i.entries WHERE i.dataset_id=ANY($1::smallint[]) AND i.version=1", datasetIDs).Scan(&indexed)
-		if err != nil || indexed != len(datasetIDs) {
-			return candidateFilters{}, 503, errors.New("Address search needs a complete address index for every selected edition")
-		}
-	}
 	kind := int16(0)
 	if q.Kind == "business" {
 		kind = 1
@@ -493,6 +488,13 @@ func (a *API) buildCandidateFilters(ctx context.Context, q query) (candidateFilt
 			selected = append(selected, dataset)
 		}
 		datasetIDs = selected
+	}
+	if q.hasAddress() {
+		var indexed int
+		err = a.DB.QueryRow(ctx, "SELECT count(*) FROM address_indexes i JOIN datasets d ON d.id=i.dataset_id AND d.entries=i.entries WHERE i.dataset_id=ANY($1::smallint[]) AND i.version=1", datasetIDs).Scan(&indexed)
+		if err != nil || indexed != len(datasetIDs) {
+			return candidateFilters{}, 503, errors.New("Address search needs a complete address index for every selected edition")
+		}
 	}
 	args := []any{datasetIDs, kind}
 	conditions := []string{"dataset_id=ANY($1::smallint[])", "kind=$2"}
@@ -600,7 +602,13 @@ func (a *API) buildCandidateFilters(ctx context.Context, q query) (candidateFilt
 			return candidateFilters{}, 503, errors.New("Build a complete research index for each selected edition to use grouping or business classifications")
 		}
 	}
-	if q.hasBusinessFilters() {
+	businessReady, readyErr := a.businessSearchReady(ctx, q, datasetIDs)
+	if readyErr != nil {
+		return candidateFilters{}, 503, errors.New("Business search unavailable")
+	}
+	if businessReady {
+		conditions = append(conditions, businessClassificationPredicate(q, &args, "entries"))
+	} else if q.hasBusinessFilters() {
 		identity := "r.dataset_id=entries.dataset_id AND r.id=entries.id"
 		clauses := []string{}
 		for _, filter := range []struct{ column, value string }{{"sic", q.SIC}, {"industry", q.Industry}} {
@@ -629,7 +637,7 @@ func (a *API) buildCandidateFilters(ctx context.Context, q query) (candidateFilt
 
 	}
 
-	f := candidateFilters{q: q, datasetKeys: datasetKeys, datasetIDs: datasetIDs, args: args, conditions: conditions, termCTEs: termCTEs, missing: missing, areaOnly: areaOnly, geography: geography, nearbyIDs: nearbyIDs, radiusArg: radiusArg, distances: distances}
+	f := candidateFilters{q: q, datasetKeys: datasetKeys, datasetIDs: datasetIDs, args: args, conditions: conditions, termCTEs: termCTEs, missing: missing, areaOnly: areaOnly, geography: geography, nearbyIDs: nearbyIDs, radiusArg: radiusArg, distances: distances, businessSearch: businessReady}
 	if err = a.matchSelectiveAddresses(ctx, &f); err != nil {
 		return candidateFilters{}, 503, searchReadError(err)
 	}
@@ -716,6 +724,10 @@ func (a *API) searchCandidates(ctx context.Context, q query) (searchResult, int,
 		for _, dataset := range datasetIDs {
 			args = append(args, dataset)
 			datasetArg := len(args)
+			if f.businessSearch {
+				branches = append(branches, businessSearchBranch(f, dataset, datasetArg, limitArg, conditions, &args, &termCTEs, order))
+				continue
+			}
 			if q.hasAddress() && !f.addressMatched {
 				if f.placePostings {
 					args = append(args, afterID)

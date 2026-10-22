@@ -11,6 +11,7 @@ The required `search` job runs complementary matrices and retains the
 | Business classification probes | 50,000 invented business projections; a broad industry prefix and 50 selected postcode records; actual API predicates under forced custom/generic plans | Wrong IDs/order; classification range used as the per-record index condition; non-index-only research access or heap fetches; 800 or more shared buffers |
 | Group representatives | 50,000 invented research keys; earliest-edition identity with reversed edition input; actual representative SQL under forced custom/generic plans | Wrong representative; unnecessary later-edition requests; wrong/unpruned research partition; heap fetches; more than one row per exact group probe; 100 or more shared buffers for three probes |
 | Bounded address pages | 4,500 selected sources plus 100,000 invented distinct-name projections; actual source-batch SQL under forced custom/generic plans | More than 128 returned IDs; wrong order; unselective source walks, covering-index heap fetches, lossy bitmap or more than 64 bitmap heap pages; 1,000 or more shared buffers |
+| Business search projection | Actual API SQL under custom/generic plans, positive classifications, mixed-edition metadata, prefixes, address/refinement paging and complete legacy comparison | Wrong bodies/cursors; missing fallback; wrong partition; non-covering access, heap fetches or more than 1,000 shared buffers |
 | Business/address pagination | 5,000 invented businesses with industry/SIC prefixes and separated town ranges | Missing or duplicate occurrences across complete default, name-sorted and grouped pagination |
 | Hosted projection comparison | Full 22,000-row invented edition; source/address/classification combinations, lookahead and successive pages; deliberately corrupted projection | Differences in IDs, grouping keys or decoded records; accepting the corrupted projection; private values in aggregate reports |
 | Search API | 22,546 invented entries in three editions; selective/broad/scattered names, given-name/wildcard/middle initial, street/town/county/house, full/partial postcode, nearby district centre, businesses, grouped/ordered results and complete pagination | Wrong counts, duplicate pages, wrong address/strategy, HTTP errors, truncated or endless pagination |
@@ -226,3 +227,11 @@ HTTP or database query budgets.
 The paired HTTP workload runner supports `--compare-pages 1..10` (default 1),
 following each server's own cursor and keeping query/record/hash/cursor values
 private. Compare fixed first-page attempts separately from variable later pages.
+
+The integrated business projection is separate from the private spike tables.
+Build it with `index-business-search` or
+[`deploy/production/business-search.sql`](../deploy/production/business-search.sql).
+It is eligible only for complete ordinary business-classification searches;
+grouped, ordered, nearby and unavailable editions retain the complete fallback.
+`serve --disable-business-search` provides a reversible comparison switch. The
+fixed `business_projection` plan label identifies selection without query values.

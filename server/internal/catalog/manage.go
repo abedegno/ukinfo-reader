@@ -36,7 +36,7 @@ func CatalogueInventory(ctx context.Context, db *pgxpool.Pool) (report Catalogue
 	report.Datasets = []ManagedDataset{}
 	rows, err := db.Query(ctx, `SELECT d.id,d.key,d.manifest,d.entries,d.imported_at,
  COALESCE((SELECT sum(pg_total_relation_size(c.oid)) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
- WHERE n.nspname=current_schema() AND c.relname IN ('entries_d'||d.id,'blocks_d'||d.id,'research_d'||d.id)),0)::bigint,
+ WHERE n.nspname=current_schema() AND c.relname IN ('entries_d'||d.id,'blocks_d'||d.id,'research_d'||d.id,'business_d'||d.id)),0)::bigint,
  EXISTS(SELECT 1 FROM address_indexes i WHERE i.dataset_id=d.id AND i.entries=d.entries AND i.version=1),
  EXISTS(SELECT 1 FROM research_indexes i WHERE i.dataset_id=d.id AND i.entries=d.entries AND i.version=1)
  FROM datasets d ORDER BY d.imported_at DESC,d.id DESC`)
@@ -62,7 +62,7 @@ func CatalogueInventory(ctx context.Context, db *pgxpool.Pool) (report Catalogue
 		return report, err
 	}
 	err = db.QueryRow(ctx, `SELECT pg_database_size(current_database()),
- pg_total_relation_size('terms')+pg_total_relation_size('address_locations')+pg_total_relation_size('address_members')+pg_total_relation_size('address_indexes')+pg_total_relation_size('research_indexes'),
+ pg_total_relation_size('terms')+pg_total_relation_size('address_locations')+pg_total_relation_size('address_members')+pg_total_relation_size('address_indexes')+pg_total_relation_size('research_indexes')+pg_total_relation_size('business_search_indexes'),
  (SELECT COALESCE(sum(pg_total_relation_size(relid)),0)::bigint FROM pg_partition_tree('postcode_locations'))`).Scan(&report.DatabaseBytes, &report.SharedBytes, &report.GeographyBytes)
 	if err != nil {
 		return report, err
@@ -146,6 +146,26 @@ func RemoveDataset(ctx context.Context, db *pgxpool.Pool, key string, expectedID
 			return err
 		}
 		if _, err = tx.Exec(ctx, "DELETE FROM research_indexes WHERE dataset_id=$1", id); err != nil {
+			return err
+		}
+	}
+	var businessReady bool
+	if err = tx.QueryRow(ctx, "SELECT EXISTS(SELECT FROM business_search_indexes WHERE dataset_id=$1)", id).Scan(&businessReady); err != nil {
+		return err
+	}
+	if businessReady {
+		name := fmt.Sprintf("business_d%d", id)
+		var attached bool
+		if err = tx.QueryRow(ctx, "SELECT EXISTS(SELECT FROM pg_inherits WHERE inhrelid=to_regclass($1) AND inhparent=to_regclass('business_search'))", pgx.Identifier{name}.Sanitize()).Scan(&attached); err != nil {
+			return err
+		}
+		if !attached {
+			return errors.New("business index ownership could not be verified")
+		}
+		if _, err = tx.Exec(ctx, "DROP TABLE "+pgx.Identifier{name}.Sanitize()); err != nil {
+			return err
+		}
+		if _, err = tx.Exec(ctx, "DELETE FROM business_search_indexes WHERE dataset_id=$1", id); err != nil {
 			return err
 		}
 	}
