@@ -110,6 +110,7 @@ jobs:
     env:
       UKINFO_TEST_DATABASE_URL: postgres://ukinfo:ci-only@127.0.0.1:5432/ukinfo?sslmode=disable
       UKINFO_PARADE_TEST_DATABASE_URL: postgres://postgres:ci-only@127.0.0.1:5433/parade_test?sslmode=disable
+      UKINFO_PARADE_WORK_REPORT: ${{ github.workspace }}/build/performance/parade-group-work.json
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
@@ -126,3 +127,11 @@ jobs:
       - name: All-edition compatibility, publication, rollback and Top-K plans
         working-directory: server
         run: go test -race -count=1 -run '^TestParadeIntegration$' ./internal/catalog
+      - name: Grouped and ordered search work evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: parade-search-work
+          path: build/performance/parade-group-work.json
+          if-no-files-found: warn
+          retention-days: 30

@@ -10,6 +10,8 @@ import (
 )
 
 type caseMetadata struct {
+	Name           bool   `json:"name"`
+	First          bool   `json:"first"`
 	Case           int    `json:"case"`
 	Route          string `json:"route"`
 	Scope          string `json:"scope"`
@@ -69,6 +71,8 @@ func metadata(path, output string) error {
 			if e != nil {
 				return e
 			}
+			row.Name = v.Get("surname") != "" || v.Get("organisation") != ""
+			row.First = v.Get("first_name") != ""
 			row.Postcode = v.Get("postcode") != ""
 			for _, key := range []string{"street", "locality", "town", "county"} {
 				row.Address = row.Address || v.Get(key) != ""

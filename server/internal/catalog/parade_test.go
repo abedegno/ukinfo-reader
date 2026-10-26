@@ -9,8 +9,10 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"path/filepath"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -121,6 +123,22 @@ func TestParadeIntegration(t *testing.T) {
 	if _, err = IndexResearch(ctx, source, "parade-postal", AddressIndexOptions{}); err != nil {
 		t.Fatal(err)
 	}
+	var dense bytes.Buffer
+	denseEncoder := json.NewEncoder(&dense)
+	denseEncoder.Encode(Manifest{Type: "manifest", Protocol: 1, Dataset: "parade-dense", Edition: "invented-2003-01", Title: "Invented dense name-pair groups", SHA256: map[string]string{"invented": strings.Repeat("d", 64)}, Expected: 320})
+	for i := 0; i < 320; i++ {
+		denseEncoder.Encode(map[string]any{"type": "record", "source_id": fmt.Sprint(i), "record": map[string]any{"surname": "Denseonly", "firstName": "June", "postcode": "AA1 1AA", "street": "Invented Dense Road", "town": "Dense Town", "houseno": fmt.Sprint(i + 1)}})
+	}
+	denseEncoder.Encode(map[string]any{"type": "end", "count": 320})
+	if _, err = Import(ctx, source, &dense); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = IndexAddresses(ctx, source, "parade-dense", AddressIndexOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = IndexResearch(ctx, source, "parade-dense", AddressIndexOptions{}); err != nil {
+		t.Fatal(err)
+	}
 	role := fmt.Sprintf("parade_reader_%d", time.Now().UnixNano())
 	if _, err = target.Exec(ctx, "CREATE ROLE "+role+" NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS"); err != nil {
 		t.Fatal(err)
@@ -142,14 +160,14 @@ func TestParadeIntegration(t *testing.T) {
 		t.Fatal("interrupted preparation", err)
 	}
 	options.CheckResources = nil
-	if n, e := BuildParadeIndex(ctx, source, target, "all", options); e != nil || n != 304 {
+	if n, e := BuildParadeIndex(ctx, source, target, "all", options); e != nil || n != 624 {
 		t.Fatal("complete visible editions", n, e)
 	}
-	if n, e := BuildParadeIndex(ctx, source, target, "all", options); e != nil || n != 304 {
+	if n, e := BuildParadeIndex(ctx, source, target, "all", options); e != nil || n != 624 {
 		t.Fatal("idempotent resume", n, e)
 	}
 	verification, e := VerifyParadeTrial(ctx, source, target, 8)
-	if e != nil || !verification.Passed || len(verification.Editions) != 7 {
+	if e != nil || !verification.Passed || len(verification.Editions) != 8 {
 		t.Fatal("all-edition verification", verification, e)
 	}
 	pilot, e := VerifyParadeEditionTrial(ctx, source, target, keys[0], 8)
@@ -241,6 +259,15 @@ func TestParadeIntegration(t *testing.T) {
 		"dataset=all&kind=business&sic=1234&limit=2",
 		"dataset=all&kind=business&industry=Invented*&sort=name&limit=2",
 		"dataset=all&surname=Researchonly&group=listing&limit=2",
+		"dataset=all&street=Invented+Street&group=listing&limit=2",
+		"dataset=all&street=Invented+Street&group=listing&sort=name&house=1&limit=2",
+		"dataset=all&street=Invented*&sort=edition&limit=37",
+		"dataset=parade-dense&town=Dense+Town&group=listing&limit=37",
+		"dataset=parade-dense&town=Dense+Town&group=listing&house=319&limit=2",
+		"dataset=parade-sparse&town=Invented+Sparse+Town&group=listing&limit=1",
+		"dataset=parade-sparse&town=Invented+Sparse+Town&group=listing&house=999&limit=1",
+		"dataset=parade-sparse&town=Invented+Sparse+Town&sort=edition&house=999&limit=2",
+
 		"dataset=all&surname=Researchonly&sort=edition&limit=2",
 		"dataset=all&surname=Absent&limit=2",
 		"dataset=parade-postal&postcode=W11&limit=1",
@@ -254,6 +281,7 @@ func TestParadeIntegration(t *testing.T) {
 	} {
 		check(q)
 	}
+	testParadeGroupWork(t, source, reader)
 	for _, key := range keys {
 		check("dataset=" + key + "&surname=Researchonly&limit=2")
 	}
@@ -266,7 +294,7 @@ func TestParadeIntegration(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	for _, input := range []string{"surname=Researchonly", "postcode=AA1", "street=Invented+Street", "surname=Researchonly&sort=name"} {
+	for _, input := range []string{"surname=Researchonly", "postcode=AA1", "street=Invented+Street", "surname=Researchonly&sort=name", "street=Invented+Street&sort=edition"} {
 		q, e := parse(mustValues("dataset=" + keys[0] + "&limit=2&" + input))
 		if e != nil {
 			t.Fatal(e)
@@ -302,7 +330,7 @@ func TestParadeIntegration(t *testing.T) {
 	// Unindexed explicit sample must fall back; all must never include that sample.
 	check("dataset=parade-sample&surname=Researchonly&limit=2")
 	var count int
-	if err = target.QueryRow(ctx, "SELECT count(*) FROM ukinfo_search.editions WHERE ready").Scan(&count); err != nil || count != 7 {
+	if err = target.QueryRow(ctx, "SELECT count(*) FROM ukinfo_search.editions WHERE ready").Scan(&count); err != nil || count != 8 {
 		t.Fatal("sample unexpectedly indexed", count, err)
 	}
 	if _, err = target.Exec(ctx, "UPDATE ukinfo_search.editions SET ready=false WHERE dataset_id=(SELECT min(dataset_id) FROM ukinfo_search.editions)"); err != nil {
@@ -339,6 +367,8 @@ func TestParadeIntegration(t *testing.T) {
 	if !errors.As(e, &denied) || denied.Code != "42501" {
 		t.Fatal("reader has write privileges", e)
 	}
+	testNativeReferencePrefix(t, source, "dataset=parade-dense&town=Dense+Town&group=listing&limit=37")
+	testNativeReferencePrefix(t, source, "dataset=all&street=Invented*&sort=edition&limit=37")
 	// Active backend faults fail closed instead of retrying a slow native search.
 	if _, err = target.Exec(ctx, "REVOKE SELECT ON ALL TABLES IN SCHEMA ukinfo_search FROM "+role); err != nil {
 		t.Fatal(err)
@@ -393,4 +423,127 @@ func paradeWalk(t *testing.T, first, rest *API, raw string) []result {
 	}
 	t.Fatal("unbounded fixture pagination")
 	return nil
+}
+
+// Count actual query work as well as comparing all pages. A dense pair extends
+// beyond the lexical discovery window, but target probes must drain it in a
+// bounded numeric batch without rereading other editions or decoding unused names.
+func testParadeGroupWork(t *testing.T, source, target *pgxpool.Pool) {
+	t.Helper()
+	ctx := context.Background()
+	a := NewAPI(source)
+	a.ParadeDB = target
+	raw := "dataset=parade-dense&town=Dense+Town&group=listing&limit=37"
+	w := httptest.NewRecorder()
+	a.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/search?"+raw, nil))
+	var out searchResult
+	if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &out) != nil || len(out.Items) != 37 || out.Next == "" {
+		t.Fatal("dense group discovery failed", w.Code)
+	}
+	discoveries, drains := a.metrics.phases[phaseKey{"parade_candidates", "ok"}].Count, a.metrics.phases[phaseKey{"parade_pair", "ok"}].Count
+	if discoveries != 1 || drains != 1 {
+		t.Fatal("dense group pair was repeatedly rediscovered")
+	}
+	later := false
+	for _, item := range out.Items {
+		if id, e := strconv.Atoi(item.SourceID); e == nil && id >= 128 {
+			later = true
+		}
+	}
+	if !later {
+		t.Fatal("fixture did not require groups beyond the discovery window")
+	}
+	editions, e := searchEditions(ctx, source, "parade-dense")
+	if e != nil {
+		t.Fatal(e)
+	}
+	q, e := parse(mustValues("dataset=parade-dense&town=Dense+Town&limit=100"))
+	if e != nil {
+		t.Fatal(e)
+	}
+	sql, args := paradeSQLBounds(q, editions[0], paradePosition{}, true, &paradeNamePair{Name: Normalize("Denseonly"), First: Normalize("June")})
+	var rawPlan []byte
+	if e = target.QueryRow(ctx, "EXPLAIN(ANALYZE,BUFFERS,FORMAT JSON) "+sql, args...).Scan(&rawPlan); e != nil {
+		t.Fatal(e)
+	}
+	var plans []map[string]any
+	if json.Unmarshal(rawPlan, &plans) != nil || len(plans) != 1 {
+		t.Fatal("invalid numeric pair plan")
+	}
+	heap := float64(0)
+	var walk func(map[string]any)
+	walk = func(n map[string]any) {
+		if v, ok := n["Heap Fetches"].(float64); ok {
+			heap += v
+		}
+		if children, ok := n["Plans"].([]any); ok {
+			for _, child := range children {
+				walk(child.(map[string]any))
+			}
+		}
+	}
+	walk(plans[0]["Plan"].(map[string]any))
+	if heap > float64(q.Limit) || !bytes.Contains(rawPlan, []byte("TopKScanExecState")) {
+		t.Fatalf("numeric pair exceeded bounded Top-K work, heap fetches=%g", heap)
+	}
+	// A publication hole must fail explicitly rather than omit one occurrence.
+	var id int32
+	var sourceHash, group []byte
+	var sic, industry string
+	dataset := editions[0].ID
+	if e = source.QueryRow(ctx, "DELETE FROM research_keys WHERE dataset_id=$1 AND id=1 RETURNING id,source_hash,group_key,sic,industry", dataset).Scan(&id, &sourceHash, &group, &sic, &industry); e != nil {
+		t.Fatal(e)
+	}
+	defer func() {
+		if _, e := source.Exec(ctx, "INSERT INTO research_keys(dataset_id,id,source_hash,group_key,sic,industry) VALUES($1,$2,$3,$4,$5,$6)", dataset, id, sourceHash, group, sic, industry); e != nil {
+			t.Fatal(e)
+		}
+	}()
+	w = httptest.NewRecorder()
+	a.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/search?"+raw, nil))
+	if w.Code != 503 || !bytes.Contains(w.Body.Bytes(), []byte("catalogue_integrity")) {
+		t.Fatal("missing group key did not fail closed", w.Code)
+	}
+	if output := os.Getenv("UKINFO_PARADE_WORK_REPORT"); output != "" {
+		if e := os.MkdirAll(filepath.Dir(output), 0755); e != nil {
+			t.Fatal(e)
+		}
+		raw, e := json.MarshalIndent(map[string]any{"conditions": "invented dense-pair fixture; execution work only", "fixture_rows": 320, "page_size": 37, "discovery_scans": discoveries, "pair_drains": drains, "numeric_plan_heap_fetches": heap, "numeric_plan_limit": q.Limit, "missing_source_key_rejected": true, "passed": true}, "", "  ")
+		if e != nil {
+			t.Fatal(e)
+		}
+		if e = os.WriteFile(output, append(raw, '\n'), 0644); e != nil {
+			t.Fatal(e)
+		}
+	}
+}
+
+func testNativeReferencePrefix(t *testing.T, db *pgxpool.Pool, raw string) {
+	t.Helper()
+	a := NewAPI(db)
+	values, _ := url.ParseQuery(raw)
+	original := values.Encode()
+	gold := []searchResult{}
+	for i := 0; i < 3; i++ {
+		w := httptest.NewRecorder()
+		a.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/search?"+values.Encode(), nil))
+		var result searchResult
+		if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &result) != nil || len(result.Items) == 0 {
+			t.Fatal("native oracle fixture", w.Code)
+		}
+		gold = append(gold, result)
+		values.Set("cursor", result.Next)
+	}
+	values, _ = url.ParseQuery(original)
+	bound := gold[2].Items[0]
+	pages, e := NativeOrderedPrefixReference(context.Background(), db, values, bound.Dataset, int32(bound.ID))
+	if e != nil || len(pages) != 2 {
+		t.Fatal("source prefix oracle", e)
+	}
+	for i, body := range pages {
+		var got searchResult
+		if json.Unmarshal(body, &got) != nil || !reflect.DeepEqual(got.Items, gold[i].Items) || (got.Next != "") != (gold[i].Next != "") {
+			t.Fatal("prefix excluded an earlier source result")
+		}
+	}
 }

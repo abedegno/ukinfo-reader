@@ -7,6 +7,7 @@ Short warm tests do not establish cold-storage or public-service capacity.
 
 ## Storage and query execution
 
+- [Grouped, edition and alphabetical postcode search follow-up](ordered-search-2026-10-26.md) — independent source references, fixed workload, concurrency and source-cold checks.
 - [Equal-budget hybrid control and hosted rollout](parade-rollout-2026-10-26.md) — complete fixed cohort, remaining tails and deployment evidence.
 
 - [Hybrid routing, complete workload and measured cold-cache follow-up](parade-hybrid-trial-2026-10-26.md)

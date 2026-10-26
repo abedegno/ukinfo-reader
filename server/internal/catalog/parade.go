@@ -12,9 +12,11 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/sync/errgroup"
 )
 
 const paradeVersion = 1
@@ -69,7 +71,7 @@ func searchEditions(ctx context.Context, db *pgxpool.Pool, scope string) ([]para
 
 // Restrict the optional accelerator to address filters validated by the real trial.
 func paradeEligible(q query) bool {
-	return q.hasAddress() && q.Group == "" && q.Near == "" && (q.Sort == "" || q.Sort == "name")
+	return q.hasAddress() && q.Near == "" && (q.Sort == "" || q.Sort == "name" || (q.Sort == "edition" && q.Group == ""))
 }
 
 // ParadeDB contains derived search rows only; permissions, visibility and original
@@ -122,6 +124,12 @@ func (a *API) paradeResults(ctx context.Context, q query) (searchResult, int, bo
 	}
 	end(nil)
 	a.metrics.plan("paradedb")
+	if q.Group != "" {
+		out, status, err := orderedResultsWith(ctx, q, func(ctx context.Context, q query) (searchResult, []orderCursor, int, error) {
+			return a.paradeGroupedCandidates(ctx, q, editions)
+		})
+		return out, status, true, err
+	}
 	keys := map[int16]string{}
 	for _, d := range editions {
 		keys[d.ID] = d.Key
@@ -192,7 +200,8 @@ func (a *API) paradeResults(ctx context.Context, q query) (searchResult, int, bo
 type paradePosition struct {
 	Dataset                         int16
 	ID, NameID, FirstID, PostcodeID int32
-	Name, First                     string
+	Name, First, Edition            string
+	PairSeek, PairInclusive         bool
 }
 
 func paradeAfter(q query, keys map[int16]string) (paradePosition, error) {
@@ -204,12 +213,12 @@ func paradeAfter(q query, keys map[int16]string) (paradePosition, error) {
 	if e != nil {
 		return paradePosition{}, invalid
 	}
-	if q.Sort == "name" {
+	if q.Sort == "name" || q.Sort == "edition" {
 		var c orderCursor
-		if json.Unmarshal(b, &c) != nil || c.Query != q.fingerprint() || keys[c.Dataset] == "" || c.ID < 1 || len(c.Name) > 256 || len(c.First) > 256 || c.Group != "" {
+		if json.Unmarshal(b, &c) != nil || c.Query != q.fingerprint() || keys[c.Dataset] == "" || c.ID < 1 || len(c.Name) > 256 || len(c.First) > 256 || len(c.Edition) > 7 || c.Group != "" {
 			return paradePosition{}, invalid
 		}
-		return paradePosition{Dataset: c.Dataset, ID: c.ID, Name: c.Name, First: c.First}, nil
+		return paradePosition{Dataset: c.Dataset, ID: c.ID, Name: c.Name, First: c.First, Edition: c.Edition}, nil
 	}
 	var c cursor
 	if json.Unmarshal(b, &c) != nil || c.Query != q.fingerprint() || keys[c.Dataset] == "" || c.ID < 1 || c.Name < 0 || c.First < 0 || c.Postcode < 0 {
@@ -218,14 +227,14 @@ func paradeAfter(q query, keys map[int16]string) (paradePosition, error) {
 	return paradePosition{Dataset: c.Dataset, ID: c.ID, NameID: c.Name, FirstID: c.First, PostcodeID: c.Postcode}, nil
 }
 func paradeEncode(q query, p paradePosition) string {
-	if q.Sort == "name" {
-		return encodeOrder(orderCursor{Query: q.fingerprint(), Dataset: p.Dataset, ID: p.ID, Name: p.Name, First: p.First})
+	if q.Sort == "name" || q.Sort == "edition" {
+		return encodeOrder(orderCursor{Query: q.fingerprint(), Dataset: p.Dataset, ID: p.ID, Name: p.Name, First: p.First, Edition: p.Edition})
 	}
 	b, _ := json.Marshal(cursor{Query: q.fingerprint(), Dataset: p.Dataset, ID: p.ID, Name: p.NameID, First: p.FirstID, Postcode: p.PostcodeID})
 	return base64.RawURLEncoding.EncodeToString(b)
 }
 func paradeOrder(q query) []string {
-	if q.Sort == "name" {
+	if q.Sort == "name" || q.Sort == "edition" {
 		return []string{"name", "first_full", "dataset_id", "id"}
 	}
 	if q.hasAddress() {
@@ -255,6 +264,11 @@ func (p paradePosition) value(key string) any {
 	}
 }
 func paradeCompare(q query, a, b paradePosition) int {
+	if q.Sort == "edition" {
+		if c := cmp.Compare(b.Edition, a.Edition); c != 0 {
+			return c
+		}
+	}
 	for _, key := range paradeOrder(q) {
 		var c int
 		switch av := a.value(key).(type) {
@@ -275,8 +289,33 @@ func paradeSQL(q query, d paradeEdition, after paradePosition) (string, []any) {
 	return paradeSQLPrefix(q, d, after, true)
 }
 func paradeSQLPrefix(q query, d paradeEdition, after paradePosition, prefilter bool) (string, []any) {
+	return paradeSQLBounds(q, d, after, prefilter, nil)
+}
+
+type paradeNamePair struct{ Name, First string }
+
+func paradeSQLBounds(q query, d paradeEdition, after paradePosition, prefilter bool, pair *paradeNamePair) (string, []any) {
 	args := []any{}
 	conditions := searchFieldConditions(q, &args)
+	if pair != nil {
+		args = append(args, pair.Name, pair.First)
+		conditions = append(conditions, fmt.Sprintf("name=$%d AND first_full=$%d", len(args)-1, len(args)))
+	}
+	if after.PairSeek {
+		args = append(args, after.Name, after.First)
+		op := ">"
+		if after.PairInclusive {
+			op = ">="
+		}
+		conditions = append(conditions, fmt.Sprintf("(name>$%d OR (name=$%d AND first_full%s$%d))", len(args)-1, len(args)-1, op, len(args)))
+		after = paradePosition{}
+	}
+	if q.Sort == "edition" && after.ID > 0 && d.sortEdition() != after.Edition {
+		if d.sortEdition() > after.Edition {
+			conditions = append(conditions, "false")
+		}
+		after = paradePosition{}
+	}
 	// Keep the complete scalar range/precision predicate. The redundant literal
 	// token prefix lets the inverted index narrow candidates before fast-field
 	// range checks and sorting; user regex syntax is never accepted.
@@ -315,32 +354,72 @@ func paradeSQLPrefix(q query, d paradeEdition, after paradePosition, prefilter b
 		}
 	}
 	args = append(args, q.Limit)
-	return "SELECT id,name_id,first_id,postcode_id,name,first_full FROM ukinfo_search." + d.table() + " WHERE " + strings.Join(conditions, " AND ") + " ORDER BY " + strings.Join(order, ",") + fmt.Sprintf(" LIMIT $%d", len(args)), args
+	projection := "id,name_id,first_id,postcode_id,name,first_full"
+	if q.Sort != "name" && q.Sort != "edition" {
+		projection = "id,name_id,first_id,postcode_id,''::text,''::text"
+	}
+	return "SELECT " + projection + " FROM ukinfo_search." + d.table() + " WHERE " + strings.Join(conditions, " AND ") + " ORDER BY " + strings.Join(order, ",") + fmt.Sprintf(" LIMIT $%d", len(args)), args
 }
 func (a *API) paradePositions(ctx context.Context, q query, editions []paradeEdition, after paradePosition) ([]paradePosition, error) {
 	ctx, end := a.searchPhase(ctx, "parade_candidates")
 	var failure error
 	defer func() { end(failure) }()
 	out := []paradePosition{}
-	for _, d := range editions {
+	read := func(ctx context.Context, d paradeEdition) ([]paradePosition, error) {
 		sql, args := paradeSQL(q, d, after)
 		rows, err := a.ParadeDB.Query(ctx, sql, args...)
 		if err != nil {
-			failure = err
 			return nil, err
 		}
+		defer rows.Close()
+		batch := []paradePosition{}
+		edition := d.sortEdition()
 		for rows.Next() {
-			p := paradePosition{Dataset: d.ID}
+			p := paradePosition{Dataset: d.ID, Edition: edition}
 			if err = rows.Scan(&p.ID, &p.NameID, &p.FirstID, &p.PostcodeID, &p.Name, &p.First); err != nil {
+				return nil, err
+			}
+			batch = append(batch, p)
+		}
+		return batch, rows.Err()
+	}
+	if q.Sort == "edition" {
+		editions = slices.Clone(editions)
+		slices.SortStableFunc(editions, func(a, b paradeEdition) int { return cmp.Compare(b.sortEdition(), a.sortEdition()) })
+		for _, d := range editions {
+			if after.ID > 0 && d.sortEdition() > after.Edition {
+				continue
+			}
+			if len(out) >= q.Limit && d.sortEdition() < out[len(out)-1].Edition {
 				break
 			}
-			out = append(out, p)
+			batch, err := read(ctx, d)
+			if err != nil {
+				failure = err
+				return nil, err
+			}
+			out = append(out, batch...)
 		}
-		if err == nil {
-			err = rows.Err()
+	} else {
+		// Two edition scans may overlap I/O. The shared four-connection target
+		// pool still bounds all requests; any failed branch cancels its sibling
+		// and discards the entire partial result. Merge order remains exact.
+		g, groupCtx := errgroup.WithContext(ctx)
+		g.SetLimit(2)
+		var mu sync.Mutex
+		for _, d := range editions {
+			g.Go(func() error {
+				batch, err := read(groupCtx, d)
+				if err != nil {
+					return err
+				}
+				mu.Lock()
+				out = append(out, batch...)
+				mu.Unlock()
+				return nil
+			})
 		}
-		rows.Close()
-		if err != nil {
+		if err := g.Wait(); err != nil {
 			failure = err
 			return nil, err
 		}
@@ -350,4 +429,14 @@ func (a *API) paradePositions(ctx context.Context, q query, editions []paradeEdi
 		out = out[:q.Limit]
 	}
 	return out, nil
+}
+
+var paradeEditionDate = regexp.MustCompile(`[12][0-9]{3}-[01][0-9]`)
+
+func (d paradeEdition) sortEdition() string {
+	var m struct {
+		Edition string `json:"edition"`
+	}
+	_ = json.Unmarshal(d.Manifest, &m)
+	return paradeEditionDate.FindString(m.Edition)
 }

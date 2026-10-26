@@ -30,8 +30,12 @@ func encodeOrder(c orderCursor) string {
 	return base64.RawURLEncoding.EncodeToString(raw)
 }
 func (a *API) orderedResults(ctx context.Context, q query) (searchResult, int, error) {
+	return orderedResultsWith(ctx, q, a.orderedCandidates)
+}
+
+func orderedResultsWith(ctx context.Context, q query, candidates func(context.Context, query) (searchResult, []orderCursor, int, error)) (searchResult, int, error) {
 	if !q.hasRefinements() {
-		out, _, status, err := a.orderedCandidates(ctx, q)
+		out, _, status, err := candidates(ctx, q)
 		return out, status, err
 	}
 	limit := q.Limit
@@ -39,7 +43,7 @@ func (a *API) orderedResults(ctx context.Context, q query) (searchResult, int, e
 	out := searchResult{Items: []result{}}
 	var last orderCursor
 	for {
-		batch, positions, status, err := a.orderedCandidates(ctx, q)
+		batch, positions, status, err := candidates(ctx, q)
 		if err != nil {
 			return searchResult{}, status, err
 		}
@@ -190,6 +194,11 @@ func (a *API) orderedCandidates(ctx context.Context, q query) (searchResult, []o
 	if err != nil {
 		return searchResult{}, nil, 503, searchReadError(err)
 	}
+	return a.finishOrderedCandidates(ctx, q, f, positions)
+}
+
+func (a *API) finishOrderedCandidates(ctx context.Context, q query, f candidateFilters, positions []orderCursor) (searchResult, []orderCursor, int, error) {
+	out := searchResult{Items: []result{}, Geography: f.geography}
 	if len(positions) > q.Limit {
 		positions = positions[:q.Limit]
 		out.Next = encodeOrder(positions[len(positions)-1])
@@ -304,33 +313,40 @@ func (a *API) readOrderedPositions(ctx context.Context, q query, sql string, arg
 	}
 	return positions, rows.Err()
 }
+
+type orderedNamePair struct {
+	nameID, firstID int32
+	name, first     string
+	count           int64
+}
+
 func (a *API) orderedPairPositions(ctx context.Context, q query, ctes, prefix []string, pairs, inner, after string, args []any) ([]orderCursor, error) {
 	pairArgs := args[:len(args)-1]
 	if q.Cursor != "" {
 		pairArgs = args[:len(args)-4]
 	}
-	rows, err := a.searchRows(ctx, "ordered", "WITH "+strings.Join(ctes, ",")+" "+pairs, pairArgs, false)
+	selected, batched, err := a.postcodeNamePairs(ctx, q, ctes, args)
 	if err != nil {
 		return nil, err
 	}
-	type pair struct {
-		nameID, firstID int32
-		name, first     string
-		count           int64
-	}
-	selected := []pair{}
-	for rows.Next() {
-		var p pair
-		if err = rows.Scan(&p.nameID, &p.firstID, &p.name, &p.first, &p.count); err != nil {
-			rows.Close()
+	if !batched {
+		rows, err := a.searchRows(ctx, "ordered", "WITH "+strings.Join(ctes, ",")+" "+pairs, pairArgs, false)
+		if err != nil {
 			return nil, err
 		}
-		selected = append(selected, p)
-	}
-	err = rows.Err()
-	rows.Close()
-	if err != nil {
-		return nil, err
+		for rows.Next() {
+			var p orderedNamePair
+			if err = rows.Scan(&p.nameID, &p.firstID, &p.name, &p.first, &p.count); err != nil {
+				rows.Close()
+				return nil, err
+			}
+			selected = append(selected, p)
+		}
+		err = rows.Err()
+		rows.Close()
+		if err != nil {
+			return nil, err
+		}
 	}
 	positions := []orderCursor{}
 	for start := 0; start < len(selected); {

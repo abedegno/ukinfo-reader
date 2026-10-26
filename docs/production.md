@@ -270,8 +270,9 @@ any staged edition publication procedure before swapping catalogue identities.
 The NAS deployment enabled the optional [ParadeDB hybrid adapter](paradedb-preview.md)
 on 26 October 2026, after a complete equal-budget control. The original PostgreSQL
 catalogue remains authoritative; the separate pinned derived database selects
-address-filter candidates. Names/postcodes without address filters, grouped,
-nearby and edition-sorted searches retain native execution. Desktop is unchanged.
+address-filter candidates, including grouped default/alphabetical searches and
+ungrouped edition ordering. Names/postcodes without address filters, nearby and
+grouped edition-sorted searches retain native execution. Desktop is unchanged.
 
 Homelab keeps the persistent target configuration, staged rollout, image identity
 checks and internal reference acceptance under `docker/ukinfo/parade-serving/`.
