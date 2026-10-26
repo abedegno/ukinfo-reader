@@ -125,3 +125,26 @@ local monitor reported health, metrics, disk, backup freshness and timeout rate
 all OK. Splunk registered the new target-pool series and a `parade_candidates`
 phase series. Existing alert delivery remains disabled; no new notification
 recipients were configured.
+
+## Certificate-security follow-up
+
+CI identified the existing Electron 44.9.0 certificate advisory. Its remediation
+was followed by the Go advisory scan, which found the same compromised-certificate
+mitigation missing from Go 1.26.9. The exact upstream reports are
+[GHSA-jr5w-w6x2-84p9](https://github.com/advisories/GHSA-jr5w-w6x2-84p9) and
+[GO-2026-6809](https://pkg.go.dev/vuln/GO-2026-6809).
+
+The active hosted release is now **`ukinfo:hosted-2026-10-26.2`**, built with Go
+1.26.10. Desktop's pinned Electron dependency is 44.9.3. The Go race suite, vet,
+pinned-extension integration and vulnerability scan passed; desktop's 22 unit
+tests and npm audit passed with zero reported vulnerabilities. Hosting-edge TLS
+and quota checks also passed. The advisory CI check is green.
+
+The patched image again matched all twelve internal references in native mode,
+then all twelve in hybrid mode. Source instance identity/start time/restarts
+remained unchanged. The final public health/UI/invented-query checks passed, and
+hybrid routing and existing security flags remain enabled. These checks are
+recorded separately from the original rollout evidence. Performance tables above
+remain measurements of the earlier build; they were not rerun for the certificate
+patch. Prefer native routing on the current patched image when rolling back;
+older retained images predate these mitigations.

@@ -193,7 +193,7 @@ grouped/ordered/postcode tails are documented there. Backup/restore and extensio
 upgrade recovery exercises were explicitly skipped at the operator's request;
 the pinned derived database is rebuildable from original media. Existing source
 backups remain authoritative; the observed full build took 5 hours 17 minutes.
-Keep native indexes and the previous image for rollback. Desktop packaging and
+Keep native indexes and use the current patched image for native rollback. Desktop packaging and
 extension upgrades require separate validation.
 
 The [serving-schema trial tools](../tools/parade-preview/README.md) provide real

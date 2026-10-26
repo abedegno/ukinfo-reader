@@ -281,7 +281,7 @@ Cloudflare protections and source deadlines are preserved.
 
 To roll back routing on this deployment, set `UKINFO_SEARCH_BACKEND=native` in
 `~/homelab/docker/ukinfo/.env`, then run `docker/ukinfo/deploy.sh up` from homelab.
-Native startup does not connect to the derived target. The previous application
-image `ukinfo:hosted-2026-10-22.1` is retained for image rollback. Keep native
-indexes. Read the [control, diagnostics and rollout evidence](research/parade-rollout-2026-10-26.md)
+Native startup does not connect to the derived target. Use the current Go 1.26.10 patched image for native rollback. Older application
+images remain retained for investigation; they predate the certificate mitigation.
+Keep native indexes. Read the [control, diagnostics and rollout evidence](research/parade-rollout-2026-10-26.md)
 before changing the pinned extension or removing retained derived data.
