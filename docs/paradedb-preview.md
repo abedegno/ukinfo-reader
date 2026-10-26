@@ -36,8 +36,13 @@ middle-initial refinements use displayed original records, continuing through
 complete candidate batches until the page plus lookahead is known. No sparse
 candidate-count cap truncates results.
 
-Grouped/deduplicated searches, nearby/nearest searches and edition ordering use
-the native backend. They remain available; this version does not accelerate them.
+Address-filter searches also accelerate grouped/deduplicated results in default
+or alphabetical order, and ungrouped results in edition order. Grouping consumes
+each complete name/first-name pair before emitting its canonical source groups;
+dense pairs use numeric batches rather than repeated lexical discovery. Edition
+ordering queries newer dates first and stops only once older dates cannot enter
+the page. Tied dates retain the original name/dataset/record ordering.
+Nearby/nearest searches and grouped edition ordering retain native execution.
 Group membership, record detail, maps, exports and archival lookup retain their
 existing permission and original-record checks. Exports use the same search
 selector and pagination as the interactive API.
@@ -68,6 +73,12 @@ Partial-postcode searches additionally use a literal-token prefix prefilter via
 escaped and bound as a parameter; user regex syntax is never accepted. The
 original scalar range and district/sector precision predicates remain in place,
 so the prefilter changes candidate work without changing search semantics.
+
+The native alphabetical postcode path batches distinct vocabulary reads for up
+to 65,536 name pairs, then orders the same complete population. An overflowing
+probe uses the original SQL path; the ceiling never limits successful results.
+See the [ordered-search follow-up](research/ordered-search-2026-10-26.md) for
+measurements, source-cold checks and remaining concurrency timeouts.
 
 ## Build privately
 
@@ -170,26 +181,34 @@ cd server
 go test -race -count=1 -run '^TestParadeIntegration$' ./internal/catalog
 ```
 
-Invented fixtures cover five edition labels plus a hidden sample, a 260-row
-sparse-refinement edition and postcode district/sector boundaries. Tests walk
+Invented fixtures cover eight visible editions plus a hidden sample, a 260-row
+sparse-refinement edition, a 320-group dense pair, tied edition dates and postcode
+district/sector boundaries. Tests walk
 complete result sets, compare original records and order with native, cross
 backends mid-pagination, check primary and
 continuation Top-K plans, interrupt/resume publication, invalidate import
-metadata, reject partial all-edition readiness, exercise grouped/native fallback,
+metadata, reject partial all-edition readiness, exercise grouped/native cursors,
 and verify permission faults fail closed. Write denial is checked with read-only
 defaults disabled. These are **synthetic all-edition compatibility checks**, not a
 new benchmark of the complete real archive or historical format decoders.
 
 Fixed observability labels `paradedb`/`paradedb_fallback` identify selection;
 `parade_inventory`/`parade_candidates` measure target phases. Existing original
-record-load signals remain. Query text, names and postcode values are not labels.
+record-load signals remain; `parade_pair` measures dense grouped-pair drains.
+Query text, names and postcode values are not labels.
+
+CI publishes `parade-search-work` and the native performance artifacts. Work
+gates check one lexical discovery plus one numeric drain for the dense fixture,
+bounded Top-K heap fetches, and one batched vocabulary query for 360 postcode
+pairs. They assert work and correctness rather than machine-dependent latency.
 
 The real five-edition trials now cover first/deeper pages, native fallbacks,
 field/order checks, fixed-cohort per-engine warm load and rollback with the target
 offline. The hybrid policy has also been tested over the complete corpus and
 measured cold file caches. The [equal-budget control and rollout](research/parade-rollout-2026-10-26.md)
-confirm the selected policy with unchanged production deadlines. Remaining native
-grouped/ordered/postcode tails are documented there. Backup/restore and extension-
+confirm the selected policy with unchanged production deadlines. The
+[ordered-search follow-up](research/ordered-search-2026-10-26.md) extends coverage
+and records remaining nearby/concurrency tails. Backup/restore and extension-
 upgrade recovery exercises were explicitly skipped at the operator's request;
 the pinned derived database is rebuildable from original media. Existing source
 backups remain authoritative; the observed full build took 5 hours 17 minutes.

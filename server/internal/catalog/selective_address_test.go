@@ -246,6 +246,7 @@ INSERT INTO geography_active VALUES(true,'2026-08'); ANALYZE;`); err != nil {
 		}
 	}
 	testOrderedSurnameWindows(t, db)
+	testOrderedVocabularyBatch(t, db)
 	testSourceProbeReuse(t, db)
 	testBusinessAddressIntersection(t, db)
 	testSearchPhaseRows(t, db)
@@ -609,5 +610,42 @@ func testSearchPhaseRows(t *testing.T, db *pgxpool.Pool) {
 	}
 	if err == nil || db.Stat().AcquiredConns() != 0 || a.metrics.phases[phaseKey{"candidates", "error"}].Count != 1 {
 		t.Fatal("query error leaked resources or disappeared")
+	}
+}
+
+func testOrderedVocabularyBatch(t *testing.T, db *pgxpool.Pool) {
+	t.Helper()
+	ctx := context.Background()
+	var dataset int16
+	if e := db.QueryRow(ctx, "SELECT id FROM datasets WHERE key='surname-windows'").Scan(&dataset); e != nil {
+		t.Fatal(e)
+	}
+	q, e := parse(mustValues("dataset=surname-windows&postcode=AA1&sort=name&limit=100"))
+	if e != nil {
+		t.Fatal(e)
+	}
+	a := NewAPI(db)
+	ctes := []string{"ordered_candidates AS MATERIALIZED (SELECT name_id,first_id,count(*) AS occurrences FROM entries WHERE dataset_id=$1 AND kind=$2 GROUP BY name_id,first_id)"}
+	pairs, batched, e := a.postcodeNamePairs(ctx, q, ctes, []any{dataset, int16(0), 101})
+	if e != nil || !batched || len(pairs) != 128 {
+		t.Fatal("postcode vocabulary batch", e)
+	}
+	if pairs[0].name != Normalize("Surnamewindow0000") || pairs[127].name != Normalize("Surnamewindow0254") {
+		t.Fatal("unused vocabulary or numeric ID order changed the lexical window")
+	}
+	if a.metrics.phases[phaseKey{"ordered", "ok"}].Count != 1 || a.metrics.phases[phaseKey{"vocabulary", "ok"}].Count != 1 {
+		t.Fatal("name labels were fetched with repeated point queries")
+	}
+	if directory := os.Getenv("UKINFO_PERFORMANCE_REPORT_DIR"); directory != "" {
+		if e := os.MkdirAll(directory, 0755); e != nil {
+			t.Fatal(e)
+		}
+		raw, e := json.MarshalIndent(map[string]any{"conditions": "invented postcode/name-pair fixture; execution work only", "fixture_pairs": 360, "returned_pair_window": len(pairs), "ordered_queries": a.metrics.phases[phaseKey{"ordered", "ok"}].Count, "vocabulary_queries": a.metrics.phases[phaseKey{"vocabulary", "ok"}].Count, "passed": true}, "", "  ")
+		if e != nil {
+			t.Fatal(e)
+		}
+		if e = os.WriteFile(filepath.Join(directory, "ordered-vocabulary-work.json"), append(raw, '\n'), 0644); e != nil {
+			t.Fatal(e)
+		}
 	}
 }

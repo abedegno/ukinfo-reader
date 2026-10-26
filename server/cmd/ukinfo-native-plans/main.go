@@ -85,6 +85,7 @@ type observation struct {
 	OriginalMS float64 `json:"original_ms"`
 	ExplainMS  float64 `json:"explain_ms"`
 	Outcome    string  `json:"outcome"`
+	JITMS      float64 `json:"jit_ms"`
 	Nodes      []node  `json:"nodes"`
 }
 
@@ -110,7 +111,11 @@ func run() error {
 	ords := flag.String("ordinals", "56,91,92,212", "up to 12 private case ordinals")
 	output := flag.String("output", "", "new aggregate report")
 	estimate := flag.Bool("estimate-only", false, "capture estimated structure without executing EXPLAIN ANALYZE")
+	analysisMS := flag.Int("analysis-ms", 10000, "private diagnostic statement budget, 1000..60000 ms; API deadlines stay unchanged")
 	flag.Parse()
+	if *analysisMS < 1000 || *analysisMS > 60000 {
+		return errors.New("invalid diagnostic statement budget")
+	}
 	raw, e := os.ReadFile(*file)
 	if e != nil {
 		return errors.New("cases unavailable")
@@ -174,7 +179,7 @@ func run() error {
 			if e != nil {
 				return errors.New("diagnostic transaction unavailable")
 			}
-			_, e = tx.Exec(ctx, "SET LOCAL statement_timeout='10000'; SET LOCAL work_mem='32MB'")
+			_, e = tx.Exec(ctx, fmt.Sprintf("SET LOCAL statement_timeout='%d'; SET LOCAL work_mem='32MB'", *analysisMS))
 			started := time.Now()
 			var raw []byte
 			if e == nil {
@@ -188,6 +193,11 @@ func run() error {
 			if e == nil {
 				var plans []map[string]any
 				if json.Unmarshal(raw, &plans) == nil && len(plans) == 1 {
+					if jit, ok := plans[0]["JIT"].(map[string]any); ok {
+						if timing, ok := jit["Timing"].(map[string]any); ok {
+							ob.JITMS, _ = timing["Total"].(float64)
+						}
+					}
 					root, _ := plans[0]["Plan"].(map[string]any)
 					ob.Nodes = summarize(root)
 					ob.Outcome = "ok"

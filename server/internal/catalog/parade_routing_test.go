@@ -26,9 +26,10 @@ func TestParadeHybridRouting(t *testing.T) {
 		{"surname=Inv*&postcode=AA1&town=Invented&sort=name", true},
 		{"kind=business&sic=1234&town=Invented", true},
 		{"surname=Invented&town=Invented&house=99", true},
-		{"town=Invented&group=listing", false},
+		{"town=Invented&group=listing", true},
 		{"town=Invented&near=AA1+1AA", false},
-		{"town=Invented&sort=edition", false},
+		{"town=Invented&sort=edition", true},
+		{"town=Invented&group=listing&sort=edition", false},
 	} {
 		t.Run(tc.query, func(t *testing.T) {
 			q, err := parse(mustValues("dataset=all&" + tc.query))

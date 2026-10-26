@@ -1,0 +1,49 @@
+diff --git a/server/internal/catalog/ordered.go b/server/internal/catalog/ordered.go
+index e08a96a..a33e2d2 100644
+--- a/server/internal/catalog/ordered.go
++++ b/server/internal/catalog/ordered.go
+@@ -83,11 +83,20 @@ func (a *API) orderedCandidates(ctx context.Context, q query) (searchResult, []o
+ 	base := "SELECT * FROM entries WHERE " + strings.Join(conditions, " AND ")
+ 	if q.hasAddress() && !f.addressMatched {
+ 		predicate := addressPredicate(q, &args)
+-		f.termCTEs = append(f.termCTEs, "ordered_addresses AS MATERIALIZED (SELECT m.dataset_id,unnest(m.ids) AS id FROM address_members m JOIN address_locations l ON l.id=m.location_id WHERE m.dataset_id=ANY($1::smallint[]) AND "+predicate+")")
+ 		if q.Surname != "" || q.First != "" || q.Organisation != "" || q.Postcode != "" || q.Near != "" || q.hasBusinessFilters() {
++			f.termCTEs = append(f.termCTEs, "ordered_addresses AS MATERIALIZED (SELECT m.dataset_id,unnest(m.ids) AS id FROM address_members m JOIN address_locations l ON l.id=m.location_id WHERE m.dataset_id=ANY($1::smallint[]) AND "+predicate+")")
+ 			base = "SELECT e.* FROM (" + base + ") e JOIN ordered_addresses a USING(dataset_id,id)"
+ 		} else {
+-			base = "SELECT e.* FROM ordered_addresses a CROSS JOIN LATERAL (SELECT * FROM entries WHERE " + strings.Join(conditions, " AND ") + " AND dataset_id=a.dataset_id AND id=a.id OFFSET 0) e"
++			// Plan each edition with a scalar partition key and visit its source
++			// ordinals in storage order, rather than repruning every partition and
++			// jumping between heap pages for every expanded address occurrence.
++			branches := []string{}
++			for _, dataset := range f.datasetIDs {
++				args = append(args, dataset)
++				d := fmt.Sprintf("$%d", len(args))
++				branches = append(branches, "(SELECT e.* FROM (SELECT unnest(m.ids) AS id FROM address_members m JOIN address_locations l ON l.id=m.location_id WHERE m.dataset_id="+d+" AND "+predicate+" ORDER BY 1) a CROSS JOIN LATERAL (SELECT * FROM entries WHERE "+strings.Join(conditions, " AND ")+" AND dataset_id="+d+" AND id=a.id OFFSET 0) e)")
++			}
++			base = strings.Join(branches, " UNION ALL ")
+ 		}
+ 	}
+ 	// The materialization fence fixes the selective candidate set before name-order
+@@ -98,7 +107,11 @@ func (a *API) orderedCandidates(ctx context.Context, q query) (searchResult, []o
+ 	}
+ 	pairPrefix := append([]string(nil), f.termCTEs...)
+ 	f.termCTEs = append(f.termCTEs, "ordered_candidates AS MATERIALIZED ("+base+")")
+-	joins := " CROSS JOIN LATERAL (SELECT key FROM terms WHERE id=e.name_id OFFSET 0) n CROSS JOIN LATERAL (SELECT key FROM terms WHERE id=e.first_id OFFSET 0) t JOIN datasets d ON d.id=e.dataset_id"
++	// Fetch each distinct label once, through ordered point lookups.
++	f.termCTEs = append(f.termCTEs,
++		"ordered_label_ids AS MATERIALIZED (SELECT name_id AS id FROM ordered_candidates UNION SELECT first_id FROM ordered_candidates ORDER BY 1)",
++		"ordered_labels AS MATERIALIZED (SELECT i.id,t.key FROM ordered_label_ids i CROSS JOIN LATERAL (SELECT key FROM terms WHERE id=i.id OFFSET 0) t)")
++	joins := " JOIN ordered_labels n ON n.id=e.name_id JOIN ordered_labels t ON t.id=e.first_id JOIN datasets d ON d.id=e.dataset_id"
+ 	distance := "0::double precision"
+ 	if q.Sort == "nearest" {
+ 		ids := []int32{}
+@@ -166,7 +179,7 @@ func (a *API) orderedCandidates(ctx context.Context, q query) (searchResult, []o
+ 		// At most one pair can be exhausted by the incoming cursor. 128 pairs therefore
+ 		// provide lookahead for every supported page size (<=100), without truncating
+ 		// the search. Subsequent requests seek from the last returned name/pair/key.
+-		pairQuery = "SELECT p.name_id,p.first_id,n.key AS name,t.key AS first,p.occurrences FROM ordered_candidates p CROSS JOIN LATERAL (SELECT key FROM terms WHERE id=p.name_id OFFSET 0) n CROSS JOIN LATERAL (SELECT key FROM terms WHERE id=p.first_id OFFSET 0) t" + pairAfter + " ORDER BY n.key,t.key LIMIT 128"
++		pairQuery = "SELECT p.name_id,p.first_id,n.key AS name,t.key AS first,p.occurrences FROM ordered_candidates p JOIN ordered_labels n ON n.id=p.name_id JOIN ordered_labels t ON t.id=p.first_id" + pairAfter + " ORDER BY n.key,t.key LIMIT 128"
+ 		source := "SELECT * FROM entries WHERE " + strings.Join(conditions, " AND ") + " AND name_id=p.name_id AND first_id=p.first_id"
+ 		inner := "SELECT ''::bytea AS g," + edition + " AS edition,0::double precision AS distance,e.dataset_id,e.id,e.postcode_id FROM (" + source + ") e JOIN datasets d ON d.id=e.dataset_id" + pairRowAfter + " ORDER BY e.dataset_id,e.id"
+ 		if q.Group != "" {

@@ -48,6 +48,12 @@ func run() error {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 	defer cancel()
+	if *stage == "native-reference" {
+		return nativeReference(ctx, *cases, *planCases, *output, *aggregateReport)
+	}
+	if *stage == "compare-reference" {
+		return compareReference(ctx, *cases, *beforeSnapshot, *output)
+	}
 	if *stage == "hosted-check" {
 		return checkHosted(ctx, *cases, *output)
 	}
