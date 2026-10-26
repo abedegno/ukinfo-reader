@@ -52,6 +52,7 @@ func run() error {
 	placePostings := flags.Bool("experimental-place-postings", false, "private town/county posting experiment; disabled by default")
 	disableBusiness := flags.Bool("disable-business-search", false, "use the legacy classification path for comparison or rollback")
 	addressProbe := flags.Bool("experimental-address-probe", false, "opt-in bounded address probe experiment; disabled by default")
+	searchBackend := flags.String("search-backend", "native", "serve: native or hybrid paradedb address search (requires PARADE_DATABASE_URL; preview)")
 	trustedProxy := flags.String("trusted-proxy", "", "public-limits: comma-separated socket peer CIDRs trusted for CF-Connecting-IP; never trust arbitrary forwarded headers")
 	data := flags.String("data-dir", "", "desktop: app-managed data directory")
 	binaries := flags.String("pg-bin", "", "desktop: directory containing PostgreSQL 18 initdb and postgres")
@@ -66,6 +67,12 @@ func run() error {
 	parent := flags.Bool("parent-stdin", false, "desktop: shut down when parent closes stdin")
 	if err := flags.Parse(os.Args[1:]); err != nil {
 		return err
+	}
+	if *searchBackend != "native" && *searchBackend != "paradedb" {
+		return errors.New("search-backend must be native or paradedb")
+	}
+	if *searchBackend == "paradedb" && (command != "serve" || *data != "" || *desktopControl) {
+		return errors.New("paradedb requires hosted serve; desktop continues to use native search")
 	}
 	limits, err := publichttp.New(*trustedProxy)
 	if err != nil {
@@ -303,6 +310,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	defer listener.Close()
 	localOrigin := "http://" + listener.Addr().String()
 	allowedOrigin := localOrigin
 	if *origin != "" {
@@ -335,6 +343,34 @@ func run() error {
 	api.ExperimentalAddressProbe = *addressProbe
 	api.ExperimentalPlacePostings = *placePostings
 	api.DisableBusinessSearch = *disableBusiness
+	if *searchBackend == "paradedb" {
+		if os.Getenv("PARADE_DATABASE_URL") == "" {
+			return errors.New("paradedb requires PARADE_DATABASE_URL")
+		}
+		pc, e := pgxpool.ParseConfig(os.Getenv("PARADE_DATABASE_URL"))
+		if e != nil {
+			return errors.New("invalid ParadeDB configuration")
+		}
+		pc.MaxConns, pc.MinConns = 4, 0
+		pc.ConnConfig.ConnectTimeout = 2 * time.Second
+		pc.ConnConfig.RuntimeParams["default_transaction_read_only"] = "on"
+		pc.ConnConfig.RuntimeParams["statement_timeout"] = "4000"
+		pc.ConnConfig.RuntimeParams["application_name"] = "ukinfo-parade-search"
+		pc.ConnConfig.Tracer = telemetry.DBTracer{}
+		searchDB, e := pgxpool.NewWithConfig(ctx, pc)
+		if e != nil {
+			return errors.New("ParadeDB pool unavailable")
+		}
+		defer searchDB.Close()
+		if e = searchDB.Ping(ctx); e != nil {
+			return errors.New("ParadeDB unavailable")
+		}
+		var extensionVersion string
+		if e = searchDB.QueryRow(ctx, "SELECT extversion FROM pg_extension WHERE extname='pg_search'").Scan(&extensionVersion); e != nil || extensionVersion != "0.26.3" {
+			return errors.New("ParadeDB preview requires pg_search 0.26.3")
+		}
+		api.ParadeDB = searchDB
+	}
 	healthConfig := config.Copy()
 	healthConfig.MaxConns, healthConfig.MinConns = 1, 0
 	healthConfig.ConnConfig.RuntimeParams["statement_timeout"] = "1000"

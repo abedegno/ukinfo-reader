@@ -61,6 +61,18 @@ locals {
       name    = "Search p95 stage latency (seconds, bucket estimate)"
       program = "histogram('ukinfo_search_phase_duration_seconds').percentile(pct=95, by=['phase']).publish(label='Stage p95 seconds')"
     }
+    search_backend = {
+      name    = "Search plan selection / second"
+      program = "data('ukinfo_address_plans_total', rollup='rate').sum(by=['plan']).publish(label='Plans/s')"
+    }
+    parade_pool = {
+      name    = "Derived search pool utilisation (%)"
+      program = "used = data('ukinfo_parade_pool_acquired').sum()\nmaximum = data('ukinfo_parade_pool_max').sum()\n(100 * used / maximum).publish(label='Derived pool utilisation')"
+    }
+    parade_waits = {
+      name    = "Derived search pool waits / second"
+      program = "data('ukinfo_parade_pool_waits_total', rollup='rate').sum().publish(label='Waited acquires/s')\ndata('ukinfo_parade_pool_canceled_acquires_total', rollup='rate').sum().publish(label='Canceled acquires/s')"
+    }
     errors = {
       name    = "Search error percentage"
       program = "total = data('ukinfo_query_requests_total', rollup='rate').sum()\nfailed = data('ukinfo_query_requests_total', filter=filter('status', '5*'), rollup='rate').sum().fill(0)\n(100 * failed / total).publish(label='Search errors %')"

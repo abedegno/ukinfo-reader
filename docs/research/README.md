@@ -7,6 +7,12 @@ Short warm tests do not establish cold-storage or public-service capacity.
 
 ## Storage and query execution
 
+- [Equal-budget hybrid control and hosted rollout](parade-rollout-2026-10-26.md) — complete fixed cohort, remaining tails and deployment evidence.
+
+- [Hybrid routing, complete workload and measured cold-cache follow-up](parade-hybrid-trial-2026-10-26.md)
+- [All-edition ParadeDB serving trial, concurrency and offline rollback](parade-serving-trial-2026-10-26.md)
+- [Full 2003-edition native PostgreSQL / ParadeDB comparison](real-search-spike-2026-10-26.md)
+- [Synthetic PostgreSQL search-index comparison](postgres-search-spike-2026-10-25.md)
 - [Storage backend spike](search-storage-spike-2026-10-17.html)
 - [Compact PostgreSQL catalogue and full-edition measurements](compact-catalogue.md)
 - [Address index](address-index.md)

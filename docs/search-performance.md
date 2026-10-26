@@ -235,3 +235,44 @@ It is eligible only for complete ordinary business-classification searches;
 grouped, ordered, nearby and unavailable editions retain the complete fallback.
 `serve --disable-business-search` provides a reversible comparison switch. The
 fixed `business_projection` plan label identifies selection without query values.
+
+## PostgreSQL search-index comparison
+
+The [small synthetic comparison](research/postgres-search-spike-2026-10-25.md)
+tests denormalised B-tree, multicolumn GIN, ParadeDB and pg_textsearch approaches
+on one million invented listings. It checks independent expected IDs and paging,
+compares ordinary prepared reuse with a custom-plan follow-up, and retains
+explicit custom/generic prepared plans. The
+[isolated runner](../tools/search-index-spike/README.md) pins extension packages
+and removes its synthetic volume. This is an operator experiment, not a CI
+latency gate, a production migration or full-archive capacity evidence.
+
+The [full 2003-edition follow-up](research/real-search-spike-2026-10-26.md)
+compares native PostgreSQL and ParadeDB over 59,886,841 real entries with
+original-record retrieval, alphabetical/keyset paging and 1/4 mixed clients.
+ParadeDB completed all 1,136 corrected requests; native had 11 timeouts in
+1,117 attempts. Native retains lower median and later-page latency. The report
+also retains a failed pagination prototype, aggregate plans, storage measurements
+and the limits of this single-edition experiment. Production is unchanged.
+
+The [hosted ParadeDB preview](paradedb-preview.md) adds an explicit serving flag
+and a separate generation-checked builder. Its source dictionary-ID compatibility
+fields and all-edition merge are measured in the
+[five-edition serving trial](research/parade-serving-trial-2026-10-26.md), covering
+248,951,107 entries, real cursor exchange and an offline-dependency rollback.
+Warmed fixed-cohort concurrency favored the candidate, but the complete paired
+run exposed postcode regressions and had 26 native versus 25 candidate timeouts.
+The earlier spike's figures do not describe this serving schema.
+
+The [hybrid follow-up](research/parade-hybrid-trial-2026-10-26.md) implements
+address-only acceleration and repeats all 294 cases. It also measures actual
+file-cache eviction on an isolated source copy: cold-start batches and twelve
+individually reset regressions retain all failures. First-page timeouts fell from
+16 native to seven hybrid in that run; warmed four-client p95 was 221–236 ms versus
+522–524 ms. Cold successful requests can still take one to four seconds. Source
+pool defaults differ (two/four seconds), while address/ordered/nearby source
+transactions already use four seconds. Hybrid adds database resources. The
+[equal-budget control and public rollout](research/parade-rollout-2026-10-26.md)
+retains the improvement with uniformly four-second SQL backstops in the control;
+production deadlines remain unchanged. Recovery exercises were explicitly skipped
+in favour of regenerating derived data from original media.

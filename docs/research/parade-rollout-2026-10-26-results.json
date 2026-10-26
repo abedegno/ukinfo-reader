@@ -1,0 +1,3167 @@
+{
+  "protocol": {
+    "source_statement_ms": 4000,
+    "target_statement_ms": 4000,
+    "http_limits_unchanged": true,
+    "cases": 294,
+    "backup_testing_skipped": true
+  },
+  "cases": 294,
+  "rounds": 2,
+  "budget_exhausted": false,
+  "pairs": 1345,
+  "outcomes": {
+    "after_only_ok": 13,
+    "before_only_ok": 1,
+    "both_failed": 4,
+    "both_ok_same": 1327
+  },
+  "cohorts": [
+    {
+      "backend": "native",
+      "scope": "first",
+      "requests": 588,
+      "errors": 15,
+      "error_codes": {
+        "query_timeout": 15
+      },
+      "p50_ms": 26.308,
+      "p95_ms": 1780.258,
+      "p99_ms": 4112.775,
+      "max_ms": 5002.875
+    },
+    {
+      "backend": "native",
+      "scope": "later",
+      "requests": 757,
+      "errors": 2,
+      "error_codes": {
+        "query_timeout": 2
+      },
+      "p50_ms": 81.839,
+      "p95_ms": 619.126,
+      "p99_ms": 2518.603,
+      "max_ms": 4147.998
+    },
+    {
+      "backend": "native",
+      "scope": "all",
+      "requests": 1345,
+      "errors": 17,
+      "error_codes": {
+        "query_timeout": 17
+      },
+      "p50_ms": 59.694,
+      "p95_ms": 871.334,
+      "p99_ms": 4017.488,
+      "max_ms": 5002.875
+    },
+    {
+      "backend": "hybrid",
+      "scope": "first",
+      "requests": 588,
+      "errors": 5,
+      "error_codes": {
+        "query_timeout": 5
+      },
+      "p50_ms": 18.539,
+      "p95_ms": 859.165,
+      "p99_ms": 4002.941,
+      "max_ms": 4454.345
+    },
+    {
+      "backend": "hybrid",
+      "scope": "later",
+      "requests": 757,
+      "errors": 0,
+      "error_codes": {},
+      "p50_ms": 86.958,
+      "p95_ms": 646.531,
+      "p99_ms": 2154.563,
+      "max_ms": 3173.422
+    },
+    {
+      "backend": "hybrid",
+      "scope": "all",
+      "requests": 1345,
+      "errors": 5,
+      "error_codes": {
+        "query_timeout": 5
+      },
+      "p50_ms": 48.291,
+      "p95_ms": 741.275,
+      "p99_ms": 2766.691,
+      "max_ms": 4454.345
+    }
+  ],
+  "paths": [
+    {
+      "path": "paradedb",
+      "pairs": 636,
+      "outcomes": {
+        "both_ok_same": 625,
+        "after_only_ok": 11
+      },
+      "native": {
+        "requests": 636,
+        "errors": 11,
+        "error_codes": {
+          "query_timeout": 11
+        },
+        "p50_ms": 67.866,
+        "p95_ms": 659.881,
+        "p99_ms": 4112.775,
+        "max_ms": 5002.875
+      },
+      "hybrid": {
+        "requests": 636,
+        "errors": 0,
+        "error_codes": {},
+        "p50_ms": 53.644,
+        "p95_ms": 520.92,
+        "p99_ms": 1050.465,
+        "max_ms": 3612.783
+      }
+    },
+    {
+      "path": "native",
+      "pairs": 709,
+      "outcomes": {
+        "both_ok_same": 702,
+        "after_only_ok": 2,
+        "both_failed": 4,
+        "before_only_ok": 1
+      },
+      "native": {
+        "requests": 709,
+        "errors": 6,
+        "error_codes": {
+          "query_timeout": 6
+        },
+        "p50_ms": 35.437,
+        "p95_ms": 1100.893,
+        "p99_ms": 3796.816,
+        "max_ms": 4127.27
+      },
+      "hybrid": {
+        "requests": 709,
+        "errors": 5,
+        "error_codes": {
+          "query_timeout": 5
+        },
+        "p50_ms": 36.922,
+        "p95_ms": 1421.517,
+        "p99_ms": 3459.886,
+        "max_ms": 4454.345
+      }
+    }
+  ],
+  "diagnostics": {
+    "native-plans": [
+      {
+        "case": 56,
+        "rank": 1,
+        "status": 200,
+        "original_ms": 420.243,
+        "explain_ms": 122.628,
+        "outcome": "ok",
+        "nodes": [
+          {
+            "type": "Limit",
+            "rows": 128,
+            "loops": 1,
+            "ms": 109.045,
+            "hit_blocks": 104577,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Aggregate",
+            "rows": 15554,
+            "loops": 1,
+            "ms": 13.07,
+            "hit_blocks": 9535,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 18237,
+            "loops": 1,
+            "ms": 4.613,
+            "hit_blocks": 9535,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Sort",
+            "rows": 128,
+            "loops": 1,
+            "ms": 90.197,
+            "hit_blocks": 104577,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 15554,
+            "loops": 1,
+            "ms": 85.38,
+            "hit_blocks": 104577,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 15554,
+            "loops": 1,
+            "ms": 56.172,
+            "hit_blocks": 56382,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "CTE Scan",
+            "rows": 15554,
+            "loops": 1,
+            "ms": 18.727,
+            "hit_blocks": 9535,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 1,
+            "loops": 15554,
+            "ms": 0.002,
+            "hit_blocks": 46847,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 1,
+            "loops": 15554,
+            "ms": 0.002,
+            "hit_blocks": 48195,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          }
+        ]
+      },
+      {
+        "case": 56,
+        "rank": 2,
+        "status": 200,
+        "original_ms": 231.495,
+        "explain_ms": 0.534,
+        "outcome": "ok",
+        "nodes": [
+          {
+            "type": "Sort",
+            "rows": 1,
+            "loops": 1,
+            "ms": 0.039,
+            "hit_blocks": 3,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Seq Scan",
+            "rows": 1,
+            "loops": 1,
+            "ms": 0.016,
+            "hit_blocks": 3,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          }
+        ]
+      },
+      {
+        "case": 56,
+        "rank": 3,
+        "status": 200,
+        "original_ms": 174.743,
+        "explain_ms": 2.322,
+        "outcome": "ok",
+        "nodes": [
+          {
+            "type": "Limit",
+            "rows": 4,
+            "loops": 1,
+            "ms": 0.147,
+            "hit_blocks": 25,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Sort",
+            "rows": 4,
+            "loops": 1,
+            "ms": 0.146,
+            "hit_blocks": 25,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 4,
+            "loops": 1,
+            "ms": 0.125,
+            "hit_blocks": 25,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Values Scan",
+            "rows": 4,
+            "loops": 1,
+            "ms": 0.004,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Limit",
+            "rows": 1,
+            "loops": 4,
+            "ms": 0.029,
+            "hit_blocks": 25,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 1,
+            "loops": 4,
+            "ms": 0.029,
+            "hit_blocks": 25,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 1,
+            "loops": 4,
+            "ms": 0.016,
+            "hit_blocks": 17,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Seq Scan",
+            "rows": 2,
+            "loops": 4,
+            "ms": 0.004,
+            "hit_blocks": 8,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          }
+        ]
+      },
+      {
+        "case": 63,
+        "rank": 1,
+        "status": 200,
+        "original_ms": 87.78,
+        "explain_ms": 0.646,
+        "outcome": "ok",
+        "nodes": [
+          {
+            "type": "Index Scan",
+            "rows": 39,
+            "loops": 1,
+            "ms": 0.149,
+            "hit_blocks": 149,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          }
+        ]
+      },
+      {
+        "case": 63,
+        "rank": 2,
+        "status": 200,
+        "original_ms": 78.868,
+        "explain_ms": 0.963,
+        "outcome": "ok",
+        "nodes": [
+          {
+            "type": "Limit",
+            "rows": 67,
+            "loops": 1,
+            "ms": 0.135,
+            "hit_blocks": 37,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Merge Append",
+            "rows": 67,
+            "loops": 1,
+            "ms": 0.129,
+            "hit_blocks": 37,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Limit",
+            "rows": 66,
+            "loops": 1,
+            "ms": 0.09,
+            "hit_blocks": 32,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Sort",
+            "rows": 66,
+            "loops": 1,
+            "ms": 0.085,
+            "hit_blocks": 32,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 66,
+            "loops": 1,
+            "ms": 0.057,
+            "hit_blocks": 32,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Limit",
+            "rows": 1,
+            "loops": 1,
+            "ms": 0.033,
+            "hit_blocks": 5,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Sort",
+            "rows": 1,
+            "loops": 1,
+            "ms": 0.032,
+            "hit_blocks": 5,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 1,
+            "loops": 1,
+            "ms": 0.024,
+            "hit_blocks": 5,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          }
+        ]
+      },
+      {
+        "case": 63,
+        "rank": 3,
+        "status": 200,
+        "original_ms": 62.891,
+        "explain_ms": 0.491,
+        "outcome": "ok",
+        "nodes": [
+          {
+            "type": "Index Scan",
+            "rows": 38,
+            "loops": 1,
+            "ms": 0.162,
+            "hit_blocks": 146,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          }
+        ]
+      },
+      {
+        "case": 91,
+        "rank": 1,
+        "status": 503,
+        "original_ms": 4036.63,
+        "explain_ms": 10031.736,
+        "outcome": "bounded_explain_failed",
+        "nodes": []
+      },
+      {
+        "case": 91,
+        "rank": 2,
+        "status": 503,
+        "original_ms": 121.157,
+        "explain_ms": 2.117,
+        "outcome": "ok",
+        "nodes": [
+          {
+            "type": "Limit",
+            "rows": 1025,
+            "loops": 1,
+            "ms": 0.734,
+            "hit_blocks": 382,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 1025,
+            "loops": 1,
+            "ms": 0.643,
+            "hit_blocks": 382,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 24,
+            "loops": 1,
+            "ms": 0.34,
+            "hit_blocks": 382,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 24,
+            "loops": 1,
+            "ms": 0.041,
+            "hit_blocks": 4,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Index Scan",
+            "rows": 1,
+            "loops": 24,
+            "ms": 0.012,
+            "hit_blocks": 378,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Function Scan",
+            "rows": 42.71,
+            "loops": 24,
+            "ms": 0.007,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          }
+        ]
+      },
+      {
+        "case": 91,
+        "rank": 3,
+        "status": 503,
+        "original_ms": 17.984,
+        "explain_ms": 0.904,
+        "outcome": "ok",
+        "nodes": [
+          {
+            "type": "Aggregate",
+            "rows": 1,
+            "loops": 1,
+            "ms": 0.055,
+            "hit_blocks": 4,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Hash Join",
+            "rows": 5,
+            "loops": 1,
+            "ms": 0.052,
+            "hit_blocks": 4,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Seq Scan",
+            "rows": 5,
+            "loops": 1,
+            "ms": 0.014,
+            "hit_blocks": 3,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Hash",
+            "rows": 5,
+            "loops": 1,
+            "ms": 0.03,
+            "hit_blocks": 1,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Seq Scan",
+            "rows": 5,
+            "loops": 1,
+            "ms": 0.017,
+            "hit_blocks": 1,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          }
+        ]
+      },
+      {
+        "case": 92,
+        "rank": 1,
+        "status": 503,
+        "original_ms": 4018.479,
+        "explain_ms": 10257.595,
+        "outcome": "bounded_explain_failed",
+        "nodes": []
+      },
+      {
+        "case": 92,
+        "rank": 2,
+        "status": 503,
+        "original_ms": 1.291,
+        "explain_ms": 1.514,
+        "outcome": "ok",
+        "nodes": [
+          {
+            "type": "Limit",
+            "rows": 1025,
+            "loops": 1,
+            "ms": 0.625,
+            "hit_blocks": 382,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 1025,
+            "loops": 1,
+            "ms": 0.552,
+            "hit_blocks": 382,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 24,
+            "loops": 1,
+            "ms": 0.299,
+            "hit_blocks": 382,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 24,
+            "loops": 1,
+            "ms": 0.04,
+            "hit_blocks": 4,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Index Scan",
+            "rows": 1,
+            "loops": 24,
+            "ms": 0.01,
+            "hit_blocks": 378,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Function Scan",
+            "rows": 42.71,
+            "loops": 24,
+            "ms": 0.006,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          }
+        ]
+      },
+      {
+        "case": 92,
+        "rank": 3,
+        "status": 503,
+        "original_ms": 0.821,
+        "explain_ms": 0.557,
+        "outcome": "ok",
+        "nodes": [
+          {
+            "type": "Limit",
+            "rows": 1,
+            "loops": 1,
+            "ms": 0.046,
+            "hit_blocks": 5,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 1,
+            "loops": 1,
+            "ms": 0.045,
+            "hit_blocks": 5,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          }
+        ]
+      },
+      {
+        "case": 95,
+        "rank": 1,
+        "status": 200,
+        "original_ms": 808.598,
+        "explain_ms": 34.416,
+        "outcome": "ok",
+        "nodes": [
+          {
+            "type": "Gather",
+            "rows": 1741,
+            "loops": 1,
+            "ms": 32.971,
+            "hit_blocks": 18008,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 870.5,
+            "loops": 2,
+            "ms": 7.614,
+            "hit_blocks": 18008,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Bitmap Heap Scan",
+            "rows": 2187,
+            "loops": 2,
+            "ms": 2.093,
+            "hit_blocks": 310,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Bitmap Index Scan",
+            "rows": 5659,
+            "loops": 1,
+            "ms": 1.329,
+            "hit_blocks": 156,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 0.4,
+            "loops": 4374,
+            "ms": 0.002,
+            "hit_blocks": 17698,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          }
+        ]
+      },
+      {
+        "case": 95,
+        "rank": 2,
+        "status": 200,
+        "original_ms": 140.95,
+        "explain_ms": 130.5,
+        "outcome": "ok",
+        "nodes": [
+          {
+            "type": "Limit",
+            "rows": 51,
+            "loops": 1,
+            "ms": 123.358,
+            "hit_blocks": 29297,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 50046,
+            "loops": 1,
+            "ms": 10.095,
+            "hit_blocks": 6692,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Sort",
+            "rows": 51,
+            "loops": 1,
+            "ms": 105.936,
+            "hit_blocks": 29297,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Subquery Scan",
+            "rows": 51,
+            "loops": 1,
+            "ms": 105.915,
+            "hit_blocks": 29297,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 51,
+            "loops": 1,
+            "ms": 105.901,
+            "hit_blocks": 29297,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Limit",
+            "rows": 51,
+            "loops": 1,
+            "ms": 105.594,
+            "hit_blocks": 29042,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Sort",
+            "rows": 51,
+            "loops": 1,
+            "ms": 105.58,
+            "hit_blocks": 29042,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Hash Join",
+            "rows": 50046,
+            "loops": 1,
+            "ms": 103.414,
+            "hit_blocks": 29042,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 195824,
+            "loops": 1,
+            "ms": 45.532,
+            "hit_blocks": 22350,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Gather",
+            "rows": 2636,
+            "loops": 1,
+            "ms": 9.387,
+            "hit_blocks": 22268,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 1318,
+            "loops": 2,
+            "ms": 13.08,
+            "hit_blocks": 22268,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Bitmap Heap Scan",
+            "rows": 2807,
+            "loops": 2,
+            "ms": 2.475,
+            "hit_blocks": 2590,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Bitmap Index Scan",
+            "rows": 5614,
+            "loops": 1,
+            "ms": 0.496,
+            "hit_blocks": 8,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0.47,
+            "loops": 5614,
+            "ms": 0.002,
+            "hit_blocks": 19678,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Function Scan",
+            "rows": 74.29,
+            "loops": 2636,
+            "ms": 0.009,
+            "hit_blocks": 82,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Hash",
+            "rows": 50046,
+            "loops": 1,
+            "ms": 24.46,
+            "hit_blocks": 6692,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "CTE Scan",
+            "rows": 50046,
+            "loops": 1,
+            "ms": 16.723,
+            "hit_blocks": 6692,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Memoize",
+            "rows": 1,
+            "loops": 51,
+            "ms": 0.005,
+            "hit_blocks": 255,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Index Scan",
+            "rows": 1,
+            "loops": 51,
+            "ms": 0.004,
+            "hit_blocks": 255,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          }
+        ]
+      },
+      {
+        "case": 95,
+        "rank": 3,
+        "status": 200,
+        "original_ms": 33.771,
+        "explain_ms": 0.293,
+        "outcome": "ok",
+        "nodes": [
+          {
+            "type": "Result",
+            "rows": 1,
+            "loops": 1,
+            "ms": 0.014,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          }
+        ]
+      },
+      {
+        "case": 166,
+        "rank": 1,
+        "status": 200,
+        "original_ms": 106.631,
+        "explain_ms": 72.65,
+        "outcome": "ok",
+        "nodes": [
+          {
+            "type": "Limit",
+            "rows": 128,
+            "loops": 1,
+            "ms": 69.928,
+            "hit_blocks": 91611,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Aggregate",
+            "rows": 13527,
+            "loops": 1,
+            "ms": 11.945,
+            "hit_blocks": 9067,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 16106,
+            "loops": 1,
+            "ms": 5.46,
+            "hit_blocks": 9067,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Sort",
+            "rows": 128,
+            "loops": 1,
+            "ms": 61.039,
+            "hit_blocks": 91611,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 13527,
+            "loops": 1,
+            "ms": 58.233,
+            "hit_blocks": 91611,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 13527,
+            "loops": 1,
+            "ms": 39.485,
+            "hit_blocks": 49829,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "CTE Scan",
+            "rows": 13527,
+            "loops": 1,
+            "ms": 15.068,
+            "hit_blocks": 9067,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 1,
+            "loops": 13527,
+            "ms": 0.002,
+            "hit_blocks": 40762,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 1,
+            "loops": 13527,
+            "ms": 0.001,
+            "hit_blocks": 41782,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          }
+        ]
+      },
+      {
+        "case": 166,
+        "rank": 2,
+        "status": 200,
+        "original_ms": 34.888,
+        "explain_ms": 1.855,
+        "outcome": "ok",
+        "nodes": [
+          {
+            "type": "Limit",
+            "rows": 4,
+            "loops": 1,
+            "ms": 0.136,
+            "hit_blocks": 29,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Sort",
+            "rows": 4,
+            "loops": 1,
+            "ms": 0.134,
+            "hit_blocks": 29,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 4,
+            "loops": 1,
+            "ms": 0.119,
+            "hit_blocks": 29,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Values Scan",
+            "rows": 4,
+            "loops": 1,
+            "ms": 0.004,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Limit",
+            "rows": 1,
+            "loops": 4,
+            "ms": 0.028,
+            "hit_blocks": 29,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 1,
+            "loops": 4,
+            "ms": 0.027,
+            "hit_blocks": 29,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 1,
+            "loops": 4,
+            "ms": 0.016,
+            "hit_blocks": 17,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Seq Scan",
+            "rows": 5,
+            "loops": 4,
+            "ms": 0.005,
+            "hit_blocks": 12,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          }
+        ]
+      },
+      {
+        "case": 166,
+        "rank": 3,
+        "status": 200,
+        "original_ms": 29.709,
+        "explain_ms": 1.435,
+        "outcome": "ok",
+        "nodes": [
+          {
+            "type": "Limit",
+            "rows": 4,
+            "loops": 1,
+            "ms": 0.112,
+            "hit_blocks": 29,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Sort",
+            "rows": 4,
+            "loops": 1,
+            "ms": 0.111,
+            "hit_blocks": 29,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 4,
+            "loops": 1,
+            "ms": 0.071,
+            "hit_blocks": 29,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Values Scan",
+            "rows": 4,
+            "loops": 1,
+            "ms": 0.003,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Limit",
+            "rows": 1,
+            "loops": 4,
+            "ms": 0.017,
+            "hit_blocks": 29,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 1,
+            "loops": 4,
+            "ms": 0.016,
+            "hit_blocks": 29,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 1,
+            "loops": 4,
+            "ms": 0.01,
+            "hit_blocks": 17,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Seq Scan",
+            "rows": 5,
+            "loops": 4,
+            "ms": 0.003,
+            "hit_blocks": 12,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          }
+        ]
+      },
+      {
+        "case": 212,
+        "rank": 1,
+        "status": 503,
+        "original_ms": 4049.278,
+        "explain_ms": 10012.68,
+        "outcome": "bounded_explain_failed",
+        "nodes": []
+      },
+      {
+        "case": 212,
+        "rank": 2,
+        "status": 503,
+        "original_ms": 38.599,
+        "explain_ms": 13.472,
+        "outcome": "ok",
+        "nodes": [
+          {
+            "type": "Limit",
+            "rows": 1025,
+            "loops": 1,
+            "ms": 11.86,
+            "hit_blocks": 6734,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 1025,
+            "loops": 1,
+            "ms": 11.791,
+            "hit_blocks": 6734,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 6,
+            "loops": 1,
+            "ms": 11.548,
+            "hit_blocks": 6734,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Bitmap Heap Scan",
+            "rows": 1801,
+            "loops": 1,
+            "ms": 7.673,
+            "hit_blocks": 1325,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "BitmapOr",
+            "rows": 0,
+            "loops": 1,
+            "ms": 2.966,
+            "hit_blocks": 34,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Bitmap Index Scan",
+            "rows": 8204,
+            "loops": 1,
+            "ms": 1.516,
+            "hit_blocks": 18,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Bitmap Index Scan",
+            "rows": 7734,
+            "loops": 1,
+            "ms": 1.448,
+            "hit_blocks": 16,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 1801,
+            "ms": 0.002,
+            "hit_blocks": 5409,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Function Scan",
+            "rows": 170.83,
+            "loops": 6,
+            "ms": 0.024,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          }
+        ]
+      },
+      {
+        "case": 212,
+        "rank": 3,
+        "status": 503,
+        "original_ms": 0.512,
+        "explain_ms": 0.808,
+        "outcome": "ok",
+        "nodes": [
+          {
+            "type": "Aggregate",
+            "rows": 1,
+            "loops": 1,
+            "ms": 0.053,
+            "hit_blocks": 4,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Hash Join",
+            "rows": 1,
+            "loops": 1,
+            "ms": 0.049,
+            "hit_blocks": 4,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Seq Scan",
+            "rows": 5,
+            "loops": 1,
+            "ms": 0.013,
+            "hit_blocks": 3,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Hash",
+            "rows": 1,
+            "loops": 1,
+            "ms": 0.028,
+            "hit_blocks": 1,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          },
+          {
+            "type": "Seq Scan",
+            "rows": 1,
+            "loops": 1,
+            "ms": 0.017,
+            "hit_blocks": 1,
+            "read_blocks": 0,
+            "temp_blocks": 0
+          }
+        ]
+      }
+    ],
+    "native-estimates": [
+      {
+        "case": 91,
+        "rank": 1,
+        "status": 503,
+        "original_ms": 4045.462,
+        "explain_ms": 16.045,
+        "outcome": "estimate_only",
+        "nodes": [
+          {
+            "type": "Limit",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 2402012.87
+          },
+          {
+            "type": "Gather",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 11983,
+            "estimated_cost": 82294.98
+          },
+          {
+            "type": "ProjectSet",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 458185,
+            "estimated_cost": 80096.68
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 7049,
+            "estimated_cost": 77752.89
+          },
+          {
+            "type": "Bitmap Heap Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 3099,
+            "estimated_cost": 13302.46
+          },
+          {
+            "type": "Bitmap Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 5268,
+            "estimated_cost": 59.94
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 3,
+            "estimated_cost": 20.77
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 59915,
+            "estimated_cost": 1605212.72
+          },
+          {
+            "type": "CTE Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 11983,
+            "estimated_cost": 239.66
+          },
+          {
+            "type": "Append",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 5,
+            "estimated_cost": 133.89
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 26.9
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 26.9
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 26.9
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 26.26
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 26.9
+          },
+          {
+            "type": "Sort",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 714505.16
+          },
+          {
+            "type": "Subquery Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 714505.15
+          },
+          {
+            "type": "Aggregate",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 714505.14
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 308136,
+            "estimated_cost": 708342.41
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 51356,
+            "estimated_cost": 101922.95
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 51356,
+            "estimated_cost": 57566.41
+          },
+          {
+            "type": "Hash Join",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 51356,
+            "estimated_cost": 1406.52
+          },
+          {
+            "type": "CTE Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 59915,
+            "estimated_cost": 1198.3
+          },
+          {
+            "type": "Hash",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 12,
+            "estimated_cost": 3.17
+          },
+          {
+            "type": "Seq Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 12,
+            "estimated_cost": 3.17
+          },
+          {
+            "type": "Memoize",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 4.46
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 4.45
+          },
+          {
+            "type": "Memoize",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 4.46
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 4.45
+          },
+          {
+            "type": "Memoize",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 6,
+            "estimated_cost": 51.42
+          },
+          {
+            "type": "Append",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 6,
+            "estimated_cost": 51.41
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 8.58
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 8.58
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 8.58
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 8.46
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 8.58
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 8.58
+          }
+        ]
+      },
+      {
+        "case": 91,
+        "rank": 2,
+        "status": 503,
+        "original_ms": 173.143,
+        "explain_ms": 0.68,
+        "outcome": "estimate_only",
+        "nodes": [
+          {
+            "type": "Sort",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 9,
+            "estimated_cost": 50.84
+          },
+          {
+            "type": "Seq Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 9,
+            "estimated_cost": 50.67
+          },
+          {
+            "type": "Seq Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 6,
+            "estimated_cost": 3.3
+          }
+        ]
+      },
+      {
+        "case": 91,
+        "rank": 3,
+        "status": 503,
+        "original_ms": 168.266,
+        "explain_ms": 0.827,
+        "outcome": "estimate_only",
+        "nodes": [
+          {
+            "type": "Limit",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1025,
+            "estimated_cost": 165.78
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 778895,
+            "estimated_cost": 125318
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 11983,
+            "estimated_cost": 109740.1
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 5268,
+            "estimated_cost": 180.62
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 3,
+            "estimated_cost": 20.77
+          },
+          {
+            "type": "Function Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 65,
+            "estimated_cost": 0.65
+          }
+        ]
+      },
+      {
+        "case": 92,
+        "rank": 1,
+        "status": 503,
+        "original_ms": 4015.557,
+        "explain_ms": 4.994,
+        "outcome": "estimate_only",
+        "nodes": [
+          {
+            "type": "Limit",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 51,
+            "estimated_cost": 1791400.9
+          },
+          {
+            "type": "Gather",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 11983,
+            "estimated_cost": 82294.98
+          },
+          {
+            "type": "ProjectSet",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 458185,
+            "estimated_cost": 80096.68
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 7049,
+            "estimated_cost": 77752.89
+          },
+          {
+            "type": "Bitmap Heap Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 3099,
+            "estimated_cost": 13302.46
+          },
+          {
+            "type": "Bitmap Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 5268,
+            "estimated_cost": 59.94
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 3,
+            "estimated_cost": 20.77
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 59915,
+            "estimated_cost": 1605212.72
+          },
+          {
+            "type": "CTE Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 11983,
+            "estimated_cost": 239.66
+          },
+          {
+            "type": "Append",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 5,
+            "estimated_cost": 133.89
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 26.9
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 26.9
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 26.9
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 26.26
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 26.9
+          },
+          {
+            "type": "Sort",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 51356,
+            "estimated_cost": 104021.46
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 51356,
+            "estimated_cost": 102179.73
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 51356,
+            "estimated_cost": 57566.41
+          },
+          {
+            "type": "Hash Join",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 51356,
+            "estimated_cost": 1406.52
+          },
+          {
+            "type": "CTE Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 59915,
+            "estimated_cost": 1198.3
+          },
+          {
+            "type": "Hash",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 12,
+            "estimated_cost": 3.17
+          },
+          {
+            "type": "Seq Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 12,
+            "estimated_cost": 3.17
+          },
+          {
+            "type": "Memoize",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 4.46
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 4.45
+          },
+          {
+            "type": "Memoize",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 4.46
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 4.45
+          }
+        ]
+      },
+      {
+        "case": 92,
+        "rank": 2,
+        "status": 503,
+        "original_ms": 74.263,
+        "explain_ms": 0.562,
+        "outcome": "estimate_only",
+        "nodes": [
+          {
+            "type": "Limit",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 0.6
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 45001106,
+            "estimated_cost": 1593111.06
+          }
+        ]
+      },
+      {
+        "case": 92,
+        "rank": 3,
+        "status": 503,
+        "original_ms": 1.623,
+        "explain_ms": 0.572,
+        "outcome": "estimate_only",
+        "nodes": [
+          {
+            "type": "Limit",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1025,
+            "estimated_cost": 165.78
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 778895,
+            "estimated_cost": 125318
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 11983,
+            "estimated_cost": 109740.1
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 5268,
+            "estimated_cost": 180.62
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 3,
+            "estimated_cost": 20.77
+          },
+          {
+            "type": "Function Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 65,
+            "estimated_cost": 0.65
+          }
+        ]
+      },
+      {
+        "case": 212,
+        "rank": 1,
+        "status": 503,
+        "original_ms": 4011.011,
+        "explain_ms": 3.646,
+        "outcome": "estimate_only",
+        "nodes": [
+          {
+            "type": "Limit",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 51,
+            "estimated_cost": 96831.06
+          },
+          {
+            "type": "Gather",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 3072,
+            "estimated_cost": 46613.19
+          },
+          {
+            "type": "ProjectSet",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 117455,
+            "estimated_cost": 45305.99
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1807,
+            "estimated_cost": 44705.16
+          },
+          {
+            "type": "Bitmap Heap Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 3850,
+            "estimated_cost": 15508.06
+          },
+          {
+            "type": "BitmapOr",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 6551,
+            "estimated_cost": 113.64
+          },
+          {
+            "type": "Bitmap Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 2721,
+            "estimated_cost": 47.64
+          },
+          {
+            "type": "Bitmap Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 3830,
+            "estimated_cost": 62.73
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 7.57
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 3072,
+            "estimated_cost": 26480.64
+          },
+          {
+            "type": "CTE Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 3072,
+            "estimated_cost": 61.44
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 8.59
+          },
+          {
+            "type": "Sort",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 2633,
+            "estimated_cost": 23743.69
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 2633,
+            "estimated_cost": 23649.27
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 2633,
+            "estimated_cost": 11886.34
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 2633,
+            "estimated_cost": 136.58
+          },
+          {
+            "type": "CTE Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 3072,
+            "estimated_cost": 61.44
+          },
+          {
+            "type": "Memoize",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 0.17
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 0.16
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 4.45
+          },
+          {
+            "type": "Index Only Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 4.45
+          }
+        ]
+      },
+      {
+        "case": 212,
+        "rank": 2,
+        "status": 503,
+        "original_ms": 13.723,
+        "explain_ms": 1.292,
+        "outcome": "estimate_only",
+        "nodes": [
+          {
+            "type": "Limit",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1025,
+            "estimated_cost": 468.66
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 199680,
+            "estimated_cost": 69190.68
+          },
+          {
+            "type": "Nested Loop",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 3072,
+            "estimated_cost": 65197.07
+          },
+          {
+            "type": "Bitmap Heap Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 6545,
+            "estimated_cost": 15562.01
+          },
+          {
+            "type": "BitmapOr",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 6551,
+            "estimated_cost": 113.64
+          },
+          {
+            "type": "Bitmap Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 2721,
+            "estimated_cost": 47.64
+          },
+          {
+            "type": "Bitmap Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 3830,
+            "estimated_cost": 62.73
+          },
+          {
+            "type": "Index Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 7.57
+          },
+          {
+            "type": "Function Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 65,
+            "estimated_cost": 0.65
+          }
+        ]
+      },
+      {
+        "case": 212,
+        "rank": 3,
+        "status": 503,
+        "original_ms": 0.511,
+        "explain_ms": 0.958,
+        "outcome": "estimate_only",
+        "nodes": [
+          {
+            "type": "Aggregate",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 4.39
+          },
+          {
+            "type": "Hash Join",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 4.38
+          },
+          {
+            "type": "Seq Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 12,
+            "estimated_cost": 3.17
+          },
+          {
+            "type": "Hash",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 1.12
+          },
+          {
+            "type": "Seq Scan",
+            "rows": 0,
+            "loops": 0,
+            "ms": 0,
+            "hit_blocks": 0,
+            "read_blocks": 0,
+            "temp_blocks": 0,
+            "estimated_rows": 1,
+            "estimated_cost": 1.12
+          }
+        ]
+      }
+    ],
+    "target-plans": [
+      {
+        "strategy": "scalar",
+        "case": 58,
+        "dataset": "se2004-pcp218-2004-07",
+        "mode": "force_custom_plan",
+        "outcome": "ok",
+        "ms": 2395.319419,
+        "buffers": 1298,
+        "temp_blocks": 0,
+        "heap_fetches": 51,
+        "nodes": [
+          "Limit:",
+          "Custom Scan:TopKScanExecState"
+        ]
+      },
+      {
+        "strategy": "scalar",
+        "case": 58,
+        "dataset": "se2004-pcp218-2004-07",
+        "mode": "force_generic_plan",
+        "outcome": "ok",
+        "ms": 36.727894,
+        "buffers": 1298,
+        "temp_blocks": 0,
+        "heap_fetches": 51,
+        "nodes": [
+          "Limit:",
+          "Custom Scan:TopKScanExecState"
+        ]
+      },
+      {
+        "strategy": "scalar",
+        "case": 89,
+        "dataset": "se4-pcf94-1999-04",
+        "mode": "force_custom_plan",
+        "outcome": "ok",
+        "ms": 704.224497,
+        "buffers": 201,
+        "temp_blocks": 0,
+        "heap_fetches": 51,
+        "nodes": [
+          "Limit:",
+          "Custom Scan:TopKScanExecState"
+        ]
+      },
+      {
+        "strategy": "scalar",
+        "case": 89,
+        "dataset": "se4-pcf94-1999-04",
+        "mode": "force_generic_plan",
+        "outcome": "ok",
+        "ms": 7.244934,
+        "buffers": 201,
+        "temp_blocks": 0,
+        "heap_fetches": 51,
+        "nodes": [
+          "Limit:",
+          "Custom Scan:TopKScanExecState"
+        ]
+      },
+      {
+        "strategy": "scalar",
+        "case": 167,
+        "dataset": "se2003-dpcs0104",
+        "mode": "force_custom_plan",
+        "outcome": "ok",
+        "ms": 657.7651559999999,
+        "buffers": 1207,
+        "temp_blocks": 0,
+        "heap_fetches": 51,
+        "nodes": [
+          "Limit:",
+          "Custom Scan:TopKScanExecState"
+        ]
+      },
+      {
+        "strategy": "scalar",
+        "case": 167,
+        "dataset": "se2003-dpcs0104",
+        "mode": "force_generic_plan",
+        "outcome": "ok",
+        "ms": 27.772251,
+        "buffers": 1207,
+        "temp_blocks": 0,
+        "heap_fetches": 51,
+        "nodes": [
+          "Limit:",
+          "Custom Scan:TopKScanExecState"
+        ]
+      },
+      {
+        "strategy": "scalar",
+        "case": 209,
+        "dataset": "se2003-dpcs0104",
+        "mode": "force_custom_plan",
+        "outcome": "ok",
+        "ms": 280.940113,
+        "buffers": 685,
+        "temp_blocks": 0,
+        "heap_fetches": 51,
+        "nodes": [
+          "Limit:",
+          "Custom Scan:TopKScanExecState"
+        ]
+      },
+      {
+        "strategy": "scalar",
+        "case": 209,
+        "dataset": "se2003-dpcs0104",
+        "mode": "force_generic_plan",
+        "outcome": "ok",
+        "ms": 180.463731,
+        "buffers": 685,
+        "temp_blocks": 0,
+        "heap_fetches": 51,
+        "nodes": [
+          "Limit:",
+          "Custom Scan:TopKScanExecState"
+        ]
+      },
+      {
+        "strategy": "scalar",
+        "case": 212,
+        "dataset": "se2003-dpcs0104",
+        "mode": "force_custom_plan",
+        "outcome": "ok",
+        "ms": 856.915474,
+        "buffers": 34894,
+        "temp_blocks": 0,
+        "heap_fetches": 51,
+        "nodes": [
+          "Limit:",
+          "Custom Scan:TopKScanExecState"
+        ]
+      },
+      {
+        "strategy": "scalar",
+        "case": 212,
+        "dataset": "se2003-dpcs0104",
+        "mode": "force_generic_plan",
+        "outcome": "ok",
+        "ms": 678.272376,
+        "buffers": 34894,
+        "temp_blocks": 0,
+        "heap_fetches": 51,
+        "nodes": [
+          "Limit:",
+          "Custom Scan:TopKScanExecState"
+        ]
+      }
+    ]
+  },
+  "deployment": {
+    "hosted-native": {
+      "complete": true,
+      "internal_network_only": true,
+      "matched": 12,
+      "mismatches_or_errors": 0,
+      "observations": [
+        {
+          "case": 0,
+          "status": 200,
+          "milliseconds": 2111.958,
+          "success": true,
+          "has_next": false
+        },
+        {
+          "case": 26,
+          "status": 200,
+          "milliseconds": 433.528,
+          "success": true,
+          "has_next": false
+        },
+        {
+          "case": 52,
+          "status": 200,
+          "milliseconds": 551.252,
+          "success": true,
+          "has_next": false
+        },
+        {
+          "case": 79,
+          "status": 200,
+          "milliseconds": 115.301,
+          "success": true,
+          "has_next": false
+        },
+        {
+          "case": 105,
+          "status": 200,
+          "milliseconds": 2121.345,
+          "success": true,
+          "has_next": false
+        },
+        {
+          "case": 131,
+          "status": 200,
+          "milliseconds": 67.426,
+          "success": true,
+          "has_next": false
+        },
+        {
+          "case": 158,
+          "status": 200,
+          "milliseconds": 1441.923,
+          "success": true,
+          "has_next": false
+        },
+        {
+          "case": 184,
+          "status": 200,
+          "milliseconds": 5.343,
+          "success": true,
+          "has_next": false
+        },
+        {
+          "case": 210,
+          "status": 200,
+          "milliseconds": 3209.836,
+          "success": true,
+          "has_next": false
+        },
+        {
+          "case": 237,
+          "status": 200,
+          "milliseconds": 226.323,
+          "success": true,
+          "has_next": false
+        },
+        {
+          "case": 263,
+          "status": 200,
+          "milliseconds": 9.922,
+          "success": true,
+          "has_next": false
+        },
+        {
+          "case": 290,
+          "status": 200,
+          "milliseconds": 19.003,
+          "success": true,
+          "has_next": false
+        }
+      ],
+      "requests": 12
+    },
+    "hosted-native-deployment": {
+      "backend": "native",
+      "image_id": "sha256:a209d3d2b4606b0c0bc74dfe88bb2eab5b50a4c7202cb07fa2e026ce878fe059",
+      "source_unchanged": true,
+      "health": "healthy",
+      "internal_acceptance_matches": 12,
+      "security_flags_preserved": true
+    },
+    "hosted-paradedb": {
+      "complete": true,
+      "internal_network_only": true,
+      "matched": 12,
+      "mismatches_or_errors": 0,
+      "observations": [
+        {
+          "case": 0,
+          "status": 200,
+          "milliseconds": 1016.19,
+          "success": true,
+          "has_next": false
+        },
+        {
+          "case": 26,
+          "status": 200,
+          "milliseconds": 14.34,
+          "success": true,
+          "has_next": false
+        },
+        {
+          "case": 52,
+          "status": 200,
+          "milliseconds": 7.737,
+          "success": true,
+          "has_next": false
+        },
+        {
+          "case": 79,
+          "status": 200,
+          "milliseconds": 4.275,
+          "success": true,
+          "has_next": false
+        },
+        {
+          "case": 105,
+          "status": 200,
+          "milliseconds": 895.358,
+          "success": true,
+          "has_next": false
+        },
+        {
+          "case": 131,
+          "status": 200,
+          "milliseconds": 706.198,
+          "success": true,
+          "has_next": false
+        },
+        {
+          "case": 158,
+          "status": 200,
+          "milliseconds": 40.144,
+          "success": true,
+          "has_next": false
+        },
+        {
+          "case": 184,
+          "status": 200,
+          "milliseconds": 5.032,
+          "success": true,
+          "has_next": false
+        },
+        {
+          "case": 210,
+          "status": 200,
+          "milliseconds": 24.149,
+          "success": true,
+          "has_next": false
+        },
+        {
+          "case": 237,
+          "status": 200,
+          "milliseconds": 193.744,
+          "success": true,
+          "has_next": false
+        },
+        {
+          "case": 263,
+          "status": 200,
+          "milliseconds": 5.393,
+          "success": true,
+          "has_next": false
+        },
+        {
+          "case": 290,
+          "status": 200,
+          "milliseconds": 3.831,
+          "success": true,
+          "has_next": false
+        }
+      ],
+      "requests": 12
+    },
+    "hosted-paradedb-deployment": {
+      "backend": "paradedb",
+      "image_id": "sha256:a209d3d2b4606b0c0bc74dfe88bb2eab5b50a4c7202cb07fa2e026ce878fe059",
+      "source_unchanged": true,
+      "health": "healthy",
+      "internal_acceptance_matches": 12,
+      "security_flags_preserved": true
+    },
+    "observation": {
+      "services": {
+        "ukinfo": {
+          "running": true,
+          "health": "healthy",
+          "restarts": 0
+        },
+        "ukinfo-db": {
+          "running": true,
+          "health": "healthy",
+          "restarts": 0
+        },
+        "ukinfo-parade-preview-db": {
+          "running": true,
+          "health": "healthy",
+          "restarts": 0
+        },
+        "ukinfo-collector": {
+          "running": true,
+          "health": null,
+          "restarts": 0
+        },
+        "ukinfo-monitor": {
+          "running": true,
+          "health": "healthy",
+          "restarts": 0
+        },
+        "ukinfo-cloudflared": {
+          "running": true,
+          "health": "healthy",
+          "restarts": 0
+        }
+      },
+      "local_metrics": [
+        "ukinfo_search_phase_duration_seconds_count{phase=\"parade_candidates\",outcome=\"ok\"} 7",
+        "ukinfo_search_phase_duration_seconds_count{phase=\"parade_inventory\",outcome=\"ok\"} 7",
+        "ukinfo_address_plans_total{plan=\"paradedb\"} 7",
+        "ukinfo_address_plans_total{plan=\"paradedb_fallback\"} 7",
+        "ukinfo_address_plans_total{plan=\"indexed_source\"} 1",
+        "ukinfo_parade_pool_acquired 0",
+        "ukinfo_parade_pool_max 4",
+        "ukinfo_parade_pool_waits_total 1",
+        "ukinfo_parade_pool_wait_seconds_total 0.004398663",
+        "ukinfo_parade_pool_canceled_acquires_total 0"
+      ],
+      "public_smoke": [
+        {
+          "check": "health",
+          "status": 200,
+          "nosniff": true,
+          "csp_present": true
+        },
+        {
+          "check": "ui",
+          "status": 200,
+          "nosniff": true,
+          "csp_present": true
+        },
+        {
+          "check": "invented_query",
+          "status": 200,
+          "nosniff": true,
+          "csp_present": true
+        }
+      ],
+      "splunk_registered_series": {
+        "ukinfo_parade_pool_max": 1,
+        "ukinfo_address_plans_total": 5,
+        "ukinfo_search_phase_duration_seconds": 10
+      },
+      "saved_queries_sent_to_internet": false,
+      "checked_at_epoch": 1793044102
+    },
+    "derived_phase_registered_in_splunk": true,
+    "local_monitor_status": "healthy",
+    "notification_delivery": "disabled"
+  }
+}

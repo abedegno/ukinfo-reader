@@ -270,3 +270,15 @@ when upgrading the server.
 `ukinfo_ordered_pairs_expanded_total` counts pairs submitted for ordered expansion,
 including failed attempts. It provides a bounded work signal alongside stage
 latency: sparse pairs are batched; dense pairs are processed individually.
+
+### Hosted hybrid search
+
+The optional address-search target adds `ukinfo_parade_pool_acquired`,
+`ukinfo_parade_pool_max`, `ukinfo_parade_pool_waits_total`,
+`ukinfo_parade_pool_wait_seconds_total` and
+`ukinfo_parade_pool_canceled_acquires_total`. Existing pool names continue to
+describe the source pool. Fixed `paradedb`/`paradedb_fallback` plan counters and
+`parade_inventory`/`parade_candidates` phase histograms distinguish selection,
+readiness work and candidate execution from original-record retrieval. The
+managed Splunk dashboard includes plan selection, derived pool utilisation and
+waits. No SQL text or search values are added to labels or logs.

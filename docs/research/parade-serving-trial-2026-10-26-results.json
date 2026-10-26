@@ -1,0 +1,7799 @@
+{
+  "schema_version": 1,
+  "method": {
+    "cases": 294,
+    "rounds": 2,
+    "max_pages": 10,
+    "original_record_retrieval": true,
+    "includes_http": true,
+    "includes_cloudflare": false,
+    "cache_flushed": false,
+    "candidate_additional_cpus": 2,
+    "candidate_additional_memory_bytes": 6442450944,
+    "mixed_engine_load": false,
+    "load_order": [
+      "load-native",
+      "load-candidate",
+      "load-candidate-repeat",
+      "load-native-repeat"
+    ],
+    "load_subset_matching_cases": 287,
+    "load_subset_excluded_cases": 7
+  },
+  "verification": {
+    "passed": true,
+    "editions": [
+      {
+        "dataset": "se2005-pcf175-2005-06",
+        "entries": 51350897,
+        "samples": 256,
+        "ready": true,
+        "index_valid": true,
+        "fields_matched": 256,
+        "independent_matched": 256
+      },
+      {
+        "dataset": "se2004-pcp218-2004-07",
+        "entries": 63373974,
+        "samples": 256,
+        "ready": true,
+        "index_valid": true,
+        "fields_matched": 256,
+        "independent_matched": 256
+      },
+      {
+        "dataset": "se4-pcf94-1999-04",
+        "entries": 46355850,
+        "samples": 256,
+        "ready": true,
+        "index_valid": true,
+        "fields_matched": 256,
+        "independent_matched": 256
+      },
+      {
+        "dataset": "se-pcf78-1998-01",
+        "entries": 27983545,
+        "samples": 256,
+        "ready": true,
+        "index_valid": true,
+        "fields_matched": 256,
+        "independent_matched": 256
+      },
+      {
+        "dataset": "se2003-dpcs0104",
+        "entries": 59886841,
+        "samples": 256,
+        "ready": true,
+        "index_valid": true,
+        "fields_matched": 256,
+        "independent_matched": 256
+      }
+    ]
+  },
+  "build": {
+    "started_at": "2026-10-26T08:24:23.85619032Z",
+    "finished_at": "2026-10-26T13:41:11.92436801Z",
+    "exit_code": 0,
+    "oom": false
+  },
+  "paired_outcomes": {
+    "after_only_ok": 21,
+    "before_only_ok": 20,
+    "both_failed": 5,
+    "both_ok_same": 1073
+  },
+  "cohorts": [
+    {
+      "engine": "native",
+      "scope": "first",
+      "requests": 588,
+      "errors": 25,
+      "error_codes": {
+        "query_timeout": 25
+      },
+      "p50_ms": 44.454,
+      "p95_ms": 2949.284,
+      "p99_ms": 4167.382,
+      "max_ms": 5223.735
+    },
+    {
+      "engine": "native",
+      "scope": "later",
+      "requests": 531,
+      "errors": 1,
+      "error_codes": {
+        "query_timeout": 1
+      },
+      "p50_ms": 90.122,
+      "p95_ms": 1431.947,
+      "p99_ms": 2248.664,
+      "max_ms": 4150.7
+    },
+    {
+      "engine": "native",
+      "scope": "all",
+      "requests": 1119,
+      "errors": 26,
+      "error_codes": {
+        "query_timeout": 26
+      },
+      "p50_ms": 70.831,
+      "p95_ms": 1936.628,
+      "p99_ms": 4059.348,
+      "max_ms": 5223.735
+    },
+    {
+      "engine": "paradedb",
+      "scope": "first",
+      "requests": 588,
+      "errors": 25,
+      "error_codes": {
+        "query_timeout": 25
+      },
+      "p50_ms": 53.144,
+      "p95_ms": 2000.634,
+      "p99_ms": 4034.862,
+      "max_ms": 5001.045
+    },
+    {
+      "engine": "paradedb",
+      "scope": "later",
+      "requests": 531,
+      "errors": 0,
+      "error_codes": {},
+      "p50_ms": 111.64,
+      "p95_ms": 514.824,
+      "p99_ms": 1117.985,
+      "max_ms": 1986.16
+    },
+    {
+      "engine": "paradedb",
+      "scope": "all",
+      "requests": 1119,
+      "errors": 25,
+      "error_codes": {
+        "query_timeout": 25
+      },
+      "p50_ms": 90.171,
+      "p95_ms": 1032.574,
+      "p99_ms": 2424.184,
+      "max_ms": 5001.045
+    }
+  ],
+  "capabilities": [
+    {
+      "engine": "native",
+      "selected_path": "paradedb",
+      "requests": 1051,
+      "errors": 20,
+      "error_codes": {
+        "query_timeout": 20
+      },
+      "p50_ms": 72.083,
+      "p95_ms": 1854.278,
+      "p99_ms": 4042.341,
+      "max_ms": 5223.735
+    },
+    {
+      "engine": "paradedb",
+      "selected_path": "paradedb",
+      "requests": 1051,
+      "errors": 19,
+      "error_codes": {
+        "query_timeout": 19
+      },
+      "p50_ms": 93.379,
+      "p95_ms": 827.361,
+      "p99_ms": 2002.079,
+      "max_ms": 4036.158
+    },
+    {
+      "engine": "native",
+      "selected_path": "native",
+      "requests": 68,
+      "errors": 6,
+      "error_codes": {
+        "query_timeout": 6
+      },
+      "p50_ms": 38.643,
+      "p95_ms": 4033.415,
+      "p99_ms": 5001.196,
+      "max_ms": 5001.196
+    },
+    {
+      "engine": "paradedb",
+      "selected_path": "native",
+      "requests": 68,
+      "errors": 6,
+      "error_codes": {
+        "query_timeout": 6
+      },
+      "p50_ms": 36.676,
+      "p95_ms": 4037.0,
+      "p99_ms": 5001.045,
+      "max_ms": 5001.045
+    }
+  ],
+  "breakdowns": [
+    {
+      "dimension": "edition_ordinal",
+      "value": 0,
+      "engine": "native",
+      "scope": "first",
+      "requests": 80,
+      "errors": 6,
+      "error_codes": {
+        "query_timeout": 6
+      },
+      "p50_ms": 83.348,
+      "p95_ms": 4021.849,
+      "p99_ms": 4049.336,
+      "max_ms": 4049.336
+    },
+    {
+      "dimension": "edition_ordinal",
+      "value": 0,
+      "engine": "paradedb",
+      "scope": "first",
+      "requests": 80,
+      "errors": 12,
+      "error_codes": {
+        "query_timeout": 12
+      },
+      "p50_ms": 162.663,
+      "p95_ms": 3109.161,
+      "p99_ms": 4100.552,
+      "max_ms": 4100.552
+    },
+    {
+      "dimension": "edition_ordinal",
+      "value": 1,
+      "engine": "native",
+      "scope": "first",
+      "requests": 76,
+      "errors": 1,
+      "error_codes": {
+        "query_timeout": 1
+      },
+      "p50_ms": 72.542,
+      "p95_ms": 2069.925,
+      "p99_ms": 5001.196,
+      "max_ms": 5001.196
+    },
+    {
+      "dimension": "edition_ordinal",
+      "value": 1,
+      "engine": "paradedb",
+      "scope": "first",
+      "requests": 76,
+      "errors": 4,
+      "error_codes": {
+        "query_timeout": 4
+      },
+      "p50_ms": 22.65,
+      "p95_ms": 2000.634,
+      "p99_ms": 5000.883,
+      "max_ms": 5000.883
+    },
+    {
+      "dimension": "edition_ordinal",
+      "value": 2,
+      "engine": "native",
+      "scope": "first",
+      "requests": 66,
+      "errors": 6,
+      "error_codes": {
+        "query_timeout": 6
+      },
+      "p50_ms": 17.145,
+      "p95_ms": 4002.969,
+      "p99_ms": 4089.028,
+      "max_ms": 4089.028
+    },
+    {
+      "dimension": "edition_ordinal",
+      "value": 2,
+      "engine": "paradedb",
+      "scope": "first",
+      "requests": 66,
+      "errors": 3,
+      "error_codes": {
+        "query_timeout": 3
+      },
+      "p50_ms": 48.595,
+      "p95_ms": 2001.528,
+      "p99_ms": 4012.661,
+      "max_ms": 4012.661
+    },
+    {
+      "dimension": "edition_ordinal",
+      "value": 3,
+      "engine": "native",
+      "scope": "first",
+      "requests": 64,
+      "errors": 3,
+      "error_codes": {
+        "query_timeout": 3
+      },
+      "p50_ms": 64.247,
+      "p95_ms": 3180.901,
+      "p99_ms": 4263.954,
+      "max_ms": 4263.954
+    },
+    {
+      "dimension": "edition_ordinal",
+      "value": 3,
+      "engine": "paradedb",
+      "scope": "first",
+      "requests": 64,
+      "errors": 3,
+      "error_codes": {
+        "query_timeout": 3
+      },
+      "p50_ms": 36.454,
+      "p95_ms": 1523.247,
+      "p99_ms": 5001.045,
+      "max_ms": 5001.045
+    },
+    {
+      "dimension": "edition_ordinal",
+      "value": 4,
+      "engine": "native",
+      "scope": "first",
+      "requests": 48,
+      "errors": 0,
+      "error_codes": {},
+      "p50_ms": 26.335,
+      "p95_ms": 397.354,
+      "p99_ms": 3204.99,
+      "max_ms": 3204.99
+    },
+    {
+      "dimension": "edition_ordinal",
+      "value": 4,
+      "engine": "paradedb",
+      "scope": "first",
+      "requests": 48,
+      "errors": 2,
+      "error_codes": {
+        "query_timeout": 2
+      },
+      "p50_ms": 23.27,
+      "p95_ms": 2001.14,
+      "p99_ms": 2607.192,
+      "max_ms": 2607.192
+    },
+    {
+      "dimension": "edition_ordinal",
+      "value": 5,
+      "engine": "native",
+      "scope": "first",
+      "requests": 254,
+      "errors": 9,
+      "error_codes": {
+        "query_timeout": 9
+      },
+      "p50_ms": 38.966,
+      "p95_ms": 2926.932,
+      "p99_ms": 4559.835,
+      "max_ms": 5223.735
+    },
+    {
+      "dimension": "edition_ordinal",
+      "value": 5,
+      "engine": "paradedb",
+      "scope": "first",
+      "requests": 254,
+      "errors": 1,
+      "error_codes": {
+        "query_timeout": 1
+      },
+      "p50_ms": 53.144,
+      "p95_ms": 1032.574,
+      "p99_ms": 1908.378,
+      "max_ms": 2002.538
+    },
+    {
+      "dimension": "kind",
+      "value": "business",
+      "engine": "native",
+      "scope": "first",
+      "requests": 108,
+      "errors": 0,
+      "error_codes": {},
+      "p50_ms": 38.692,
+      "p95_ms": 1134.261,
+      "p99_ms": 2926.932,
+      "max_ms": 3316.162
+    },
+    {
+      "dimension": "kind",
+      "value": "business",
+      "engine": "paradedb",
+      "scope": "first",
+      "requests": 108,
+      "errors": 0,
+      "error_codes": {},
+      "p50_ms": 75.06,
+      "p95_ms": 322.452,
+      "p99_ms": 585.613,
+      "max_ms": 1104.614
+    },
+    {
+      "dimension": "kind",
+      "value": "other",
+      "engine": "native",
+      "scope": "first",
+      "requests": 24,
+      "errors": 1,
+      "error_codes": {
+        "query_timeout": 1
+      },
+      "p50_ms": 4.747,
+      "p95_ms": 2841.069,
+      "p99_ms": 5001.196,
+      "max_ms": 5001.196
+    },
+    {
+      "dimension": "kind",
+      "value": "other",
+      "engine": "paradedb",
+      "scope": "first",
+      "requests": 24,
+      "errors": 1,
+      "error_codes": {
+        "query_timeout": 1
+      },
+      "p50_ms": 2.305,
+      "p95_ms": 3103.236,
+      "p99_ms": 5000.883,
+      "max_ms": 5000.883
+    },
+    {
+      "dimension": "kind",
+      "value": "person",
+      "engine": "native",
+      "scope": "first",
+      "requests": 456,
+      "errors": 24,
+      "error_codes": {
+        "query_timeout": 24
+      },
+      "p50_ms": 49.883,
+      "p95_ms": 3597.653,
+      "p99_ms": 4167.382,
+      "max_ms": 5223.735
+    },
+    {
+      "dimension": "kind",
+      "value": "person",
+      "engine": "paradedb",
+      "scope": "first",
+      "requests": 456,
+      "errors": 24,
+      "error_codes": {
+        "query_timeout": 24
+      },
+      "p50_ms": 57.761,
+      "p95_ms": 2000.966,
+      "p99_ms": 4034.862,
+      "max_ms": 5001.045
+    },
+    {
+      "dimension": "route",
+      "value": "/api/address",
+      "engine": "native",
+      "scope": "first",
+      "requests": 6,
+      "errors": 1,
+      "error_codes": {
+        "query_timeout": 1
+      },
+      "p50_ms": 51.732,
+      "p95_ms": 5001.196,
+      "p99_ms": 5001.196,
+      "max_ms": 5001.196
+    },
+    {
+      "dimension": "route",
+      "value": "/api/address",
+      "engine": "paradedb",
+      "scope": "first",
+      "requests": 6,
+      "errors": 1,
+      "error_codes": {
+        "query_timeout": 1
+      },
+      "p50_ms": 65.372,
+      "p95_ms": 5000.883,
+      "p99_ms": 5000.883,
+      "max_ms": 5000.883
+    },
+    {
+      "dimension": "route",
+      "value": "/api/export",
+      "engine": "native",
+      "scope": "first",
+      "requests": 8,
+      "errors": 0,
+      "error_codes": {},
+      "p50_ms": 4.747,
+      "p95_ms": 100.782,
+      "p99_ms": 100.782,
+      "max_ms": 100.782
+    },
+    {
+      "dimension": "route",
+      "value": "/api/export",
+      "engine": "paradedb",
+      "scope": "first",
+      "requests": 8,
+      "errors": 0,
+      "error_codes": {},
+      "p50_ms": 4.62,
+      "p95_ms": 8.038,
+      "p99_ms": 8.038,
+      "max_ms": 8.038
+    },
+    {
+      "dimension": "route",
+      "value": "/api/group",
+      "engine": "native",
+      "scope": "first",
+      "requests": 8,
+      "errors": 0,
+      "error_codes": {},
+      "p50_ms": 4.963,
+      "p95_ms": 156.535,
+      "p99_ms": 156.535,
+      "max_ms": 156.535
+    },
+    {
+      "dimension": "route",
+      "value": "/api/group",
+      "engine": "paradedb",
+      "scope": "first",
+      "requests": 8,
+      "errors": 0,
+      "error_codes": {},
+      "p50_ms": 4.335,
+      "p95_ms": 239.003,
+      "p99_ms": 239.003,
+      "max_ms": 239.003
+    },
+    {
+      "dimension": "route",
+      "value": "/api/record",
+      "engine": "native",
+      "scope": "first",
+      "requests": 10,
+      "errors": 0,
+      "error_codes": {},
+      "p50_ms": 1.438,
+      "p95_ms": 21.137,
+      "p99_ms": 21.137,
+      "max_ms": 21.137
+    },
+    {
+      "dimension": "route",
+      "value": "/api/record",
+      "engine": "paradedb",
+      "scope": "first",
+      "requests": 10,
+      "errors": 0,
+      "error_codes": {},
+      "p50_ms": 1.244,
+      "p95_ms": 1.708,
+      "p99_ms": 1.708,
+      "max_ms": 1.708
+    },
+    {
+      "dimension": "route",
+      "value": "/api/search",
+      "engine": "native",
+      "scope": "first",
+      "requests": 556,
+      "errors": 24,
+      "error_codes": {
+        "query_timeout": 24
+      },
+      "p50_ms": 46.995,
+      "p95_ms": 3180.901,
+      "p99_ms": 4124.097,
+      "max_ms": 5223.735
+    },
+    {
+      "dimension": "route",
+      "value": "/api/search",
+      "engine": "paradedb",
+      "scope": "first",
+      "requests": 556,
+      "errors": 24,
+      "error_codes": {
+        "query_timeout": 24
+      },
+      "p50_ms": 61.651,
+      "p95_ms": 2000.634,
+      "p99_ms": 4020.391,
+      "max_ms": 5001.045
+    },
+    {
+      "dimension": "postcode",
+      "value": false,
+      "engine": "native",
+      "scope": "first",
+      "requests": 430,
+      "errors": 21,
+      "error_codes": {
+        "query_timeout": 21
+      },
+      "p50_ms": 41.876,
+      "p95_ms": 3249.442,
+      "p99_ms": 4263.954,
+      "max_ms": 5223.735
+    },
+    {
+      "dimension": "postcode",
+      "value": false,
+      "engine": "paradedb",
+      "scope": "first",
+      "requests": 430,
+      "errors": 8,
+      "error_codes": {
+        "query_timeout": 8
+      },
+      "p50_ms": 44.193,
+      "p95_ms": 899.639,
+      "p99_ms": 4034.862,
+      "max_ms": 5001.045
+    },
+    {
+      "dimension": "postcode",
+      "value": true,
+      "engine": "native",
+      "scope": "first",
+      "requests": 158,
+      "errors": 4,
+      "error_codes": {
+        "query_timeout": 4
+      },
+      "p50_ms": 52.587,
+      "p95_ms": 2627.225,
+      "p99_ms": 4008.405,
+      "max_ms": 4061.161
+    },
+    {
+      "dimension": "postcode",
+      "value": true,
+      "engine": "paradedb",
+      "scope": "first",
+      "requests": 158,
+      "errors": 17,
+      "error_codes": {
+        "query_timeout": 17
+      },
+      "p50_ms": 79.688,
+      "p95_ms": 2002.079,
+      "p99_ms": 4012.661,
+      "max_ms": 4036.158
+    },
+    {
+      "dimension": "address",
+      "value": false,
+      "engine": "native",
+      "scope": "first",
+      "requests": 200,
+      "errors": 5,
+      "error_codes": {
+        "query_timeout": 5
+      },
+      "p50_ms": 50.871,
+      "p95_ms": 2926.932,
+      "p99_ms": 4008.405,
+      "max_ms": 5001.196
+    },
+    {
+      "dimension": "address",
+      "value": false,
+      "engine": "paradedb",
+      "scope": "first",
+      "requests": 200,
+      "errors": 20,
+      "error_codes": {
+        "query_timeout": 20
+      },
+      "p50_ms": 68.898,
+      "p95_ms": 2002.079,
+      "p99_ms": 4012.661,
+      "max_ms": 5000.883
+    },
+    {
+      "dimension": "address",
+      "value": true,
+      "engine": "native",
+      "scope": "first",
+      "requests": 388,
+      "errors": 20,
+      "error_codes": {
+        "query_timeout": 20
+      },
+      "p50_ms": 43.951,
+      "p95_ms": 2949.284,
+      "p99_ms": 4263.954,
+      "max_ms": 5223.735
+    },
+    {
+      "dimension": "address",
+      "value": true,
+      "engine": "paradedb",
+      "scope": "first",
+      "requests": 388,
+      "errors": 5,
+      "error_codes": {
+        "query_timeout": 5
+      },
+      "p50_ms": 46.132,
+      "p95_ms": 801.885,
+      "p99_ms": 4034.862,
+      "max_ms": 5001.045
+    }
+  ],
+  "load_runs": [
+    {
+      "name": "load-native",
+      "cases": 287,
+      "initial": {
+        "requests": 287,
+        "errors": 1,
+        "median_ms": 12.573815,
+        "p95_ms": 227.12985,
+        "p99_ms": 1881.459881,
+        "max_ms": 2957.868183,
+        "wall_seconds": 20.404991958,
+        "requests_per_second": 14.065185646274097,
+        "outcomes": {
+          "http_error": 1,
+          "ok": 286
+        },
+        "statuses": {
+          "200": 286,
+          "503": 1
+        },
+        "families": {
+          "address": {
+            "requests": 131,
+            "errors": 1,
+            "median_ms": 13.849491,
+            "p95_ms": 283.600988,
+            "p99_ms": 850.216997,
+            "max_ms": 2843.855644,
+            "wall_seconds": 20.404991958,
+            "requests_per_second": 6.419997629483996
+          },
+          "export": {
+            "requests": 4,
+            "errors": 0,
+            "median_ms": 59.09702,
+            "p95_ms": 84.821215,
+            "p99_ms": 84.821215,
+            "max_ms": 84.821215,
+            "wall_seconds": 20.404991958,
+            "requests_per_second": 0.19603046196897697
+          },
+          "group": {
+            "requests": 4,
+            "errors": 0,
+            "median_ms": 2.587682,
+            "p95_ms": 3.592963,
+            "p99_ms": 3.592963,
+            "max_ms": 3.592963,
+            "wall_seconds": 20.404991958,
+            "requests_per_second": 0.19603046196897697
+          },
+          "grouped": {
+            "requests": 8,
+            "errors": 0,
+            "median_ms": 36.950078,
+            "p95_ms": 187.45853,
+            "p99_ms": 187.45853,
+            "max_ms": 187.45853,
+            "wall_seconds": 20.404991958,
+            "requests_per_second": 0.39206092393795394
+          },
+          "name": {
+            "requests": 5,
+            "errors": 0,
+            "median_ms": 7.639479,
+            "p95_ms": 8.72183,
+            "p99_ms": 8.72183,
+            "max_ms": 8.72183,
+            "wall_seconds": 20.404991958,
+            "requests_per_second": 0.24503807746122122
+          },
+          "nearby": {
+            "requests": 4,
+            "errors": 0,
+            "median_ms": 75.271727,
+            "p95_ms": 120.920539,
+            "p99_ms": 120.920539,
+            "max_ms": 120.920539,
+            "wall_seconds": 20.404991958,
+            "requests_per_second": 0.19603046196897697
+          },
+          "ordered": {
+            "requests": 100,
+            "errors": 0,
+            "median_ms": 13.602781,
+            "p95_ms": 210.982362,
+            "p99_ms": 1881.459881,
+            "max_ms": 2957.868183,
+            "wall_seconds": 20.404991958,
+            "requests_per_second": 4.900761549224424
+          },
+          "postcode": {
+            "requests": 26,
+            "errors": 0,
+            "median_ms": 6.235854,
+            "p95_ms": 19.493004,
+            "p99_ms": 52.02185,
+            "max_ms": 52.02185,
+            "wall_seconds": 20.404991958,
+            "requests_per_second": 1.2741980027983504
+          },
+          "record": {
+            "requests": 5,
+            "errors": 0,
+            "median_ms": 1.085008,
+            "p95_ms": 1.486313,
+            "p99_ms": 1.486313,
+            "max_ms": 1.486313,
+            "wall_seconds": 20.404991958,
+            "requests_per_second": 0.24503807746122122
+          }
+        }
+      },
+      "closed_loop": {
+        "1": {
+          "requests": 574,
+          "errors": 0,
+          "median_ms": 12.05942,
+          "p95_ms": 209.955037,
+          "p99_ms": 854.16532,
+          "max_ms": 3130.464257,
+          "wall_seconds": 36.264501341,
+          "requests_per_second": 15.828150912723176,
+          "outcomes": {
+            "ok": 574
+          },
+          "statuses": {
+            "200": 574
+          },
+          "families": {
+            "address": {
+              "requests": 262,
+              "errors": 0,
+              "median_ms": 14.929663,
+              "p95_ms": 234.118125,
+              "p99_ms": 615.837961,
+              "max_ms": 854.16532,
+              "wall_seconds": 36.264501341,
+              "requests_per_second": 7.22469606120814
+            },
+            "export": {
+              "requests": 8,
+              "errors": 0,
+              "median_ms": 46.173086,
+              "p95_ms": 90.820226,
+              "p99_ms": 90.820226,
+              "max_ms": 90.820226,
+              "wall_seconds": 36.264501341,
+              "requests_per_second": 0.2206014064491035
+            },
+            "group": {
+              "requests": 8,
+              "errors": 0,
+              "median_ms": 2.986566,
+              "p95_ms": 4.178645,
+              "p99_ms": 4.178645,
+              "max_ms": 4.178645,
+              "wall_seconds": 36.264501341,
+              "requests_per_second": 0.2206014064491035
+            },
+            "grouped": {
+              "requests": 16,
+              "errors": 0,
+              "median_ms": 40.245164,
+              "p95_ms": 209.955037,
+              "p99_ms": 209.955037,
+              "max_ms": 209.955037,
+              "wall_seconds": 36.264501341,
+              "requests_per_second": 0.441202812898207
+            },
+            "name": {
+              "requests": 10,
+              "errors": 0,
+              "median_ms": 7.386961,
+              "p95_ms": 8.054851,
+              "p99_ms": 8.054851,
+              "max_ms": 8.054851,
+              "wall_seconds": 36.264501341,
+              "requests_per_second": 0.27575175806137936
+            },
+            "nearby": {
+              "requests": 8,
+              "errors": 0,
+              "median_ms": 71.122493,
+              "p95_ms": 144.876909,
+              "p99_ms": 144.876909,
+              "max_ms": 144.876909,
+              "wall_seconds": 36.264501341,
+              "requests_per_second": 0.2206014064491035
+            },
+            "ordered": {
+              "requests": 200,
+              "errors": 0,
+              "median_ms": 13.903323,
+              "p95_ms": 212.295371,
+              "p99_ms": 2876.625873,
+              "max_ms": 3130.464257,
+              "wall_seconds": 36.264501341,
+              "requests_per_second": 5.515035161227588
+            },
+            "postcode": {
+              "requests": 52,
+              "errors": 0,
+              "median_ms": 6.405165,
+              "p95_ms": 21.416822,
+              "p99_ms": 56.728026,
+              "max_ms": 56.728026,
+              "wall_seconds": 36.264501341,
+              "requests_per_second": 1.4339091419191727
+            },
+            "record": {
+              "requests": 10,
+              "errors": 0,
+              "median_ms": 1.222536,
+              "p95_ms": 1.536939,
+              "p99_ms": 1.536939,
+              "max_ms": 1.536939,
+              "wall_seconds": 36.264501341,
+              "requests_per_second": 0.27575175806137936
+            }
+          }
+        },
+        "4": {
+          "requests": 574,
+          "errors": 3,
+          "median_ms": 26.775551,
+          "p95_ms": 581.463688,
+          "p99_ms": 2700.335412,
+          "max_ms": 4093.001335,
+          "wall_seconds": 22.704420922,
+          "requests_per_second": 25.281419947769237,
+          "outcomes": {
+            "http_error": 3,
+            "ok": 571
+          },
+          "statuses": {
+            "200": 571,
+            "503": 3
+          },
+          "families": {
+            "address": {
+              "requests": 262,
+              "errors": 0,
+              "median_ms": 38.75221,
+              "p95_ms": 598.037679,
+              "p99_ms": 1597.717516,
+              "max_ms": 2420.61845,
+              "wall_seconds": 22.704420922,
+              "requests_per_second": 11.539602833302334
+            },
+            "export": {
+              "requests": 8,
+              "errors": 0,
+              "median_ms": 118.526185,
+              "p95_ms": 209.993556,
+              "p99_ms": 209.993556,
+              "max_ms": 209.993556,
+              "wall_seconds": 22.704420922,
+              "requests_per_second": 0.3523542849863308
+            },
+            "group": {
+              "requests": 8,
+              "errors": 0,
+              "median_ms": 4.055032,
+              "p95_ms": 51.795421,
+              "p99_ms": 51.795421,
+              "max_ms": 51.795421,
+              "wall_seconds": 22.704420922,
+              "requests_per_second": 0.3523542849863308
+            },
+            "grouped": {
+              "requests": 16,
+              "errors": 0,
+              "median_ms": 90.782734,
+              "p95_ms": 578.420892,
+              "p99_ms": 578.420892,
+              "max_ms": 578.420892,
+              "wall_seconds": 22.704420922,
+              "requests_per_second": 0.7047085699726616
+            },
+            "name": {
+              "requests": 10,
+              "errors": 0,
+              "median_ms": 8.357453,
+              "p95_ms": 65.114858,
+              "p99_ms": 65.114858,
+              "max_ms": 65.114858,
+              "wall_seconds": 22.704420922,
+              "requests_per_second": 0.4404428562329135
+            },
+            "nearby": {
+              "requests": 8,
+              "errors": 0,
+              "median_ms": 137.533066,
+              "p95_ms": 385.384544,
+              "p99_ms": 385.384544,
+              "max_ms": 385.384544,
+              "wall_seconds": 22.704420922,
+              "requests_per_second": 0.3523542849863308
+            },
+            "ordered": {
+              "requests": 200,
+              "errors": 3,
+              "median_ms": 39.195255,
+              "p95_ms": 914.874701,
+              "p99_ms": 4017.808381,
+              "max_ms": 4093.001335,
+              "wall_seconds": 22.704420922,
+              "requests_per_second": 8.808857124658271
+            },
+            "postcode": {
+              "requests": 52,
+              "errors": 0,
+              "median_ms": 11.119622,
+              "p95_ms": 78.772387,
+              "p99_ms": 177.128995,
+              "max_ms": 177.128995,
+              "wall_seconds": 22.704420922,
+              "requests_per_second": 2.29030285241115
+            },
+            "record": {
+              "requests": 10,
+              "errors": 0,
+              "median_ms": 1.75506,
+              "p95_ms": 4.505426,
+              "p99_ms": 4.505426,
+              "max_ms": 4.505426,
+              "wall_seconds": 22.704420922,
+              "requests_per_second": 0.4404428562329135
+            }
+          }
+        }
+      },
+      "passed": false
+    },
+    {
+      "name": "load-candidate",
+      "cases": 287,
+      "initial": {
+        "requests": 287,
+        "errors": 0,
+        "median_ms": 7.461968,
+        "p95_ms": 158.871706,
+        "p99_ms": 227.90425,
+        "max_ms": 1123.662267,
+        "wall_seconds": 9.149389605,
+        "requests_per_second": 31.368212786911922,
+        "outcomes": {
+          "ok": 287
+        },
+        "statuses": {
+          "200": 287
+        },
+        "families": {
+          "address": {
+            "requests": 131,
+            "errors": 0,
+            "median_ms": 5.990845,
+            "p95_ms": 135.471929,
+            "p99_ms": 227.90425,
+            "max_ms": 1123.662267,
+            "wall_seconds": 9.149389605,
+            "requests_per_second": 14.317895035140982
+          },
+          "export": {
+            "requests": 4,
+            "errors": 0,
+            "median_ms": 4.887286,
+            "p95_ms": 8.862243,
+            "p99_ms": 8.862243,
+            "max_ms": 8.862243,
+            "wall_seconds": 9.149389605,
+            "requests_per_second": 0.4371876346607933
+          },
+          "group": {
+            "requests": 4,
+            "errors": 0,
+            "median_ms": 3.098514,
+            "p95_ms": 3.964595,
+            "p99_ms": 3.964595,
+            "max_ms": 3.964595,
+            "wall_seconds": 9.149389605,
+            "requests_per_second": 0.4371876346607933
+          },
+          "grouped": {
+            "requests": 8,
+            "errors": 0,
+            "median_ms": 25.77435,
+            "p95_ms": 186.143385,
+            "p99_ms": 186.143385,
+            "max_ms": 186.143385,
+            "wall_seconds": 9.149389605,
+            "requests_per_second": 0.8743752693215866
+          },
+          "name": {
+            "requests": 5,
+            "errors": 0,
+            "median_ms": 10.840819,
+            "p95_ms": 109.921735,
+            "p99_ms": 109.921735,
+            "max_ms": 109.921735,
+            "wall_seconds": 9.149389605,
+            "requests_per_second": 0.5464845433259916
+          },
+          "nearby": {
+            "requests": 4,
+            "errors": 0,
+            "median_ms": 70.580641,
+            "p95_ms": 161.829751,
+            "p99_ms": 161.829751,
+            "max_ms": 161.829751,
+            "wall_seconds": 9.149389605,
+            "requests_per_second": 0.4371876346607933
+          },
+          "ordered": {
+            "requests": 100,
+            "errors": 0,
+            "median_ms": 7.602766,
+            "p95_ms": 158.871706,
+            "p99_ms": 198.615797,
+            "max_ms": 218.823973,
+            "wall_seconds": 9.149389605,
+            "requests_per_second": 10.929690866519833
+          },
+          "postcode": {
+            "requests": 26,
+            "errors": 0,
+            "median_ms": 9.322107,
+            "p95_ms": 183.243563,
+            "p99_ms": 267.890575,
+            "max_ms": 267.890575,
+            "wall_seconds": 9.149389605,
+            "requests_per_second": 2.8417196252951564
+          },
+          "record": {
+            "requests": 5,
+            "errors": 0,
+            "median_ms": 1.31443,
+            "p95_ms": 1.400952,
+            "p99_ms": 1.400952,
+            "max_ms": 1.400952,
+            "wall_seconds": 9.149389605,
+            "requests_per_second": 0.5464845433259916
+          }
+        }
+      },
+      "closed_loop": {
+        "1": {
+          "requests": 574,
+          "errors": 0,
+          "median_ms": 7.330224,
+          "p95_ms": 122.986671,
+          "p99_ms": 245.046953,
+          "max_ms": 744.765653,
+          "wall_seconds": 15.754050926,
+          "requests_per_second": 36.43507328344916,
+          "outcomes": {
+            "ok": 574
+          },
+          "statuses": {
+            "200": 574
+          },
+          "families": {
+            "address": {
+              "requests": 262,
+              "errors": 0,
+              "median_ms": 4.931578,
+              "p95_ms": 101.607375,
+              "p99_ms": 288.614064,
+              "max_ms": 744.765653,
+              "wall_seconds": 15.754050926,
+              "requests_per_second": 16.630643206034282
+            },
+            "export": {
+              "requests": 8,
+              "errors": 0,
+              "median_ms": 3.750576,
+              "p95_ms": 8.501067,
+              "p99_ms": 8.501067,
+              "max_ms": 8.501067,
+              "wall_seconds": 15.754050926,
+              "requests_per_second": 0.5078058994208942
+            },
+            "group": {
+              "requests": 8,
+              "errors": 0,
+              "median_ms": 2.343833,
+              "p95_ms": 3.78056,
+              "p99_ms": 3.78056,
+              "max_ms": 3.78056,
+              "wall_seconds": 15.754050926,
+              "requests_per_second": 0.5078058994208942
+            },
+            "grouped": {
+              "requests": 16,
+              "errors": 0,
+              "median_ms": 22.660173,
+              "p95_ms": 189.241459,
+              "p99_ms": 189.241459,
+              "max_ms": 189.241459,
+              "wall_seconds": 15.754050926,
+              "requests_per_second": 1.0156117988417883
+            },
+            "name": {
+              "requests": 10,
+              "errors": 0,
+              "median_ms": 11.535421,
+              "p95_ms": 124.571886,
+              "p99_ms": 124.571886,
+              "max_ms": 124.571886,
+              "wall_seconds": 15.754050926,
+              "requests_per_second": 0.6347573742761177
+            },
+            "nearby": {
+              "requests": 8,
+              "errors": 0,
+              "median_ms": 75.02947,
+              "p95_ms": 147.847224,
+              "p99_ms": 147.847224,
+              "max_ms": 147.847224,
+              "wall_seconds": 15.754050926,
+              "requests_per_second": 0.5078058994208942
+            },
+            "ordered": {
+              "requests": 200,
+              "errors": 0,
+              "median_ms": 7.858693,
+              "p95_ms": 131.182896,
+              "p99_ms": 203.025936,
+              "max_ms": 308.612138,
+              "wall_seconds": 15.754050926,
+              "requests_per_second": 12.695147485522353
+            },
+            "postcode": {
+              "requests": 52,
+              "errors": 0,
+              "median_ms": 9.422697,
+              "p95_ms": 142.572544,
+              "p99_ms": 245.046953,
+              "max_ms": 245.046953,
+              "wall_seconds": 15.754050926,
+              "requests_per_second": 3.300738346235812
+            },
+            "record": {
+              "requests": 10,
+              "errors": 0,
+              "median_ms": 1.328802,
+              "p95_ms": 2.654072,
+              "p99_ms": 2.654072,
+              "max_ms": 2.654072,
+              "wall_seconds": 15.754050926,
+              "requests_per_second": 0.6347573742761177
+            }
+          }
+        },
+        "4": {
+          "requests": 574,
+          "errors": 0,
+          "median_ms": 14.333349,
+          "p95_ms": 405.583296,
+          "p99_ms": 986.668103,
+          "max_ms": 2585.055959,
+          "wall_seconds": 12.283873713,
+          "requests_per_second": 46.727930733489785,
+          "outcomes": {
+            "ok": 574
+          },
+          "statuses": {
+            "200": 574
+          },
+          "families": {
+            "address": {
+              "requests": 262,
+              "errors": 0,
+              "median_ms": 12.787917,
+              "p95_ms": 604.136026,
+              "p99_ms": 1223.683288,
+              "max_ms": 2585.055959,
+              "wall_seconds": 12.283873713,
+              "requests_per_second": 21.3287767459483
+            },
+            "export": {
+              "requests": 8,
+              "errors": 0,
+              "median_ms": 7.152266,
+              "p95_ms": 16.730649,
+              "p99_ms": 16.730649,
+              "max_ms": 16.730649,
+              "wall_seconds": 12.283873713,
+              "requests_per_second": 0.6512603586549099
+            },
+            "group": {
+              "requests": 8,
+              "errors": 0,
+              "median_ms": 5.351624,
+              "p95_ms": 14.899523,
+              "p99_ms": 14.899523,
+              "max_ms": 14.899523,
+              "wall_seconds": 12.283873713,
+              "requests_per_second": 0.6512603586549099
+            },
+            "grouped": {
+              "requests": 16,
+              "errors": 0,
+              "median_ms": 91.94546,
+              "p95_ms": 360.207245,
+              "p99_ms": 360.207245,
+              "max_ms": 360.207245,
+              "wall_seconds": 12.283873713,
+              "requests_per_second": 1.3025207173098199
+            },
+            "name": {
+              "requests": 10,
+              "errors": 0,
+              "median_ms": 66.80508,
+              "p95_ms": 386.337803,
+              "p99_ms": 386.337803,
+              "max_ms": 386.337803,
+              "wall_seconds": 12.283873713,
+              "requests_per_second": 0.8140754483186374
+            },
+            "nearby": {
+              "requests": 8,
+              "errors": 0,
+              "median_ms": 98.200827,
+              "p95_ms": 153.977518,
+              "p99_ms": 153.977518,
+              "max_ms": 153.977518,
+              "wall_seconds": 12.283873713,
+              "requests_per_second": 0.6512603586549099
+            },
+            "ordered": {
+              "requests": 200,
+              "errors": 0,
+              "median_ms": 15.234086,
+              "p95_ms": 352.882629,
+              "p99_ms": 625.6036,
+              "max_ms": 1032.500777,
+              "wall_seconds": 12.283873713,
+              "requests_per_second": 16.281508966372748
+            },
+            "postcode": {
+              "requests": 52,
+              "errors": 0,
+              "median_ms": 37.102178,
+              "p95_ms": 588.422852,
+              "p99_ms": 1039.45772,
+              "max_ms": 1039.45772,
+              "wall_seconds": 12.283873713,
+              "requests_per_second": 4.233192331256914
+            },
+            "record": {
+              "requests": 10,
+              "errors": 0,
+              "median_ms": 1.571034,
+              "p95_ms": 20.254994,
+              "p99_ms": 20.254994,
+              "max_ms": 20.254994,
+              "wall_seconds": 12.283873713,
+              "requests_per_second": 0.8140754483186374
+            }
+          }
+        }
+      },
+      "passed": true
+    },
+    {
+      "name": "load-candidate-repeat",
+      "cases": 287,
+      "initial": {
+        "requests": 287,
+        "errors": 0,
+        "median_ms": 7.112018,
+        "p95_ms": 102.419832,
+        "p99_ms": 242.521884,
+        "max_ms": 555.179724,
+        "wall_seconds": 7.595395153,
+        "requests_per_second": 37.786052498748774,
+        "outcomes": {
+          "ok": 287
+        },
+        "statuses": {
+          "200": 287
+        },
+        "families": {
+          "address": {
+            "requests": 131,
+            "errors": 0,
+            "median_ms": 4.865154,
+            "p95_ms": 96.712829,
+            "p99_ms": 189.628731,
+            "max_ms": 555.179724,
+            "wall_seconds": 7.595395153,
+            "requests_per_second": 17.247292255526446
+          },
+          "export": {
+            "requests": 4,
+            "errors": 0,
+            "median_ms": 4.373673,
+            "p95_ms": 7.284943,
+            "p99_ms": 7.284943,
+            "max_ms": 7.284943,
+            "wall_seconds": 7.595395153,
+            "requests_per_second": 0.5266348780313418
+          },
+          "group": {
+            "requests": 4,
+            "errors": 0,
+            "median_ms": 2.921137,
+            "p95_ms": 5.063755,
+            "p99_ms": 5.063755,
+            "max_ms": 5.063755,
+            "wall_seconds": 7.595395153,
+            "requests_per_second": 0.5266348780313418
+          },
+          "grouped": {
+            "requests": 8,
+            "errors": 0,
+            "median_ms": 34.668149,
+            "p95_ms": 211.13817,
+            "p99_ms": 211.13817,
+            "max_ms": 211.13817,
+            "wall_seconds": 7.595395153,
+            "requests_per_second": 1.0532697560626836
+          },
+          "name": {
+            "requests": 5,
+            "errors": 0,
+            "median_ms": 13.371464,
+            "p95_ms": 37.394985,
+            "p99_ms": 37.394985,
+            "max_ms": 37.394985,
+            "wall_seconds": 7.595395153,
+            "requests_per_second": 0.6582935975391773
+          },
+          "nearby": {
+            "requests": 4,
+            "errors": 0,
+            "median_ms": 79.333938,
+            "p95_ms": 261.042897,
+            "p99_ms": 261.042897,
+            "max_ms": 261.042897,
+            "wall_seconds": 7.595395153,
+            "requests_per_second": 0.5266348780313418
+          },
+          "ordered": {
+            "requests": 100,
+            "errors": 0,
+            "median_ms": 8.332264,
+            "p95_ms": 102.419832,
+            "p99_ms": 186.884208,
+            "max_ms": 237.738623,
+            "wall_seconds": 7.595395153,
+            "requests_per_second": 13.165871950783545
+          },
+          "postcode": {
+            "requests": 26,
+            "errors": 0,
+            "median_ms": 9.168376,
+            "p95_ms": 123.525583,
+            "p99_ms": 242.521884,
+            "max_ms": 242.521884,
+            "wall_seconds": 7.595395153,
+            "requests_per_second": 3.4231267072037217
+          },
+          "record": {
+            "requests": 5,
+            "errors": 0,
+            "median_ms": 1.363769,
+            "p95_ms": 1.503159,
+            "p99_ms": 1.503159,
+            "max_ms": 1.503159,
+            "wall_seconds": 7.595395153,
+            "requests_per_second": 0.6582935975391773
+          }
+        }
+      },
+      "closed_loop": {
+        "1": {
+          "requests": 574,
+          "errors": 0,
+          "median_ms": 7.416772,
+          "p95_ms": 104.774235,
+          "p99_ms": 193.504344,
+          "max_ms": 543.263259,
+          "wall_seconds": 14.497973589,
+          "requests_per_second": 39.59173994050514,
+          "outcomes": {
+            "ok": 574
+          },
+          "statuses": {
+            "200": 574
+          },
+          "families": {
+            "address": {
+              "requests": 262,
+              "errors": 0,
+              "median_ms": 5.201725,
+              "p95_ms": 100.245336,
+              "p99_ms": 207.103543,
+              "max_ms": 543.263259,
+              "wall_seconds": 14.497973589,
+              "requests_per_second": 18.071491052983184
+            },
+            "export": {
+              "requests": 8,
+              "errors": 0,
+              "median_ms": 3.713859,
+              "p95_ms": 8.568504,
+              "p99_ms": 8.568504,
+              "max_ms": 8.568504,
+              "wall_seconds": 14.497973589,
+              "requests_per_second": 0.551801253526204
+            },
+            "group": {
+              "requests": 8,
+              "errors": 0,
+              "median_ms": 3.137408,
+              "p95_ms": 7.948183,
+              "p99_ms": 7.948183,
+              "max_ms": 7.948183,
+              "wall_seconds": 14.497973589,
+              "requests_per_second": 0.551801253526204
+            },
+            "grouped": {
+              "requests": 16,
+              "errors": 0,
+              "median_ms": 28.116232,
+              "p95_ms": 193.504344,
+              "p99_ms": 193.504344,
+              "max_ms": 193.504344,
+              "wall_seconds": 14.497973589,
+              "requests_per_second": 1.103602507052408
+            },
+            "name": {
+              "requests": 10,
+              "errors": 0,
+              "median_ms": 12.435427,
+              "p95_ms": 101.505337,
+              "p99_ms": 101.505337,
+              "max_ms": 101.505337,
+              "wall_seconds": 14.497973589,
+              "requests_per_second": 0.6897515669077551
+            },
+            "nearby": {
+              "requests": 8,
+              "errors": 0,
+              "median_ms": 66.187701,
+              "p95_ms": 188.976904,
+              "p99_ms": 188.976904,
+              "max_ms": 188.976904,
+              "wall_seconds": 14.497973589,
+              "requests_per_second": 0.551801253526204
+            },
+            "ordered": {
+              "requests": 200,
+              "errors": 0,
+              "median_ms": 8.773717,
+              "p95_ms": 99.13102,
+              "p99_ms": 171.358162,
+              "max_ms": 244.131052,
+              "wall_seconds": 14.497973589,
+              "requests_per_second": 13.795031338155102
+            },
+            "postcode": {
+              "requests": 52,
+              "errors": 0,
+              "median_ms": 10.073569,
+              "p95_ms": 149.662147,
+              "p99_ms": 194.971445,
+              "max_ms": 194.971445,
+              "wall_seconds": 14.497973589,
+              "requests_per_second": 3.5867081479203264
+            },
+            "record": {
+              "requests": 10,
+              "errors": 0,
+              "median_ms": 1.329936,
+              "p95_ms": 2.114086,
+              "p99_ms": 2.114086,
+              "max_ms": 2.114086,
+              "wall_seconds": 14.497973589,
+              "requests_per_second": 0.6897515669077551
+            }
+          }
+        },
+        "4": {
+          "requests": 574,
+          "errors": 0,
+          "median_ms": 14.709978,
+          "p95_ms": 385.01391,
+          "p99_ms": 1008.830987,
+          "max_ms": 2995.164282,
+          "wall_seconds": 11.751881089,
+          "requests_per_second": 48.843244383852365,
+          "outcomes": {
+            "ok": 574
+          },
+          "statuses": {
+            "200": 574
+          },
+          "families": {
+            "address": {
+              "requests": 262,
+              "errors": 0,
+              "median_ms": 12.313139,
+              "p95_ms": 423.681994,
+              "p99_ms": 1027.155187,
+              "max_ms": 2995.164282,
+              "wall_seconds": 11.751881089,
+              "requests_per_second": 22.294303185660834
+            },
+            "export": {
+              "requests": 8,
+              "errors": 0,
+              "median_ms": 4.166192,
+              "p95_ms": 16.378614,
+              "p99_ms": 16.378614,
+              "max_ms": 16.378614,
+              "wall_seconds": 11.751881089,
+              "requests_per_second": 0.6807420820049109
+            },
+            "group": {
+              "requests": 8,
+              "errors": 0,
+              "median_ms": 6.498027,
+              "p95_ms": 27.450576,
+              "p99_ms": 27.450576,
+              "max_ms": 27.450576,
+              "wall_seconds": 11.751881089,
+              "requests_per_second": 0.6807420820049109
+            },
+            "grouped": {
+              "requests": 16,
+              "errors": 0,
+              "median_ms": 47.031311,
+              "p95_ms": 280.39083,
+              "p99_ms": 280.39083,
+              "max_ms": 280.39083,
+              "wall_seconds": 11.751881089,
+              "requests_per_second": 1.3614841640098219
+            },
+            "name": {
+              "requests": 10,
+              "errors": 0,
+              "median_ms": 28.808867,
+              "p95_ms": 399.561893,
+              "p99_ms": 399.561893,
+              "max_ms": 399.561893,
+              "wall_seconds": 11.751881089,
+              "requests_per_second": 0.8509276025061387
+            },
+            "nearby": {
+              "requests": 8,
+              "errors": 0,
+              "median_ms": 104.069068,
+              "p95_ms": 202.876231,
+              "p99_ms": 202.876231,
+              "max_ms": 202.876231,
+              "wall_seconds": 11.751881089,
+              "requests_per_second": 0.6807420820049109
+            },
+            "ordered": {
+              "requests": 200,
+              "errors": 0,
+              "median_ms": 15.434585,
+              "p95_ms": 323.08025,
+              "p99_ms": 607.665119,
+              "max_ms": 1016.859582,
+              "wall_seconds": 11.751881089,
+              "requests_per_second": 17.018552050122775
+            },
+            "postcode": {
+              "requests": 52,
+              "errors": 0,
+              "median_ms": 17.350057,
+              "p95_ms": 632.960738,
+              "p99_ms": 1008.830987,
+              "max_ms": 1008.830987,
+              "wall_seconds": 11.751881089,
+              "requests_per_second": 4.424823533031922
+            },
+            "record": {
+              "requests": 10,
+              "errors": 0,
+              "median_ms": 2.382614,
+              "p95_ms": 3.483773,
+              "p99_ms": 3.483773,
+              "max_ms": 3.483773,
+              "wall_seconds": 11.751881089,
+              "requests_per_second": 0.8509276025061387
+            }
+          }
+        }
+      },
+      "passed": true
+    },
+    {
+      "name": "load-native-repeat",
+      "cases": 287,
+      "initial": {
+        "requests": 287,
+        "errors": 0,
+        "median_ms": 14.839898,
+        "p95_ms": 192.491934,
+        "p99_ms": 865.570225,
+        "max_ms": 2549.396636,
+        "wall_seconds": 16.737380478,
+        "requests_per_second": 17.147247167932846,
+        "outcomes": {
+          "ok": 287
+        },
+        "statuses": {
+          "200": 287
+        },
+        "families": {
+          "address": {
+            "requests": 131,
+            "errors": 0,
+            "median_ms": 18.264345,
+            "p95_ms": 208.676807,
+            "p99_ms": 459.397251,
+            "max_ms": 865.570225,
+            "wall_seconds": 16.737380478,
+            "requests_per_second": 7.826792261321264
+          },
+          "export": {
+            "requests": 4,
+            "errors": 0,
+            "median_ms": 66.546895,
+            "p95_ms": 97.606046,
+            "p99_ms": 97.606046,
+            "max_ms": 97.606046,
+            "wall_seconds": 16.737380478,
+            "requests_per_second": 0.23898602324645082
+          },
+          "group": {
+            "requests": 4,
+            "errors": 0,
+            "median_ms": 4.056001,
+            "p95_ms": 4.391836,
+            "p99_ms": 4.391836,
+            "max_ms": 4.391836,
+            "wall_seconds": 16.737380478,
+            "requests_per_second": 0.23898602324645082
+          },
+          "grouped": {
+            "requests": 8,
+            "errors": 0,
+            "median_ms": 37.581195,
+            "p95_ms": 188.83662,
+            "p99_ms": 188.83662,
+            "max_ms": 188.83662,
+            "wall_seconds": 16.737380478,
+            "requests_per_second": 0.47797204649290165
+          },
+          "name": {
+            "requests": 5,
+            "errors": 0,
+            "median_ms": 8.040027,
+            "p95_ms": 9.728501,
+            "p99_ms": 9.728501,
+            "max_ms": 9.728501,
+            "wall_seconds": 16.737380478,
+            "requests_per_second": 0.2987325290580635
+          },
+          "nearby": {
+            "requests": 4,
+            "errors": 0,
+            "median_ms": 70.479489,
+            "p95_ms": 142.206422,
+            "p99_ms": 142.206422,
+            "max_ms": 142.206422,
+            "wall_seconds": 16.737380478,
+            "requests_per_second": 0.23898602324645082
+          },
+          "ordered": {
+            "requests": 100,
+            "errors": 0,
+            "median_ms": 17.699431,
+            "p95_ms": 178.161234,
+            "p99_ms": 1394.539035,
+            "max_ms": 2549.396636,
+            "wall_seconds": 16.737380478,
+            "requests_per_second": 5.974650581161271
+          },
+          "postcode": {
+            "requests": 26,
+            "errors": 0,
+            "median_ms": 6.199293,
+            "p95_ms": 22.414386,
+            "p99_ms": 51.131213,
+            "max_ms": 51.131213,
+            "wall_seconds": 16.737380478,
+            "requests_per_second": 1.5534091511019303
+          },
+          "record": {
+            "requests": 5,
+            "errors": 0,
+            "median_ms": 1.081686,
+            "p95_ms": 1.236465,
+            "p99_ms": 1.236465,
+            "max_ms": 1.236465,
+            "wall_seconds": 16.737380478,
+            "requests_per_second": 0.2987325290580635
+          }
+        }
+      },
+      "closed_loop": {
+        "1": {
+          "requests": 574,
+          "errors": 0,
+          "median_ms": 12.925686,
+          "p95_ms": 197.057696,
+          "p99_ms": 765.854789,
+          "max_ms": 2286.567752,
+          "wall_seconds": 31.56808642,
+          "requests_per_second": 18.1829203190581,
+          "outcomes": {
+            "ok": 574
+          },
+          "statuses": {
+            "200": 574
+          },
+          "families": {
+            "address": {
+              "requests": 262,
+              "errors": 0,
+              "median_ms": 15.514117,
+              "p95_ms": 217.286127,
+              "p99_ms": 520.70042,
+              "max_ms": 946.982578,
+              "wall_seconds": 31.56808642,
+              "requests_per_second": 8.299521121242547
+            },
+            "export": {
+              "requests": 8,
+              "errors": 0,
+              "median_ms": 57.304873,
+              "p95_ms": 79.442825,
+              "p99_ms": 79.442825,
+              "max_ms": 79.442825,
+              "wall_seconds": 31.56808642,
+              "requests_per_second": 0.2534204922516808
+            },
+            "group": {
+              "requests": 8,
+              "errors": 0,
+              "median_ms": 2.640268,
+              "p95_ms": 4.836868,
+              "p99_ms": 4.836868,
+              "max_ms": 4.836868,
+              "wall_seconds": 31.56808642,
+              "requests_per_second": 0.2534204922516808
+            },
+            "grouped": {
+              "requests": 16,
+              "errors": 0,
+              "median_ms": 43.357757,
+              "p95_ms": 201.392986,
+              "p99_ms": 201.392986,
+              "max_ms": 201.392986,
+              "wall_seconds": 31.56808642,
+              "requests_per_second": 0.5068409845033616
+            },
+            "name": {
+              "requests": 10,
+              "errors": 0,
+              "median_ms": 7.954297,
+              "p95_ms": 10.586872,
+              "p99_ms": 10.586872,
+              "max_ms": 10.586872,
+              "wall_seconds": 31.56808642,
+              "requests_per_second": 0.316775615314601
+            },
+            "nearby": {
+              "requests": 8,
+              "errors": 0,
+              "median_ms": 76.141173,
+              "p95_ms": 139.787937,
+              "p99_ms": 139.787937,
+              "max_ms": 139.787937,
+              "wall_seconds": 31.56808642,
+              "requests_per_second": 0.2534204922516808
+            },
+            "ordered": {
+              "requests": 200,
+              "errors": 0,
+              "median_ms": 15.799866,
+              "p95_ms": 218.40014,
+              "p99_ms": 1698.07885,
+              "max_ms": 2286.567752,
+              "wall_seconds": 31.56808642,
+              "requests_per_second": 6.33551230629202
+            },
+            "postcode": {
+              "requests": 52,
+              "errors": 0,
+              "median_ms": 6.82545,
+              "p95_ms": 26.260276,
+              "p99_ms": 57.874941,
+              "max_ms": 57.874941,
+              "wall_seconds": 31.56808642,
+              "requests_per_second": 1.6472331996359253
+            },
+            "record": {
+              "requests": 10,
+              "errors": 0,
+              "median_ms": 1.29123,
+              "p95_ms": 1.601156,
+              "p99_ms": 1.601156,
+              "max_ms": 1.601156,
+              "wall_seconds": 31.56808642,
+              "requests_per_second": 0.316775615314601
+            }
+          }
+        },
+        "4": {
+          "requests": 574,
+          "errors": 7,
+          "median_ms": 68.024347,
+          "p95_ms": 1043.309321,
+          "p99_ms": 4067.226959,
+          "max_ms": 4125.067723,
+          "wall_seconds": 34.992903984,
+          "requests_per_second": 16.403325664610552,
+          "outcomes": {
+            "http_error": 7,
+            "ok": 567
+          },
+          "statuses": {
+            "200": 567,
+            "503": 7
+          },
+          "families": {
+            "address": {
+              "requests": 262,
+              "errors": 2,
+              "median_ms": 72.019442,
+              "p95_ms": 1277.116498,
+              "p99_ms": 3360.389344,
+              "max_ms": 4094.475615,
+              "wall_seconds": 34.992903984,
+              "requests_per_second": 7.487232271999938
+            },
+            "export": {
+              "requests": 8,
+              "errors": 0,
+              "median_ms": 356.276356,
+              "p95_ms": 442.576898,
+              "p99_ms": 442.576898,
+              "max_ms": 442.576898,
+              "wall_seconds": 34.992903984,
+              "requests_per_second": 0.22861777929770802
+            },
+            "group": {
+              "requests": 8,
+              "errors": 0,
+              "median_ms": 8.018511,
+              "p95_ms": 58.343561,
+              "p99_ms": 58.343561,
+              "max_ms": 58.343561,
+              "wall_seconds": 34.992903984,
+              "requests_per_second": 0.22861777929770802
+            },
+            "grouped": {
+              "requests": 16,
+              "errors": 0,
+              "median_ms": 137.377502,
+              "p95_ms": 1020.025321,
+              "p99_ms": 1020.025321,
+              "max_ms": 1020.025321,
+              "wall_seconds": 34.992903984,
+              "requests_per_second": 0.45723555859541604
+            },
+            "name": {
+              "requests": 10,
+              "errors": 0,
+              "median_ms": 31.857622,
+              "p95_ms": 68.593531,
+              "p99_ms": 68.593531,
+              "max_ms": 68.593531,
+              "wall_seconds": 34.992903984,
+              "requests_per_second": 0.28577222412213504
+            },
+            "nearby": {
+              "requests": 8,
+              "errors": 0,
+              "median_ms": 211.82873,
+              "p95_ms": 1012.299109,
+              "p99_ms": 1012.299109,
+              "max_ms": 1012.299109,
+              "wall_seconds": 34.992903984,
+              "requests_per_second": 0.22861777929770802
+            },
+            "ordered": {
+              "requests": 200,
+              "errors": 5,
+              "median_ms": 81.182826,
+              "p95_ms": 1085.079366,
+              "p99_ms": 4083.024624,
+              "max_ms": 4125.067723,
+              "wall_seconds": 34.992903984,
+              "requests_per_second": 5.715444482442701
+            },
+            "postcode": {
+              "requests": 52,
+              "errors": 0,
+              "median_ms": 19.795421,
+              "p95_ms": 187.979581,
+              "p99_ms": 218.48563,
+              "max_ms": 218.48563,
+              "wall_seconds": 34.992903984,
+              "requests_per_second": 1.4860155654351022
+            },
+            "record": {
+              "requests": 10,
+              "errors": 0,
+              "median_ms": 2.82821,
+              "p95_ms": 6.444779,
+              "p99_ms": 6.444779,
+              "max_ms": 6.444779,
+              "wall_seconds": 34.992903984,
+              "requests_per_second": 0.28577222412213504
+            }
+          }
+        }
+      },
+      "passed": false
+    }
+  ],
+  "cursor_checks": {
+    "complete": true,
+    "cases": 294,
+    "first_matches": 273,
+    "continuations": 51,
+    "native_errors": 7,
+    "candidate_errors": 9,
+    "mismatches": 0,
+    "binding_checks": 2,
+    "binding_rejected": 2,
+    "observations": [
+      {
+        "case": 0,
+        "outcome": "no_next"
+      },
+      {
+        "case": 1,
+        "outcome": "no_next"
+      },
+      {
+        "case": 2,
+        "outcome": "no_next"
+      },
+      {
+        "case": 3,
+        "outcome": "no_next"
+      },
+      {
+        "case": 4,
+        "outcome": "no_next"
+      },
+      {
+        "case": 5,
+        "outcome": "no_next"
+      },
+      {
+        "case": 6,
+        "outcome": "no_next"
+      },
+      {
+        "case": 7,
+        "outcome": "no_next"
+      },
+      {
+        "case": 8,
+        "outcome": "match"
+      },
+      {
+        "case": 9,
+        "outcome": "match"
+      },
+      {
+        "case": 10,
+        "outcome": "first_error"
+      },
+      {
+        "case": 11,
+        "outcome": "match"
+      },
+      {
+        "case": 12,
+        "outcome": "no_next"
+      },
+      {
+        "case": 13,
+        "outcome": "no_next"
+      },
+      {
+        "case": 16,
+        "outcome": "no_next"
+      },
+      {
+        "case": 17,
+        "outcome": "no_next"
+      },
+      {
+        "case": 18,
+        "outcome": "no_next"
+      },
+      {
+        "case": 19,
+        "outcome": "no_next"
+      },
+      {
+        "case": 20,
+        "outcome": "no_next"
+      },
+      {
+        "case": 21,
+        "outcome": "no_next"
+      },
+      {
+        "case": 22,
+        "outcome": "no_next"
+      },
+      {
+        "case": 23,
+        "outcome": "no_next"
+      },
+      {
+        "case": 24,
+        "outcome": "no_next"
+      },
+      {
+        "case": 25,
+        "outcome": "no_next"
+      },
+      {
+        "case": 26,
+        "outcome": "match"
+      },
+      {
+        "case": 27,
+        "outcome": "no_next"
+      },
+      {
+        "case": 28,
+        "outcome": "no_next"
+      },
+      {
+        "case": 29,
+        "outcome": "no_next"
+      },
+      {
+        "case": 30,
+        "outcome": "no_next"
+      },
+      {
+        "case": 31,
+        "outcome": "no_next"
+      },
+      {
+        "case": 32,
+        "outcome": "no_next"
+      },
+      {
+        "case": 33,
+        "outcome": "no_next"
+      },
+      {
+        "case": 34,
+        "outcome": "no_next"
+      },
+      {
+        "case": 35,
+        "outcome": "no_next"
+      },
+      {
+        "case": 36,
+        "outcome": "no_next"
+      },
+      {
+        "case": 37,
+        "outcome": "no_next"
+      },
+      {
+        "case": 38,
+        "outcome": "no_next"
+      },
+      {
+        "case": 39,
+        "outcome": "no_next"
+      },
+      {
+        "case": 40,
+        "outcome": "no_next"
+      },
+      {
+        "case": 41,
+        "outcome": "no_next"
+      },
+      {
+        "case": 42,
+        "outcome": "no_next"
+      },
+      {
+        "case": 43,
+        "outcome": "no_next"
+      },
+      {
+        "case": 44,
+        "outcome": "no_next"
+      },
+      {
+        "case": 45,
+        "outcome": "no_next"
+      },
+      {
+        "case": 46,
+        "outcome": "no_next"
+      },
+      {
+        "case": 47,
+        "outcome": "no_next"
+      },
+      {
+        "case": 48,
+        "outcome": "no_next"
+      },
+      {
+        "case": 49,
+        "outcome": "no_next"
+      },
+      {
+        "case": 50,
+        "outcome": "no_next"
+      },
+      {
+        "case": 51,
+        "outcome": "no_next"
+      },
+      {
+        "case": 52,
+        "outcome": "no_next"
+      },
+      {
+        "case": 53,
+        "outcome": "no_next"
+      },
+      {
+        "case": 54,
+        "outcome": "no_next"
+      },
+      {
+        "case": 55,
+        "outcome": "first_error"
+      },
+      {
+        "case": 56,
+        "outcome": "match"
+      },
+      {
+        "case": 57,
+        "outcome": "first_error"
+      },
+      {
+        "case": 58,
+        "outcome": "match"
+      },
+      {
+        "case": 59,
+        "outcome": "no_next"
+      },
+      {
+        "case": 60,
+        "outcome": "no_next"
+      },
+      {
+        "case": 63,
+        "outcome": "no_next"
+      },
+      {
+        "case": 64,
+        "outcome": "no_next"
+      },
+      {
+        "case": 65,
+        "outcome": "no_next"
+      },
+      {
+        "case": 66,
+        "outcome": "no_next"
+      },
+      {
+        "case": 67,
+        "outcome": "no_next"
+      },
+      {
+        "case": 68,
+        "outcome": "no_next"
+      },
+      {
+        "case": 69,
+        "outcome": "no_next"
+      },
+      {
+        "case": 70,
+        "outcome": "no_next"
+      },
+      {
+        "case": 71,
+        "outcome": "no_next"
+      },
+      {
+        "case": 72,
+        "outcome": "no_next"
+      },
+      {
+        "case": 73,
+        "outcome": "match"
+      },
+      {
+        "case": 74,
+        "outcome": "no_next"
+      },
+      {
+        "case": 75,
+        "outcome": "no_next"
+      },
+      {
+        "case": 76,
+        "outcome": "no_next"
+      },
+      {
+        "case": 77,
+        "outcome": "no_next"
+      },
+      {
+        "case": 78,
+        "outcome": "no_next"
+      },
+      {
+        "case": 79,
+        "outcome": "no_next"
+      },
+      {
+        "case": 80,
+        "outcome": "no_next"
+      },
+      {
+        "case": 81,
+        "outcome": "no_next"
+      },
+      {
+        "case": 82,
+        "outcome": "no_next"
+      },
+      {
+        "case": 83,
+        "outcome": "no_next"
+      },
+      {
+        "case": 84,
+        "outcome": "no_next"
+      },
+      {
+        "case": 85,
+        "outcome": "no_next"
+      },
+      {
+        "case": 86,
+        "outcome": "no_next"
+      },
+      {
+        "case": 87,
+        "outcome": "no_next"
+      },
+      {
+        "case": 88,
+        "outcome": "match"
+      },
+      {
+        "case": 89,
+        "outcome": "match"
+      },
+      {
+        "case": 90,
+        "outcome": "first_error"
+      },
+      {
+        "case": 91,
+        "outcome": "first_error"
+      },
+      {
+        "case": 92,
+        "outcome": "first_error"
+      },
+      {
+        "case": 93,
+        "outcome": "match"
+      },
+      {
+        "case": 94,
+        "outcome": "match"
+      },
+      {
+        "case": 95,
+        "outcome": "match"
+      },
+      {
+        "case": 96,
+        "outcome": "match"
+      },
+      {
+        "case": 97,
+        "outcome": "match"
+      },
+      {
+        "case": 98,
+        "outcome": "first_error"
+      },
+      {
+        "case": 99,
+        "outcome": "match"
+      },
+      {
+        "case": 100,
+        "outcome": "match"
+      },
+      {
+        "case": 101,
+        "outcome": "no_next"
+      },
+      {
+        "case": 104,
+        "outcome": "no_next"
+      },
+      {
+        "case": 105,
+        "outcome": "no_next"
+      },
+      {
+        "case": 106,
+        "outcome": "no_next"
+      },
+      {
+        "case": 107,
+        "outcome": "no_next"
+      },
+      {
+        "case": 108,
+        "outcome": "no_next"
+      },
+      {
+        "case": 109,
+        "outcome": "no_next"
+      },
+      {
+        "case": 110,
+        "outcome": "no_next"
+      },
+      {
+        "case": 111,
+        "outcome": "no_next"
+      },
+      {
+        "case": 112,
+        "outcome": "first_error"
+      },
+      {
+        "case": 113,
+        "outcome": "no_next"
+      },
+      {
+        "case": 114,
+        "outcome": "no_next"
+      },
+      {
+        "case": 115,
+        "outcome": "match"
+      },
+      {
+        "case": 116,
+        "outcome": "no_next"
+      },
+      {
+        "case": 117,
+        "outcome": "no_next"
+      },
+      {
+        "case": 118,
+        "outcome": "no_next"
+      },
+      {
+        "case": 119,
+        "outcome": "no_next"
+      },
+      {
+        "case": 120,
+        "outcome": "no_next"
+      },
+      {
+        "case": 121,
+        "outcome": "no_next"
+      },
+      {
+        "case": 122,
+        "outcome": "no_next"
+      },
+      {
+        "case": 123,
+        "outcome": "no_next"
+      },
+      {
+        "case": 124,
+        "outcome": "no_next"
+      },
+      {
+        "case": 125,
+        "outcome": "no_next"
+      },
+      {
+        "case": 126,
+        "outcome": "no_next"
+      },
+      {
+        "case": 127,
+        "outcome": "no_next"
+      },
+      {
+        "case": 128,
+        "outcome": "no_next"
+      },
+      {
+        "case": 130,
+        "outcome": "no_next"
+      },
+      {
+        "case": 131,
+        "outcome": "no_next"
+      },
+      {
+        "case": 132,
+        "outcome": "no_next"
+      },
+      {
+        "case": 133,
+        "outcome": "no_next"
+      },
+      {
+        "case": 134,
+        "outcome": "no_next"
+      },
+      {
+        "case": 135,
+        "outcome": "no_next"
+      },
+      {
+        "case": 136,
+        "outcome": "no_next"
+      },
+      {
+        "case": 137,
+        "outcome": "no_next"
+      },
+      {
+        "case": 138,
+        "outcome": "first_error"
+      },
+      {
+        "case": 139,
+        "outcome": "match"
+      },
+      {
+        "case": 140,
+        "outcome": "first_error"
+      },
+      {
+        "case": 141,
+        "outcome": "match"
+      },
+      {
+        "case": 142,
+        "outcome": "no_next"
+      },
+      {
+        "case": 143,
+        "outcome": "no_next"
+      },
+      {
+        "case": 144,
+        "outcome": "no_next"
+      },
+      {
+        "case": 145,
+        "outcome": "no_next"
+      },
+      {
+        "case": 146,
+        "outcome": "no_next"
+      },
+      {
+        "case": 147,
+        "outcome": "no_next"
+      },
+      {
+        "case": 148,
+        "outcome": "no_next"
+      },
+      {
+        "case": 149,
+        "outcome": "no_next"
+      },
+      {
+        "case": 150,
+        "outcome": "no_next"
+      },
+      {
+        "case": 151,
+        "outcome": "no_next"
+      },
+      {
+        "case": 152,
+        "outcome": "no_next"
+      },
+      {
+        "case": 153,
+        "outcome": "no_next"
+      },
+      {
+        "case": 154,
+        "outcome": "no_next"
+      },
+      {
+        "case": 155,
+        "outcome": "no_next"
+      },
+      {
+        "case": 156,
+        "outcome": "no_next"
+      },
+      {
+        "case": 157,
+        "outcome": "no_next"
+      },
+      {
+        "case": 158,
+        "outcome": "no_next"
+      },
+      {
+        "case": 159,
+        "outcome": "no_next"
+      },
+      {
+        "case": 160,
+        "outcome": "no_next"
+      },
+      {
+        "case": 161,
+        "outcome": "no_next"
+      },
+      {
+        "case": 162,
+        "outcome": "no_next"
+      },
+      {
+        "case": 163,
+        "outcome": "no_next"
+      },
+      {
+        "case": 164,
+        "outcome": "no_next"
+      },
+      {
+        "case": 165,
+        "outcome": "match"
+      },
+      {
+        "case": 166,
+        "outcome": "match"
+      },
+      {
+        "case": 167,
+        "outcome": "first_error"
+      },
+      {
+        "case": 168,
+        "outcome": "no_next"
+      },
+      {
+        "case": 169,
+        "outcome": "no_next"
+      },
+      {
+        "case": 172,
+        "outcome": "no_next"
+      },
+      {
+        "case": 173,
+        "outcome": "no_next"
+      },
+      {
+        "case": 174,
+        "outcome": "no_next"
+      },
+      {
+        "case": 175,
+        "outcome": "no_next"
+      },
+      {
+        "case": 176,
+        "outcome": "no_next"
+      },
+      {
+        "case": 177,
+        "outcome": "no_next"
+      },
+      {
+        "case": 178,
+        "outcome": "no_next"
+      },
+      {
+        "case": 179,
+        "outcome": "no_next"
+      },
+      {
+        "case": 180,
+        "outcome": "no_next"
+      },
+      {
+        "case": 181,
+        "outcome": "match"
+      },
+      {
+        "case": 182,
+        "outcome": "no_next"
+      },
+      {
+        "case": 183,
+        "outcome": "no_next"
+      },
+      {
+        "case": 184,
+        "outcome": "no_next"
+      },
+      {
+        "case": 185,
+        "outcome": "no_next"
+      },
+      {
+        "case": 186,
+        "outcome": "no_next"
+      },
+      {
+        "case": 187,
+        "outcome": "no_next"
+      },
+      {
+        "case": 188,
+        "outcome": "no_next"
+      },
+      {
+        "case": 189,
+        "outcome": "no_next"
+      },
+      {
+        "case": 190,
+        "outcome": "no_next"
+      },
+      {
+        "case": 191,
+        "outcome": "no_next"
+      },
+      {
+        "case": 192,
+        "outcome": "no_next"
+      },
+      {
+        "case": 193,
+        "outcome": "no_next"
+      },
+      {
+        "case": 194,
+        "outcome": "no_next"
+      },
+      {
+        "case": 195,
+        "outcome": "no_next"
+      },
+      {
+        "case": 196,
+        "outcome": "no_next"
+      },
+      {
+        "case": 197,
+        "outcome": "no_next"
+      },
+      {
+        "case": 198,
+        "outcome": "no_next"
+      },
+      {
+        "case": 199,
+        "outcome": "no_next"
+      },
+      {
+        "case": 200,
+        "outcome": "no_next"
+      },
+      {
+        "case": 201,
+        "outcome": "no_next"
+      },
+      {
+        "case": 202,
+        "outcome": "no_next"
+      },
+      {
+        "case": 203,
+        "outcome": "no_next"
+      },
+      {
+        "case": 204,
+        "outcome": "no_next"
+      },
+      {
+        "case": 205,
+        "outcome": "no_next"
+      },
+      {
+        "case": 206,
+        "outcome": "no_next"
+      },
+      {
+        "case": 207,
+        "outcome": "no_next"
+      },
+      {
+        "case": 208,
+        "outcome": "match"
+      },
+      {
+        "case": 209,
+        "outcome": "match"
+      },
+      {
+        "case": 210,
+        "outcome": "match"
+      },
+      {
+        "case": 211,
+        "outcome": "no_next"
+      },
+      {
+        "case": 212,
+        "outcome": "first_error"
+      },
+      {
+        "case": 213,
+        "outcome": "continuation_error"
+      },
+      {
+        "case": 214,
+        "outcome": "no_next"
+      },
+      {
+        "case": 215,
+        "outcome": "no_next"
+      },
+      {
+        "case": 216,
+        "outcome": "match"
+      },
+      {
+        "case": 217,
+        "outcome": "match"
+      },
+      {
+        "case": 218,
+        "outcome": "match"
+      },
+      {
+        "case": 219,
+        "outcome": "match"
+      },
+      {
+        "case": 220,
+        "outcome": "no_next"
+      },
+      {
+        "case": 221,
+        "outcome": "match"
+      },
+      {
+        "case": 222,
+        "outcome": "no_next"
+      },
+      {
+        "case": 223,
+        "outcome": "match"
+      },
+      {
+        "case": 224,
+        "outcome": "match"
+      },
+      {
+        "case": 225,
+        "outcome": "no_next"
+      },
+      {
+        "case": 226,
+        "outcome": "match"
+      },
+      {
+        "case": 227,
+        "outcome": "match"
+      },
+      {
+        "case": 228,
+        "outcome": "match"
+      },
+      {
+        "case": 229,
+        "outcome": "no_next"
+      },
+      {
+        "case": 230,
+        "outcome": "no_next"
+      },
+      {
+        "case": 231,
+        "outcome": "match"
+      },
+      {
+        "case": 232,
+        "outcome": "match"
+      },
+      {
+        "case": 233,
+        "outcome": "match"
+      },
+      {
+        "case": 234,
+        "outcome": "match"
+      },
+      {
+        "case": 235,
+        "outcome": "match"
+      },
+      {
+        "case": 236,
+        "outcome": "match"
+      },
+      {
+        "case": 237,
+        "outcome": "no_next"
+      },
+      {
+        "case": 238,
+        "outcome": "match"
+      },
+      {
+        "case": 239,
+        "outcome": "match"
+      },
+      {
+        "case": 240,
+        "outcome": "no_next"
+      },
+      {
+        "case": 241,
+        "outcome": "no_next"
+      },
+      {
+        "case": 242,
+        "outcome": "match"
+      },
+      {
+        "case": 243,
+        "outcome": "no_next"
+      },
+      {
+        "case": 244,
+        "outcome": "no_next"
+      },
+      {
+        "case": 245,
+        "outcome": "no_next"
+      },
+      {
+        "case": 246,
+        "outcome": "match"
+      },
+      {
+        "case": 247,
+        "outcome": "no_next"
+      },
+      {
+        "case": 248,
+        "outcome": "no_next"
+      },
+      {
+        "case": 249,
+        "outcome": "no_next"
+      },
+      {
+        "case": 250,
+        "outcome": "no_next"
+      },
+      {
+        "case": 251,
+        "outcome": "no_next"
+      },
+      {
+        "case": 252,
+        "outcome": "no_next"
+      },
+      {
+        "case": 253,
+        "outcome": "no_next"
+      },
+      {
+        "case": 254,
+        "outcome": "no_next"
+      },
+      {
+        "case": 255,
+        "outcome": "no_next"
+      },
+      {
+        "case": 256,
+        "outcome": "no_next"
+      },
+      {
+        "case": 257,
+        "outcome": "match"
+      },
+      {
+        "case": 258,
+        "outcome": "no_next"
+      },
+      {
+        "case": 259,
+        "outcome": "no_next"
+      },
+      {
+        "case": 260,
+        "outcome": "no_next"
+      },
+      {
+        "case": 261,
+        "outcome": "no_next"
+      },
+      {
+        "case": 262,
+        "outcome": "no_next"
+      },
+      {
+        "case": 263,
+        "outcome": "no_next"
+      },
+      {
+        "case": 264,
+        "outcome": "no_next"
+      },
+      {
+        "case": 265,
+        "outcome": "no_next"
+      },
+      {
+        "case": 266,
+        "outcome": "no_next"
+      },
+      {
+        "case": 267,
+        "outcome": "no_next"
+      },
+      {
+        "case": 268,
+        "outcome": "match"
+      },
+      {
+        "case": 269,
+        "outcome": "no_next"
+      },
+      {
+        "case": 270,
+        "outcome": "no_next"
+      },
+      {
+        "case": 271,
+        "outcome": "no_next"
+      },
+      {
+        "case": 272,
+        "outcome": "no_next"
+      },
+      {
+        "case": 273,
+        "outcome": "no_next"
+      },
+      {
+        "case": 274,
+        "outcome": "no_next"
+      },
+      {
+        "case": 275,
+        "outcome": "no_next"
+      },
+      {
+        "case": 276,
+        "outcome": "no_next"
+      },
+      {
+        "case": 277,
+        "outcome": "no_next"
+      },
+      {
+        "case": 278,
+        "outcome": "no_next"
+      },
+      {
+        "case": 279,
+        "outcome": "no_next"
+      },
+      {
+        "case": 280,
+        "outcome": "no_next"
+      },
+      {
+        "case": 281,
+        "outcome": "match"
+      },
+      {
+        "case": 282,
+        "outcome": "no_next"
+      },
+      {
+        "case": 283,
+        "outcome": "no_next"
+      },
+      {
+        "case": 284,
+        "outcome": "match"
+      },
+      {
+        "case": 285,
+        "outcome": "no_next"
+      },
+      {
+        "case": 286,
+        "outcome": "no_next"
+      },
+      {
+        "case": 287,
+        "outcome": "match"
+      },
+      {
+        "case": 288,
+        "outcome": "no_next"
+      },
+      {
+        "case": 289,
+        "outcome": "no_next"
+      },
+      {
+        "case": 290,
+        "outcome": "no_next"
+      },
+      {
+        "case": 291,
+        "outcome": "match"
+      },
+      {
+        "case": 292,
+        "outcome": "no_next"
+      },
+      {
+        "case": 293,
+        "outcome": "no_next"
+      }
+    ]
+  },
+  "storage": {
+    "database_bytes": 51978081983,
+    "table_bytes": 30705541120,
+    "index_bytes": 21263335424
+  },
+  "versions": {
+    "version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+    "extension": "0.26.3"
+  },
+  "plans": [
+    {
+      "strategy": "scalar",
+      "case": 0,
+      "dataset": "se2005-pcf175-2005-06",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 23.411716,
+      "buffers": 185,
+      "temp_blocks": 0,
+      "heap_fetches": 1,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 0,
+      "dataset": "se2005-pcf175-2005-06",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 3.4628810000000003,
+      "buffers": 185,
+      "temp_blocks": 0,
+      "heap_fetches": 1,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 1,
+      "dataset": "se2005-pcf175-2005-06",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 3.900131,
+      "buffers": 195,
+      "temp_blocks": 0,
+      "heap_fetches": 1,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 1,
+      "dataset": "se2005-pcf175-2005-06",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 3.2999840000000003,
+      "buffers": 195,
+      "temp_blocks": 0,
+      "heap_fetches": 1,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 5,
+      "dataset": "se2005-pcf175-2005-06",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 5.919095,
+      "buffers": 275,
+      "temp_blocks": 0,
+      "heap_fetches": 1,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 5,
+      "dataset": "se2005-pcf175-2005-06",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 3.9444119999999994,
+      "buffers": 275,
+      "temp_blocks": 0,
+      "heap_fetches": 1,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "postcode_prefilter",
+      "case": 5,
+      "dataset": "se2005-pcf175-2005-06",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 6.375998,
+      "buffers": 278,
+      "temp_blocks": 0,
+      "heap_fetches": 1,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "postcode_prefilter",
+      "case": 5,
+      "dataset": "se2005-pcf175-2005-06",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 7.716017000000001,
+      "buffers": 278,
+      "temp_blocks": 0,
+      "heap_fetches": 1,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 8,
+      "dataset": "se2005-pcf175-2005-06",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 784.6533900000001,
+      "buffers": 22510,
+      "temp_blocks": 0,
+      "heap_fetches": 51,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 8,
+      "dataset": "se2005-pcf175-2005-06",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 710.161446,
+      "buffers": 22510,
+      "temp_blocks": 0,
+      "heap_fetches": 51,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "postcode_prefilter",
+      "case": 8,
+      "dataset": "se2005-pcf175-2005-06",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 23.462219,
+      "buffers": 10978,
+      "temp_blocks": 0,
+      "heap_fetches": 51,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "postcode_prefilter",
+      "case": 8,
+      "dataset": "se2005-pcf175-2005-06",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 24.118087,
+      "buffers": 10978,
+      "temp_blocks": 0,
+      "heap_fetches": 51,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 40,
+      "dataset": "se2005-pcf175-2005-06",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 72.030597,
+      "buffers": 145,
+      "temp_blocks": 0,
+      "heap_fetches": 1,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 40,
+      "dataset": "se2005-pcf175-2005-06",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 42.587761,
+      "buffers": 145,
+      "temp_blocks": 0,
+      "heap_fetches": 1,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 40,
+      "dataset": "se2004-pcp218-2004-07",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 2.096339,
+      "buffers": 24,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 40,
+      "dataset": "se2004-pcp218-2004-07",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 1.378402,
+      "buffers": 24,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 40,
+      "dataset": "se4-pcf94-1999-04",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 2.1068729999999998,
+      "buffers": 24,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 40,
+      "dataset": "se4-pcf94-1999-04",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 1.532533,
+      "buffers": 24,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 40,
+      "dataset": "se-pcf78-1998-01",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 1.954083,
+      "buffers": 24,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 40,
+      "dataset": "se-pcf78-1998-01",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 1.658341,
+      "buffers": 24,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 40,
+      "dataset": "se2003-dpcs0104",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 117.291311,
+      "buffers": 123,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 40,
+      "dataset": "se2003-dpcs0104",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 63.749424999999995,
+      "buffers": 123,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 80,
+      "dataset": "se2004-pcp218-2004-07",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 28.568398,
+      "buffers": 862,
+      "temp_blocks": 0,
+      "heap_fetches": 1,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 80,
+      "dataset": "se2004-pcp218-2004-07",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 14.919655,
+      "buffers": 862,
+      "temp_blocks": 0,
+      "heap_fetches": 1,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "postcode_prefilter",
+      "case": 80,
+      "dataset": "se2004-pcp218-2004-07",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 15.979322,
+      "buffers": 863,
+      "temp_blocks": 0,
+      "heap_fetches": 1,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "postcode_prefilter",
+      "case": 80,
+      "dataset": "se2004-pcp218-2004-07",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 17.202175,
+      "buffers": 863,
+      "temp_blocks": 0,
+      "heap_fetches": 1,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 120,
+      "dataset": "se4-pcf94-1999-04",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 3.1445629999999998,
+      "buffers": 144,
+      "temp_blocks": 0,
+      "heap_fetches": 3,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 120,
+      "dataset": "se4-pcf94-1999-04",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 2.383656,
+      "buffers": 144,
+      "temp_blocks": 0,
+      "heap_fetches": 3,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 220,
+      "dataset": "se2003-dpcs0104",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 5.373137,
+      "buffers": 396,
+      "temp_blocks": 0,
+      "heap_fetches": 16,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 220,
+      "dataset": "se2003-dpcs0104",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 3.806307,
+      "buffers": 396,
+      "temp_blocks": 0,
+      "heap_fetches": 16,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 280,
+      "dataset": "se2003-dpcs0104",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 5.7151559999999995,
+      "buffers": 178,
+      "temp_blocks": 0,
+      "heap_fetches": 2,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "scalar",
+      "case": 280,
+      "dataset": "se2003-dpcs0104",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 4.131908999999999,
+      "buffers": 178,
+      "temp_blocks": 0,
+      "heap_fetches": 2,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "postcode_prefilter",
+      "case": 280,
+      "dataset": "se2003-dpcs0104",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 5.787986,
+      "buffers": 179,
+      "temp_blocks": 0,
+      "heap_fetches": 2,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "strategy": "postcode_prefilter",
+      "case": 280,
+      "dataset": "se2003-dpcs0104",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 4.608356,
+      "buffers": 179,
+      "temp_blocks": 0,
+      "heap_fetches": 2,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    }
+  ],
+  "resources": {
+    "load-native": {
+      "wall_seconds": 91.5165228843689,
+      "before": {
+        "ukinfo-db": {
+          "cpu_ns": 12897017102000,
+          "memory_bytes": 3704053760,
+          "memory_limit": 6442450944,
+          "anonymous_bytes": 78688256,
+          "file_bytes": 3550851072,
+          "io": [
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "read",
+              "value": 1583063040
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "write",
+              "value": 1326243840
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "read",
+              "value": 1575034880
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "write",
+              "value": 1322242048
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "read",
+              "value": 1573474304
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "write",
+              "value": 1315397632
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "read",
+              "value": 1571983360
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "write",
+              "value": 1321611264
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 124244901888
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 124316823552
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 124341129216
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 124272316416
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 589174009856
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 209750949888
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 497175171072
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 442494623744
+            }
+          ]
+        },
+        "ukinfo-parade-preview-db": {
+          "cpu_ns": 7271420850000,
+          "memory_bytes": 6332993536,
+          "memory_limit": 6442450944,
+          "anonymous_bytes": 27885568,
+          "file_bytes": 6160793600,
+          "io": [
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "read",
+              "value": 323047424
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "write",
+              "value": 336936960
+            },
+            {
+              "major": 259,
+              "minor": 0,
+              "op": "read",
+              "value": 28672
+            },
+            {
+              "major": 259,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "read",
+              "value": 317198336
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "write",
+              "value": 333594624
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "read",
+              "value": 319217664
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "write",
+              "value": 333676544
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "read",
+              "value": 321323008
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "write",
+              "value": 338014208
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 21163569152
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 21160194048
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 21161414656
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 21154422784
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 88193257472
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 247517892608
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 84639600640
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 291684302848
+            }
+          ]
+        },
+        "ukinfo-parade-preview-native": {
+          "cpu_ns": 12627650000,
+          "memory_bytes": 28487680,
+          "memory_limit": 536870912,
+          "anonymous_bytes": 9195520,
+          "file_bytes": 18657280,
+          "io": [
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 4882432
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 4755456
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 4943872
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 4947968
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 19529728
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 19529728
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            }
+          ]
+        },
+        "ukinfo-parade-preview-candidate": {
+          "cpu_ns": 9399259000,
+          "memory_bytes": 39460864,
+          "memory_limit": 536870912,
+          "anonymous_bytes": 21463040,
+          "file_bytes": 17330176,
+          "io": [
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 4587520
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 4661248
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 4792320
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 4669440
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 18710528
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 18710528
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            }
+          ]
+        }
+      },
+      "after": {
+        "ukinfo-db": {
+          "cpu_ns": 12999065940000,
+          "memory_bytes": 3747209216,
+          "memory_limit": 6442450944,
+          "anonymous_bytes": 166248448,
+          "file_bytes": 3497201664,
+          "io": [
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "read",
+              "value": 1583292416
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "write",
+              "value": 1326563328
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "read",
+              "value": 1575309312
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "write",
+              "value": 1322823680
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "read",
+              "value": 1573847040
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "write",
+              "value": 1316020224
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "read",
+              "value": 1572175872
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "write",
+              "value": 1322274816
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 124257570816
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 124329127936
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 124353777664
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 124284981248
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 589226319872
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 209750949888
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 497225457664
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 442507935744
+            }
+          ]
+        },
+        "ukinfo-parade-preview-db": {
+          "cpu_ns": 7272370995000,
+          "memory_bytes": 6089228288,
+          "memory_limit": 6442450944,
+          "anonymous_bytes": 27881472,
+          "file_bytes": 5917069312,
+          "io": [
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "read",
+              "value": 323051520
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "write",
+              "value": 337219584
+            },
+            {
+              "major": 259,
+              "minor": 0,
+              "op": "read",
+              "value": 28672
+            },
+            {
+              "major": 259,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "read",
+              "value": 317198336
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "write",
+              "value": 333905920
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "read",
+              "value": 319217664
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "write",
+              "value": 333987840
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "read",
+              "value": 321323008
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "write",
+              "value": 338202624
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 21163601920
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 21160255488
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 21161488384
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 21154451456
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 88193454080
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 247517892608
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 84639797248
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 291684302848
+            }
+          ]
+        },
+        "ukinfo-parade-preview-native": {
+          "cpu_ns": 21317800000,
+          "memory_bytes": 33599488,
+          "memory_limit": 536870912,
+          "anonymous_bytes": 14057472,
+          "file_bytes": 18849792,
+          "io": [
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 5046272
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 4964352
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 5267456
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 5185536
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 20463616
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 20463616
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            }
+          ]
+        },
+        "ukinfo-parade-preview-candidate": {
+          "cpu_ns": 9399935000,
+          "memory_bytes": 38825984,
+          "memory_limit": 536870912,
+          "anonymous_bytes": 21463040,
+          "file_bytes": 16695296,
+          "io": [
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 4587520
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 4661248
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 4792320
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 4669440
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 18710528
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 18710528
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            }
+          ]
+        }
+      },
+      "exit_code": 1
+    },
+    "load-candidate": {
+      "wall_seconds": 55.087461948394775,
+      "before": {
+        "ukinfo-db": {
+          "cpu_ns": 12999102471000,
+          "memory_bytes": 3747209216,
+          "memory_limit": 6442450944,
+          "anonymous_bytes": 166248448,
+          "file_bytes": 3497201664,
+          "io": [
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "read",
+              "value": 1583292416
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "write",
+              "value": 1326563328
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "read",
+              "value": 1575309312
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "write",
+              "value": 1322823680
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "read",
+              "value": 1573847040
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "write",
+              "value": 1316020224
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "read",
+              "value": 1572175872
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "write",
+              "value": 1322274816
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 124257570816
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 124329127936
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 124353777664
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 124284981248
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 589226319872
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 209750949888
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 497225457664
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 442507935744
+            }
+          ]
+        },
+        "ukinfo-parade-preview-db": {
+          "cpu_ns": 7272478686000,
+          "memory_bytes": 6089228288,
+          "memory_limit": 6442450944,
+          "anonymous_bytes": 27881472,
+          "file_bytes": 5917069312,
+          "io": [
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "read",
+              "value": 323051520
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "write",
+              "value": 337219584
+            },
+            {
+              "major": 259,
+              "minor": 0,
+              "op": "read",
+              "value": 28672
+            },
+            {
+              "major": 259,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "read",
+              "value": 317198336
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "write",
+              "value": 333905920
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "read",
+              "value": 319217664
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "write",
+              "value": 333987840
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "read",
+              "value": 321323008
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "write",
+              "value": 338202624
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 21163601920
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 21160255488
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 21161488384
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 21154451456
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 88193454080
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 247517892608
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 84639797248
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 291684302848
+            }
+          ]
+        },
+        "ukinfo-parade-preview-native": {
+          "cpu_ns": 21317800000,
+          "memory_bytes": 33599488,
+          "memory_limit": 536870912,
+          "anonymous_bytes": 14057472,
+          "file_bytes": 18849792,
+          "io": [
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 5046272
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 4964352
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 5267456
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 5185536
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 20463616
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 20463616
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            }
+          ]
+        },
+        "ukinfo-parade-preview-candidate": {
+          "cpu_ns": 9399935000,
+          "memory_bytes": 38825984,
+          "memory_limit": 536870912,
+          "anonymous_bytes": 21463040,
+          "file_bytes": 16695296,
+          "io": [
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 4587520
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 4661248
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 4792320
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 4669440
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 18710528
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 18710528
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            }
+          ]
+        }
+      },
+      "after": {
+        "ukinfo-db": {
+          "cpu_ns": 13007935822000,
+          "memory_bytes": 3749150720,
+          "memory_limit": 6442450944,
+          "anonymous_bytes": 183967744,
+          "file_bytes": 3476303872,
+          "io": [
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "read",
+              "value": 1583296512
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "write",
+              "value": 1327493120
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "read",
+              "value": 1575321600
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "write",
+              "value": 1323339776
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "read",
+              "value": 1573879808
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "write",
+              "value": 1316651008
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "read",
+              "value": 1572188160
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "write",
+              "value": 1322721280
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 124257955840
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 124329508864
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 124354252800
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 124285431808
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 589228011520
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 209750949888
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 497227149312
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 442507935744
+            }
+          ]
+        },
+        "ukinfo-parade-preview-db": {
+          "cpu_ns": 7313370872000,
+          "memory_bytes": 6214332416,
+          "memory_limit": 6442450944,
+          "anonymous_bytes": 178638848,
+          "file_bytes": 5883469824,
+          "io": [
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "read",
+              "value": 323448832
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "write",
+              "value": 337219584
+            },
+            {
+              "major": 259,
+              "minor": 0,
+              "op": "read",
+              "value": 28672
+            },
+            {
+              "major": 259,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "read",
+              "value": 317677568
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "write",
+              "value": 333914112
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "read",
+              "value": 319623168
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "write",
+              "value": 333991936
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "read",
+              "value": 321617920
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "write",
+              "value": 338202624
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 21169319936
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 21165883392
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 21167214592
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 21159915520
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 88215990272
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 247517892608
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 84662333440
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 291684302848
+            }
+          ]
+        },
+        "ukinfo-parade-preview-native": {
+          "cpu_ns": 21318268000,
+          "memory_bytes": 33452032,
+          "memory_limit": 536870912,
+          "anonymous_bytes": 14057472,
+          "file_bytes": 18702336,
+          "io": [
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 5046272
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 4964352
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 5267456
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 5185536
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 20463616
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 20463616
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            }
+          ]
+        },
+        "ukinfo-parade-preview-candidate": {
+          "cpu_ns": 15700146000,
+          "memory_bytes": 45604864,
+          "memory_limit": 536870912,
+          "anonymous_bytes": 26279936,
+          "file_bytes": 18616320,
+          "io": [
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 5115904
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 5353472
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 5226496
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 5091328
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 20787200
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 20787200
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            }
+          ]
+        }
+      },
+      "exit_code": 0
+    },
+    "load-candidate-repeat": {
+      "wall_seconds": 49.59282398223877,
+      "before": {
+        "ukinfo-db": {
+          "cpu_ns": 13007996483000,
+          "memory_bytes": 3748192256,
+          "memory_limit": 6442450944,
+          "anonymous_bytes": 183967744,
+          "file_bytes": 3475345408,
+          "io": [
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "read",
+              "value": 1583296512
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "write",
+              "value": 1327493120
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "read",
+              "value": 1575321600
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "write",
+              "value": 1323339776
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "read",
+              "value": 1573879808
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "write",
+              "value": 1316651008
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "read",
+              "value": 1572188160
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "write",
+              "value": 1322721280
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 124258275328
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 124329869312
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 124354543616
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 124285812736
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 589229363200
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 209750949888
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 497228500992
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 442507935744
+            }
+          ]
+        },
+        "ukinfo-parade-preview-db": {
+          "cpu_ns": 7313418345000,
+          "memory_bytes": 6208651264,
+          "memory_limit": 6442450944,
+          "anonymous_bytes": 178638848,
+          "file_bytes": 5877784576,
+          "io": [
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "read",
+              "value": 323448832
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "write",
+              "value": 337219584
+            },
+            {
+              "major": 259,
+              "minor": 0,
+              "op": "read",
+              "value": 28672
+            },
+            {
+              "major": 259,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "read",
+              "value": 317677568
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "write",
+              "value": 333914112
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "read",
+              "value": 319623168
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "write",
+              "value": 333991936
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "read",
+              "value": 321617920
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "write",
+              "value": 338202624
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 21169319936
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 21165883392
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 21167214592
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 21159915520
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 88215990272
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 247517892608
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 84662333440
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 291684302848
+            }
+          ]
+        },
+        "ukinfo-parade-preview-native": {
+          "cpu_ns": 21318268000,
+          "memory_bytes": 33452032,
+          "memory_limit": 536870912,
+          "anonymous_bytes": 14057472,
+          "file_bytes": 18702336,
+          "io": [
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 5046272
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 4964352
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 5267456
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 5185536
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 20463616
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 20463616
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            }
+          ]
+        },
+        "ukinfo-parade-preview-candidate": {
+          "cpu_ns": 15700146000,
+          "memory_bytes": 45604864,
+          "memory_limit": 536870912,
+          "anonymous_bytes": 26279936,
+          "file_bytes": 18616320,
+          "io": [
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 5115904
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 5353472
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 5226496
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 5091328
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 20787200
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 20787200
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            }
+          ]
+        }
+      },
+      "after": {
+        "ukinfo-db": {
+          "cpu_ns": 13016719507000,
+          "memory_bytes": 3395874816,
+          "memory_limit": 6442450944,
+          "anonymous_bytes": 191365120,
+          "file_bytes": 3114217472,
+          "io": [
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "read",
+              "value": 1583296512
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "write",
+              "value": 1328640000
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "read",
+              "value": 1575321600
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "write",
+              "value": 1324892160
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "read",
+              "value": 1573879808
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "write",
+              "value": 1318490112
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "read",
+              "value": 1572188160
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "write",
+              "value": 1324081152
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 124259549184
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 124331020288
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 124355682304
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 124287049728
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 589234163712
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 209750949888
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 497233301504
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 442508234752
+            }
+          ]
+        },
+        "ukinfo-parade-preview-db": {
+          "cpu_ns": 7351489945000,
+          "memory_bytes": 5360148480,
+          "memory_limit": 6442450944,
+          "anonymous_bytes": 187064320,
+          "file_bytes": 5023797248,
+          "io": [
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "read",
+              "value": 323665920
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "write",
+              "value": 337219584
+            },
+            {
+              "major": 259,
+              "minor": 0,
+              "op": "read",
+              "value": 28672
+            },
+            {
+              "major": 259,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "read",
+              "value": 317861888
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "write",
+              "value": 333983744
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "read",
+              "value": 319877120
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "write",
+              "value": 334106624
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "read",
+              "value": 321753088
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "write",
+              "value": 338202624
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 21169688576
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 21166235648
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 21167710208
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 21160271872
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 88217563136
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 247517892608
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 84663906304
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 291686170624
+            }
+          ]
+        },
+        "ukinfo-parade-preview-native": {
+          "cpu_ns": 21320620000,
+          "memory_bytes": 31698944,
+          "memory_limit": 536870912,
+          "anonymous_bytes": 14041088,
+          "file_bytes": 16969728,
+          "io": [
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "read",
+              "value": 0
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "write",
+              "value": 12288
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 5414912
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 5492736
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 5636096
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 5488640
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 22032384
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 22032384
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            }
+          ]
+        },
+        "ukinfo-parade-preview-candidate": {
+          "cpu_ns": 21578783000,
+          "memory_bytes": 45944832,
+          "memory_limit": 536870912,
+          "anonymous_bytes": 29552640,
+          "file_bytes": 15683584,
+          "io": [
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "read",
+              "value": 0
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "write",
+              "value": 36864
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "read",
+              "value": 0
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "write",
+              "value": 90112
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "read",
+              "value": 0
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "write",
+              "value": 32768
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "read",
+              "value": 0
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "write",
+              "value": 40960
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 5115904
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 5353472
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 5226496
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 5091328
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 20787200
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 20787200
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            }
+          ]
+        }
+      },
+      "exit_code": 0
+    },
+    "load-native-repeat": {
+      "wall_seconds": 106.68995690345764,
+      "before": {
+        "ukinfo-db": {
+          "cpu_ns": 13016761398000,
+          "memory_bytes": 3395936256,
+          "memory_limit": 6442450944,
+          "anonymous_bytes": 191365120,
+          "file_bytes": 3114266624,
+          "io": [
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "read",
+              "value": 1583300608
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "write",
+              "value": 1328640000
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "read",
+              "value": 1575321600
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "write",
+              "value": 1324892160
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "read",
+              "value": 1573883904
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "write",
+              "value": 1318490112
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "read",
+              "value": 1572188160
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "write",
+              "value": 1324081152
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 124259565568
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 124331020288
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 124355682304
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 124287082496
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 589234212864
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 209750949888
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 497233350656
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 442508234752
+            }
+          ]
+        },
+        "ukinfo-parade-preview-db": {
+          "cpu_ns": 7351598205000,
+          "memory_bytes": 5363384320,
+          "memory_limit": 6442450944,
+          "anonymous_bytes": 187064320,
+          "file_bytes": 5026942976,
+          "io": [
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "read",
+              "value": 323665920
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "write",
+              "value": 337219584
+            },
+            {
+              "major": 259,
+              "minor": 0,
+              "op": "read",
+              "value": 28672
+            },
+            {
+              "major": 259,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "read",
+              "value": 317861888
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "write",
+              "value": 333983744
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "read",
+              "value": 319881216
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "write",
+              "value": 334106624
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "read",
+              "value": 321753088
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "write",
+              "value": 338202624
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 21170413568
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 21167063040
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 21168570368
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 21161066496
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 88220770304
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 247517892608
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 84667113472
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 291686334464
+            }
+          ]
+        },
+        "ukinfo-parade-preview-native": {
+          "cpu_ns": 21320620000,
+          "memory_bytes": 31698944,
+          "memory_limit": 536870912,
+          "anonymous_bytes": 14041088,
+          "file_bytes": 16969728,
+          "io": [
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "read",
+              "value": 0
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "write",
+              "value": 12288
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 5414912
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 5492736
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 5636096
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 5488640
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 22032384
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 22032384
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            }
+          ]
+        },
+        "ukinfo-parade-preview-candidate": {
+          "cpu_ns": 21578783000,
+          "memory_bytes": 45944832,
+          "memory_limit": 536870912,
+          "anonymous_bytes": 29552640,
+          "file_bytes": 15683584,
+          "io": [
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "read",
+              "value": 0
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "write",
+              "value": 36864
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "read",
+              "value": 0
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "write",
+              "value": 90112
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "read",
+              "value": 0
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "write",
+              "value": 32768
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "read",
+              "value": 0
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "write",
+              "value": 40960
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 5115904
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 5353472
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 5226496
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 5091328
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 20787200
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 20787200
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            }
+          ]
+        }
+      },
+      "after": {
+        "ukinfo-db": {
+          "cpu_ns": 13141047612000,
+          "memory_bytes": 3421085696,
+          "memory_limit": 6442450944,
+          "anonymous_bytes": 208314368,
+          "file_bytes": 3122241536,
+          "io": [
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "read",
+              "value": 1583316992
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "write",
+              "value": 1328640000
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "read",
+              "value": 1575321600
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "write",
+              "value": 1324892160
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "read",
+              "value": 1573883904
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "write",
+              "value": 1318490112
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "read",
+              "value": 1572208640
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "write",
+              "value": 1324081152
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 124261355520
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 124332802048
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 124357603328
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 124288983040
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 589241606144
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 209750949888
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 497240743936
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 442538405888
+            }
+          ]
+        },
+        "ukinfo-parade-preview-db": {
+          "cpu_ns": 7352926114000,
+          "memory_bytes": 5359104000,
+          "memory_limit": 6442450944,
+          "anonymous_bytes": 187121664,
+          "file_bytes": 5026754560,
+          "io": [
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "read",
+              "value": 323682304
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "write",
+              "value": 337219584
+            },
+            {
+              "major": 259,
+              "minor": 0,
+              "op": "read",
+              "value": 28672
+            },
+            {
+              "major": 259,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "read",
+              "value": 317874176
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "write",
+              "value": 333983744
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "read",
+              "value": 319946752
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "write",
+              "value": 334106624
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "read",
+              "value": 321761280
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "write",
+              "value": 338202624
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 21170413568
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 21167063040
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 21168586752
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 21161082880
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 88220803072
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 247517892608
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 84667146240
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 291686367232
+            }
+          ]
+        },
+        "ukinfo-parade-preview-native": {
+          "cpu_ns": 33038239000,
+          "memory_bytes": 35287040,
+          "memory_limit": 536870912,
+          "anonymous_bytes": 13709312,
+          "file_bytes": 20885504,
+          "io": [
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "read",
+              "value": 0
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "write",
+              "value": 12288
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 6328320
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 6524928
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 6578176
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 6516736
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 25948160
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 25948160
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            }
+          ]
+        },
+        "ukinfo-parade-preview-candidate": {
+          "cpu_ns": 21579894000,
+          "memory_bytes": 46088192,
+          "memory_limit": 536870912,
+          "anonymous_bytes": 29696000,
+          "file_bytes": 15683584,
+          "io": [
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "read",
+              "value": 0
+            },
+            {
+              "major": 252,
+              "minor": 0,
+              "op": "write",
+              "value": 36864
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "read",
+              "value": 0
+            },
+            {
+              "major": 252,
+              "minor": 3,
+              "op": "write",
+              "value": 90112
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "read",
+              "value": 0
+            },
+            {
+              "major": 252,
+              "minor": 1,
+              "op": "write",
+              "value": 32768
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "read",
+              "value": 0
+            },
+            {
+              "major": 252,
+              "minor": 2,
+              "op": "write",
+              "value": 40960
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "read",
+              "value": 5115904
+            },
+            {
+              "major": 8,
+              "minor": 16,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "read",
+              "value": 5353472
+            },
+            {
+              "major": 8,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "read",
+              "value": 5226496
+            },
+            {
+              "major": 8,
+              "minor": 32,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "read",
+              "value": 5091328
+            },
+            {
+              "major": 8,
+              "minor": 48,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "read",
+              "value": 20787200
+            },
+            {
+              "major": 9,
+              "minor": 1,
+              "op": "write",
+              "value": 0
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "read",
+              "value": 20787200
+            },
+            {
+              "major": 253,
+              "minor": 0,
+              "op": "write",
+              "value": 0
+            }
+          ]
+        }
+      },
+      "exit_code": 1
+    }
+  },
+  "source_before": {
+    "serving": {
+      "visible_editions": 5,
+      "visible_entries": 248951107,
+      "hidden_rollback_visible": 0,
+      "can_write_entries": false
+    },
+    "owner_metadata": {
+      "rollback_exists": true,
+      "rollback_entries": 59886841,
+      "database_bytes": 165485115071
+    }
+  },
+  "source_after": {
+    "serving": {
+      "visible_editions": 5,
+      "visible_entries": 248951107,
+      "hidden_rollback_visible": 0,
+      "can_write_entries": false
+    },
+    "owner_metadata": {
+      "rollback_exists": true,
+      "rollback_entries": 59886841,
+      "database_bytes": 165485115071
+    }
+  },
+  "health_before": {
+    "ukinfo-db": {
+      "status": "running",
+      "health": "healthy",
+      "restarts": 0,
+      "started_at": "2026-10-19T21:24:29.392864093Z"
+    },
+    "ukinfo": {
+      "status": "running",
+      "health": "healthy",
+      "restarts": 0,
+      "started_at": "2026-10-22T22:49:42.175198979Z"
+    }
+  },
+  "health_after": {
+    "ukinfo-db": {
+      "status": "running",
+      "health": "healthy",
+      "restarts": 0,
+      "started_at": "2026-10-19T21:24:29.392864093Z"
+    },
+    "ukinfo": {
+      "status": "running",
+      "health": "healthy",
+      "restarts": 0,
+      "started_at": "2026-10-22T22:49:42.175198979Z"
+    }
+  },
+  "rollback": {
+    "cases": 287,
+    "requests_attempted": 287,
+    "passed": true,
+    "budget_exhausted": false
+  },
+  "completion": {
+    "trial_complete": true,
+    "public_service_changed": false,
+    "derived_volume_retained": true,
+    "rollback_proved": true
+  },
+  "pilots": {
+    "pilot-compare.json": {
+      "cases": 38,
+      "rounds": 1,
+      "max_pages": 3,
+      "outcomes": {
+        "after_only_ok": 1,
+        "before_only_ok": 1,
+        "both_failed": 1,
+        "both_ok_same": 41
+      },
+      "budget_exhausted": false,
+      "engines": {
+        "before": {
+          "requests": 44,
+          "errors": 2,
+          "error_codes": {
+            "query_timeout": 2
+          },
+          "p50_ms": 107.981,
+          "p95_ms": 2918.79,
+          "p99_ms": 3796.109,
+          "max_ms": 3796.109
+        },
+        "after": {
+          "requests": 44,
+          "errors": 2,
+          "error_codes": {
+            "query_timeout": 2
+          },
+          "p50_ms": 80.624,
+          "p95_ms": 2001.939,
+          "p99_ms": 3849.566,
+          "max_ms": 3849.566
+        }
+      }
+    },
+    "pilot-compare-v2.json": {
+      "cases": 38,
+      "rounds": 1,
+      "max_pages": 3,
+      "outcomes": {
+        "after_only_ok": 4,
+        "both_failed": 4,
+        "both_ok_same": 32
+      },
+      "budget_exhausted": false,
+      "engines": {
+        "before": {
+          "requests": 40,
+          "errors": 8,
+          "error_codes": {
+            "unavailable": 1,
+            "query_timeout": 7
+          },
+          "p50_ms": 172.59,
+          "p95_ms": 4724.396,
+          "p99_ms": 5194.237,
+          "max_ms": 5194.237
+        },
+        "after": {
+          "requests": 40,
+          "errors": 4,
+          "error_codes": {
+            "query_timeout": 4
+          },
+          "p50_ms": 402.175,
+          "p95_ms": 3837.685,
+          "p99_ms": 5312.371,
+          "max_ms": 5312.371
+        }
+      }
+    },
+    "pilot-verification.json": {
+      "passed": true,
+      "editions": [
+        {
+          "dataset": "se2005-pcf175-2005-06",
+          "entries": 51350897,
+          "samples": 256,
+          "ready": true,
+          "index_valid": true,
+          "fields_matched": 256,
+          "independent_matched": 256
+        }
+      ]
+    },
+    "pilot-plans.json": [
+      {
+        "case": 5,
+        "dataset": "se2005-pcf175-2005-06",
+        "mode": "force_custom_plan",
+        "outcome": "plan_error",
+        "error_code": "57014",
+        "ms": 4487.012195,
+        "buffers": 0,
+        "temp_blocks": 0,
+        "heap_fetches": 0,
+        "nodes": []
+      },
+      {
+        "case": 5,
+        "dataset": "se2005-pcf175-2005-06",
+        "mode": "force_generic_plan",
+        "outcome": "ok",
+        "ms": 2213.813302,
+        "buffers": 22510,
+        "temp_blocks": 0,
+        "heap_fetches": 51,
+        "nodes": [
+          "Limit:",
+          "Custom Scan:TopKScanExecState"
+        ]
+      },
+      {
+        "case": 6,
+        "dataset": "se2005-pcf175-2005-06",
+        "mode": "force_custom_plan",
+        "outcome": "ok",
+        "ms": 2762.147199,
+        "buffers": 17919,
+        "temp_blocks": 0,
+        "heap_fetches": 51,
+        "nodes": [
+          "Limit:",
+          "Custom Scan:TopKScanExecState"
+        ]
+      },
+      {
+        "case": 6,
+        "dataset": "se2005-pcf175-2005-06",
+        "mode": "force_generic_plan",
+        "outcome": "ok",
+        "ms": 725.293462,
+        "buffers": 17919,
+        "temp_blocks": 0,
+        "heap_fetches": 51,
+        "nodes": [
+          "Limit:",
+          "Custom Scan:TopKScanExecState"
+        ]
+      },
+      {
+        "case": 20,
+        "dataset": "se2005-pcf175-2005-06",
+        "mode": "force_custom_plan",
+        "outcome": "ok",
+        "ms": 614.769193,
+        "buffers": 534,
+        "temp_blocks": 0,
+        "heap_fetches": 1,
+        "nodes": [
+          "Limit:",
+          "Custom Scan:TopKScanExecState"
+        ]
+      },
+      {
+        "case": 20,
+        "dataset": "se2005-pcf175-2005-06",
+        "mode": "force_generic_plan",
+        "outcome": "ok",
+        "ms": 31.426443,
+        "buffers": 534,
+        "temp_blocks": 0,
+        "heap_fetches": 1,
+        "nodes": [
+          "Limit:",
+          "Custom Scan:TopKScanExecState"
+        ]
+      }
+    ],
+    "pilot-plans-v2.json": [
+      {
+        "strategy": "scalar",
+        "case": 5,
+        "dataset": "se2005-pcf175-2005-06",
+        "mode": "force_custom_plan",
+        "outcome": "plan_error",
+        "error_code": "57014",
+        "ms": 8112.940834999999,
+        "buffers": 0,
+        "temp_blocks": 0,
+        "heap_fetches": 0,
+        "nodes": []
+      },
+      {
+        "strategy": "scalar",
+        "case": 5,
+        "dataset": "se2005-pcf175-2005-06",
+        "mode": "force_generic_plan",
+        "outcome": "plan_error",
+        "error_code": "57014",
+        "ms": 5364.04151,
+        "buffers": 0,
+        "temp_blocks": 0,
+        "heap_fetches": 0,
+        "nodes": []
+      },
+      {
+        "strategy": "postcode_prefilter",
+        "case": 5,
+        "dataset": "se2005-pcf175-2005-06",
+        "mode": "force_custom_plan",
+        "outcome": "plan_error",
+        "error_code": "57014",
+        "ms": 4098.026588,
+        "buffers": 0,
+        "temp_blocks": 0,
+        "heap_fetches": 0,
+        "nodes": []
+      },
+      {
+        "strategy": "postcode_prefilter",
+        "case": 5,
+        "dataset": "se2005-pcf175-2005-06",
+        "mode": "force_generic_plan",
+        "outcome": "ok",
+        "ms": 926.0161019999999,
+        "buffers": 10978,
+        "temp_blocks": 0,
+        "heap_fetches": 51,
+        "nodes": [
+          "Limit:",
+          "Custom Scan:TopKScanExecState"
+        ]
+      },
+      {
+        "strategy": "scalar",
+        "case": 6,
+        "dataset": "se2005-pcf175-2005-06",
+        "mode": "force_custom_plan",
+        "outcome": "plan_error",
+        "error_code": "57014",
+        "ms": 4003.8002930000002,
+        "buffers": 0,
+        "temp_blocks": 0,
+        "heap_fetches": 0,
+        "nodes": []
+      },
+      {
+        "strategy": "scalar",
+        "case": 6,
+        "dataset": "se2005-pcf175-2005-06",
+        "mode": "force_generic_plan",
+        "outcome": "ok",
+        "ms": 948.574719,
+        "buffers": 17919,
+        "temp_blocks": 0,
+        "heap_fetches": 51,
+        "nodes": [
+          "Limit:",
+          "Custom Scan:TopKScanExecState"
+        ]
+      },
+      {
+        "strategy": "postcode_prefilter",
+        "case": 6,
+        "dataset": "se2005-pcf175-2005-06",
+        "mode": "force_custom_plan",
+        "outcome": "ok",
+        "ms": 38.478898,
+        "buffers": 6428,
+        "temp_blocks": 0,
+        "heap_fetches": 51,
+        "nodes": [
+          "Limit:",
+          "Custom Scan:TopKScanExecState"
+        ]
+      },
+      {
+        "strategy": "postcode_prefilter",
+        "case": 6,
+        "dataset": "se2005-pcf175-2005-06",
+        "mode": "force_generic_plan",
+        "outcome": "ok",
+        "ms": 37.480326,
+        "buffers": 6428,
+        "temp_blocks": 0,
+        "heap_fetches": 51,
+        "nodes": [
+          "Limit:",
+          "Custom Scan:TopKScanExecState"
+        ]
+      },
+      {
+        "strategy": "scalar",
+        "case": 20,
+        "dataset": "se2005-pcf175-2005-06",
+        "mode": "force_custom_plan",
+        "outcome": "ok",
+        "ms": 929.037746,
+        "buffers": 534,
+        "temp_blocks": 0,
+        "heap_fetches": 1,
+        "nodes": [
+          "Limit:",
+          "Custom Scan:TopKScanExecState"
+        ]
+      },
+      {
+        "strategy": "scalar",
+        "case": 20,
+        "dataset": "se2005-pcf175-2005-06",
+        "mode": "force_generic_plan",
+        "outcome": "ok",
+        "ms": 32.527283,
+        "buffers": 534,
+        "temp_blocks": 0,
+        "heap_fetches": 1,
+        "nodes": [
+          "Limit:",
+          "Custom Scan:TopKScanExecState"
+        ]
+      }
+    ]
+  }
+}

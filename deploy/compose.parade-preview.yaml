@@ -1,0 +1,58 @@
+# Optional derived database only. Loading this file does not switch the API.
+# Use alongside compose.production.yaml and --profile parade-preview.
+services:
+  parade-db:
+    profiles: [parade-preview]
+    image: paradedb/paradedb@sha256:ee076de0ac55b56352371fe224c1413e787b9a99a29507c7a626ee35d802b660
+    platform: linux/amd64
+    init: true
+    environment:
+      POSTGRES_DB: ukinfo_search
+      POSTGRES_PASSWORD: ${UKINFO_PARADE_OWNER_PASSWORD:?Set an independent owner password}
+      UKINFO_PARADE_SEARCH_PASSWORD: ${UKINFO_PARADE_SEARCH_PASSWORD:?Set an independent reader password}
+      POSTGRES_INITDB_ARGS: --locale=C --encoding=UTF8
+    command: [postgres, -c, shared_preload_libraries=pg_search, -c, shared_buffers=1GB, -c, work_mem=32MB, -c, maintenance_work_mem=256MB, -c, max_parallel_workers_per_gather=0, -c, max_parallel_maintenance_workers=0, -c, jit=off, -c, temp_file_limit=4GB, -c, log_statement=none, -c, log_min_error_statement=panic, -c, log_parameter_max_length_on_error=0]
+    # Skip the vendor's optional pg_cron bootstrap. Initialize the reader using
+    # /checks/parade-reader.sql explicitly; the builder creates pg_search.
+    tmpfs: ['/docker-entrypoint-initdb.d:rw,noexec,nosuid,size=4k']
+    volumes:
+      - parade-search:/var/lib/postgresql
+      - ./production/parade-reader.sql:/checks/parade-reader.sql:ro
+    networks: [database]
+    security_opt: [no-new-privileges:true]
+    cpus: 2
+    mem_limit: 6g
+    pids_limit: 256
+    shm_size: 1g
+    stop_grace_period: 120s
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, pg_isready, -U, postgres, -d, ukinfo_search]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    logging: {driver: json-file, options: {max-size: 5m, max-file: '2'}}
+  parade-indexer:
+    profiles: [parade-preview]
+    image: ukinfo-archive:${UKINFO_IMAGE_TAG:-local}
+    build: {context: .., dockerfile: deploy/Dockerfile}
+    user: '${UKINFO_MONITOR_UID:-1000}:${UKINFO_MONITOR_GID:-1000}'
+    entrypoint: [ukinfo-parade-index]
+    command: [--dataset, all, --reader-role, ukinfo_parade_search, --work-dir, /work]
+    environment:
+      SOURCE_DATABASE_URL: postgres://ukinfo_search:${UKINFO_SEARCH_PASSWORD:?Set the source reader password}@db:5432/ukinfo?sslmode=disable
+      TARGET_DATABASE_URL: postgres://postgres:${UKINFO_PARADE_OWNER_PASSWORD:?Set the derived owner password}@parade-db:5432/ukinfo_search?sslmode=disable
+      GOMEMLIMIT: 384MiB
+    # This directory must be on the same filesystem as the derived DB volume.
+    volumes: ['${UKINFO_PARADE_WORK_DIR:?Set a private directory on the derived DB filesystem}:/work:ro']
+    networks: [database]
+    depends_on: {parade-db: {condition: service_healthy}, db: {condition: service_healthy}}
+    cpus: 1
+    mem_limit: 512m
+    pids_limit: 128
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    logging: {driver: json-file, options: {max-size: 5m, max-file: '2'}}
+volumes:
+  parade-search:

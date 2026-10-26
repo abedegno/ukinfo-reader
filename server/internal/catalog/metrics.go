@@ -81,7 +81,7 @@ func queryClass(r *http.Request) string {
 }
 func (m *apiMetrics) plan(name string) {
 	switch name {
-	case "address", "source", "indexed_source", "reverse_intersection", "place_postings", "business_projection", "fallback", "error":
+	case "paradedb", "paradedb_fallback", "address", "source", "indexed_source", "reverse_intersection", "place_postings", "business_projection", "fallback", "error":
 	default:
 		return
 	}
@@ -242,5 +242,13 @@ func (a *API) Metrics() http.Handler {
 		fmt.Fprintf(w, "ukinfo_pool_max %d\n", stats.MaxConns())
 		fmt.Fprintln(w, "# TYPE ukinfo_pool_canceled_acquires_total counter")
 		fmt.Fprintf(w, "ukinfo_pool_canceled_acquires_total %d\n", stats.CanceledAcquireCount())
+		if a.ParadeDB != nil {
+			search := a.ParadeDB.Stat()
+			fmt.Fprintf(w, "# TYPE ukinfo_parade_pool_acquired gauge\nukinfo_parade_pool_acquired %d\n", search.AcquiredConns())
+			fmt.Fprintf(w, "# TYPE ukinfo_parade_pool_max gauge\nukinfo_parade_pool_max %d\n", search.MaxConns())
+			fmt.Fprintf(w, "# TYPE ukinfo_parade_pool_waits_total counter\nukinfo_parade_pool_waits_total %d\n", search.EmptyAcquireCount())
+			fmt.Fprintf(w, "# TYPE ukinfo_parade_pool_wait_seconds_total counter\nukinfo_parade_pool_wait_seconds_total %g\n", search.EmptyAcquireWaitTime().Seconds())
+			fmt.Fprintf(w, "# TYPE ukinfo_parade_pool_canceled_acquires_total counter\nukinfo_parade_pool_canceled_acquires_total %d\n", search.CanceledAcquireCount())
+		}
 	})
 }

@@ -7,6 +7,9 @@ It is a deployment baseline; it does not provision DNS, TLS, remote backups or a
 See [hosting measurements](hosting.md) before sizing storage. Allow space for WAL,
 a backup and a second database during a restore rehearsal, not just the catalogue.
 
+The [optional ParadeDB preview](paradedb-preview.md) uses a separate derived
+database behind an explicit serving flag. It is not enabled by this baseline.
+
 ## Configure and start
 
 Run commands from the repository root. Use Docker Compose 2.24.4 or newer for the
@@ -261,3 +264,24 @@ For a migrated desktop/owner catalogue, `ukinfo-server index-address-lookup
 --dataset KEY` backfills one edition. Legacy catalogues without this optional
 lookup remain searchable through the previous paths. Keep the lookup build in
 any staged edition publication procedure before swapping catalogue identities.
+
+## Hosted address-search acceleration
+
+The NAS deployment enabled the optional [ParadeDB hybrid adapter](paradedb-preview.md)
+on 26 October 2026, after a complete equal-budget control. The original PostgreSQL
+catalogue remains authoritative; the separate pinned derived database selects
+address-filter candidates. Names/postcodes without address filters, grouped,
+nearby and edition-sorted searches retain native execution. Desktop is unchanged.
+
+Homelab keeps the persistent target configuration, staged rollout, image identity
+checks and internal reference acceptance under `docker/ukinfo/parade-serving/`.
+The existing target volume is promoted in place, with no database port published.
+The API uses a dedicated SELECT-only reader. Existing public limits, proxy trust,
+Cloudflare protections and source deadlines are preserved.
+
+To roll back routing on this deployment, set `UKINFO_SEARCH_BACKEND=native` in
+`~/homelab/docker/ukinfo/.env`, then run `docker/ukinfo/deploy.sh up` from homelab.
+Native startup does not connect to the derived target. The previous application
+image `ukinfo:hosted-2026-10-22.1` is retained for image rollback. Keep native
+indexes. Read the [control, diagnostics and rollout evidence](research/parade-rollout-2026-10-26.md)
+before changing the pinned extension or removing retained derived data.

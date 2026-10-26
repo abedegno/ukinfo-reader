@@ -1,0 +1,3359 @@
+{
+  "schema_version": 1,
+  "method": {
+    "dataset": "se2003-dpcs0104",
+    "cases": 87,
+    "rounds": 2,
+    "max_pages": 3,
+    "page_size": 50,
+    "sql_timeout_ms": 4000,
+    "request_timeout_ms": 5000,
+    "database_cpus": 2,
+    "database_memory_bytes": 6442450944,
+    "client_cpus": 1,
+    "client_memory_bytes": 536870912,
+    "shared_database": true,
+    "independent_engine_throughput": false,
+    "cache_flushed": false,
+    "includes_original_record_retrieval": true,
+    "includes_http": false,
+    "plans_analyzed": true,
+    "preliminary_plans_analyzed": false,
+    "corrected_nonexecuting_plans_analyzed": false
+  },
+  "build": {
+    "expected": 59886841,
+    "last_id": 59886841,
+    "sampled": 58484,
+    "finished": true,
+    "wall_seconds": 8267.363925
+  },
+  "environment": {
+    "version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg13+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+    "extensions": {
+      "vector": "0.8.6",
+      "pg_search": "0.26.3"
+    },
+    "sizes": [
+      {
+        "relname": "native",
+        "table_bytes": 6498639872,
+        "index_bytes": 24459141120
+      },
+      {
+        "relname": "parade",
+        "table_bytes": 6495600640,
+        "index_bytes": 4553146368
+      }
+    ],
+    "phases": [
+      {
+        "phase": "native_pk",
+        "seconds": 541.929309802
+      },
+      {
+        "phase": "native_name_town",
+        "seconds": 239.679802814
+      },
+      {
+        "phase": "native_lexical",
+        "seconds": 237.597142039
+      },
+      {
+        "phase": "native_name_county",
+        "seconds": 233.834853257
+      },
+      {
+        "phase": "native_name",
+        "seconds": 264.330593858
+      },
+      {
+        "phase": "native_postcode",
+        "seconds": 198.251862255
+      },
+      {
+        "phase": "native_town",
+        "seconds": 196.203497801
+      },
+      {
+        "phase": "native_county",
+        "seconds": 190.731450212
+      },
+      {
+        "phase": "native_sic",
+        "seconds": 48.225064881
+      },
+      {
+        "phase": "native_industry",
+        "seconds": 38.97300601
+      },
+      {
+        "phase": "native_street",
+        "seconds": 266.276519565
+      },
+      {
+        "phase": "native_locality",
+        "seconds": 138.832573576
+      },
+      {
+        "phase": "parade_copy",
+        "seconds": 389.382075861
+      },
+      {
+        "phase": "parade_search",
+        "seconds": 1505.97717505
+      }
+    ],
+    "counts": [
+      {
+        "kind": 0,
+        "count": 57415803
+      },
+      {
+        "kind": 1,
+        "count": 2471038
+      }
+    ]
+  },
+  "runs": [
+    {
+      "plan_mode": "auto",
+      "clients": 1,
+      "cases": 87,
+      "wall_seconds": 74.371,
+      "failures": 4,
+      "mismatches": 0,
+      "reference_cached": true,
+      "independent_reference_pages": 130,
+      "failed_source_reference_pages": 4,
+      "cohorts": [
+        {
+          "engine": "native",
+          "scope": "first",
+          "requests": 174,
+          "errors": 3,
+          "error_codes": {
+            "57014": 3
+          },
+          "reference_matches": 165,
+          "reference_unavailable": 9,
+          "p50_ms": 1.945,
+          "p95_ms": 309.226,
+          "p99_ms": 4000.542,
+          "max_ms": 4007.681,
+          "query_p95_ms": 306.015,
+          "records_p95_ms": 8.794
+        },
+        {
+          "engine": "native",
+          "scope": "later",
+          "requests": 103,
+          "errors": 1,
+          "error_codes": {
+            "57014": 1
+          },
+          "reference_matches": 90,
+          "reference_unavailable": 13,
+          "p50_ms": 6.942,
+          "p95_ms": 262.027,
+          "p99_ms": 2436.345,
+          "max_ms": 4005.096,
+          "query_p95_ms": 260.978,
+          "records_p95_ms": 9.118
+        },
+        {
+          "engine": "native",
+          "scope": "all",
+          "requests": 277,
+          "errors": 4,
+          "error_codes": {
+            "57014": 4
+          },
+          "reference_matches": 255,
+          "reference_unavailable": 22,
+          "p50_ms": 4.263,
+          "p95_ms": 268.247,
+          "p99_ms": 4000.542,
+          "max_ms": 4007.681,
+          "query_p95_ms": 267.084,
+          "records_p95_ms": 9.109
+        },
+        {
+          "engine": "parade",
+          "scope": "first",
+          "requests": 174,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 166,
+          "reference_unavailable": 8,
+          "p50_ms": 8.984,
+          "p95_ms": 798.04,
+          "p99_ms": 1329.858,
+          "max_ms": 1415.548,
+          "query_p95_ms": 790.789,
+          "records_p95_ms": 9.091
+        },
+        {
+          "engine": "parade",
+          "scope": "later",
+          "requests": 110,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 94,
+          "reference_unavailable": 16,
+          "p50_ms": 110.709,
+          "p95_ms": 495.065,
+          "p99_ms": 947.285,
+          "max_ms": 1030.337,
+          "query_p95_ms": 490.214,
+          "records_p95_ms": 8.914
+        },
+        {
+          "engine": "parade",
+          "scope": "all",
+          "requests": 284,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 260,
+          "reference_unavailable": 24,
+          "p50_ms": 59.91,
+          "p95_ms": 659.176,
+          "p99_ms": 1286.742,
+          "max_ms": 1415.548,
+          "query_p95_ms": 655.2,
+          "records_p95_ms": 8.914
+        }
+      ],
+      "families": [
+        {
+          "engine": "native",
+          "family": "address",
+          "requests": 66,
+          "errors": 3,
+          "error_codes": {
+            "57014": 3
+          },
+          "reference_matches": 61,
+          "reference_unavailable": 5,
+          "p50_ms": 1.331,
+          "p95_ms": 3629.703,
+          "p99_ms": 4007.681,
+          "max_ms": 4007.681,
+          "query_p95_ms": 3625.075,
+          "records_p95_ms": 4.918
+        },
+        {
+          "engine": "native",
+          "family": "address_lexical",
+          "requests": 36,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 34,
+          "reference_unavailable": 2,
+          "p50_ms": 1.102,
+          "p95_ms": 46.366,
+          "p99_ms": 59.634,
+          "max_ms": 59.634,
+          "query_p95_ms": 45.542,
+          "records_p95_ms": 3.588
+        },
+        {
+          "engine": "native",
+          "family": "classification",
+          "requests": 18,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 18,
+          "reference_unavailable": 0,
+          "p50_ms": 25.968,
+          "p95_ms": 253.247,
+          "p99_ms": 253.247,
+          "max_ms": 253.247,
+          "query_p95_ms": 251.467,
+          "records_p95_ms": 11.219
+        },
+        {
+          "engine": "native",
+          "family": "classification_lexical",
+          "requests": 18,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 16,
+          "reference_unavailable": 2,
+          "p50_ms": 12.785,
+          "p95_ms": 376.119,
+          "p99_ms": 376.119,
+          "max_ms": 376.119,
+          "query_p95_ms": 374.939,
+          "records_p95_ms": 9.144
+        },
+        {
+          "engine": "native",
+          "family": "name_lexical",
+          "requests": 2,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 2,
+          "reference_unavailable": 0,
+          "p50_ms": 6.403,
+          "p95_ms": 8.084,
+          "p99_ms": 8.084,
+          "max_ms": 8.084,
+          "query_p95_ms": 0.834,
+          "records_p95_ms": 7.378
+        },
+        {
+          "engine": "native",
+          "family": "postcode_lexical",
+          "requests": 34,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 34,
+          "reference_unavailable": 0,
+          "p50_ms": 3.382,
+          "p95_ms": 8.098,
+          "p99_ms": 22.545,
+          "max_ms": 22.545,
+          "query_p95_ms": 0.977,
+          "records_p95_ms": 7.453
+        },
+        {
+          "engine": "parade",
+          "family": "address",
+          "requests": 66,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 62,
+          "reference_unavailable": 4,
+          "p50_ms": 3.649,
+          "p95_ms": 237.189,
+          "p99_ms": 1286.742,
+          "max_ms": 1286.742,
+          "query_p95_ms": 232.072,
+          "records_p95_ms": 4.8
+        },
+        {
+          "engine": "parade",
+          "family": "address_lexical",
+          "requests": 36,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 34,
+          "reference_unavailable": 2,
+          "p50_ms": 3.126,
+          "p95_ms": 1059.342,
+          "p99_ms": 1415.548,
+          "max_ms": 1415.548,
+          "query_p95_ms": 1055.156,
+          "records_p95_ms": 4.185
+        },
+        {
+          "engine": "parade",
+          "family": "classification",
+          "requests": 18,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 18,
+          "reference_unavailable": 0,
+          "p50_ms": 81.657,
+          "p95_ms": 129.846,
+          "p99_ms": 129.846,
+          "max_ms": 129.846,
+          "query_p95_ms": 127.849,
+          "records_p95_ms": 11.37
+        },
+        {
+          "engine": "parade",
+          "family": "classification_lexical",
+          "requests": 18,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 16,
+          "reference_unavailable": 2,
+          "p50_ms": 121.692,
+          "p95_ms": 872.619,
+          "p99_ms": 872.619,
+          "max_ms": 872.619,
+          "query_p95_ms": 862.473,
+          "records_p95_ms": 14.356
+        },
+        {
+          "engine": "parade",
+          "family": "name_lexical",
+          "requests": 2,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 2,
+          "reference_unavailable": 0,
+          "p50_ms": 76.291,
+          "p95_ms": 239.812,
+          "p99_ms": 239.812,
+          "max_ms": 239.812,
+          "query_p95_ms": 234.15,
+          "records_p95_ms": 5.81
+        },
+        {
+          "engine": "parade",
+          "family": "postcode_lexical",
+          "requests": 34,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 34,
+          "reference_unavailable": 0,
+          "p50_ms": 75.035,
+          "p95_ms": 1119.205,
+          "p99_ms": 1329.858,
+          "max_ms": 1329.858,
+          "query_p95_ms": 1114.888,
+          "records_p95_ms": 7.251
+        }
+      ],
+      "pairs": {
+        "mutual_success": 273,
+        "native_only_success": 0,
+        "parade_only_success": 4,
+        "both_failed": 0,
+        "unpaired": 7
+      }
+    },
+    {
+      "plan_mode": "force_custom_plan",
+      "clients": 1,
+      "cases": 87,
+      "wall_seconds": 53.653,
+      "failures": 3,
+      "mismatches": 0,
+      "reference_cached": true,
+      "independent_reference_pages": 130,
+      "failed_source_reference_pages": 4,
+      "cohorts": [
+        {
+          "engine": "native",
+          "scope": "first",
+          "requests": 174,
+          "errors": 2,
+          "error_codes": {
+            "57014": 2
+          },
+          "reference_matches": 166,
+          "reference_unavailable": 8,
+          "p50_ms": 2.974,
+          "p95_ms": 271.201,
+          "p99_ms": 4000.652,
+          "max_ms": 4000.838,
+          "query_p95_ms": 265.159,
+          "records_p95_ms": 8.875
+        },
+        {
+          "engine": "native",
+          "scope": "later",
+          "requests": 106,
+          "errors": 1,
+          "error_codes": {
+            "57014": 1
+          },
+          "reference_matches": 93,
+          "reference_unavailable": 13,
+          "p50_ms": 7.377,
+          "p95_ms": 268.211,
+          "p99_ms": 1862.631,
+          "max_ms": 4006.327,
+          "query_p95_ms": 267.057,
+          "records_p95_ms": 8.71
+        },
+        {
+          "engine": "native",
+          "scope": "all",
+          "requests": 280,
+          "errors": 3,
+          "error_codes": {
+            "57014": 3
+          },
+          "reference_matches": 259,
+          "reference_unavailable": 21,
+          "p50_ms": 4.899,
+          "p95_ms": 268.211,
+          "p99_ms": 4000.652,
+          "max_ms": 4006.327,
+          "query_p95_ms": 265.159,
+          "records_p95_ms": 8.71
+        },
+        {
+          "engine": "parade",
+          "scope": "first",
+          "requests": 174,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 166,
+          "reference_unavailable": 8,
+          "p50_ms": 5.972,
+          "p95_ms": 135.535,
+          "p99_ms": 1190.221,
+          "max_ms": 1469.318,
+          "query_p95_ms": 131.669,
+          "records_p95_ms": 8.717
+        },
+        {
+          "engine": "parade",
+          "scope": "later",
+          "requests": 110,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 94,
+          "reference_unavailable": 16,
+          "p50_ms": 103.253,
+          "p95_ms": 550.109,
+          "p99_ms": 993.183,
+          "max_ms": 1629.34,
+          "query_p95_ms": 549.161,
+          "records_p95_ms": 9.065
+        },
+        {
+          "engine": "parade",
+          "scope": "all",
+          "requests": 284,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 260,
+          "reference_unavailable": 24,
+          "p50_ms": 31.52,
+          "p95_ms": 271.849,
+          "p99_ms": 1190.221,
+          "max_ms": 1629.34,
+          "query_p95_ms": 270.306,
+          "records_p95_ms": 8.904
+        }
+      ],
+      "families": [
+        {
+          "engine": "native",
+          "family": "address",
+          "requests": 66,
+          "errors": 2,
+          "error_codes": {
+            "57014": 2
+          },
+          "reference_matches": 62,
+          "reference_unavailable": 4,
+          "p50_ms": 1.533,
+          "p95_ms": 1275.522,
+          "p99_ms": 4000.838,
+          "max_ms": 4000.838,
+          "query_p95_ms": 1270.962,
+          "records_p95_ms": 4.947
+        },
+        {
+          "engine": "native",
+          "family": "address_lexical",
+          "requests": 36,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 34,
+          "reference_unavailable": 2,
+          "p50_ms": 1.235,
+          "p95_ms": 6.805,
+          "p99_ms": 7.544,
+          "max_ms": 7.544,
+          "query_p95_ms": 3.042,
+          "records_p95_ms": 3.763
+        },
+        {
+          "engine": "native",
+          "family": "classification",
+          "requests": 18,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 18,
+          "reference_unavailable": 0,
+          "p50_ms": 10.557,
+          "p95_ms": 250.6,
+          "p99_ms": 250.6,
+          "max_ms": 250.6,
+          "query_p95_ms": 248.863,
+          "records_p95_ms": 11.054
+        },
+        {
+          "engine": "native",
+          "family": "classification_lexical",
+          "requests": 18,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 16,
+          "reference_unavailable": 2,
+          "p50_ms": 12.921,
+          "p95_ms": 355.329,
+          "p99_ms": 355.329,
+          "max_ms": 355.329,
+          "query_p95_ms": 354.099,
+          "records_p95_ms": 9.361
+        },
+        {
+          "engine": "native",
+          "family": "name_lexical",
+          "requests": 2,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 2,
+          "reference_unavailable": 0,
+          "p50_ms": 5.951,
+          "p95_ms": 6.282,
+          "p99_ms": 6.282,
+          "max_ms": 6.282,
+          "query_p95_ms": 0.883,
+          "records_p95_ms": 5.399
+        },
+        {
+          "engine": "native",
+          "family": "postcode_lexical",
+          "requests": 34,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 34,
+          "reference_unavailable": 0,
+          "p50_ms": 3.595,
+          "p95_ms": 173.883,
+          "p99_ms": 271.374,
+          "max_ms": 271.374,
+          "query_p95_ms": 169.027,
+          "records_p95_ms": 6.022
+        },
+        {
+          "engine": "parade",
+          "family": "address",
+          "requests": 66,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 62,
+          "reference_unavailable": 4,
+          "p50_ms": 4.121,
+          "p95_ms": 125.081,
+          "p99_ms": 1469.318,
+          "max_ms": 1469.318,
+          "query_p95_ms": 121.803,
+          "records_p95_ms": 5.12
+        },
+        {
+          "engine": "parade",
+          "family": "address_lexical",
+          "requests": 36,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 34,
+          "reference_unavailable": 2,
+          "p50_ms": 3.905,
+          "p95_ms": 720.102,
+          "p99_ms": 751.123,
+          "max_ms": 751.123,
+          "query_p95_ms": 716.551,
+          "records_p95_ms": 3.478
+        },
+        {
+          "engine": "parade",
+          "family": "classification",
+          "requests": 18,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 18,
+          "reference_unavailable": 0,
+          "p50_ms": 80.046,
+          "p95_ms": 130.52,
+          "p99_ms": 130.52,
+          "max_ms": 130.52,
+          "query_p95_ms": 128.456,
+          "records_p95_ms": 10.556
+        },
+        {
+          "engine": "parade",
+          "family": "classification_lexical",
+          "requests": 18,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 16,
+          "reference_unavailable": 2,
+          "p50_ms": 67.388,
+          "p95_ms": 150.282,
+          "p99_ms": 150.282,
+          "max_ms": 150.282,
+          "query_p95_ms": 149.06,
+          "records_p95_ms": 12.357
+        },
+        {
+          "engine": "parade",
+          "family": "name_lexical",
+          "requests": 2,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 2,
+          "reference_unavailable": 0,
+          "p50_ms": 19.439,
+          "p95_ms": 28.231,
+          "p99_ms": 28.231,
+          "max_ms": 28.231,
+          "query_p95_ms": 22.387,
+          "records_p95_ms": 5.843
+        },
+        {
+          "engine": "parade",
+          "family": "postcode_lexical",
+          "requests": 34,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 34,
+          "reference_unavailable": 0,
+          "p50_ms": 8.288,
+          "p95_ms": 20.141,
+          "p99_ms": 31.52,
+          "max_ms": 31.52,
+          "query_p95_ms": 15.265,
+          "records_p95_ms": 6.094
+        }
+      ],
+      "pairs": {
+        "mutual_success": 277,
+        "native_only_success": 0,
+        "parade_only_success": 3,
+        "both_failed": 0,
+        "unpaired": 4
+      }
+    },
+    {
+      "plan_mode": "auto",
+      "clients": 4,
+      "cases": 87,
+      "wall_seconds": 17.67,
+      "failures": 2,
+      "mismatches": 0,
+      "reference_cached": true,
+      "independent_reference_pages": 130,
+      "failed_source_reference_pages": 4,
+      "cohorts": [
+        {
+          "engine": "native",
+          "scope": "first",
+          "requests": 174,
+          "errors": 2,
+          "error_codes": {
+            "57014": 2
+          },
+          "reference_matches": 166,
+          "reference_unavailable": 8,
+          "p50_ms": 2.893,
+          "p95_ms": 429.199,
+          "p99_ms": 4000.857,
+          "max_ms": 4004.895,
+          "query_p95_ms": 424.738,
+          "records_p95_ms": 12.449
+        },
+        {
+          "engine": "native",
+          "scope": "later",
+          "requests": 106,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 94,
+          "reference_unavailable": 12,
+          "p50_ms": 12.167,
+          "p95_ms": 469.704,
+          "p99_ms": 533.373,
+          "max_ms": 568.376,
+          "query_p95_ms": 466.122,
+          "records_p95_ms": 15.037
+        },
+        {
+          "engine": "native",
+          "scope": "all",
+          "requests": 280,
+          "errors": 2,
+          "error_codes": {
+            "57014": 2
+          },
+          "reference_matches": 260,
+          "reference_unavailable": 20,
+          "p50_ms": 6.385,
+          "p95_ms": 466.943,
+          "p99_ms": 1480.451,
+          "max_ms": 4004.895,
+          "query_p95_ms": 458.961,
+          "records_p95_ms": 13.394
+        },
+        {
+          "engine": "parade",
+          "scope": "first",
+          "requests": 174,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 166,
+          "reference_unavailable": 8,
+          "p50_ms": 9.057,
+          "p95_ms": 246.844,
+          "p99_ms": 1056.976,
+          "max_ms": 1208.587,
+          "query_p95_ms": 239.261,
+          "records_p95_ms": 13.906
+        },
+        {
+          "engine": "parade",
+          "scope": "later",
+          "requests": 110,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 94,
+          "reference_unavailable": 16,
+          "p50_ms": 210.943,
+          "p95_ms": 1062.012,
+          "p99_ms": 1782.675,
+          "max_ms": 1810.357,
+          "query_p95_ms": 1061.189,
+          "records_p95_ms": 13.826
+        },
+        {
+          "engine": "parade",
+          "scope": "all",
+          "requests": 284,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 260,
+          "reference_unavailable": 24,
+          "p50_ms": 56.846,
+          "p95_ms": 505.761,
+          "p99_ms": 1598.48,
+          "max_ms": 1810.357,
+          "query_p95_ms": 504.603,
+          "records_p95_ms": 13.826
+        }
+      ],
+      "families": [
+        {
+          "engine": "native",
+          "family": "address",
+          "requests": 66,
+          "errors": 2,
+          "error_codes": {
+            "57014": 2
+          },
+          "reference_matches": 62,
+          "reference_unavailable": 4,
+          "p50_ms": 1.858,
+          "p95_ms": 266.226,
+          "p99_ms": 4004.895,
+          "max_ms": 4004.895,
+          "query_p95_ms": 259.083,
+          "records_p95_ms": 12.211
+        },
+        {
+          "engine": "native",
+          "family": "address_lexical",
+          "requests": 36,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 34,
+          "reference_unavailable": 2,
+          "p50_ms": 1.335,
+          "p95_ms": 41.544,
+          "p99_ms": 42.684,
+          "max_ms": 42.684,
+          "query_p95_ms": 34.021,
+          "records_p95_ms": 3.723
+        },
+        {
+          "engine": "native",
+          "family": "classification",
+          "requests": 18,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 18,
+          "reference_unavailable": 0,
+          "p50_ms": 17.369,
+          "p95_ms": 507.88,
+          "p99_ms": 507.88,
+          "max_ms": 507.88,
+          "query_p95_ms": 494.144,
+          "records_p95_ms": 22.746
+        },
+        {
+          "engine": "native",
+          "family": "classification_lexical",
+          "requests": 18,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 16,
+          "reference_unavailable": 2,
+          "p50_ms": 11.778,
+          "p95_ms": 579.434,
+          "p99_ms": 579.434,
+          "max_ms": 579.434,
+          "query_p95_ms": 578.221,
+          "records_p95_ms": 14.381
+        },
+        {
+          "engine": "native",
+          "family": "name_lexical",
+          "requests": 2,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 2,
+          "reference_unavailable": 0,
+          "p50_ms": 9.024,
+          "p95_ms": 48.41,
+          "p99_ms": 48.41,
+          "max_ms": 48.41,
+          "query_p95_ms": 31.527,
+          "records_p95_ms": 16.883
+        },
+        {
+          "engine": "native",
+          "family": "postcode_lexical",
+          "requests": 34,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 34,
+          "reference_unavailable": 0,
+          "p50_ms": 4.851,
+          "p95_ms": 11.71,
+          "p99_ms": 47.831,
+          "max_ms": 47.831,
+          "query_p95_ms": 3.153,
+          "records_p95_ms": 8.528
+        },
+        {
+          "engine": "parade",
+          "family": "address",
+          "requests": 66,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 62,
+          "reference_unavailable": 4,
+          "p50_ms": 4.919,
+          "p95_ms": 129.914,
+          "p99_ms": 811.539,
+          "max_ms": 811.539,
+          "query_p95_ms": 124.61,
+          "records_p95_ms": 9.197
+        },
+        {
+          "engine": "parade",
+          "family": "address_lexical",
+          "requests": 36,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 34,
+          "reference_unavailable": 2,
+          "p50_ms": 3.705,
+          "p95_ms": 1056.976,
+          "p99_ms": 1208.587,
+          "max_ms": 1208.587,
+          "query_p95_ms": 1053.38,
+          "records_p95_ms": 3.595
+        },
+        {
+          "engine": "parade",
+          "family": "classification",
+          "requests": 18,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 18,
+          "reference_unavailable": 0,
+          "p50_ms": 178.671,
+          "p95_ms": 282.43,
+          "p99_ms": 282.43,
+          "max_ms": 282.43,
+          "query_p95_ms": 280.087,
+          "records_p95_ms": 17.693
+        },
+        {
+          "engine": "parade",
+          "family": "classification_lexical",
+          "requests": 18,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 16,
+          "reference_unavailable": 2,
+          "p50_ms": 177.703,
+          "p95_ms": 441.064,
+          "p99_ms": 441.064,
+          "max_ms": 441.064,
+          "query_p95_ms": 439.587,
+          "records_p95_ms": 11.034
+        },
+        {
+          "engine": "parade",
+          "family": "name_lexical",
+          "requests": 2,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 2,
+          "reference_unavailable": 0,
+          "p50_ms": 34.859,
+          "p95_ms": 61.982,
+          "p99_ms": 61.982,
+          "max_ms": 61.982,
+          "query_p95_ms": 47.593,
+          "records_p95_ms": 14.388
+        },
+        {
+          "engine": "parade",
+          "family": "postcode_lexical",
+          "requests": 34,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 34,
+          "reference_unavailable": 0,
+          "p50_ms": 11.944,
+          "p95_ms": 56.162,
+          "p99_ms": 56.846,
+          "max_ms": 56.846,
+          "query_p95_ms": 46.837,
+          "records_p95_ms": 9.152
+        }
+      ],
+      "pairs": {
+        "mutual_success": 278,
+        "native_only_success": 0,
+        "parade_only_success": 2,
+        "both_failed": 0,
+        "unpaired": 4
+      }
+    },
+    {
+      "plan_mode": "force_custom_plan",
+      "clients": 4,
+      "cases": 87,
+      "wall_seconds": 17.844,
+      "failures": 2,
+      "mismatches": 0,
+      "reference_cached": true,
+      "independent_reference_pages": 130,
+      "failed_source_reference_pages": 4,
+      "cohorts": [
+        {
+          "engine": "native",
+          "scope": "first",
+          "requests": 174,
+          "errors": 2,
+          "error_codes": {
+            "57014": 2
+          },
+          "reference_matches": 166,
+          "reference_unavailable": 8,
+          "p50_ms": 3.149,
+          "p95_ms": 429.07,
+          "p99_ms": 4000.604,
+          "max_ms": 4001.353,
+          "query_p95_ms": 425.338,
+          "records_p95_ms": 13.293
+        },
+        {
+          "engine": "native",
+          "scope": "later",
+          "requests": 106,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 94,
+          "reference_unavailable": 12,
+          "p50_ms": 10.177,
+          "p95_ms": 474.814,
+          "p99_ms": 522.928,
+          "max_ms": 565.16,
+          "query_p95_ms": 472.851,
+          "records_p95_ms": 13.503
+        },
+        {
+          "engine": "native",
+          "scope": "all",
+          "requests": 280,
+          "errors": 2,
+          "error_codes": {
+            "57014": 2
+          },
+          "reference_matches": 260,
+          "reference_unavailable": 20,
+          "p50_ms": 6.6,
+          "p95_ms": 470.975,
+          "p99_ms": 576.32,
+          "max_ms": 4001.353,
+          "query_p95_ms": 459.308,
+          "records_p95_ms": 13.293
+        },
+        {
+          "engine": "parade",
+          "scope": "first",
+          "requests": 174,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 166,
+          "reference_unavailable": 8,
+          "p50_ms": 7.755,
+          "p95_ms": 290.342,
+          "p99_ms": 1194.655,
+          "max_ms": 1396.642,
+          "query_p95_ms": 273.285,
+          "records_p95_ms": 15.323
+        },
+        {
+          "engine": "parade",
+          "scope": "later",
+          "requests": 110,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 94,
+          "reference_unavailable": 16,
+          "p50_ms": 220.787,
+          "p95_ms": 1029.723,
+          "p99_ms": 1968.825,
+          "max_ms": 2004.073,
+          "query_p95_ms": 1028.858,
+          "records_p95_ms": 15.165
+        },
+        {
+          "engine": "parade",
+          "scope": "all",
+          "requests": 284,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 260,
+          "reference_unavailable": 24,
+          "p50_ms": 72.107,
+          "p95_ms": 518.883,
+          "p99_ms": 1882.971,
+          "max_ms": 2004.073,
+          "query_p95_ms": 517.664,
+          "records_p95_ms": 15.165
+        }
+      ],
+      "families": [
+        {
+          "engine": "native",
+          "family": "address",
+          "requests": 66,
+          "errors": 2,
+          "error_codes": {
+            "57014": 2
+          },
+          "reference_matches": 62,
+          "reference_unavailable": 4,
+          "p50_ms": 2.045,
+          "p95_ms": 103.886,
+          "p99_ms": 4001.353,
+          "max_ms": 4001.353,
+          "query_p95_ms": 96.814,
+          "records_p95_ms": 9.057
+        },
+        {
+          "engine": "native",
+          "family": "address_lexical",
+          "requests": 36,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 34,
+          "reference_unavailable": 2,
+          "p50_ms": 1.398,
+          "p95_ms": 8.555,
+          "p99_ms": 40.426,
+          "max_ms": 40.426,
+          "query_p95_ms": 3.458,
+          "records_p95_ms": 5.096
+        },
+        {
+          "engine": "native",
+          "family": "classification",
+          "requests": 18,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 18,
+          "reference_unavailable": 0,
+          "p50_ms": 17.262,
+          "p95_ms": 505.865,
+          "p99_ms": 505.865,
+          "max_ms": 505.865,
+          "query_p95_ms": 500.242,
+          "records_p95_ms": 19.565
+        },
+        {
+          "engine": "native",
+          "family": "classification_lexical",
+          "requests": 18,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 16,
+          "reference_unavailable": 2,
+          "p50_ms": 10.108,
+          "p95_ms": 576.32,
+          "p99_ms": 576.32,
+          "max_ms": 576.32,
+          "query_p95_ms": 574.991,
+          "records_p95_ms": 16.559
+        },
+        {
+          "engine": "native",
+          "family": "name_lexical",
+          "requests": 2,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 2,
+          "reference_unavailable": 0,
+          "p50_ms": 7.844,
+          "p95_ms": 10.345,
+          "p99_ms": 10.345,
+          "max_ms": 10.345,
+          "query_p95_ms": 0.893,
+          "records_p95_ms": 9.451
+        },
+        {
+          "engine": "native",
+          "family": "postcode_lexical",
+          "requests": 34,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 34,
+          "reference_unavailable": 0,
+          "p50_ms": 5.051,
+          "p95_ms": 44.407,
+          "p99_ms": 45.897,
+          "max_ms": 45.897,
+          "query_p95_ms": 40.582,
+          "records_p95_ms": 13.305
+        },
+        {
+          "engine": "parade",
+          "family": "address",
+          "requests": 66,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 62,
+          "reference_unavailable": 4,
+          "p50_ms": 5.336,
+          "p95_ms": 63.743,
+          "p99_ms": 807.613,
+          "max_ms": 807.613,
+          "query_p95_ms": 58.271,
+          "records_p95_ms": 15.323
+        },
+        {
+          "engine": "parade",
+          "family": "address_lexical",
+          "requests": 36,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 34,
+          "reference_unavailable": 2,
+          "p50_ms": 3.917,
+          "p95_ms": 1194.655,
+          "p99_ms": 1396.642,
+          "max_ms": 1396.642,
+          "query_p95_ms": 1188.94,
+          "records_p95_ms": 3.881
+        },
+        {
+          "engine": "parade",
+          "family": "classification",
+          "requests": 18,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 18,
+          "reference_unavailable": 0,
+          "p50_ms": 169.046,
+          "p95_ms": 298.498,
+          "p99_ms": 298.498,
+          "max_ms": 298.498,
+          "query_p95_ms": 296.514,
+          "records_p95_ms": 19.019
+        },
+        {
+          "engine": "parade",
+          "family": "classification_lexical",
+          "requests": 18,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 16,
+          "reference_unavailable": 2,
+          "p50_ms": 187.821,
+          "p95_ms": 404.903,
+          "p99_ms": 404.903,
+          "max_ms": 404.903,
+          "query_p95_ms": 403.599,
+          "records_p95_ms": 24.27
+        },
+        {
+          "engine": "parade",
+          "family": "name_lexical",
+          "requests": 2,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 2,
+          "reference_unavailable": 0,
+          "p50_ms": 68.772,
+          "p95_ms": 85.045,
+          "p99_ms": 85.045,
+          "max_ms": 85.045,
+          "query_p95_ms": 77.828,
+          "records_p95_ms": 8.78
+        },
+        {
+          "engine": "parade",
+          "family": "postcode_lexical",
+          "requests": 34,
+          "errors": 0,
+          "error_codes": {},
+          "reference_matches": 34,
+          "reference_unavailable": 0,
+          "p50_ms": 14.415,
+          "p95_ms": 72.107,
+          "p99_ms": 79.893,
+          "max_ms": 79.893,
+          "query_p95_ms": 61.756,
+          "records_p95_ms": 12.05
+        }
+      ],
+      "pairs": {
+        "mutual_success": 278,
+        "native_only_success": 0,
+        "parade_only_success": 2,
+        "both_failed": 0,
+        "unpaired": 4
+      }
+    }
+  ],
+  "plans": [
+    {
+      "case": 0,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 11.038910000000001,
+      "buffers": 10,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Scan:native_name_town"
+      ]
+    },
+    {
+      "case": 1,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.866916,
+      "buffers": 15,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Only Scan [residual filter]:native_name"
+      ]
+    },
+    {
+      "case": 4,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.5537749999999999,
+      "buffers": 10,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Only Scan [residual filter]:native_name"
+      ]
+    },
+    {
+      "case": 8,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 29.83412,
+      "buffers": 708,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:native_postcode"
+      ]
+    },
+    {
+      "case": 16,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.9483039999999999,
+      "buffers": 34,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Incremental Sort:",
+        "Index Scan:native_postcode"
+      ]
+    },
+    {
+      "case": 24,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 3.959395,
+      "buffers": 1243,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:native_lexical"
+      ]
+    },
+    {
+      "case": 36,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.6230899999999999,
+      "buffers": 5,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Scan:native_name_town"
+      ]
+    },
+    {
+      "case": 48,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.570994,
+      "buffers": 5,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan:native_name_town"
+      ]
+    },
+    {
+      "case": 64,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.68728,
+      "buffers": 6,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:native_name"
+      ]
+    },
+    {
+      "case": 80,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 1.064722,
+      "buffers": 97,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Scan [residual filter]:native_sic"
+      ]
+    },
+    {
+      "case": 0,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 10.043593,
+      "buffers": 219,
+      "temp_blocks": 0,
+      "heap_fetches": 8,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 1,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 4.3567670000000005,
+      "buffers": 305,
+      "temp_blocks": 0,
+      "heap_fetches": 51,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 4,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 2.458,
+      "buffers": 98,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 8,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 91.367997,
+      "buffers": 1832,
+      "temp_blocks": 0,
+      "heap_fetches": 49,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 16,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 13.172743,
+      "buffers": 900,
+      "temp_blocks": 0,
+      "heap_fetches": 51,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 24,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 7.35784,
+      "buffers": 312,
+      "temp_blocks": 0,
+      "heap_fetches": 51,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 36,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 2.896572,
+      "buffers": 208,
+      "temp_blocks": 0,
+      "heap_fetches": 1,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 48,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 3.2611950000000003,
+      "buffers": 243,
+      "temp_blocks": 0,
+      "heap_fetches": 2,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 64,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 5.225604,
+      "buffers": 391,
+      "temp_blocks": 0,
+      "heap_fetches": 1,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 80,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 79.789179,
+      "buffers": 536,
+      "temp_blocks": 0,
+      "heap_fetches": 51,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 0,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.736672,
+      "buffers": 14,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Only Scan [residual filter]:native_name"
+      ]
+    },
+    {
+      "case": 1,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.490891,
+      "buffers": 15,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Only Scan [residual filter]:native_name"
+      ]
+    },
+    {
+      "case": 4,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 980.0531460000001,
+      "buffers": 34806,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Scan [residual filter]:native_town"
+      ]
+    },
+    {
+      "case": 8,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 171.45053299999998,
+      "buffers": 84706,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:native_sic"
+      ]
+    },
+    {
+      "case": 16,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.608547,
+      "buffers": 34,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Incremental Sort:",
+        "Index Scan:native_postcode"
+      ]
+    },
+    {
+      "case": 24,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 1.711549,
+      "buffers": 1243,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:native_lexical"
+      ]
+    },
+    {
+      "case": 36,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.441858,
+      "buffers": 5,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Only Scan [residual filter]:native_name"
+      ]
+    },
+    {
+      "case": 48,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.439472,
+      "buffers": 6,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Only Scan [residual filter]:native_name"
+      ]
+    },
+    {
+      "case": 64,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.444376,
+      "buffers": 6,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:native_name"
+      ]
+    },
+    {
+      "case": 80,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.453459,
+      "buffers": 97,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Scan [residual filter]:native_sic"
+      ]
+    },
+    {
+      "case": 0,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 3.739258,
+      "buffers": 219,
+      "temp_blocks": 0,
+      "heap_fetches": 8,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 1,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 3.698486,
+      "buffers": 305,
+      "temp_blocks": 0,
+      "heap_fetches": 51,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 4,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 2.2322349999999997,
+      "buffers": 98,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 8,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 112.482812,
+      "buffers": 1832,
+      "temp_blocks": 0,
+      "heap_fetches": 49,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 16,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 9.745567,
+      "buffers": 900,
+      "temp_blocks": 0,
+      "heap_fetches": 51,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 24,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 6.982272,
+      "buffers": 312,
+      "temp_blocks": 0,
+      "heap_fetches": 51,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 36,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 2.483263,
+      "buffers": 208,
+      "temp_blocks": 0,
+      "heap_fetches": 1,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 48,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 2.803375,
+      "buffers": 243,
+      "temp_blocks": 0,
+      "heap_fetches": 2,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 64,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 4.028531,
+      "buffers": 391,
+      "temp_blocks": 0,
+      "heap_fetches": 1,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 80,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 77.759494,
+      "buffers": 536,
+      "temp_blocks": 0,
+      "heap_fetches": 51,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    }
+  ],
+  "preliminary": {
+    "plan_mode": "auto",
+    "clients": 1,
+    "cases": 87,
+    "wall_seconds": 545.947,
+    "failures": 101,
+    "mismatches": 0,
+    "reference_cached": false,
+    "independent_reference_pages": 130,
+    "failed_source_reference_pages": 4,
+    "cohorts": [
+      {
+        "engine": "native",
+        "scope": "first",
+        "requests": 174,
+        "errors": 10,
+        "error_codes": {
+          "57014": 10
+        },
+        "reference_matches": 159,
+        "reference_unavailable": 15,
+        "p50_ms": 43.026,
+        "p95_ms": 4000.31,
+        "p99_ms": 4008.614,
+        "max_ms": 4009.206,
+        "query_p95_ms": 4000.306,
+        "records_p95_ms": 8.661
+      },
+      {
+        "engine": "native",
+        "scope": "later",
+        "requests": 89,
+        "errors": 1,
+        "error_codes": {
+          "57014": 1
+        },
+        "reference_matches": 78,
+        "reference_unavailable": 11,
+        "p50_ms": 40.791,
+        "p95_ms": 248.96,
+        "p99_ms": 4002.947,
+        "max_ms": 4002.947,
+        "query_p95_ms": 245.454,
+        "records_p95_ms": 15.525
+      },
+      {
+        "engine": "native",
+        "scope": "all",
+        "requests": 263,
+        "errors": 11,
+        "error_codes": {
+          "57014": 11
+        },
+        "reference_matches": 237,
+        "reference_unavailable": 26,
+        "p50_ms": 42.891,
+        "p95_ms": 1987.651,
+        "p99_ms": 4008.085,
+        "max_ms": 4009.206,
+        "query_p95_ms": 1977.663,
+        "records_p95_ms": 9.866
+      },
+      {
+        "engine": "parade",
+        "scope": "first",
+        "requests": 174,
+        "errors": 90,
+        "error_codes": {
+          "57014": 90
+        },
+        "reference_matches": 80,
+        "reference_unavailable": 94,
+        "p50_ms": 4000.488,
+        "p95_ms": 4000.752,
+        "p99_ms": 4004.306,
+        "max_ms": 4009.718,
+        "query_p95_ms": 4000.748,
+        "records_p95_ms": 9.062
+      },
+      {
+        "engine": "parade",
+        "scope": "later",
+        "requests": 64,
+        "errors": 0,
+        "error_codes": {},
+        "reference_matches": 56,
+        "reference_unavailable": 8,
+        "p50_ms": 139.74,
+        "p95_ms": 499.012,
+        "p99_ms": 1074.374,
+        "max_ms": 1074.374,
+        "query_p95_ms": 498.058,
+        "records_p95_ms": 10.003
+      },
+      {
+        "engine": "parade",
+        "scope": "all",
+        "requests": 238,
+        "errors": 90,
+        "error_codes": {
+          "57014": 90
+        },
+        "reference_matches": 136,
+        "reference_unavailable": 102,
+        "p50_ms": 275.841,
+        "p95_ms": 4000.712,
+        "p99_ms": 4002.205,
+        "max_ms": 4009.718,
+        "query_p95_ms": 4000.708,
+        "records_p95_ms": 9.409
+      }
+    ],
+    "families": [
+      {
+        "engine": "native",
+        "family": "address",
+        "requests": 66,
+        "errors": 7,
+        "error_codes": {
+          "57014": 7
+        },
+        "reference_matches": 57,
+        "reference_unavailable": 9,
+        "p50_ms": 41.663,
+        "p95_ms": 4000.522,
+        "p99_ms": 4008.614,
+        "max_ms": 4008.614,
+        "query_p95_ms": 4000.518,
+        "records_p95_ms": 5.004
+      },
+      {
+        "engine": "native",
+        "family": "address_lexical",
+        "requests": 36,
+        "errors": 0,
+        "error_codes": {},
+        "reference_matches": 34,
+        "reference_unavailable": 2,
+        "p50_ms": 1.327,
+        "p95_ms": 71.169,
+        "p99_ms": 159.395,
+        "max_ms": 159.395,
+        "query_p95_ms": 70.128,
+        "records_p95_ms": 4.051
+      },
+      {
+        "engine": "native",
+        "family": "classification",
+        "requests": 18,
+        "errors": 1,
+        "error_codes": {
+          "57014": 1
+        },
+        "reference_matches": 17,
+        "reference_unavailable": 1,
+        "p50_ms": 69.396,
+        "p95_ms": 4008.085,
+        "p99_ms": 4008.085,
+        "max_ms": 4008.085,
+        "query_p95_ms": 4008.081,
+        "records_p95_ms": 9.866
+      },
+      {
+        "engine": "native",
+        "family": "classification_lexical",
+        "requests": 18,
+        "errors": 2,
+        "error_codes": {
+          "57014": 2
+        },
+        "reference_matches": 15,
+        "reference_unavailable": 3,
+        "p50_ms": 48.59,
+        "p95_ms": 4009.206,
+        "p99_ms": 4009.206,
+        "max_ms": 4009.206,
+        "query_p95_ms": 4009.202,
+        "records_p95_ms": 9.987
+      },
+      {
+        "engine": "native",
+        "family": "name_lexical",
+        "requests": 2,
+        "errors": 0,
+        "error_codes": {},
+        "reference_matches": 2,
+        "reference_unavailable": 0,
+        "p50_ms": 6.869,
+        "p95_ms": 41.42,
+        "p99_ms": 41.42,
+        "max_ms": 41.42,
+        "query_p95_ms": 35.389,
+        "records_p95_ms": 6.08
+      },
+      {
+        "engine": "native",
+        "family": "postcode_lexical",
+        "requests": 34,
+        "errors": 0,
+        "error_codes": {},
+        "reference_matches": 34,
+        "reference_unavailable": 0,
+        "p50_ms": 122.079,
+        "p95_ms": 283.902,
+        "p99_ms": 290.188,
+        "max_ms": 290.188,
+        "query_p95_ms": 279.037,
+        "records_p95_ms": 8.18
+      },
+      {
+        "engine": "parade",
+        "family": "address",
+        "requests": 66,
+        "errors": 0,
+        "error_codes": {},
+        "reference_matches": 62,
+        "reference_unavailable": 4,
+        "p50_ms": 90.585,
+        "p95_ms": 935.139,
+        "p99_ms": 2212.468,
+        "max_ms": 2212.468,
+        "query_p95_ms": 898.465,
+        "records_p95_ms": 5.207
+      },
+      {
+        "engine": "parade",
+        "family": "address_lexical",
+        "requests": 36,
+        "errors": 36,
+        "error_codes": {
+          "57014": 36
+        },
+        "reference_matches": 0,
+        "reference_unavailable": 36,
+        "p50_ms": 4000.568,
+        "p95_ms": 4000.777,
+        "p99_ms": 4001.081,
+        "max_ms": 4001.081,
+        "query_p95_ms": 4000.772,
+        "records_p95_ms": 0
+      },
+      {
+        "engine": "parade",
+        "family": "classification",
+        "requests": 18,
+        "errors": 0,
+        "error_codes": {},
+        "reference_matches": 18,
+        "reference_unavailable": 0,
+        "p50_ms": 164.14,
+        "p95_ms": 614.597,
+        "p99_ms": 614.597,
+        "max_ms": 614.597,
+        "query_p95_ms": 607.85,
+        "records_p95_ms": 12.925
+      },
+      {
+        "engine": "parade",
+        "family": "classification_lexical",
+        "requests": 18,
+        "errors": 18,
+        "error_codes": {
+          "57014": 18
+        },
+        "reference_matches": 0,
+        "reference_unavailable": 18,
+        "p50_ms": 4000.618,
+        "p95_ms": 4001.355,
+        "p99_ms": 4001.355,
+        "max_ms": 4001.355,
+        "query_p95_ms": 4001.351,
+        "records_p95_ms": 0
+      },
+      {
+        "engine": "parade",
+        "family": "name_lexical",
+        "requests": 2,
+        "errors": 2,
+        "error_codes": {
+          "57014": 2
+        },
+        "reference_matches": 0,
+        "reference_unavailable": 2,
+        "p50_ms": 4000.681,
+        "p95_ms": 4000.72,
+        "p99_ms": 4000.72,
+        "max_ms": 4000.72,
+        "query_p95_ms": 4000.716,
+        "records_p95_ms": 0
+      },
+      {
+        "engine": "parade",
+        "family": "postcode_lexical",
+        "requests": 34,
+        "errors": 34,
+        "error_codes": {
+          "57014": 34
+        },
+        "reference_matches": 0,
+        "reference_unavailable": 34,
+        "p50_ms": 4000.592,
+        "p95_ms": 4004.306,
+        "p99_ms": 4009.718,
+        "max_ms": 4009.718,
+        "query_p95_ms": 4004.301,
+        "records_p95_ms": 0
+      }
+    ],
+    "pairs": {
+      "mutual_success": 122,
+      "native_only_success": 88,
+      "parade_only_success": 9,
+      "both_failed": 2,
+      "unpaired": 59
+    }
+  },
+  "preliminary_plans": [
+    {
+      "case": 0,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 240.570635,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Scan:native_name_town"
+      ]
+    },
+    {
+      "case": 1,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.6331019999999999,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Only Scan [residual filter]:native_name"
+      ]
+    },
+    {
+      "case": 4,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.505167,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Only Scan [residual filter]:native_name"
+      ]
+    },
+    {
+      "case": 8,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 23.331503,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:native_postcode"
+      ]
+    },
+    {
+      "case": 16,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.572176,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Incremental Sort:",
+        "Index Scan [residual filter]:native_postcode"
+      ]
+    },
+    {
+      "case": 24,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.49620100000000006,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:native_lexical"
+      ]
+    },
+    {
+      "case": 36,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.36702799999999997,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Scan:native_name_town"
+      ]
+    },
+    {
+      "case": 48,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.500221,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:native_name_town"
+      ]
+    },
+    {
+      "case": 64,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.5270239999999999,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:native_name"
+      ]
+    },
+    {
+      "case": 80,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.41213900000000003,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Scan [residual filter]:native_sic"
+      ]
+    },
+    {
+      "case": 0,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 80.126109,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 1,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 2.044021,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 4,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 1.6240539999999999,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 8,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 1.050057,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:parade_search"
+      ]
+    },
+    {
+      "case": 16,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.666309,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:parade_search"
+      ]
+    },
+    {
+      "case": 24,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 1.789161,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 36,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 1.887249,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 48,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.7188850000000001,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:parade_search"
+      ]
+    },
+    {
+      "case": 64,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.816586,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:parade_search"
+      ]
+    },
+    {
+      "case": 80,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 2.147435,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 0,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.347078,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Only Scan [residual filter]:native_name"
+      ]
+    },
+    {
+      "case": 1,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.331637,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Only Scan [residual filter]:native_name"
+      ]
+    },
+    {
+      "case": 4,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.345132,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Scan [residual filter]:native_town"
+      ]
+    },
+    {
+      "case": 8,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.47634499999999996,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:native_sic"
+      ]
+    },
+    {
+      "case": 16,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.386168,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Incremental Sort:",
+        "Index Scan [residual filter]:native_postcode"
+      ]
+    },
+    {
+      "case": 24,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.383817,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:native_lexical"
+      ]
+    },
+    {
+      "case": 36,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.33565500000000004,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Only Scan [residual filter]:native_name"
+      ]
+    },
+    {
+      "case": 48,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.363429,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Only Scan [residual filter]:native_name"
+      ]
+    },
+    {
+      "case": 64,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.416456,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:native_name"
+      ]
+    },
+    {
+      "case": 80,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.30468500000000004,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Scan [residual filter]:native_sic"
+      ]
+    },
+    {
+      "case": 0,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 1.2891160000000002,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 1,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.9425870000000001,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 4,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 1.145934,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 8,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.989598,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:parade_search"
+      ]
+    },
+    {
+      "case": 16,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.675073,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:parade_search"
+      ]
+    },
+    {
+      "case": 24,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 1.1747509999999999,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 36,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 1.1802329999999999,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 48,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.718633,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:parade_search"
+      ]
+    },
+    {
+      "case": 64,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.8107099999999999,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:parade_search"
+      ]
+    },
+    {
+      "case": 80,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 1.116473,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    }
+  ],
+  "corrected_nonexecuting_plans": [
+    {
+      "case": 0,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 2.416424,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Scan:native_name_town"
+      ]
+    },
+    {
+      "case": 1,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.482273,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Only Scan [residual filter]:native_name"
+      ]
+    },
+    {
+      "case": 4,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.407559,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Only Scan [residual filter]:native_name"
+      ]
+    },
+    {
+      "case": 8,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.612472,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:native_postcode"
+      ]
+    },
+    {
+      "case": 16,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.413763,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Incremental Sort:",
+        "Index Scan:native_postcode"
+      ]
+    },
+    {
+      "case": 24,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.534462,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:native_lexical"
+      ]
+    },
+    {
+      "case": 36,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.461354,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Scan:native_name_town"
+      ]
+    },
+    {
+      "case": 48,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.44246800000000003,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan:native_name_town"
+      ]
+    },
+    {
+      "case": 64,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.479238,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:native_name"
+      ]
+    },
+    {
+      "case": 80,
+      "engine": "native",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 0.396397,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Scan [residual filter]:native_sic"
+      ]
+    },
+    {
+      "case": 0,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 6.597306,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 1,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 1.785859,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 4,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 1.5212610000000002,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 8,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 148.876884,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 16,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 41.219718,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 24,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 1.900115,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 36,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 1.6236490000000001,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 48,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 1.725665,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 64,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 205.11792,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 80,
+      "engine": "parade",
+      "mode": "force_custom_plan",
+      "outcome": "ok",
+      "ms": 1.8250790000000001,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 0,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.356325,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Only Scan [residual filter]:native_name"
+      ]
+    },
+    {
+      "case": 1,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.37149600000000005,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Only Scan [residual filter]:native_name"
+      ]
+    },
+    {
+      "case": 4,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.344489,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Scan [residual filter]:native_town"
+      ]
+    },
+    {
+      "case": 8,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.362788,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:native_sic"
+      ]
+    },
+    {
+      "case": 16,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.27666799999999997,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Incremental Sort:",
+        "Index Scan:native_postcode"
+      ]
+    },
+    {
+      "case": 24,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.313002,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:native_lexical"
+      ]
+    },
+    {
+      "case": 36,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.280526,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Only Scan [residual filter]:native_name"
+      ]
+    },
+    {
+      "case": 48,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.324369,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Only Scan [residual filter]:native_name"
+      ]
+    },
+    {
+      "case": 64,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.359547,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Sort:",
+        "Index Scan [residual filter]:native_name"
+      ]
+    },
+    {
+      "case": 80,
+      "engine": "native",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 0.358536,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Index Scan [residual filter]:native_sic"
+      ]
+    },
+    {
+      "case": 0,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 1.24459,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 1,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 1.044271,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 4,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 1.022484,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 8,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 1.417882,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 16,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 1.135237,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 24,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 1.254342,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 36,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 1.103156,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 48,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 1.024236,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 64,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 1.252719,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    },
+    {
+      "case": 80,
+      "engine": "parade",
+      "mode": "force_generic_plan",
+      "outcome": "ok",
+      "ms": 1.1431060000000002,
+      "buffers": 0,
+      "temp_blocks": 0,
+      "heap_fetches": 0,
+      "nodes": [
+        "Limit:",
+        "Custom Scan:TopKScanExecState"
+      ]
+    }
+  ]
+}
