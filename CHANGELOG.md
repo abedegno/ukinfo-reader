@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Build hosted and desktop backends with Go 1.26.10 for
+  [GO-2026-6809](https://pkg.go.dev/vuln/GO-2026-6809).
+
 - Update the pinned desktop Electron runtime to 44.9.3 for
   [the compromised-intermediate-certificate mitigation](https://github.com/advisories/GHSA-jr5w-w6x2-84p9).
 
