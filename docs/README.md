@@ -51,6 +51,7 @@ for your task; dated investigation reports describe the evidence at the time.
 [Changelog](../CHANGELOG.md) records implementation changes. The following are dated
 research and measurement records, rather than promises about every deployment:
 
+- [Optional ParadeDB hosted-search preview](paradedb-preview.md) — explicit build, compatibility checks and rollback; native remains the default.
 - [Research index](research/README.md)
 - [Complete-edition storage and local performance](research/compact-catalogue.md)
 - [Feature validation, index storage and national-query limits](research/review-validation.md)

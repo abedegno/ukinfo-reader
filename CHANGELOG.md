@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+- Build hosted and desktop backends with Go 1.26.10 for
+  [GO-2026-6809](https://pkg.go.dev/vuln/GO-2026-6809).
+
+- Update the pinned desktop Electron runtime to 44.9.3 for
+  [the compromised-intermediate-certificate mitigation](https://github.com/advisories/GHSA-jr5w-w6x2-84p9).
+
+- Route the optional ParadeDB adapter only to address-filter searches, retaining
+  native name/postcode and grouped/nearby paths. Validate the complete frozen
+  workload and isolated cold file caches, preserving failures and source privacy.
+- Add an opt-in hosted ParadeDB search adapter with a separate resumable index
+  builder, complete-generation selection, compatible cursors, original-record
+  refinements and all-edition synthetic compatibility/Top-K CI checks. Keep native
+  as the default and preserve grouped/nearby fallbacks; add private configuration
+  templates and rollback instructions.
+- Validate the serving projection over all five editions, add fixed-cohort private
+  load tooling and retain aggregate failure/rollback evidence. Add an indexed
+  partial-postcode prefilter. Enable address-only hybrid routing on the hosted NAS
+  after equal-budget verification, with native rollback and pool/plan monitoring;
+  leave desktop and the default backend native.
+
 - Integrate a complete, optional business-classification search projection with
   canonical address joins, original record retrieval, unchanged pagination and
   refinements, mixed-edition fallback, owner-only indexing and a rollback flag.

@@ -79,7 +79,7 @@ def check(root):
             "GOOS": "linux",
             "GOARCH": probe.stdout.strip(),
             "CGO_ENABLED": "0",
-            "GOTOOLCHAIN": "go1.26.9",
+            "GOTOOLCHAIN": "go1.26.10",
         }
         subprocess.run(
             ["go", "build", "-o", str(directory / "client"), str(directory / "client.go")],

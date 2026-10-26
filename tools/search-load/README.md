@@ -96,3 +96,17 @@ reference hash. Query strings, cursors, records and hashes stay private. The
 report adds a `page` number and `max_pages`; compare the fixed first-page cohort
 separately from the variable number of successful later pages. Include later
 pages in the total request/time budget.
+
+## Fixed cohorts for engine comparisons
+
+Use `--fixed-rounds 2 --concurrency 1,4 --rate 0` to attempt each reference-hashed
+case exactly twice at each client level. Case order is deterministically shuffled
+with seed 20261026. This mode ignores the duration window but retains the global
+request/time bounds and records failed attempts. Reserve enough requests for
+initial observations plus every fixed stage; an insufficient budget is rejected
+before any HTTP request. An exact completed budget is successful, not exhaustion.
+
+Fixed cohorts avoid comparing different case populations when a faster backend
+cycles through more queries inside a duration window. Initial observations still
+warm caches; record backend order and repeat in reverse order when useful. Only
+private, internally reachable APIs should receive saved real-data workloads.

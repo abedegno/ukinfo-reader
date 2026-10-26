@@ -23,6 +23,8 @@ import (
 )
 
 type API struct {
+	// Optional derived-search database. Nil keeps the compact backend.
+	ParadeDB *pgxpool.Pool
 	// Private access-path experiments. Initialize before serving; default off.
 	ExperimentalAddressProbe  bool
 	ExperimentalPlacePostings bool
@@ -433,15 +435,8 @@ func (a *API) buildCandidateFilters(ctx context.Context, q query) (candidateFilt
 	var err error
 	datasetKeys := map[int16]string{}
 	datasetIDs := []int16{}
-	datasetSQL := "SELECT id,key FROM datasets WHERE key=$1 ORDER BY id"
-	datasetArgs := []any{q.Dataset}
-	if q.Dataset == "all" {
-		datasetSQL = `SELECT d.id,d.key FROM datasets d WHERE NOT (
-   COALESCE((d.manifest->>'sample')::boolean,false) AND EXISTS (
-    SELECT 1 FROM datasets full_edition WHERE full_edition.manifest->>'edition'=d.manifest->>'edition'
-    AND NOT COALESCE((full_edition.manifest->>'sample')::boolean,false))) ORDER BY d.id`
-		datasetArgs = nil
-	}
+	where, datasetArgs := catalogueSelection(q.Dataset)
+	datasetSQL := "SELECT id,key FROM datasets d WHERE " + where + " ORDER BY id"
 	ds, err := a.DB.Query(ctx, datasetSQL, datasetArgs...)
 	if err != nil {
 		return candidateFilters{}, 503, errors.New("Catalogue unavailable")

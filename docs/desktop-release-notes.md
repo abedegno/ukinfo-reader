@@ -44,7 +44,7 @@ a claim of compatibility with every older OS or a tested public hosting capacity
 - Optional research index for search-wide groups, archival references, business industry/SIC filters and full-result ordering.
 - Search coverage/rule explanations, larger controls and quick return to the form.
 - Bounded logs, isolated health checks, private aggregate metrics and edge-quota example.
-- Shipped-component inventory and full dependency review. Go is now pinned to 1.26.9;
+- Shipped-component inventory and full dependency review. Go is now pinned to 1.26.10;
   x/text 0.41.0 and x/sys 0.44.0 replace versions flagged by the new advisory scan.
   The updated Go scan and full npm audit report no advisories. These checks do not
   establish that every native dependency is free of vulnerabilities.

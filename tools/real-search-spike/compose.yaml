@@ -1,0 +1,68 @@
+# Private operator experiment; reuse the internal catalogue network only.
+# The runner requires private SOURCE_DATABASE_URL and TARGET_DATABASE_URL values.
+name: ukinfo-search-spike
+services:
+  database:
+    image: paradedb/paradedb@sha256:ee076de0ac55b56352371fe224c1413e787b9a99a29507c7a626ee35d802b660
+    platform: linux/amd64
+    container_name: ukinfo-pgsearch-spike
+    init: true
+    environment:
+      POSTGRES_DB: spike
+      POSTGRES_PASSWORD: ${SPIKE_PASSWORD:?Use a private random password}
+    command: [postgres, -c, shared_preload_libraries=pg_search, -c, shared_buffers=1GB, -c, work_mem=32MB, -c, maintenance_work_mem=256MB, -c, max_parallel_workers_per_gather=0, -c, max_parallel_maintenance_workers=0, -c, jit=off, -c, temp_file_limit=4GB, -c, log_statement=none, -c, log_min_error_statement=panic]
+    cpus: 2
+    mem_limit: 6g
+    shm_size: 1g
+    pids_limit: 256
+    networks: [database]
+    security_opt: [no-new-privileges:true]
+    # Skip the vendor image's optional pg_cron bootstrap. The operator builder
+    # creates only the required pg_search extension and its dependencies.
+    tmpfs: ['/docker-entrypoint-initdb.d:rw,noexec,nosuid,size=4k']
+    volumes:
+      - data:/var/lib/postgresql
+      - ${SPIKE_ROOT:?Private directory on the NAS data filesystem}:/work
+    healthcheck:
+      test: [CMD, pg_isready, -U, postgres, -d, spike]
+      interval: 5s
+      retries: 30
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: '2'}
+  client:
+    profiles: [operator]
+    build:
+      context: ../../server
+      dockerfile: ../tools/real-search-spike/Dockerfile
+    image: ukinfo-real-search-spike:local
+    user: '1000:10'
+    environment:
+      SOURCE_DATABASE_URL: ${SOURCE_DATABASE_URL:?SELECT-only source catalogue connection}
+      TARGET_DATABASE_URL: ${TARGET_DATABASE_URL:?Owner for prepare; spike_search for measurement}
+      UKINFO_SPIKE_REFERENCE_FILE: /work/references.json
+      GOMEMLIMIT: 384MiB
+    command: [--stage, prepare]
+    volumes: ["${SPIKE_ROOT}:/work"]
+    cpus: 1
+    mem_limit: 512m
+    pids_limit: 128
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: ['/tmp:rw,noexec,nosuid,size=64m']
+    networks: [database]
+    depends_on:
+      database: {condition: service_healthy}
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: '2'}
+networks:
+  database:
+    external: true
+    name: ukinfo_database
+volumes:
+  data:
+    name: ukinfo-pgsearch-spike-data
+    labels:
+      ukinfo.experiment: postgres-search-2026-10-25

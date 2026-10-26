@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"math/rand/v2"
 	"net/http"
 	"net/url"
 	"os"
@@ -284,6 +285,7 @@ func main() {
 func run(args []string, stdout io.Writer) error {
 	f := flag.NewFlagSet("search-load", flag.ContinueOnError)
 	f.SetOutput(io.Discard)
+	fixedRounds := f.Int("fixed-rounds", 0, "exact shuffled rounds per case at each closed-loop level (0 uses duration; requires rate 0)")
 	comparePages := f.Int("compare-pages", 1, "maximum pages per paired case, from 1 to 10")
 	compare := f.String("compare-url", "", "optional baseline API for balanced sequential paired observations; requires probe-only")
 	host := f.String("url", "http://127.0.0.1:8080", "base API URL")
@@ -303,6 +305,9 @@ func run(args []string, stdout io.Writer) error {
 	}
 	if *comparePages < 1 || *comparePages > 10 || (*comparePages != 1 && *compare == "") {
 		return errors.New("compare-pages requires paired comparison and a value from 1 to 10")
+	}
+	if *fixedRounds < 0 || *fixedRounds > 10 || (*fixedRounds > 0 && (*probe || *compare != "" || *rate != 0)) {
+		return errors.New("fixed-rounds requires 1..10, load mode and rate 0")
 	}
 	levels, err := parseConcurrency(*concurrency)
 	if err != nil {
@@ -332,6 +337,9 @@ func run(args []string, stdout io.Writer) error {
 	}
 	if json.Unmarshal(raw, &cases) != nil || len(cases) == 0 || len(cases) > 10000 || factor*int64(len(cases)**rounds) > *maxRequests {
 		return errors.New("invalid workload or insufficient request budget for observations")
+	}
+	if *fixedRounds > 0 && int64(len(cases))*int64(*rounds+*fixedRounds*len(levels)) > *maxRequests {
+		return errors.New("insufficient request budget for fixed cohorts")
 	}
 	unverified := 0
 	classes := map[string]int{}
@@ -369,6 +377,11 @@ func run(args []string, stdout io.Writer) error {
 	}
 	result := map[string]any{"schema_version": 2, "cases": len(cases), "case_classes": classes, "unverified_cases": unverified, "request_timeout_seconds": timeout.Seconds(), "max_requests": *maxRequests, "max_duration_seconds": maxDuration.Seconds(), "closed_loop": map[string]stageReport{}, "notes": []string{"Initial observations precede any warm-up by this runner. Cache state is otherwise unchanged and is not necessarily cold.", "HTTP transfer, JSON validation and hashing are timed; failed attempts are included in percentiles.", "Only reference-hashed cases may enter load stages. Probe-only unverified successes do not establish result correctness.", "Reports exclude URLs, query values, response records, hashes and raw errors.", "cursor-neutral-v1 compares full response content while replacing opaque next-page tokens with page availability; pagination traversal requires separate verification.", "Document corpus, build, hardware, quotas, import activity and storage/cache conditions alongside this report."}}
 	initial := &recorder{}
+	if *fixedRounds > 0 {
+		result["fixed_rounds"] = *fixedRounds
+		result["mode"] = "fixed_cohort"
+		result["order_seed"] = 20261026
+	}
 	start := time.Now()
 	for round := 1; round <= *rounds; round++ {
 		for i := range cases {
@@ -387,13 +400,33 @@ func run(args []string, stdout io.Writer) error {
 			r := &recorder{}
 			start := time.Now()
 			deadline := start.Add(*duration)
+			var fixedSequence atomic.Uint64
+			fixedOrder := []int{}
+			if *fixedRounds > 0 {
+				random := rand.New(rand.NewPCG(20261026, 1))
+				for round := 0; round < *fixedRounds; round++ {
+					fixedOrder = append(fixedOrder, random.Perm(len(cases))...)
+				}
+			}
 			var wg sync.WaitGroup
 			for worker := 0; worker < clients; worker++ {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					for time.Now().Before(deadline) && ctx.Err() == nil {
-						i := int(sequence.Add(1)-1) % len(cases)
+					for ctx.Err() == nil {
+						var i int
+						if *fixedRounds > 0 {
+							ticket := int(fixedSequence.Add(1) - 1)
+							if ticket >= len(fixedOrder) {
+								return
+							}
+							i = fixedOrder[ticket]
+						} else {
+							if !time.Now().Before(deadline) {
+								return
+							}
+							i = int(sequence.Add(1)-1) % len(cases)
+						}
 						o, ok := e.request(i, 0, time.Now())
 						if !ok {
 							return
@@ -463,6 +496,18 @@ func run(args []string, stdout io.Writer) error {
 	// Reaching the exact sequential budget is complete in probe-only mode.
 	if *probe && len(initial.rows) == len(cases)**rounds && ctx.Err() == nil {
 		exhausted = false
+	}
+	if *fixedRounds > 0 && ctx.Err() == nil && len(initial.rows) == len(cases)**rounds {
+		complete := true
+		for _, level := range levels {
+			stage, ok := result["closed_loop"].(map[string]stageReport)[strconv.Itoa(level)]
+			if !ok || stage.Requests != len(cases)**fixedRounds {
+				complete = false
+			}
+		}
+		if complete {
+			exhausted = false
+		}
 	}
 	result["requests_attempted"] = e.used.Load()
 	result["budget_exhausted"] = exhausted

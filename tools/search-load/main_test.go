@@ -12,6 +12,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 )
 
 func workload(t *testing.T, cases []queryCase) (string, string) {
@@ -156,5 +157,53 @@ func TestNDJSONExportsRemainValid(t *testing.T) {
 	}
 	if validResponse([]byte("{\"record\":1}\nNOT_JSON\n"), "application/x-ndjson") {
 		t.Fatal("invalid export accepted")
+	}
+}
+
+// Time-limited loops can sample different case populations when one engine is
+// faster. Fixed cohorts must cover every case equally even beyond duration.
+func TestFixedCohortCoversEachCaseAtEveryLevel(t *testing.T) {
+	body := `{"items":[]}`
+	var calls atomic.Int32
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls.Add(1)
+		time.Sleep(3 * time.Millisecond)
+		_, _ = w.Write([]byte(body))
+	}))
+	defer s.Close()
+	cases, out := workload(t, []queryCase{{Query: "surname=SECRET_A", SHA256: digest(body)}, {Query: "surname=SECRET_B", SHA256: digest(body)}, {Query: "surname=SECRET_C", SHA256: digest(body)}})
+	var log bytes.Buffer
+	err := run([]string{"--url", s.URL, "--cases", cases, "--output", out, "--fixed-rounds", "2", "--concurrency", "1,4", "--duration", "1ms", "--rate", "0", "--max-requests", "15"}, &log)
+	if err != nil || calls.Load() != 15 {
+		t.Fatal("fixed cohort did not complete at exact budget", calls.Load(), err)
+	}
+	result := report(t, out)
+	if string(result["budget_exhausted"]) != "false" || string(result["passed"]) != "true" {
+		t.Fatal("complete fixed cohort reported exhausted")
+	}
+	var stages map[string]stageReport
+	if e := json.Unmarshal(result["closed_loop"], &stages); e != nil {
+		t.Fatal(e)
+	}
+	for _, level := range []string{"1", "4"} {
+		stage := stages[level]
+		if stage.Requests != 6 || len(stage.Cases) != 3 {
+			t.Fatal("unequal case population", level)
+		}
+		for _, caseStats := range stage.Cases {
+			if caseStats.Requests != 2 {
+				t.Fatal("unequal case frequency", level)
+			}
+		}
+	}
+}
+func TestFixedCohortRejectsInsufficientBudgetBeforeRequests(t *testing.T) {
+	var calls atomic.Int32
+	body := `{"items":[]}`
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { calls.Add(1); _, _ = w.Write([]byte(body)) }))
+	defer s.Close()
+	cases, out := workload(t, []queryCase{{Query: "surname=SECRET_A", SHA256: digest(body)}, {Query: "surname=SECRET_B", SHA256: digest(body)}, {Query: "surname=SECRET_C", SHA256: digest(body)}})
+	if e := run([]string{"--url", s.URL, "--cases", cases, "--output", out, "--fixed-rounds", "2", "--concurrency", "1,4", "--rate", "0", "--max-requests", "14"}, &bytes.Buffer{}); e == nil || calls.Load() != 0 {
+		t.Fatal("incomplete fixed budget started requests")
 	}
 }
