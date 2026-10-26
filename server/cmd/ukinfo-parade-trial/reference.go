@@ -131,7 +131,7 @@ func nativeReference(ctx context.Context, path, ordinals, output, report string)
 	}
 	return nil
 }
-func compareReference(ctx context.Context, path, reference, output string) error {
+func compareReference(ctx context.Context, path, reference, output string, hosted bool) error {
 	cases, e := referenceCases(path)
 	if e != nil {
 		return e
@@ -154,11 +154,18 @@ func compareReference(ctx context.Context, path, reference, output string) error
 			return errors.New("invalid bounded native reference")
 		}
 		for _, mode := range []string{"candidate_cursor", "native_cursor"} {
+			if hosted && len(observations) > 0 {
+				select {
+				case <-ctx.Done():
+					return errors.New("acceptance cancelled")
+				case <-time.After(600 * time.Millisecond):
+				}
+			}
 			cursor := r.Cursor
 			if mode == "candidate_cursor" {
 				cursor = own[r.Case]
 			}
-			p := privateRead(ctx, client, 1, cases[r.Case], cursor)
+			p := privateReadTarget(ctx, client, 1, cases[r.Case], cursor, hosted)
 			match := p.hash != "" && p.hash == r.Digest
 			if p.hash == "" {
 				failures++

@@ -23,6 +23,10 @@ type privatePage struct {
 }
 
 func privateRead(ctx context.Context, client *http.Client, side int, c catalog.ParadeTrialCase, cursor string) (p privatePage) {
+	return privateReadTarget(ctx, client, side, c, cursor, false)
+}
+
+func privateReadTarget(ctx context.Context, client *http.Client, side int, c catalog.ParadeTrialCase, cursor string, hosted bool) (p privatePage) {
 	started := time.Now()
 	defer func() { p.ms = float64(time.Since(started).Microseconds()) / 1000 }()
 	if side < 0 || side >= len(privateBases) {
@@ -40,9 +44,16 @@ func privateRead(ctx context.Context, client *http.Client, side int, c catalog.P
 	if cursor != "" {
 		values.Set("cursor", cursor)
 	}
-	req, e := http.NewRequestWithContext(ctx, http.MethodGet, privateBases[side]+c.Path+"?"+values.Encode(), nil)
+	base := privateBases[side]
+	if hosted {
+		base = "http://ukinfo:8080"
+	}
+	req, e := http.NewRequestWithContext(ctx, http.MethodGet, base+c.Path+"?"+values.Encode(), nil)
 	if e != nil {
 		return p
+	}
+	if hosted {
+		req.Host = "ukinfo.6153112.xyz"
 	}
 	r, e := client.Do(req)
 	if e != nil {

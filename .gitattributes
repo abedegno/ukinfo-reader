@@ -4,3 +4,6 @@
 server/cmd/ukinfo-server/web/leaflet.js -text
 server/cmd/ukinfo-server/web/leaflet.css -text
 server/cmd/ukinfo-server/web/leaflet-LICENSE.txt -text
+
+# Unified-diff context begins with a space before the original Go indentation.
+tools/ordered-preview/experiments/*.patch whitespace=-space-before-tab

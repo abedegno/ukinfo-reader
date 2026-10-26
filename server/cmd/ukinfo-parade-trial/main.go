@@ -52,7 +52,10 @@ func run() error {
 		return nativeReference(ctx, *cases, *planCases, *output, *aggregateReport)
 	}
 	if *stage == "compare-reference" {
-		return compareReference(ctx, *cases, *beforeSnapshot, *output)
+		return compareReference(ctx, *cases, *beforeSnapshot, *output, false)
+	}
+	if *stage == "hosted-reference" {
+		return compareReference(ctx, *cases, *beforeSnapshot, *output, true)
 	}
 	if *stage == "hosted-check" {
 		return checkHosted(ctx, *cases, *output)
