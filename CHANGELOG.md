@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Update the pinned desktop Electron runtime to 44.9.3 for
+  [the compromised-intermediate-certificate mitigation](https://github.com/advisories/GHSA-jr5w-w6x2-84p9).
+
 - Route the optional ParadeDB adapter only to address-filter searches, retaining
   native name/postcode and grouped/nearby paths. Validate the complete frozen
   workload and isolated cold file caches, preserving failures and source privacy.
