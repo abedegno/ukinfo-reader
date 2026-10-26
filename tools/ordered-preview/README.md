@@ -24,6 +24,11 @@ compare this oracle with complete native results, including dense groups and tie
 edition dates. `--stage compare-reference` checks two pages using both returned
 and original-native cursors against that private reference.
 
+`--stage hosted-reference` repeats those eight checks against the fixed internal
+`http://ukinfo:8080` Docker service, using its public Host header, no proxy and no
+redirects. Requests are paced 600 ms apart. This is post-deployment acceptance;
+saved real queries do not traverse the public hostname or Internet.
+
 Run real workload comparisons only on the internal network, using frozen input
 cases and binaries. Keep the serving target SELECT-only, with no cache eviction
 or restart. To measure source coldness, stop only the private source clone and

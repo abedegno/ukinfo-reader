@@ -1,0 +1,335 @@
+{
+  "schema_version": 1,
+  "cases": 294,
+  "rounds": 2,
+  "pair_outcomes": {
+    "after_only_ok": 5,
+    "before_only_ok": 1,
+    "both_ok_same": 1410
+  },
+  "pairs": 1416,
+  "first_page_requests_per_backend": 588,
+  "first_page_errors": {
+    "before": 5,
+    "after": 1
+  },
+  "targeted_first_pages": [
+    {
+      "case": 91,
+      "round": 1,
+      "before_ms": 4065.662124,
+      "after_ms": 266.898271,
+      "before_status": 503,
+      "after_status": 200
+    },
+    {
+      "case": 92,
+      "round": 1,
+      "before_ms": 4020.983992,
+      "after_ms": 32.855834,
+      "before_status": 503,
+      "after_status": 200
+    },
+    {
+      "case": 91,
+      "round": 2,
+      "before_ms": 4063.880307,
+      "after_ms": 119.804887,
+      "before_status": 503,
+      "after_status": 200
+    },
+    {
+      "case": 92,
+      "round": 2,
+      "before_ms": 4041.707002,
+      "after_ms": 36.955347,
+      "before_status": 503,
+      "after_status": 200
+    }
+  ],
+  "source_reference_pages": 4,
+  "source_reference_checks": 8,
+  "cursor_mismatches": 0,
+  "loads": {
+    "load-native": {
+      "1": {
+        "requests": 584,
+        "errors": 0,
+        "median_ms": 6.112969,
+        "p95_ms": 114.201395,
+        "p99_ms": 563.540834,
+        "requests_per_second": 28.77685866446891
+      },
+      "4": {
+        "requests": 584,
+        "errors": 2,
+        "median_ms": 9.901862,
+        "p95_ms": 255.440867,
+        "p99_ms": 1054.194141,
+        "requests_per_second": 57.37929874472282
+      }
+    },
+    "load-candidate": {
+      "1": {
+        "requests": 584,
+        "errors": 0,
+        "median_ms": 6.158649,
+        "p95_ms": 105.937802,
+        "p99_ms": 498.79318,
+        "requests_per_second": 28.619676756650637
+      },
+      "4": {
+        "requests": 584,
+        "errors": 2,
+        "median_ms": 9.537456,
+        "p95_ms": 264.376423,
+        "p99_ms": 1437.05041,
+        "requests_per_second": 50.882687606217424
+      }
+    },
+    "load-candidate-repeat": {
+      "1": {
+        "requests": 584,
+        "errors": 0,
+        "median_ms": 6.343674,
+        "p95_ms": 137.968419,
+        "p99_ms": 669.269565,
+        "requests_per_second": 25.786451623931494
+      },
+      "4": {
+        "requests": 584,
+        "errors": 2,
+        "median_ms": 9.824076,
+        "p95_ms": 189.053388,
+        "p99_ms": 1162.436391,
+        "requests_per_second": 60.25177795073212
+      }
+    },
+    "load-native-repeat": {
+      "1": {
+        "requests": 584,
+        "errors": 0,
+        "median_ms": 6.04728,
+        "p95_ms": 114.301787,
+        "p99_ms": 512.690024,
+        "requests_per_second": 29.062680485466426
+      },
+      "4": {
+        "requests": 584,
+        "errors": 2,
+        "median_ms": 8.808521,
+        "p95_ms": 230.954277,
+        "p99_ms": 1033.208939,
+        "requests_per_second": 62.60174214148089
+      }
+    }
+  },
+  "source_cold": [
+    {
+      "case": 91,
+      "side": "native",
+      "source_residency_gate": true,
+      "observations": [
+        {
+          "case": 91,
+          "status": 503,
+          "milliseconds": 5002.92,
+          "code": "query_timeout",
+          "success": false,
+          "has_next": false
+        }
+      ]
+    },
+    {
+      "case": 91,
+      "side": "candidate",
+      "source_residency_gate": true,
+      "observations": [
+        {
+          "case": 91,
+          "status": 200,
+          "milliseconds": 2461.584,
+          "success": true,
+          "has_next": true
+        }
+      ]
+    },
+    {
+      "case": 92,
+      "side": "native",
+      "source_residency_gate": true,
+      "observations": [
+        {
+          "case": 92,
+          "status": 503,
+          "milliseconds": 5003.525,
+          "code": "query_timeout",
+          "success": false,
+          "has_next": false
+        }
+      ]
+    },
+    {
+      "case": 92,
+      "side": "candidate",
+      "source_residency_gate": true,
+      "observations": [
+        {
+          "case": 92,
+          "status": 200,
+          "milliseconds": 597.649,
+          "success": true,
+          "has_next": true
+        }
+      ]
+    },
+    {
+      "case": 56,
+      "side": "native",
+      "source_residency_gate": true,
+      "observations": [
+        {
+          "case": 56,
+          "status": 503,
+          "milliseconds": 4347.941,
+          "code": "query_timeout",
+          "success": false,
+          "has_next": false
+        }
+      ]
+    },
+    {
+      "case": 56,
+      "side": "candidate",
+      "source_residency_gate": true,
+      "observations": [
+        {
+          "case": 56,
+          "status": 503,
+          "milliseconds": 5003.419,
+          "code": "query_timeout",
+          "success": false,
+          "has_next": false
+        }
+      ]
+    },
+    {
+      "case": 166,
+      "side": "native",
+      "source_residency_gate": true,
+      "observations": [
+        {
+          "case": 166,
+          "status": 503,
+          "milliseconds": 4373.998,
+          "code": "query_timeout",
+          "success": false,
+          "has_next": false
+        }
+      ]
+    },
+    {
+      "case": 166,
+      "side": "candidate",
+      "source_residency_gate": true,
+      "observations": [
+        {
+          "case": 166,
+          "status": 503,
+          "milliseconds": 5002.439,
+          "code": "query_timeout",
+          "success": false,
+          "has_next": false
+        }
+      ]
+    },
+    {
+      "case": 95,
+      "side": "native",
+      "source_residency_gate": true,
+      "observations": [
+        {
+          "case": 95,
+          "status": 503,
+          "milliseconds": 5004.584,
+          "code": "query_timeout",
+          "success": false,
+          "has_next": false
+        }
+      ]
+    },
+    {
+      "case": 95,
+      "side": "candidate",
+      "source_residency_gate": true,
+      "observations": [
+        {
+          "case": 95,
+          "status": 503,
+          "milliseconds": 5002.103,
+          "code": "query_timeout",
+          "success": false,
+          "has_next": false
+        }
+      ]
+    },
+    {
+      "case": 9,
+      "side": "native",
+      "source_residency_gate": true,
+      "observations": [
+        {
+          "case": 9,
+          "status": 200,
+          "milliseconds": 3769.654,
+          "success": true,
+          "has_next": true
+        }
+      ]
+    },
+    {
+      "case": 9,
+      "side": "candidate",
+      "source_residency_gate": true,
+      "observations": [
+        {
+          "case": 9,
+          "status": 200,
+          "milliseconds": 4397.081,
+          "success": true,
+          "has_next": true
+        }
+      ]
+    },
+    {
+      "case": 230,
+      "side": "native",
+      "source_residency_gate": true,
+      "observations": [
+        {
+          "case": 230,
+          "status": 200,
+          "milliseconds": 438.576,
+          "success": true,
+          "has_next": false
+        }
+      ]
+    },
+    {
+      "case": 230,
+      "side": "candidate",
+      "source_residency_gate": true,
+      "observations": [
+        {
+          "case": 230,
+          "status": 200,
+          "milliseconds": 457.691,
+          "success": true,
+          "has_next": false
+        }
+      ]
+    }
+  ],
+  "target_cache": "shared_uncontrolled",
+  "public_unchanged_during_trial": true
+}
