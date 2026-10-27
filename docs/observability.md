@@ -118,8 +118,8 @@ and its retained failures/limits; the slowest expanded cold check was 2.927 s
 against an unchanged 3 s gate.
 
 Request spans contain only a fixed route, bounded HTTP method, response status and
-search category. Child operations are `db.pool.acquire`, `db.query`, `search.records`
-, `address.select`, and fixed `search.*` phases for geography, source groups and
+search category. Child operations are `db.pool.acquire`, `db.query`, `search.records`,
+`address.select`, and fixed `search.*` phases for geography, source groups and
 derived candidate/inventory/pair work. Database spans measure duration without SQL text, parameters,
 connection details or error messages. Record loading includes decompression time;
 there is no per-record span or identifier.
