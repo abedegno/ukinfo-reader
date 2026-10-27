@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "cohort": {
+    "cases": 294,
+    "rounds": 2,
+    "maximum_pages": 10,
+    "pairs": 1470,
+    "outcomes": {
+      "both_ok_same": 1470
+    },
+    "first_pages": {
+      "before": {
+        "requests": 588,
+        "errors": 0,
+        "median_ms": 7.160345,
+        "p95_ms": 184.705033
+      },
+      "after": {
+        "requests": 588,
+        "errors": 0,
+        "median_ms": 6.98692,
+        "p95_ms": 165.245618
+      }
+    }
+  },
+  "source_reference_checks": {
+    "business-reference-compare": {
+      "complete": true,
+      "requests": 4,
+      "errors": 0,
+      "mismatches": 0
+    },
+    "cold-reference-compare": {
+      "complete": true,
+      "requests": 16,
+      "errors": 0,
+      "mismatches": 0
+    },
+    "native-fallback-reference-compare": {
+      "complete": true,
+      "requests": 4,
+      "errors": 0,
+      "mismatches": 0
+    }
+  },
+  "loads": {
+    "load-baseline-c1": {
+      "requests": 584,
+      "errors": 0,
+      "median_ms": 5.970454,
+      "p95_ms": 96.618125,
+      "p99_ms": 519.588023,
+      "requests_per_second": 29.13139343168068,
+      "initial_errors": 0
+    },
+    "load-candidate-c1": {
+      "requests": 584,
+      "errors": 0,
+      "median_ms": 6.145948,
+      "p95_ms": 109.137222,
+      "p99_ms": 458.509015,
+      "requests_per_second": 36.470176945885854,
+      "initial_errors": 0
+    },
+    "load-baseline-c4": {
+      "requests": 584,
+      "errors": 2,
+      "median_ms": 10.032119,
+      "p95_ms": 216.110816,
+      "p99_ms": 1397.413018,
+      "requests_per_second": 55.66304461192505,
+      "initial_errors": 0
+    },
+    "load-candidate-c4": {
+      "requests": 584,
+      "errors": 0,
+      "median_ms": 10.942618,
+      "p95_ms": 284.379651,
+      "p99_ms": 1011.317094,
+      "requests_per_second": 64.78872326231877,
+      "initial_errors": 0
+    },
+    "load-candidate-c4-repeat": {
+      "requests": 584,
+      "errors": 0,
+      "median_ms": 9.805855,
+      "p95_ms": 252.854123,
+      "p99_ms": 991.050432,
+      "requests_per_second": 68.3120629483916,
+      "initial_errors": 0
+    },
+    "load-baseline-c4-repeat": {
+      "requests": 584,
+      "errors": 2,
+      "median_ms": 9.592694,
+      "p95_ms": 225.541806,
+      "p99_ms": 1115.647392,
+      "requests_per_second": 57.188795027318804,
+      "initial_errors": 0
+    }
+  },
+  "repeated_source_cold": [
+    {
+      "side": "native",
+      "round": 1,
+      "case": 56,
+      "status": 503,
+      "milliseconds": 5001.583,
+      "success": false
+    },
+    {
+      "side": "native",
+      "round": 1,
+      "case": 166,
+      "status": 503,
+      "milliseconds": 5001.989,
+      "success": false
+    },
+    {
+      "side": "native",
+      "round": 1,
+      "case": 9,
+      "status": 503,
+      "milliseconds": 5001.73,
+      "success": false
+    },
+    {
+      "side": "native",
+      "round": 1,
+      "case": 95,
+      "status": 503,
+      "milliseconds": 5002.964,
+      "success": false
+    },
+    {
+      "side": "candidate",
+      "round": 1,
+      "case": 56,
+      "status": 200,
+      "milliseconds": 1356.605,
+      "success": true
+    },
+    {
+      "side": "candidate",
+      "round": 1,
+      "case": 166,
+      "status": 200,
+      "milliseconds": 618.028,
+      "success": true
+    },
+    {
+      "side": "candidate",
+      "round": 1,
+      "case": 9,
+      "status": 200,
+      "milliseconds": 675.785,
+      "success": true
+    },
+    {
+      "side": "candidate",
+      "round": 1,
+      "case": 95,
+      "status": 200,
+      "milliseconds": 1107.345,
+      "success": true
+    },
+    {
+      "side": "candidate",
+      "round": 2,
+      "case": 56,
+      "status": 200,
+      "milliseconds": 600.496,
+      "success": true
+    },
+    {
+      "side": "candidate",
+      "round": 2,
+      "case": 166,
+      "status": 200,
+      "milliseconds": 550.141,
+      "success": true
+    },
+    {
+      "side": "candidate",
+      "round": 2,
+      "case": 9,
+      "status": 200,
+      "milliseconds": 584.271,
+      "success": true
+    },
+    {
+      "side": "candidate",
+      "round": 2,
+      "case": 95,
+      "status": 200,
+      "milliseconds": 908.925,
+      "success": true
+    }
+  ],
+  "final_source_cold": [
+    {
+      "case": 56,
+      "status": 200,
+      "milliseconds": 588.677,
+      "success": true
+    },
+    {
+      "case": 166,
+      "status": 200,
+      "milliseconds": 553.672,
+      "success": true
+    },
+    {
+      "case": 9,
+      "status": 200,
+      "milliseconds": 534.35,
+      "success": true
+    },
+    {
+      "case": 95,
+      "status": 200,
+      "milliseconds": 1081.444,
+      "success": true
+    },
+    {
+      "case": 232,
+      "status": 200,
+      "milliseconds": 653.311,
+      "success": true
+    }
+  ],
+  "concurrency_case_mapping": {
+    "load_case": 230,
+    "source_case": 232
+  },
+  "target_cache": "shared_uncontrolled",
+  "source_cold_preparation": "per-file eviction of the stopped private source clone",
+  "source_and_target_production_lifecycle_unchanged": true,
+  "serving_limits_unchanged": true
+}

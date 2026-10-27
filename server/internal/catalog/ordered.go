@@ -29,6 +29,9 @@ func encodeOrder(c orderCursor) string {
 	raw, _ := json.Marshal(c)
 	return base64.RawURLEncoding.EncodeToString(raw)
 }
+
+var errWideBusinessPairs = errors.New("classified name pairs exceed batch budget")
+
 func (a *API) orderedResults(ctx context.Context, q query) (searchResult, int, error) {
 	return orderedResultsWith(ctx, q, a.orderedCandidates)
 }
@@ -81,22 +84,26 @@ func (a *API) orderedCandidates(ctx context.Context, q query) (searchResult, []o
 		return out, positions, 200, nil
 	}
 	args := f.args
-	pairPlan := !q.hasAddress() && q.Near == "" && (q.Surname != "" || q.Organisation != "" || q.Postcode != "") && (q.Sort == "name" || (q.Group != "" && q.Sort == ""))
+	pairPlan := !q.hasAddress() && q.Near == "" && (q.Surname != "" || q.Organisation != "" || q.Postcode != "" || f.businessSearch) && (q.Sort == "name" || (q.Group != "" && q.Sort == ""))
 	conditions := append([]string(nil), f.conditions...)
-
-	base := "SELECT * FROM entries WHERE " + strings.Join(conditions, " AND ")
+	entrySource := "entries"
+	if f.businessSearch {
+		entrySource = "business_search entries"
+	}
+	base := "SELECT * FROM " + entrySource + " WHERE " + strings.Join(conditions, " AND ")
 	if q.hasAddress() && !f.addressMatched {
 		predicate := addressPredicate(q, &args)
 		f.termCTEs = append(f.termCTEs, "ordered_addresses AS MATERIALIZED (SELECT m.dataset_id,unnest(m.ids) AS id FROM address_members m JOIN address_locations l ON l.id=m.location_id WHERE m.dataset_id=ANY($1::smallint[]) AND "+predicate+")")
 		if q.Surname != "" || q.First != "" || q.Organisation != "" || q.Postcode != "" || q.Near != "" || q.hasBusinessFilters() {
 			base = "SELECT e.* FROM (" + base + ") e JOIN ordered_addresses a USING(dataset_id,id)"
 		} else {
-			base = "SELECT e.* FROM ordered_addresses a CROSS JOIN LATERAL (SELECT * FROM entries WHERE " + strings.Join(conditions, " AND ") + " AND dataset_id=a.dataset_id AND id=a.id OFFSET 0) e"
+			base = "SELECT e.* FROM ordered_addresses a CROSS JOIN LATERAL (SELECT * FROM " + entrySource + " WHERE " + strings.Join(conditions, " AND ") + " AND dataset_id=a.dataset_id AND id=a.id OFFSET 0) e"
 		}
 	}
 	// The materialization fence fixes the selective candidate set before name-order
 	// joins. Otherwise an order-preserving plan can walk the entire name dictionary
 	// and probe a filtered source millions of times before reaching one surname.
+	completeBase := base
 	if pairPlan {
 		base = "SELECT name_id,first_id,count(*) AS occurrences FROM (" + base + ") eligible GROUP BY name_id,first_id"
 	}
@@ -171,7 +178,7 @@ func (a *API) orderedCandidates(ctx context.Context, q query) (searchResult, []o
 		// provide lookahead for every supported page size (<=100), without truncating
 		// the search. Subsequent requests seek from the last returned name/pair/key.
 		pairQuery = "SELECT p.name_id,p.first_id,n.key AS name,t.key AS first,p.occurrences FROM ordered_candidates p CROSS JOIN LATERAL (SELECT key FROM terms WHERE id=p.name_id OFFSET 0) n CROSS JOIN LATERAL (SELECT key FROM terms WHERE id=p.first_id OFFSET 0) t" + pairAfter + " ORDER BY n.key,t.key LIMIT 128"
-		source := "SELECT * FROM entries WHERE " + strings.Join(conditions, " AND ") + " AND name_id=p.name_id AND first_id=p.first_id"
+		source := "SELECT * FROM " + entrySource + " WHERE " + strings.Join(conditions, " AND ") + " AND name_id=p.name_id AND first_id=p.first_id"
 		inner := "SELECT ''::bytea AS g," + edition + " AS edition,0::double precision AS distance,e.dataset_id,e.id,e.postcode_id FROM (" + source + ") e JOIN datasets d ON d.id=e.dataset_id" + pairRowAfter + " ORDER BY e.dataset_id,e.id"
 		if q.Group != "" {
 			inner = "SELECT k.group_key AS g,max(" + edition + ") AS edition,0::double precision AS distance,0::smallint AS dataset_id,0::integer AS id,min(e.postcode_id) AS postcode_id FROM (" + source + ") e JOIN datasets d ON d.id=e.dataset_id CROSS JOIN LATERAL (SELECT group_key FROM research_keys WHERE dataset_id=e.dataset_id AND id=e.id OFFSET 0) k WHERE true" + pairRowAfter + " GROUP BY k.group_key ORDER BY k.group_key"
@@ -179,7 +186,8 @@ func (a *API) orderedCandidates(ctx context.Context, q query) (searchResult, []o
 		inner += fmt.Sprintf(" LIMIT $%d", len(args))
 		pairInner = inner
 	}
-	sql := "SELECT name,first,edition,distance,g,dataset_id,id,postcode_id FROM (" + projection + ") ordered" + after + " ORDER BY " + order + fmt.Sprintf(" LIMIT $%d", len(args))
+	body := "SELECT name,first,edition,distance,g,dataset_id,id,postcode_id FROM (" + projection + ") ordered" + after + " ORDER BY " + order + fmt.Sprintf(" LIMIT $%d", len(args))
+	sql := body
 	if len(f.termCTEs) > 0 {
 		sql = "WITH " + strings.Join(f.termCTEs, ",") + " " + sql
 	}
@@ -187,7 +195,15 @@ func (a *API) orderedCandidates(ctx context.Context, q query) (searchResult, []o
 		// Sorting a lateral expansion for all 128 pairs executes every pair before
 		// LIMIT, even when the first pair fills the page. Read labels first, then
 		// expand pairs in lexical order only until the page and lookahead are full.
-		positions, err = a.orderedPairPositions(ctx, q, f.termCTEs, pairPrefix, pairQuery, pairInner, after, args)
+		positions, err = a.orderedPairPositions(ctx, q, f.termCTEs, pairPrefix, pairQuery, pairInner, after, args, f.businessSearch && q.Postcode == "")
+		if errors.Is(err, errWideBusinessPairs) {
+			// A broad classification can contain hundreds of thousands of distinct
+			// names. Retain the complete projection sort rather than discovering
+			// every label and then rescanning the class for each returned name.
+			complete := append(pairPrefix, "ordered_candidates AS MATERIALIZED ("+completeBase+")")
+			sql = "WITH " + strings.Join(complete, ",") + " " + body
+			positions, err = a.readOrderedPositions(ctx, q, sql, args, q.Limit+1)
+		}
 	} else {
 		positions, err = a.readOrderedPositions(ctx, q, sql, args, q.Limit+1)
 	}
@@ -320,16 +336,19 @@ type orderedNamePair struct {
 	count           int64
 }
 
-func (a *API) orderedPairPositions(ctx context.Context, q query, ctes, prefix []string, pairs, inner, after string, args []any) ([]orderCursor, error) {
+func (a *API) orderedPairPositions(ctx context.Context, q query, ctes, prefix []string, pairs, inner, after string, args []any, completeSortOnOverflow bool) ([]orderCursor, error) {
 	pairArgs := args[:len(args)-1]
 	if q.Cursor != "" {
 		pairArgs = args[:len(args)-4]
 	}
-	selected, batched, err := a.postcodeNamePairs(ctx, q, ctes, args)
+	selected, batched, err := a.batchedNamePairs(ctx, q, ctes, args)
 	if err != nil {
 		return nil, err
 	}
 	if !batched {
+		if completeSortOnOverflow {
+			return nil, errWideBusinessPairs
+		}
 		rows, err := a.searchRows(ctx, "ordered", "WITH "+strings.Join(ctes, ",")+" "+pairs, pairArgs, false)
 		if err != nil {
 			return nil, err

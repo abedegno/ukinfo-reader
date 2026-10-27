@@ -19,3 +19,18 @@ func TestPlanSummaryOmitsPredicatesAndNames(t *testing.T) {
 		t.Fatal("structural counters missing")
 	}
 }
+
+func TestDiagnosticPhase(t *testing.T) {
+	for _, tc := range []struct{ sql, want string }{
+		{"SELECT id,key,manifest,entries FROM datasets", "inventory"},
+		{"SELECT id,key FROM terms WHERE key=$1", "vocabulary"},
+		{"SELECT payload FROM record_blocks WHERE id=$1", "records"},
+		{"WITH ordered_candidates AS (SELECT * FROM entries) SELECT * FROM ordered_candidates", "ordered"},
+		{"SELECT id FROM entries WHERE dataset_id=$1", "source_candidates"},
+		{"SELECT t.id FROM postcode_locations p JOIN terms t ON t.key=p.postcode", "geography"},
+	} {
+		if got := diagnosticPhase(tc.sql); got != tc.want {
+			t.Fatalf("phase=%s want=%s", got, tc.want)
+		}
+	}
+}

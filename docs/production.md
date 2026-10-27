@@ -265,14 +265,19 @@ For a migrated desktop/owner catalogue, `ukinfo-server index-address-lookup
 lookup remain searchable through the previous paths. Keep the lookup build in
 any staged edition publication procedure before swapping catalogue identities.
 
-## Hosted address-search acceleration
+## Hosted search acceleration
 
 The NAS deployment enabled the optional [ParadeDB hybrid adapter](paradedb-preview.md)
 on 26 October 2026, after a complete equal-budget control. The original PostgreSQL
 catalogue remains authoritative; the separate pinned derived database selects
-address-filter candidates, including grouped default/alphabetical searches and
-ungrouped edition ordering. Names/postcodes without address filters, nearby and
-grouped edition-sorted searches retain native execution. Desktop is unchanged.
+candidates for address filters, including grouped default/alphabetical searches
+and ungrouped edition ordering. The
+[cold/concurrency follow-up](research/cold-search-2026-10-26.md) extends this to
+ungrouped alphabetical postcode/classification searches and default-order nearby
+searches with address filters. Simple names, default-order postcodes/classifications,
+nearby without address filters, nearest ordering and grouped nearby/edition-sorted
+searches retain native execution. Native alphabetical business searches also reuse
+the existing complete business projection. Desktop keeps its native backend.
 
 Homelab keeps the persistent target configuration, staged rollout, image identity
 checks and internal reference acceptance under `docker/ukinfo/parade-serving/`.

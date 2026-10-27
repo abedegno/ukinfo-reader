@@ -69,9 +69,13 @@ func searchEditions(ctx context.Context, db *pgxpool.Pool, scope string) ([]para
 	return out, rows.Err()
 }
 
-// Restrict the optional accelerator to address filters validated by the real trial.
+// Select only the search shapes validated against native pages and cold/load trials.
 func paradeEligible(q query) bool {
-	return q.hasAddress() && q.Near == "" && (q.Sort == "" || q.Sort == "name" || (q.Sort == "edition" && q.Group == ""))
+	if q.Near != "" {
+		return q.hasAddress() && q.Group == "" && q.Sort == ""
+	}
+	return q.hasAddress() && (q.Sort == "" || q.Sort == "name" || (q.Sort == "edition" && q.Group == "")) ||
+		(q.Postcode != "" || q.Kind == "business" && q.hasBusinessFilters()) && q.Sort == "name" && q.Group == ""
 }
 
 // ParadeDB contains derived search rows only; permissions, visibility and original
@@ -81,9 +85,9 @@ func (a *API) paradeResults(ctx context.Context, q query) (searchResult, int, bo
 	if a.ParadeDB == nil {
 		return searchResult{}, 0, false, nil
 	}
-	// The all-edition serving trial favors ParadeDB for address filters, while
-	// broad postcode and simple-name searches can regress. Select before touching
-	// the target; native-only queries also work when that dependency is offline.
+	// Default-order postcode and simple-name searches retain native execution.
+	// Select before contacting the target so native-only shapes remain independent
+	// of the optional database.
 	if !paradeEligible(q) {
 		a.metrics.plan("paradedb_fallback")
 		return searchResult{}, 0, false, nil
@@ -124,6 +128,24 @@ func (a *API) paradeResults(ctx context.Context, q query) (searchResult, int, bo
 	}
 	end(nil)
 	a.metrics.plan("paradedb")
+	var distances map[int32]postcodeDistance
+	var geography *GeographySearch
+	if q.Near != "" {
+		distances, geography, err = a.nearby(ctx, &q)
+		if err != nil {
+			status := 503
+			var geoErr *geographyError
+			if errors.As(err, &geoErr) {
+				status = geoErr.Status
+			}
+			return searchResult{}, status, true, err
+		}
+		q.nearbyPostcodes = make([]int32, 0, len(distances))
+		for id := range distances {
+			q.nearbyPostcodes = append(q.nearbyPostcodes, id)
+		}
+		slices.Sort(q.nearbyPostcodes)
+	}
 	if q.Group != "" {
 		out, status, err := orderedResultsWith(ctx, q, func(ctx context.Context, q query) (searchResult, []orderCursor, int, error) {
 			return a.paradeGroupedCandidates(ctx, q, editions)
@@ -141,7 +163,7 @@ func (a *API) paradeResults(ctx context.Context, q query) (searchResult, int, bo
 		return searchResult{}, 400, true, err
 	}
 	limit := q.Limit
-	out := searchResult{Items: []result{}}
+	out := searchResult{Items: []result{}, Geography: geography}
 	// Refinements use displayed original fields and complete batches, just like
 	// the native path. No sparse-match candidate cap or false end of results.
 	for {
@@ -184,6 +206,15 @@ func (a *API) paradeResults(ctx context.Context, q query) (searchResult, int, bo
 			if len(out.Items) == limit {
 				out.Next = paradeEncode(q, after)
 				return out, 200, true, nil
+			}
+			if q.Near != "" {
+				location, ok := distances[p.PostcodeID]
+				if !ok {
+					return searchResult{}, 503, true, recordIntegrity("search radius candidate outside source geography")
+				}
+				item.Distance = &location.Distance
+				item.LocationQuality = location.Quality
+				item.LocationTerminated = location.Terminated
 			}
 			out.Items = append(out.Items, item)
 			after = p
@@ -297,6 +328,12 @@ type paradeNamePair struct{ Name, First string }
 func paradeSQLBounds(q query, d paradeEdition, after paradePosition, prefilter bool, pair *paradeNamePair) (string, []any) {
 	args := []any{}
 	conditions := searchFieldConditions(q, &args)
+	if q.Near != "" {
+		// Resolve the complete radius against authoritative ONSPD first. Empty or
+		// unresolved state matches nothing; it can never remove the radius filter.
+		args = append(args, q.nearbyPostcodes)
+		conditions = append(conditions, fmt.Sprintf("postcode_id=ANY($%d::integer[])", len(args)))
+	}
 	if pair != nil {
 		args = append(args, pair.Name, pair.First)
 		conditions = append(conditions, fmt.Sprintf("name=$%d AND first_full=$%d", len(args)-1, len(args)))

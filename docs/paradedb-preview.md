@@ -1,12 +1,12 @@
 # Optional ParadeDB search preview
 
 The hosted Go service can use a **separate, derived ParadeDB database** to
-accelerate address-filter searches, including names, postcodes and businesses
-combined with those filters. Enable it explicitly with
+accelerate address-filter searches, alphabetical postcode/classification searches
+and default-order nearby searches combined with address filters. Enable it with
 `serve --search-backend paradedb` and a SELECT-only `PARADE_DATABASE_URL`.
 The default remains `native`; desktop continues using its existing PostgreSQL
 package. Original records, edition visibility and archival identities remain in
-the source catalogue. The public NAS site enabled this address-only policy on 26 October 2026;
+the source catalogue. The public NAS site enabled the initial hybrid policy on 26 October 2026;
 see the [control and rollout report](research/parade-rollout-2026-10-26.md).
 
 The [full 2003 benchmark](research/real-search-spike-2026-10-26.md) explains why
@@ -23,10 +23,17 @@ cursor-compatible ordering. Do not point the API at the earlier benchmark's
 
 ## Coverage and selection
 
-The hybrid selector uses ParadeDB only when a street, locality, town or county
-filter is present. Name-only, postcode-only, names combined only with postcodes,
-and business-classification-only searches retain native execution. This avoids
-the broad-postcode and simple-name regressions found in the full serving trial.
+The hybrid selector uses ParadeDB for these validated shapes:
+
+- Street, locality, town or county filters in default/name order, including grouping,
+  and ungrouped edition order.
+- Ungrouped alphabetical postcode or business-classification searches.
+- Ungrouped default-order nearby searches with a street/locality/town/county filter.
+
+Name-only, default-order postcode and default-order classification searches retain
+native execution. This avoids the broad-postcode and simple-name regressions found
+in the original serving trial. The
+[cold/concurrency follow-up](research/cold-search-2026-10-26.md) measures the added shapes.
 Selection happens before contacting the target; it is not a retry after failure.
 
 Accelerated searches handle people and businesses, exact/trailing-prefix fields, given
@@ -42,7 +49,11 @@ each complete name/first-name pair before emitting its canonical source groups;
 dense pairs use numeric batches rather than repeated lexical discovery. Edition
 ordering queries newer dates first and stops only once older dates cannot enter
 the page. Tied dates retain the original name/dataset/record ordering.
-Nearby/nearest searches and grouped edition ordering retain native execution.
+Nearby searches without address filters, non-default nearby ordering, grouped nearby
+searches and grouped edition ordering retain native execution. Nearby acceleration
+resolves the complete radius using the authoritative ONSPD reference, then applies
+its exact numeric postcode IDs to the derived query. Distance, quality, termination
+and centre metadata still come from that source reference. Empty radii match no rows.
 Group membership, record detail, maps, exports and archival lookup retain their
 existing permission and original-record checks. Exports use the same search
 selector and pagination as the interactive API.
@@ -74,9 +85,11 @@ escaped and bound as a parameter; user regex syntax is never accepted. The
 original scalar range and district/sector precision predicates remain in place,
 so the prefilter changes candidate work without changing search semantics.
 
-The native alphabetical postcode path batches distinct vocabulary reads for up
+The native alphabetical postcode/classification paths batch distinct vocabulary reads for up
 to 65,536 name pairs, then orders the same complete population. An overflowing
-probe uses the original SQL path; the ceiling never limits successful results.
+probe uses the complete SQL path; the ceiling never limits successful results.
+Alphabetical business searches can use the existing complete business projection.
+Broad classifications retain a complete projection sort when the pair probe overflows.
 See the [ordered-search follow-up](research/ordered-search-2026-10-26.md) for
 measurements, source-cold checks and remaining concurrency timeouts.
 

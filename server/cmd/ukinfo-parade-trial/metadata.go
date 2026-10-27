@@ -13,6 +13,7 @@ type caseMetadata struct {
 	Name           bool   `json:"name"`
 	First          bool   `json:"first"`
 	Case           int    `json:"case"`
+	SourceCase     *int   `json:"source_case,omitempty"`
 	Route          string `json:"route"`
 	Scope          string `json:"scope"`
 	EditionOrdinal int    `json:"edition_ordinal"`
@@ -22,9 +23,17 @@ type caseMetadata struct {
 	Postcode       bool   `json:"postcode"`
 	Address        bool   `json:"address"`
 	Refinements    bool   `json:"refinements"`
+	Match          string `json:"match,omitempty"`
+	FirstMatch     string `json:"first_match,omitempty"`
+	Nearby         bool   `json:"nearby"`
+	Classified     bool   `json:"classified"`
 }
 
 func metadata(path, output string) error {
+	return metadataWithParent(path, output, "")
+}
+
+func metadataWithParent(path, output, parentPath string) error {
 	raw, err := os.ReadFile(path)
 	if err != nil {
 		return errors.New("private cases unavailable")
@@ -32,6 +41,16 @@ func metadata(path, output string) error {
 	var cases []catalog.ParadeTrialCase
 	if json.Unmarshal(raw, &cases) != nil || len(cases) == 0 || len(cases) > 500 {
 		return errors.New("invalid bounded workload")
+	}
+	parent := map[string]int{}
+	if parentPath != "" {
+		parents, e := referenceCases(parentPath)
+		if e != nil {
+			return e
+		}
+		for i, c := range parents {
+			parent[c.Path+"\x00"+c.Query] = i
+		}
 	}
 	values := []caseMetadata{}
 	editions := map[string]int{}
@@ -41,6 +60,13 @@ func metadata(path, output string) error {
 			return errors.New("invalid private query")
 		}
 		row := caseMetadata{Case: i, Route: c.Path, Scope: "edition", Kind: "other", Backend: "native", Sort: "catalogue"}
+		if parentPath != "" {
+			ordinal, ok := parent[c.Path+"\x00"+c.Query]
+			if !ok {
+				return errors.New("matched workload is outside frozen parent")
+			}
+			row.SourceCase = &ordinal
+		}
 		switch c.Path {
 		case "/api/search", "/api/export", "/api/record", "/api/address", "/api/group":
 		default:
@@ -73,7 +99,17 @@ func metadata(path, output string) error {
 			}
 			row.Name = v.Get("surname") != "" || v.Get("organisation") != ""
 			row.First = v.Get("first_name") != ""
+			row.Match = v.Get("match")
+			if row.Match == "" {
+				row.Match = "exact"
+			}
+			row.FirstMatch = v.Get("first_match")
+			if row.FirstMatch == "" {
+				row.FirstMatch = row.Match
+			}
 			row.Postcode = v.Get("postcode") != ""
+			row.Nearby = v.Get("near") != ""
+			row.Classified = v.Get("sic") != "" || v.Get("industry") != ""
 			for _, key := range []string{"street", "locality", "town", "county"} {
 				row.Address = row.Address || v.Get(key) != ""
 			}

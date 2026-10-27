@@ -6,11 +6,13 @@ COPY server/ ./
 RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /ukinfo-server ./cmd/ukinfo-server
 
 RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /ukinfo-parade-index ./cmd/ukinfo-parade-index
+RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /ukinfo-fixture-lock ./cmd/ukinfo-fixture-lock
 
 FROM alpine:3.23
 RUN apk add --no-cache ca-certificates && adduser -D -u 10001 ukinfo
 COPY --from=build /ukinfo-server /usr/local/bin/ukinfo-server
 COPY --from=build /ukinfo-parade-index /usr/local/bin/ukinfo-parade-index
+COPY --from=build /ukinfo-fixture-lock /usr/local/bin/ukinfo-fixture-lock
 USER ukinfo
 EXPOSE 8080
 ENTRYPOINT ["ukinfo-server"]

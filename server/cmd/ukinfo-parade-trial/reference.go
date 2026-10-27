@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"os"
 	"strconv"
@@ -42,7 +43,7 @@ func referenceCases(path string) ([]catalog.ParadeTrialCase, error) {
 // This stage is built with an explicit private Go overlay raising only the
 // reference handler/SQL budgets. It does not listen on a socket or alter serving
 // configuration. Full responses stay in NAS memory; only hashes/cursors are saved.
-func nativeReference(ctx context.Context, path, ordinals, output, report string) error {
+func nativeReference(ctx context.Context, path, ordinals, output, report string, full bool) error {
 	if report == "" || report == output {
 		return errors.New("separate aggregate report required")
 	}
@@ -79,15 +80,21 @@ func nativeReference(ctx context.Context, path, ordinals, output, report string)
 		if e != nil {
 			return errors.New("invalid private reference")
 		}
-		boundDataset, boundID, e := referenceBoundary(ctx, cases[ci])
-		if e != nil {
-			return e
-		}
 		start := time.Now()
-		pages, e := catalog.NativeOrderedPrefixReference(ctx, db, v, boundDataset, boundID)
+		var pages [][]byte
+		if full {
+			pages, e = fullNativePages(ctx, db, v)
+		} else {
+			var boundDataset string
+			var boundID int32
+			boundDataset, boundID, e = referenceBoundary(ctx, cases[ci])
+			if e == nil {
+				pages, e = catalog.NativeOrderedPrefixReference(ctx, db, v, boundDataset, boundID)
+			}
+		}
 		elapsed := float64(time.Since(start).Microseconds()) / 1000
 		status := 200
-		if e != nil || len(pages) != 2 {
+		if e != nil || len(pages) < 1 || len(pages) > 2 || (!full && len(pages) != 2) {
 			status = 503
 			failures++
 		}
@@ -128,6 +135,76 @@ func nativeReference(ctx context.Context, path, ordinals, output, report string)
 	}
 	if failures > 0 {
 		return errors.New("native reference did not finish")
+	}
+	return nil
+}
+
+// Full execution under the offline overlay, independent of candidate ordering.
+// The normal serving executable has no expanded deadline or reference route.
+func fullNativePages(ctx context.Context, db *pgxpool.Pool, values url.Values) ([][]byte, error) {
+	handler := catalog.NewAPI(db).Handler()
+	pages := [][]byte{}
+	for page := 0; page < 2; page++ {
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, httptest.NewRequest("GET", "/api/search?"+values.Encode(), nil).WithContext(ctx))
+		if w.Code != 200 {
+			return nil, errors.New("full native reference did not complete")
+		}
+		body := append([]byte(nil), w.Body.Bytes()...)
+		var fields struct {
+			Next string `json:"next_cursor"`
+		}
+		if json.Unmarshal(body, &fields) != nil {
+			return nil, errors.New("invalid native reference response")
+		}
+		pages = append(pages, body)
+		if fields.Next == "" {
+			break
+		}
+		values.Set("cursor", fields.Next)
+	}
+	return pages, nil
+}
+
+func compareSnapshotReference(reference, snapshot, output string) error {
+	s, e := readSnapshot(snapshot)
+	if e != nil {
+		return e
+	}
+	raw, e := os.ReadFile(reference)
+	if e != nil {
+		return errors.New("private source reference unavailable")
+	}
+	var refs nativeReferenceFile
+	if json.Unmarshal(raw, &refs) != nil || refs.Cases != s.Cases || len(refs.Rows) < 1 || len(refs.Rows) > 8 {
+		return errors.New("invalid bounded source reference")
+	}
+	first := map[int]string{}
+	for _, r := range refs.Rows {
+		if r.Page == 1 && r.Case >= 0 && r.Case < s.Cases && len(r.Digest) == 64 {
+			if _, duplicate := first[r.Case]; duplicate {
+				return errors.New("duplicate source reference")
+			}
+			first[r.Case] = r.Digest
+		}
+	}
+	failures, mismatches := 0, 0
+	for _, r := range s.Rows {
+		want, ok := first[r.Case]
+		if !ok {
+			return errors.New("snapshot has no source reference")
+		}
+		if !r.Success {
+			failures++
+		} else if r.Digest != want {
+			mismatches++
+		}
+	}
+	if e = save(output, map[string]any{"complete": true, "requests": len(s.Rows), "errors": failures, "mismatches": mismatches}); e != nil {
+		return e
+	}
+	if failures+mismatches > 0 {
+		return errors.New("source snapshot comparison failed")
 	}
 	return nil
 }

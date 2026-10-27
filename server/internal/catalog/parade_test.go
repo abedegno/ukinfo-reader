@@ -224,6 +224,19 @@ func TestParadeIntegration(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer reader.Close()
+	// Invented coordinates exercise the real source radius resolver, including
+	// retired postcodes and an empty radius, without adding source records.
+	if _, err = source.Exec(ctx, `
+ INSERT INTO geography_releases(release,source_url,sha256,scope,entries,located,excluded_ni,excluded_other)
+ VALUES('2026-08','https://example.org/invented-onspd',repeat('a',64),'GB',3,3,0,0);
+ CREATE TABLE postcode_locations_parade PARTITION OF postcode_locations FOR VALUES IN ('2026-08');
+ INSERT INTO postcode_locations(release,postcode,introduced,terminated,country,quality,latitude,longitude)
+ VALUES('2026-08','AA11AA','198001','','E92000001',1,51,-1),
+ ('2026-08','BB11BB','198001','200102','E92000001',8,51.001,-1),
+ ('2026-08','CC11CC','198001','','E92000001',1,52,-1);
+ INSERT INTO geography_active(singleton,release) VALUES(true,'2026-08');`); err != nil {
+		t.Fatal(err)
+	}
 	native, parade := NewAPI(source), NewAPI(source)
 	parade.ParadeDB = reader
 	metrics := httptest.NewRecorder()
@@ -251,6 +264,14 @@ func TestParadeIntegration(t *testing.T) {
 		"dataset=all&surname=Researchonly&sort=name&limit=2",
 		"dataset=all&postcode=AA1&limit=2",
 		"dataset=all&postcode=AA1+1&sort=name&limit=2",
+		"dataset=all&postcode=AA1&sort=name&limit=2",
+		"dataset=all&street=Invented+Street&near=AA11AA&radius_m=1000&limit=2",
+		"dataset=all&street=Invented+Street&near=BB11BB&radius_m=1000&limit=2",
+		"dataset=all&street=Invented+Street&near=AA1&radius_m=1000&limit=2",
+		"dataset=all&street=Invented+Street&near=AA1+1&radius_m=1000&limit=2",
+		"dataset=all&street=Invented+Street&near=CC11CC&radius_m=1000&limit=2",
+		"dataset=all&street=Invented+Street&near=AA11AA&house=1&radius_m=1000&limit=2",
+		"dataset=all&kind=business&street=Invented+Street&near=AA11AA&radius_m=1000&limit=2",
 		"dataset=all&street=Invented+Street&house=1&limit=2",
 		"dataset=all&street=Invented+Street&sort=name&limit=2",
 		"dataset=all&surname=Res*&town=Invented*&first_name=Name&first_match=given&limit=2",
@@ -294,10 +315,19 @@ func TestParadeIntegration(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	for _, input := range []string{"surname=Researchonly", "postcode=AA1", "street=Invented+Street", "surname=Researchonly&sort=name", "street=Invented+Street&sort=edition"} {
+	for _, input := range []string{"surname=Researchonly", "postcode=AA1", "postcode=AA1&sort=name", "street=Invented+Street", "surname=Researchonly&sort=name", "street=Invented+Street&sort=edition", "street=Invented+Street&near=AA11AA&radius_m=1000"} {
 		q, e := parse(mustValues("dataset=" + keys[0] + "&limit=2&" + input))
 		if e != nil {
 			t.Fatal(e)
+		}
+		if q.Near != "" {
+			points, _, err := parade.nearby(ctx, &q)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for id := range points {
+				q.nearbyPostcodes = append(q.nearbyPostcodes, id)
+			}
 		}
 		positions, e := parade.paradePositions(ctx, q, editions, paradePosition{})
 		if e != nil || len(positions) == 0 {

@@ -73,7 +73,7 @@ func IndexBusinessSearch(ctx context.Context, db *pgxpool.Pool, key string, chec
 }
 
 func (a *API) businessSearchReady(ctx context.Context, q query, datasets []int16) (bool, error) {
-	if a.DisableBusinessSearch || q.Kind != "business" || !q.hasBusinessFilters() || q.Group != "" || q.Sort != "" || q.Near != "" || len(datasets) == 0 {
+	if a.DisableBusinessSearch || q.Kind != "business" || !q.hasBusinessFilters() || q.Group != "" || (q.Sort != "" && q.Sort != "name") || q.Near != "" || len(datasets) == 0 {
 		return false, nil
 	}
 	var available bool

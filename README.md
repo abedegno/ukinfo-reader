@@ -85,10 +85,10 @@ separate investigation and validation.
 The **Python reader** decodes original files and streams verified imports. The
 **Go service** searches an indexed **PostgreSQL 18** catalogue and embeds the web UI.
 The **Electron app** runs the same service and a private local PostgreSQL instance.
-Hosted deployments can optionally accelerate address-filter searches with a
+Hosted deployments can optionally accelerate selected searches with a
 separate [ParadeDB index](docs/paradedb-preview.md); desktop and default deployments
 retain native search. See the [measured rollout](docs/research/parade-rollout-2026-10-26.md)
-for results and remaining limits.
+and [cold/concurrency follow-up](docs/research/cold-search-2026-10-26.md) for results and limits.
 Search requests do not run Python; the original Windows executables are never run.
 
 Desktop packages include their runtimes. Archive data normally lives in the OS
