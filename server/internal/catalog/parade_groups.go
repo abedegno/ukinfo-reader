@@ -14,7 +14,21 @@ import (
 // only this page's smallest keys while streaming all matching occurrences; neither
 // a dense pair nor sparse refinements can truncate a successful result set.
 func (a *API) paradeGroupedCandidates(ctx context.Context, q query, editions []paradeEdition) (searchResult, []orderCursor, int, error) {
-	f, status, err := a.candidateFilters(ctx, q)
+	// Source visibility, readiness and canonical grouping remain authoritative,
+	// but the derived query supplies address candidates. Do not spend cold I/O
+	// choosing a native address access path that will never execute here.
+	cache, key := recordCache(ctx), "parade-group:"+q.fingerprint()
+	f, ok := cache.getPlan(key)
+	status := 200
+	var err error
+	if ok {
+		f.q.Cursor, f.q.Limit = q.Cursor, q.Limit
+	} else {
+		f, status, err = a.buildCandidateFiltersWith(ctx, q, false)
+		if err == nil {
+			cache.putPlan(key, f)
+		}
+	}
 	if err != nil {
 		return searchResult{}, nil, status, err
 	}

@@ -371,6 +371,14 @@ func TestParadeIntegration(t *testing.T) {
 	if close := paradeWalk(t, parade, parade, "dataset=parade-postal&town=Boundary+Town&near=AA11AA&radius_m=1000&limit=1"); len(close) != 0 {
 		t.Fatal("small radius included the distant postcode")
 	}
+	groupOnly := NewAPI(source)
+	groupOnly.ParadeDB = reader
+	if got := paradeWalk(t, groupOnly, groupOnly, "dataset=parade-dense&town=Dense+Town&group=listing&limit=100"); len(got) != 320 {
+		t.Fatal("derived grouped population incomplete")
+	}
+	if groupOnly.metrics.phases[phaseKey{"address_probe", "ok"}].Count != 0 || groupOnly.metrics.phases[phaseKey{"source_probe", "ok"}].Count != 0 {
+		t.Fatal("derived grouping performed an unused native address plan")
+	}
 	if parade.metrics.plans["paradedb"] == 0 {
 		t.Fatal("checks only exercised fallback")
 	}

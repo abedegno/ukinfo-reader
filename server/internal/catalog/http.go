@@ -436,6 +436,10 @@ func (a *API) candidateFilters(ctx context.Context, q query) (candidateFilters, 
 }
 
 func (a *API) buildCandidateFilters(ctx context.Context, q query) (candidateFilters, int, error) {
+	return a.buildCandidateFiltersWith(ctx, q, true)
+}
+
+func (a *API) buildCandidateFiltersWith(ctx context.Context, q query, planAddresses bool) (candidateFilters, int, error) {
 	var err error
 	datasetKeys := map[int16]string{}
 	datasetIDs := []int16{}
@@ -637,8 +641,10 @@ func (a *API) buildCandidateFilters(ctx context.Context, q query) (candidateFilt
 	}
 
 	f := candidateFilters{q: q, datasetKeys: datasetKeys, datasetIDs: datasetIDs, args: args, conditions: conditions, termCTEs: termCTEs, missing: missing, areaOnly: areaOnly, geography: geography, nearbyIDs: nearbyIDs, radiusArg: radiusArg, distances: distances, businessSearch: businessReady}
-	if err = a.matchSelectiveAddresses(ctx, &f); err != nil {
-		return candidateFilters{}, 503, searchReadError(err)
+	if planAddresses {
+		if err = a.matchSelectiveAddresses(ctx, &f); err != nil {
+			return candidateFilters{}, 503, searchReadError(err)
+		}
 	}
 	return f, 200, nil
 }

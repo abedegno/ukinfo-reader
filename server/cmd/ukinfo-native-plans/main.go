@@ -300,6 +300,15 @@ func run() error {
 
 func diagnosticPhase(sql string) string {
 	sql = strings.ToLower(sql)
+	if strings.Contains(sql, "from research_keys") && strings.Contains(sql, "count(*)") {
+		return "group_counts"
+	}
+	if strings.Contains(sql, "wanted.group_key") {
+		return "group_representatives"
+	}
+	if strings.Contains(sql, "select id,group_key from research_keys") {
+		return "group_keys"
+	}
 	for _, phase := range []struct{ fragment, label string }{{"from record_blocks", "records"}, {"postcode_locations", "geography"}, {"ordered_candidates", "ordered"}, {"address_members", "address"}, {"from entries", "source_candidates"}, {"from terms", "vocabulary"}} {
 		if strings.Contains(sql, phase.fragment) {
 			return phase.label

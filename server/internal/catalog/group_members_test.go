@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -119,6 +121,55 @@ func testGroupRepresentativePlans(t *testing.T, db *pgxpool.Pool, dataset int16)
 			}
 			observations = append(observations, map[string]any{"mode": mode, "execution_ms": plan[0]["Execution Time"], "shared_blocks": blocks, "groups": 3, "heap_fetches": 0})
 		}()
+	}
+	// The first edition can miss a group that exists in both later probes.
+	// A lower ordinal in a later edition must not beat the earlier edition,
+	// regardless of which concurrent probe finishes first.
+	var third int16
+	if err = db.QueryRow(ctx, `INSERT INTO datasets(key,manifest,entries) VALUES('parallel-later-group-work','{}',1) RETURNING id`).Scan(&third); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = db.Exec(ctx, fmt.Sprintf("CREATE TABLE research_d%d PARTITION OF research_keys FOR VALUES IN (%d)", third, third)); err != nil {
+		t.Fatal(err)
+	}
+	unique, _ := hex.DecodeString(strings.Repeat("ef", 32))
+	if _, err = db.Exec(ctx, `INSERT INTO research_keys SELECT $1,4,source_hash,$3,'','' FROM research_keys WHERE dataset_id=$2 AND id=1`, later, dataset, unique); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = db.Exec(ctx, `INSERT INTO research_keys SELECT $1,1,source_hash,group_key,'','' FROM research_keys WHERE dataset_id=$2 AND id=4`, third, later); err != nil {
+		t.Fatal(err)
+	}
+	probe := NewAPI(db)
+	members, err := probe.groupRepresentatives(ctx, []int16{third, later, dataset}, [][]byte{unique})
+	if err != nil || len(members) != 1 || members[hex.EncodeToString(unique)].dataset != later || members[hex.EncodeToString(unique)].id != 4 {
+		t.Fatal("parallel representative changed canonical source order", err)
+	}
+	countGroups := append(slices.Clone(groups), unique)
+	countDatasets := []int16{third, later, dataset}
+	countRows, err := db.Query(ctx, `SELECT k.group_key,count(*),array_agg(DISTINCT d.key ORDER BY d.key) FROM research_keys k JOIN datasets d ON d.id=k.dataset_id WHERE k.group_key=ANY($1::bytea[]) AND k.dataset_id=ANY($2::smallint[]) GROUP BY k.group_key`, countGroups, countDatasets)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantCounts := map[string]listingMember{}
+	for countRows.Next() {
+		var key []byte
+		var m listingMember
+		if err = countRows.Scan(&key, &m.count, &m.editions); err != nil {
+			t.Fatal(err)
+		}
+		wantCounts[hex.EncodeToString(key)] = m
+	}
+	err = countRows.Err()
+	countRows.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	gotCounts, err := probe.groupOccurrences(ctx, countDatasets, countGroups)
+	if err != nil || !reflect.DeepEqual(gotCounts, wantCounts) {
+		t.Fatal("parallel group counts or database edition order changed", err)
+	}
+	if _, err = probe.groupOccurrences(ctx, countDatasets, [][]byte{make([]byte, 32)}); !errors.Is(err, errRecordIntegrity) {
+		t.Fatal("missing group count accepted", err)
 	}
 	if dir := os.Getenv("UKINFO_PERFORMANCE_REPORT_DIR"); dir != "" {
 		if err = os.MkdirAll(dir, 0700); err != nil {

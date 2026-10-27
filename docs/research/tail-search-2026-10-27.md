@@ -56,6 +56,25 @@ partial candidates. This path is labeled `source_prefix_parallel`; backend and
 source planning policy remain native/auto. Invented tests compare every cursor
 page with an independent unbounded SQL population and check sibling cancellation.
 
+Derived grouping retains source visibility/readiness checks while skipping the
+native address access-plan probe that will not execute. Canonical representative
+selection keeps its one-probe early exit when the first edition has every group;
+otherwise later editions are checked in pairs and merged by min(dataset ID, source
+ordinal), not completion order. Occurrence totals use at most two scalar-edition
+aggregates at a time; edition labels retain database collation order. Counts and
+representatives remain authoritative source values. An independent unbounded SQL
+aggregate verifies the totals and edition list, and a late-edition tie fixture
+checks canonical source identity.
+
+The broad grouped-address case exposed an additional cold aggregate stall after
+the earlier I/O fixes. Three source-cold responses after splitting counts took
+2.45, 2.10 and 2.01 seconds and matched the frozen pre-change hybrid first-page
+response. A separate full-native oracle attempt exceeded its ten-minute offline
+limit without completing a page; its failed partial file is excluded. This grouped
+check is explicitly a **pre-change hybrid comparison**, additional to the 64
+full-native page/cursor checks, not a full-native oracle or a baseline capacity
+measurement. The normal serving deadlines are unchanged.
+
 The fixed `paradedb_radius_stream` plan label makes this path visible in existing
 OpenTelemetry/Splunk search-plan charts. Pools, CPU/memory limits, quotas, HTTP/SQL
 deadlines, cursor formats, source records and derived schema are unchanged.

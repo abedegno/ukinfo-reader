@@ -111,6 +111,21 @@ def build(root, prefix):
                     **{k: report["observations"][0][k] for k in ("case", "status", "milliseconds")},
                 }
             )
+    cache = read("grouped-cache-91")
+    report = read("grouped-cold-91-report")
+    gate = read("grouped-source-check-91")
+    assert cache["at_most_one_mib_resident"] and not cache["host_cache_flush"]
+    assert report["complete"] and report["requests"] == 1 and not report["errors"]
+    assert gate["complete"] and gate["requests_per_backend"] == 1
+    assert gate["outcomes"] == {"both_ok_same": 1} and gate["mismatches"] == 0
+    assert report["observations"][0]["case"] == 91
+    cold.append(
+        {
+            "coverage": False,
+            "grouped": True,
+            **{k: report["observations"][0][k] for k in ("case", "status", "milliseconds")},
+        }
+    )
     completion = json.loads((root / "completion.json").read_text())
     assert (
         completion["source_and_target_unchanged"]
@@ -127,6 +142,10 @@ def build(root, prefix):
         not s["errors"] and not s["initial_errors"] for n, s in loads.items() if "candidate" in n
     )
     passed = passed and all(
+        s["p95_ms"] <= (500 if "-c1" in n else 1000) for n, s in loads.items() if "candidate" in n
+    )
+    passed = passed and all(s["milliseconds"] <= 3000 for s in cold)
+    passed = passed and all(
         not s["errors"]
         and not s["initial_errors"]
         and not s["load_generator_drops"]
@@ -138,11 +157,21 @@ def build(root, prefix):
         "schema_version": 1,
         "passed": bool(passed),
         "baseline": "hosted-2026-10-27.1",
-        "source_cache": "independently reset for nine cold probes",
+        "source_cache": "independently reset for ten cold probes",
         "target_cache": "shared/uncontrolled",
         "original": original,
         "coverage": coverage,
         "reference_checks": references,
+        "grouped_reference": {
+            "kind": "pre-change hybrid first-page snapshot",
+            "baseline": "hosted-2026-10-27.1",
+            "checks": 1,
+            "errors": 0,
+            "mismatches": 0,
+            "full_native_reference_complete": False,
+            "full_native_offline_deadline_seconds": 600,
+        },
+        "latency_budgets_ms": {"source_cold": 3000, "c1_p95": 500, "c4_p95": 1000},
         "closed_loop": loads,
         "scheduled_arrivals": rates,
         "source_cold": cold,
