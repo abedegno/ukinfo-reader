@@ -293,3 +293,5 @@ Native startup does not connect to the derived target. Use the current Go 1.26.1
 images remain retained for investigation; they predate the certificate mitigation.
 Keep native indexes. Read the [control, diagnostics and rollout evidence](research/parade-rollout-2026-10-26.md)
 before changing the pinned extension or removing retained derived data.
+
+The [grouped source-read follow-up](research/grouped-search-2026-10-27.md) records the expanded contained regression, its retained failures and the unchanged cold/load gates.
