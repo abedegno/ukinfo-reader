@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http/httptest"
 	"net/url"
@@ -626,7 +627,7 @@ func testOrderedVocabularyBatch(t *testing.T, db *pgxpool.Pool) {
 	}
 	a := NewAPI(db)
 	ctes := []string{"ordered_candidates AS MATERIALIZED (SELECT name_id,first_id,count(*) AS occurrences FROM entries WHERE dataset_id=$1 AND kind=$2 GROUP BY name_id,first_id)"}
-	pairs, batched, e := a.postcodeNamePairs(ctx, q, ctes, []any{dataset, int16(0), 101})
+	pairs, batched, e := a.batchedNamePairs(ctx, q, ctes, []any{dataset, int16(0), 101})
 	if e != nil || !batched || len(pairs) != 128 {
 		t.Fatal("postcode vocabulary batch", e)
 	}
@@ -647,5 +648,22 @@ func testOrderedVocabularyBatch(t *testing.T, db *pgxpool.Pool) {
 		if e = os.WriteFile(filepath.Join(directory, "ordered-vocabulary-work.json"), append(raw, '\n'), 0644); e != nil {
 			t.Fatal(e)
 		}
+	}
+	// Broad classifications must select the complete SQL fallback, without
+	// treating the bounded probe as the complete population or reading labels
+	// for arbitrary IDs beyond its memory budget.
+	business, e := parse(mustValues("dataset=all&kind=business&sic=12*&sort=name"))
+	if e != nil {
+		t.Fatal(e)
+	}
+	population := []string{"ordered_candidates AS MATERIALIZED (SELECT n::integer AS name_id,0::integer AS first_id,1::bigint AS occurrences FROM generate_series(1,65537)n WHERE cardinality($1::smallint[])>0 AND $2::smallint=1)"}
+	labelsBefore := a.metrics.phases[phaseKey{"vocabulary", "ok"}].Count
+	pairs, batched, e = a.batchedNamePairs(ctx, business, population, []any{[]int16{dataset}, int16(1), 101})
+	if e != nil || batched || pairs != nil || a.metrics.phases[phaseKey{"vocabulary", "ok"}].Count != labelsBefore {
+		t.Fatal("overflow must retain complete fallback without fetching labels", e)
+	}
+	positions, e := a.orderedPairPositions(ctx, business, population, nil, "", "", "", []any{[]int16{dataset}, int16(1), 101}, true)
+	if !errors.Is(e, errWideBusinessPairs) || positions != nil {
+		t.Fatal("wide classification must select the complete projection sort", e)
 	}
 }

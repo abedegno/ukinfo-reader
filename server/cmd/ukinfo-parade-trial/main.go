@@ -49,10 +49,16 @@ func run() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 	defer cancel()
 	if *stage == "native-reference" {
-		return nativeReference(ctx, *cases, *planCases, *output, *aggregateReport)
+		return nativeReference(ctx, *cases, *planCases, *output, *aggregateReport, false)
+	}
+	if *stage == "full-native-reference" {
+		return nativeReference(ctx, *cases, *planCases, *output, *aggregateReport, true)
 	}
 	if *stage == "compare-reference" {
 		return compareReference(ctx, *cases, *beforeSnapshot, *output, false)
+	}
+	if *stage == "compare-snapshot-reference" {
+		return compareSnapshotReference(*beforeSnapshot, *afterSnapshot, *output)
 	}
 	if *stage == "hosted-reference" {
 		return compareReference(ctx, *cases, *beforeSnapshot, *output, true)
@@ -73,7 +79,7 @@ func run() error {
 		return subset(*cases, *dataset, *output)
 	}
 	if *stage == "metadata" {
-		return metadata(*cases, *output)
+		return metadataWithParent(*cases, *output, *seeds)
 	}
 	if *stage == "cursors" {
 		return checkCursors(ctx, *cases, *output)

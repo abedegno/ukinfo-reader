@@ -155,6 +155,9 @@ type query struct {
 	PostcodeLength                                        int
 	Limit                                                 int
 	Cursor                                                string
+	// Derived execution state; source cursor fingerprints contain only the
+	// requested centre/radius and immutable geography release.
+	nearbyPostcodes []int32
 }
 type cursor struct {
 	Query    string `json:"q"`

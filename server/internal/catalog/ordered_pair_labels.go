@@ -7,12 +7,12 @@ import (
 	"strings"
 )
 
-// Postcode populations often contain many name pairs sharing the same labels.
+// Postcode and classified-business populations often share many name labels.
 // Fetch their compact numeric pairs, then each distinct vocabulary ID once in
 // storage order. The ceiling selects an access path, never a result limit: an
 // overflowing probe retains the original complete SQL ordering.
-func (a *API) postcodeNamePairs(ctx context.Context, q query, ctes []string, args []any) ([]orderedNamePair, bool, error) {
-	if q.Postcode == "" || !(q.Sort == "name" || q.Group != "" && q.Sort == "") {
+func (a *API) batchedNamePairs(ctx context.Context, q query, ctes []string, args []any) ([]orderedNamePair, bool, error) {
+	if (q.Postcode == "" && !(q.Kind == "business" && q.hasBusinessFilters())) || !(q.Sort == "name" || q.Group != "" && q.Sort == "") {
 		return nil, false, nil
 	}
 	count := len(args) - 1

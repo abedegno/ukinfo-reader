@@ -1,5 +1,9 @@
 # Grouped and ordered search follow-up, 26 October 2026
 
+The [next follow-up](cold-search-2026-10-26.md) resolves the measured cold and
+concurrency tails. It also maps matched-load ordinals back to the full workload:
+load case 230 is full case 232. The source-cold case 230 below was a different query.
+
 The optional hosted hybrid path now accelerates address-filter searches with
 grouped default/alphabetical ordering and ungrouped edition ordering. The native
 alphabetical postcode path batches vocabulary reads. Source identities, canonical

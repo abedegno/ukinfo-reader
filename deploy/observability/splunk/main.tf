@@ -93,10 +93,63 @@ locals {
       name    = "Telemetry heartbeat (expected pool size)"
       program = "data('ukinfo_pool_max', extrapolation='null').sum().publish(label='Pool maximum')"
     }
+    regression_status = {
+      name    = "Private regression status (last pass / running)"
+      program = "data('ukinfo_regression_last_run_passed').max().publish(label='Last run passed')\ndata('ukinfo_regression_running').max().publish(label='Running')"
+    }
+    regression_cold = {
+      name    = "Private regression source-cold maximum (seconds)"
+      program = "data('ukinfo_regression_source_cold_max_seconds').max().publish(label='Source-cold maximum')"
+    }
+    regression_c4 = {
+      name    = "Private regression C4 p95 (seconds)"
+      program = "data('ukinfo_regression_candidate_c4_p95_seconds').max().publish(label='Candidate C4 p95')\ndata('ukinfo_regression_baseline_c4_p95_seconds').max().publish(label='Previous build C4 p95')"
+    }
+    regression_overdue = {
+      name    = "Private regression overdue (seconds)"
+      program = "data('ukinfo_regression_overdue_seconds').max().publish(label='Overdue seconds')"
+    }
     decoded = {
       name    = "Decoded record blocks / second"
       program = "data('ukinfo_record_blocks_decoded_total', rollup='rate').sum().publish(label='Decoded blocks/s')"
     }
+  }
+}
+
+resource "signalfx_detector" "regression_failed" {
+  name         = "UK-Info private regression failed"
+  description  = "The private NAS correctness/performance protocol failed or exceeded one hour. Inspect aggregate state before opening private evidence."
+  program_text = "failed = data('ukinfo_regression_failed').max()\ndetect(when(failed > 0, '5m')).publish('Regression failed')"
+  rule {
+    detect_label  = "Regression failed"
+    severity      = "Warning"
+    notifications = var.notifications
+  }
+}
+
+resource "signalfx_detector" "regression_overdue" {
+  name         = "UK-Info private regression overdue"
+  description  = "The weekly Sunday 03:00 UTC run has been deferred for over two hours. Check public traffic, free space, memory and the private fixture lock."
+  program_text = "overdue = data('ukinfo_regression_overdue_seconds').max()\ndetect(when(overdue > 7200, '10m')).publish('Regression overdue')"
+  rule {
+    detect_label  = "Regression overdue"
+    severity      = "Warning"
+    notifications = var.notifications
+  }
+}
+
+resource "signalfx_detector" "regression_telemetry" {
+  name         = "UK-Info private regression telemetry missing"
+  description  = "The isolated regression coordinator has not reported for fifteen minutes."
+  program_text = <<-SIGNALFLOW
+    from signalfx.detectors.not_reporting import not_reporting
+    heartbeat = data('ukinfo_regression_heartbeat', extrapolation='null')
+    not_reporting.detector(heartbeat, duration=duration('15m')).publish('Missing regression telemetry')
+  SIGNALFLOW
+  rule {
+    detect_label  = "Missing regression telemetry"
+    severity      = "Warning"
+    notifications = var.notifications
   }
 }
 resource "signalfx_time_chart" "ukinfo" {

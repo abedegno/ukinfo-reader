@@ -16,6 +16,12 @@ with tempfile.TemporaryDirectory(prefix="ukinfo-reference-") as directory:
             ("statement_timeout='4000'", "statement_timeout='120000'"),
             ("SET LOCAL work_mem='32MB'", "SET LOCAL work_mem='256MB'; SET LOCAL jit=off"),
         ],
+        "internal/catalog/addresses.go": [
+            ("statement_timeout='4000'", "statement_timeout='120000'"),
+        ],
+        "internal/catalog/geography.go": [
+            ("statement_timeout='4000'", "statement_timeout='120000'"),
+        ],
     }.items():
         path = root / relative
         source = path.read_text()

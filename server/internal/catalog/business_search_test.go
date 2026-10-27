@@ -8,6 +8,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -44,6 +46,8 @@ func testBusinessSearch(t *testing.T, db *pgxpool.Pool) {
 		"sic=9999", "sic=12*&town=Other+Business+Town", "industry=Other+widgets", "sic=missing", "industry=Other*&county=Old*",
 		"sic=12*&street=Business*", "sic=12*&postcode=BB1", "sic=12*&organisation=Business*", "sic=12*&building=missing",
 		"sic=12*&sort=name", "sic=12*&group=listing", "industry=Other*&town=Other*",
+		"sic=12*&postcode=BB1&sort=name", "sic=12*&organisation=Business*&sort=name",
+		"sic=12*&street=Business*&sort=name", "industry=Other*&town=Other*&sort=name",
 	} {
 		t.Run("business-projection/"+raw, func(t *testing.T) {
 			values, _ := url.ParseQuery(raw)
@@ -75,6 +79,33 @@ func testBusinessSearch(t *testing.T, db *pgxpool.Pool) {
 	}
 	if after.metrics.plans["business_projection"] == 0 || before.metrics.plans["business_projection"] != 0 {
 		t.Fatal("business path not exercised")
+	}
+	ordered, err := parse(mustValues("dataset=all&kind=business&sic=12*&sort=name"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	fOrdered, statusOrdered, err := after.buildCandidateFilters(ctx, ordered)
+	if err != nil || statusOrdered != 200 || !fOrdered.businessSearch {
+		t.Fatal("ordered business projection not selected", err)
+	}
+	vocabularyBefore := after.metrics.phases[phaseKey{"vocabulary", "ok"}].Count
+	pairsBefore := after.metrics.orderedPairs.Load()
+	w := httptest.NewRecorder()
+	after.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/search?dataset=all&kind=business&sic=12*&sort=name", nil))
+	if w.Code != 200 || after.metrics.orderedPairs.Load() <= pairsBefore || after.metrics.phases[phaseKey{"vocabulary", "ok"}].Count-vocabularyBefore != 1 {
+		t.Fatal("ordered business labels must be batched once")
+	}
+	if directory := os.Getenv("UKINFO_PERFORMANCE_REPORT_DIR"); directory != "" {
+		if err = os.MkdirAll(directory, 0755); err != nil {
+			t.Fatal(err)
+		}
+		raw, e := json.MarshalIndent(map[string]any{"passed": true, "conditions": "invented classified businesses; execution work only", "projection_used": true, "vocabulary_queries": 1, "expanded_name_pairs": after.metrics.orderedPairs.Load() - pairsBefore}, "", "  ")
+		if e != nil {
+			t.Fatal(e)
+		}
+		if e = os.WriteFile(filepath.Join(directory, "business-ordered-work.json"), append(raw, '\n'), 0644); e != nil {
+			t.Fatal(e)
+		}
 	}
 	var sourceCount, indexCount int64
 	if err = db.QueryRow(ctx, "SELECT count(*) FROM entries WHERE kind=1").Scan(&sourceCount); err != nil {
