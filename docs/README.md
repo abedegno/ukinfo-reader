@@ -26,6 +26,9 @@ for your task; dated investigation reports describe the evidence at the time.
 
 ## Manage and operate an archive
 
+- [Search performance checks](search-performance.md) — invented CI matrices, work budgets and private HDD diagnostics.
+- [Production deployment, monitoring and recovery](production.md) — separate serving credentials, TLS ingress, backups and isolated restore checks.
+
 - [Catalogue inventory, removal, backup and restore](catalogue-management.md)
 - [OpenTelemetry and Splunk backend setup](observability.md)
 - [Desktop diagnostics and safe issue reports](diagnostics.md)
@@ -58,6 +61,3 @@ research and measurement records, rather than promises about every deployment:
 - [Product review](research/product-review-2026-10-19.md) · [Implementation follow-up](review-implementation.md)
 
 [Back to the project](../README.md)
-
-- [Search performance checks](search-performance.md) — invented CI matrices, work budgets and private HDD diagnostics.
-- [Production deployment, monitoring and recovery](production.md) — separate serving credentials, TLS ingress, backups and isolated restore checks.

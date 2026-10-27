@@ -23,10 +23,13 @@ ukinfo-server index-research --dataset se2005-pcf175-2005-06
 
 Reapply the read-role grants from [server setup](search-app.md) after migrating an
 existing catalogue: the new `research_keys` and `research_indexes` tables need SELECT.
-The four complete editions now have measured research indexes covering **189,064,266
+The initial four-edition research-index measurement covered **189,064,266
 source entries**, including **6,152,296 businesses** in 2005. Together they add
 **45.84 GiB**, before WAL/build/recovery headroom. Individual local builds took
 6.1–21.4 minutes. See [per-edition measurements and validation limits](research/review-validation.md).
+The later verified 2003 import brings supported source coverage to **248,951,107
+occurrences across five editions**; the size/build-time measurements above exclude
+that import and subsequent projections.
 The native builder was outside the database's two-CPU/one-GiB Docker cap; these are
 development-machine build times, not a VPS performance promise. Check free space
 before building. Source media are not needed for this pass.

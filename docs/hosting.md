@@ -3,21 +3,22 @@
 ## Current deployment and capacity
 
 The [public archive](https://ukinfo.6153112.xyz) runs the Go service and PostgreSQL 18
-in Docker on a NAS, through a dedicated Cloudflare Tunnel. It serves four complete
-editions with no sample/demo datasets. The database has no public port; the API uses
+in Docker on a NAS, through a dedicated Cloudflare Tunnel. It serves five complete
+editions (248,951,107 source occurrences) with no sample/demo datasets. The database has no public port; the API uses
 a SELECT-only role, explicit tunnel-peer trust, per-client quotas and bounded work.
 See [public service controls](#public-service-through-cloudflare-tunnel).
 
 The original 17 October 2026 hosting shortlist below is a dated planning record.
 Prices, provider allowances and availability must be checked before provisioning.
-The complete 2005 catalogue measured **11.79 GiB**; all four supported editions together
+The complete 2005 catalogue measured **11.79 GiB**; the initial four-edition base together
 measured **38.26 GiB** (189,064,266 source occurrences).
 The optional [ONSPD nearby-search reference](geography.md) adds about **840 MiB**
 for postcode coordinates and indexes, plus import/WAL headroom.
 The later [research-index measurements](research/review-validation.md) add **45.84 GiB**
 for complete grouping/archival lookup/business classification indexes. The combined
 local database, including the existing address/coordinate indexes and small development
-samples, measures **86.40 GiB**. The 38.26 GiB figure is the base catalogue. An 80 GB
+samples, measures **86.40 GiB**. These are initial four-edition measurements, before the 2003 import and later hosted
+projections; they are not the current five-edition footprint. The 38.26 GiB figure is that base catalogue. An 80 GB
 disk cannot hold the measured fully indexed installation; OS, WAL, temporary builds,
 growth and backups need additional space.
 The [local full-corpus measurements](research/compact-catalogue.md) tested the Go API and

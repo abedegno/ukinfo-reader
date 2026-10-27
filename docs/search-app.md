@@ -31,10 +31,10 @@ all desktop releases remain drafts.
 - Go 1.26+ (tested with 1.26.10), PostgreSQL **18**, Python 3.10+ for importing discs.
 - Node 22.12+ and npm for desktop development/browser tests, not hosted serving.
 - All five [verified release profiles](editions.md) can be imported. Each import is
-  searchable individually or together. All **189,064,266** occurrences in the complete supported sources
+  searchable individually or together. All **248,951,107** occurrences in the complete supported sources
   have passed PostgreSQL record/projection verification. Modern entries retain their
   electoral/telephone/business types.
-- Business searching covers the validated **2005 V10.5 SE** business stream, including
+- Business searching covers the validated **2003 SE** and **2005 V10.5 SE** business streams, including
   updates/deletions already applied by the reader. The supplied **2004 SE** disc has no
   business listings. Early-edition business-related source fields remain visible as
   original fields; they have not been reclassified as modern business listings.
