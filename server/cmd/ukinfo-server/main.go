@@ -355,6 +355,9 @@ func run() error {
 		pc.ConnConfig.ConnectTimeout = 2 * time.Second
 		pc.ConnConfig.RuntimeParams["default_transaction_read_only"] = "on"
 		pc.ConnConfig.RuntimeParams["statement_timeout"] = "4000"
+		// Every candidate query explicitly selects the same derived Top-K index.
+		// Reuse its parameterized plan instead of rebuilding it for each request.
+		pc.ConnConfig.RuntimeParams["plan_cache_mode"] = "force_generic_plan"
 		pc.ConnConfig.RuntimeParams["application_name"] = "ukinfo-parade-search"
 		pc.ConnConfig.Tracer = telemetry.DBTracer{}
 		searchDB, e := pgxpool.NewWithConfig(ctx, pc)

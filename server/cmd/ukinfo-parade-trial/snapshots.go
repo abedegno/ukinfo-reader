@@ -33,6 +33,10 @@ type privateSnapshot struct {
 }
 
 func captureSnapshot(ctx context.Context, path, output, report, side string, reverse bool, ordinal int) error {
+	return captureSnapshotTarget(ctx, path, output, report, side, reverse, ordinal, false)
+}
+
+func captureSnapshotTarget(ctx context.Context, path, output, report, side string, reverse bool, ordinal int, hosted bool) error {
 	if report == "" || output == report {
 		return errors.New("require separate private snapshot and aggregate report")
 	}
@@ -69,7 +73,7 @@ func captureSnapshot(ctx context.Context, path, output, report, side string, rev
 		if ctx.Err() != nil {
 			break
 		}
-		p := privateRead(ctx, &client, index, cases[n], "")
+		p := privateReadTarget(ctx, &client, index, cases[n], "", hosted)
 		o := snapshotObservation{Case: n, Status: p.status, MS: p.ms, Code: p.code, Success: p.hash != "", Next: p.next != ""}
 		if !o.Success {
 			failures++

@@ -39,6 +39,9 @@ func ParadeTrialBackend(c ParadeTrialCase) (string, error) {
 		return "", errors.New("invalid private query")
 	}
 	if paradeEligible(q) {
+		if paradeNameProbe(q) {
+			return "selective", nil
+		}
 		return "paradedb", nil
 	}
 	return "native", nil

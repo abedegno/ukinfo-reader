@@ -233,28 +233,14 @@ func (a *API) finishOrderedCandidates(ctx context.Context, q query, f candidateF
 			return searchResult{}, nil, 503, sourceReadError(e)
 		}
 
-		rows, e := a.searchRows(ctx, "group_members", "SELECT k.group_key,count(*),array_agg(DISTINCT d.key ORDER BY d.key) FROM research_keys k JOIN datasets d ON d.id=k.dataset_id WHERE k.group_key=ANY($1::bytea[]) AND k.dataset_id=ANY($2::smallint[]) GROUP BY k.group_key", []any{groups, f.datasetIDs}, false)
+		counts, e := a.groupOccurrences(ctx, f.datasetIDs, groups)
 		if e != nil {
-			return searchResult{}, nil, 503, searchReadError(e)
+			return searchResult{}, nil, 503, sourceReadError(e)
 		}
-		for rows.Next() {
-			var g []byte
-			var count int64
-			var editions []string
-			if e = rows.Scan(&g, &count, &editions); e != nil {
-				break
-			}
-			key := hex.EncodeToString(g)
+		for key, count := range counts {
 			m := members[key]
-			m.count, m.editions = count, editions
+			m.count, m.editions = count.count, count.editions
 			members[key] = m
-		}
-		if e == nil {
-			e = rows.Err()
-		}
-		rows.Close()
-		if e != nil {
-			return searchResult{}, nil, 503, e
 		}
 	}
 	requested := map[int16][]int32{}

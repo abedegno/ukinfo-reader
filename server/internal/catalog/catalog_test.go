@@ -331,6 +331,21 @@ func testMultipleBlocksAndBatches(t *testing.T, db *pgxpool.Pool) {
 	}
 	api := NewAPI(db)
 	ids := []int32{1, blockRows, blockRows + 1, importBatchRows, importBatchRows + 1}
+	// More than two source read batches, out of block order, including a
+	// duplicate: batching must preserve requested order and exact source values.
+	for i := 40; i > 0; i-- {
+		ids = append(ids, int32(i*blockRows+1))
+	}
+	ids = append(ids, 1)
+	trace := &blockReadTracer{}
+	cfg := db.Config()
+	cfg.ConnConfig.Tracer = trace
+	reader, e := pgxpool.NewWithConfig(ctx, cfg)
+	if e != nil {
+		t.Fatal(e)
+	}
+	defer reader.Close()
+	api = NewAPI(reader)
 	results, e := api.loadRecords(ctx, dataset, ids)
 	if e != nil {
 		t.Fatal(e)
@@ -340,6 +355,9 @@ func testMultipleBlocksAndBatches(t *testing.T, db *pgxpool.Pool) {
 			t.Fatal("block/batch boundary or numeric precision", r.SourceID)
 		}
 	}
+	if len(results) != len(ids) || trace.reads.Load() < 11 || trace.largest.Load() > recordBlocksPerRead {
+		t.Fatal("source read batches incomplete or unbounded", len(results), trace.reads.Load(), trace.largest.Load())
+	}
 	w := httptest.NewRecorder()
 	api.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/export?dataset=multiple-batches&surname=Li&limit=1", nil))
 	if w.Code != 200 || w.Header().Get("Content-Type") != "application/x-ndjson" || !strings.Contains(w.Body.String(), "9007199254740993") || strings.Count(w.Body.String(), "\n") != 1 {
@@ -348,6 +366,14 @@ func testMultipleBlocksAndBatches(t *testing.T, db *pgxpool.Pool) {
 	if v, e := Verify(ctx, db, "multiple-batches", nil); e != nil || v.Entries != int64(count) {
 		t.Fatal("multi-batch verification", v, e)
 	}
+	canceled, cancel := context.WithCancel(ctx)
+	defer cancel()
+	trace.cancel, trace.cancelAfter = cancel, trace.reads.Load()+3
+	partial, err := api.loadRecords(canceled, dataset, ids)
+	if err == nil || len(partial) != 0 {
+		t.Fatal("canceled parallel read returned partial records", err, len(partial))
+	}
+	waitForPoolIdle(t, reader)
 }
 
 // An old catalogue is copied through a read-only pool into new partitions. The

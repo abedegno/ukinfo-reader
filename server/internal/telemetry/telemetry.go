@@ -80,7 +80,7 @@ func Operation(ctx context.Context, name string) (context.Context, trace.Span) {
 	switch name {
 	case "db.query", "db.pool.acquire", "records.load", "address.select",
 		"search.vocabulary", "search.source_probe", "search.address_probe", "search.address_blocks",
-		"search.address_dictionary", "search.candidates", "search.ordered", "search.group_members", "search.records", "search.other":
+		"search.address_dictionary", "search.candidates", "search.ordered", "search.group_members", "search.records", "search.geography", "search.parade_inventory", "search.parade_candidates", "search.parade_pair", "search.other":
 	default:
 		name = "operation"
 	}

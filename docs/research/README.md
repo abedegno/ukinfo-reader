@@ -38,3 +38,5 @@ Short warm tests do not establish cold-storage or public-service capacity.
 
 Reports and result files contain aggregate measurements. Private query fixtures,
 responses and source media are excluded from this repository.
+
+- [Tail latency and broader search coverage](tail-search-2026-10-27.md): target plan reuse, bounded surname selection and complete large-radius streaming; frozen original and separate extended suites.

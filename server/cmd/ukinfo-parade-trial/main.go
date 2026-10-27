@@ -69,6 +69,12 @@ func run() error {
 	if *stage == "snapshot" {
 		return captureSnapshot(ctx, *cases, *output, *aggregateReport, *side, *reverse, *ordinal)
 	}
+	if *stage == "hosted-snapshot" {
+		if *ordinal < 0 {
+			return errors.New("hosted snapshots require one bounded case")
+		}
+		return captureSnapshotTarget(ctx, *cases, *output, *aggregateReport, "candidate", false, *ordinal, true)
+	}
 	if *stage == "compare-snapshots" {
 		return compareSnapshots(*beforeSnapshot, *afterSnapshot, *output)
 	}
@@ -80,6 +86,9 @@ func run() error {
 	}
 	if *stage == "metadata" {
 		return metadataWithParent(*cases, *output, *seeds)
+	}
+	if *stage == "extend-coverage" {
+		return extendCoverage(*cases, *output, *aggregateReport)
 	}
 	if *stage == "cursors" {
 		return checkCursors(ctx, *cases, *output)

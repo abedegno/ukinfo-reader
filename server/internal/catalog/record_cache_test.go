@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 )
 
 func TestRecordCacheBudgetAndIsolation(t *testing.T) {
@@ -57,14 +58,29 @@ func TestRecordCacheBudgetAndIsolation(t *testing.T) {
 }
 
 type blockReadTracer struct {
-	reads   atomic.Int32
-	queries atomic.Int32
+	reads       atomic.Int32
+	queries     atomic.Int32
+	largest     atomic.Int32
+	cancel      context.CancelFunc
+	cancelAfter int32
 }
 
 func (t *blockReadTracer) TraceQueryStart(ctx context.Context, _ *pgx.Conn, d pgx.TraceQueryStartData) context.Context {
 	t.queries.Add(1)
 	if strings.Contains(d.SQL, "SELECT id,payload FROM record_blocks") {
-		t.reads.Add(1)
+		n := t.reads.Add(1)
+		if t.cancel != nil && n == t.cancelAfter {
+			t.cancel()
+		}
+		if len(d.Args) == 2 {
+			if ids, ok := d.Args[1].([]int32); ok {
+				for n := t.largest.Load(); int32(len(ids)) > n; n = t.largest.Load() {
+					if t.largest.CompareAndSwap(n, int32(len(ids))) {
+						break
+					}
+				}
+			}
+		}
 	}
 	return ctx
 }
@@ -115,5 +131,17 @@ func testRequestBlockReuse(t *testing.T, db *pgxpool.Pool) {
 	f, _, err := a.candidateFilters(planned, q)
 	if err != nil || f.q.Cursor != "next-page" || f.q.Limit != 1 || trace.queries.Load() != before {
 		t.Fatal("refinement batch repeated planning or lost cursor", err)
+	}
+}
+
+// pgx destroys cancelled connections asynchronously after Release returns.
+func waitForPoolIdle(t *testing.T, pool *pgxpool.Pool) {
+	t.Helper()
+	deadline := time.Now().Add(2 * time.Second)
+	for pool.Stat().AcquiredConns() != 0 {
+		if time.Now().After(deadline) {
+			t.Fatalf("cancelled connection was not released: %d acquired", pool.Stat().AcquiredConns())
+		}
+		time.Sleep(time.Millisecond)
 	}
 }

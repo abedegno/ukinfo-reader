@@ -109,6 +109,11 @@ func TestQueryMetricsBoundedAndCacheReuse(t *testing.T) {
 	if len(m.plans) != 1 || m.plans["source"] != 1 {
 		t.Fatal(m.plans)
 	}
+	m.plan("paradedb_radius_stream")
+	m.observePhase("geography", 0.1, false)
+	if m.plans["paradedb_radius_stream"] != 1 || m.phases[phaseKey{"geography", "ok"}].Count != 1 {
+		t.Fatal("candidate geography metrics missing")
+	}
 	ctx := withRecordCache(context.Background())
 	cache := recordCache(ctx)
 	cache.observe = m

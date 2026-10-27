@@ -21,6 +21,8 @@ import (
 
 const paradeVersion = 1
 
+func (q query) streamRadius() bool { return q.Near != "" && q.nearbyCandidateStream }
+
 type paradeEdition struct {
 	ID       int16
 	Key      string
@@ -71,11 +73,52 @@ func searchEditions(ctx context.Context, db *pgxpool.Pool, scope string) ([]para
 
 // Select only the search shapes validated against native pages and cold/load trials.
 func paradeEligible(q query) bool {
+	if paradeNameProbe(q) {
+		return true
+	}
 	if q.Near != "" {
 		return q.hasAddress() && q.Group == "" && q.Sort == ""
 	}
 	return q.hasAddress() && (q.Sort == "" || q.Sort == "name" || (q.Sort == "edition" && q.Group == "")) ||
 		(q.Postcode != "" || q.Kind == "business" && q.hasBusinessFilters()) && q.Sort == "name" && q.Group == ""
+}
+
+// Full first-name discovery dominates broad alphabetical surnames. Keep narrow
+// searches native and decide from at most 4,097 compact index rows, before any
+// derived inventory/query. The probe never limits the eventual result set.
+func paradeNameProbe(q query) bool {
+	return q.Kind == "person" && q.Sort == "name" && q.Group == "" && q.Surname != "" &&
+		q.Match == "exact" && !strings.HasSuffix(q.Surname, "*") && q.First == "" &&
+		q.Postcode == "" && !q.hasAddress() && q.Near == "" &&
+		q.House == "" && q.Building == "" && q.Flat == "" && q.Middle == ""
+}
+
+const paradeNameProbeSQL = `SELECT EXISTS(SELECT FROM entries e
+ WHERE e.dataset_id=ANY($1::smallint[]) AND e.kind=0
+ AND e.name_id=(SELECT id FROM terms WHERE key=$2)
+ OFFSET 4096 LIMIT 1)`
+
+func (a *API) paradeWideName(ctx context.Context, q query, editions []paradeEdition) (bool, error) {
+	ids := make([]int16, len(editions))
+	for i, d := range editions {
+		ids[i] = d.ID
+	}
+	rows, err := a.searchRows(ctx, "source_probe", paradeNameProbeSQL, []any{ids, q.Surname}, false)
+	if err != nil {
+		return false, err
+	}
+	defer rows.Close()
+	if !rows.Next() {
+		if err := rows.Err(); err != nil {
+			return false, err
+		}
+		return false, recordIntegrity("missing name population probe")
+	}
+	var wide bool
+	if err := rows.Scan(&wide); err != nil {
+		return false, err
+	}
+	return wide, rows.Err()
 }
 
 // ParadeDB contains derived search rows only; permissions, visibility and original
@@ -101,6 +144,18 @@ func (a *API) paradeResults(ctx context.Context, q query) (searchResult, int, bo
 	if len(editions) == 0 {
 		end(nil)
 		return searchResult{}, 404, true, errors.New("Edition not imported")
+	}
+	if paradeNameProbe(q) {
+		wide, err := a.paradeWideName(ctx, q, editions)
+		if err != nil {
+			end(err)
+			return searchResult{}, 503, true, sourceReadError(err)
+		}
+		if !wide {
+			end(nil)
+			a.metrics.plan("paradedb_fallback")
+			return searchResult{}, 0, false, nil
+		}
 	}
 	var exists bool
 	err = a.ParadeDB.QueryRow(inventoryCtx, "SELECT to_regclass('ukinfo_search.editions') IS NOT NULL").Scan(&exists)
@@ -131,7 +186,7 @@ func (a *API) paradeResults(ctx context.Context, q query) (searchResult, int, bo
 	var distances map[int32]postcodeDistance
 	var geography *GeographySearch
 	if q.Near != "" {
-		distances, geography, err = a.nearby(ctx, &q)
+		geography, err = a.nearbyCentre(ctx, &q)
 		if err != nil {
 			status := 503
 			var geoErr *geographyError
@@ -140,11 +195,8 @@ func (a *API) paradeResults(ctx context.Context, q query) (searchResult, int, bo
 			}
 			return searchResult{}, status, true, err
 		}
-		q.nearbyPostcodes = make([]int32, 0, len(distances))
-		for id := range distances {
-			q.nearbyPostcodes = append(q.nearbyPostcodes, id)
-		}
-		slices.Sort(q.nearbyPostcodes)
+		q.nearbyCandidateStream = true
+		a.metrics.plan("paradedb_radius_stream")
 	}
 	if q.Group != "" {
 		out, status, err := orderedResultsWith(ctx, q, func(ctx context.Context, q query) (searchResult, []orderCursor, int, error) {
@@ -169,16 +221,27 @@ func (a *API) paradeResults(ctx context.Context, q query) (searchResult, int, bo
 	for {
 		batchQ := q
 		batchQ.Limit = q.Limit + 1
-		if q.House != "" || q.Building != "" || q.Flat != "" || q.Middle != "" {
+		if q.House != "" || q.Building != "" || q.Flat != "" || q.Middle != "" || q.streamRadius() {
 			batchQ.Limit = 100
 		}
 		positions, e := a.paradePositions(ctx, batchQ, editions, after)
 		if e != nil {
 			return searchResult{}, 503, true, searchReadError(e)
 		}
+		if q.streamRadius() {
+			distances, e = a.nearbyCandidateDistances(ctx, geography, positions)
+			if e != nil {
+				return searchResult{}, 503, true, e
+			}
+		}
 		found := map[[2]int32]result{}
 		requested := map[int16][]int32{}
 		for _, p := range positions {
+			if q.streamRadius() {
+				if _, ok := distances[p.PostcodeID]; !ok {
+					continue
+				}
+			}
 			requested[p.Dataset] = append(requested[p.Dataset], p.ID)
 		}
 		for dataset, ids := range requested {
@@ -192,6 +255,11 @@ func (a *API) paradeResults(ctx context.Context, q query) (searchResult, int, bo
 			}
 		}
 		for _, p := range positions {
+			if q.streamRadius() {
+				if _, ok := distances[p.PostcodeID]; !ok {
+					continue
+				}
+			}
 			item, ok := found[[2]int32{int32(p.Dataset), p.ID}]
 			if !ok {
 				return searchResult{}, 503, true, recordIntegrity("search source missing")
@@ -328,11 +396,15 @@ type paradeNamePair struct{ Name, First string }
 func paradeSQLBounds(q query, d paradeEdition, after paradePosition, prefilter bool, pair *paradeNamePair) (string, []any) {
 	args := []any{}
 	conditions := searchFieldConditions(q, &args)
-	if q.Near != "" {
+	if q.Near != "" && !q.streamRadius() {
 		// Resolve the complete radius against authoritative ONSPD first. Empty or
 		// unresolved state matches nothing; it can never remove the radius filter.
-		args = append(args, q.nearbyPostcodes)
-		conditions = append(conditions, fmt.Sprintf("postcode_id=ANY($%d::integer[])", len(args)))
+		if len(q.nearbyPostcodes) == 0 {
+			conditions = append(conditions, "false")
+		} else if !q.streamRadius() {
+			args = append(args, q.nearbyPostcodes)
+			conditions = append(conditions, fmt.Sprintf("postcode_id=ANY($%d::integer[])", len(args)))
+		}
 	}
 	if pair != nil {
 		args = append(args, pair.Name, pair.First)
