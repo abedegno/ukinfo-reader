@@ -11,8 +11,10 @@ import (
 	"reflect"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"testing"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -196,6 +198,7 @@ func testGroupMemberPlans(t *testing.T, db *pgxpool.Pool, dataset int16) {
 	if _, err = probe.groupMembers(ctx, countDatasets, [][]byte{make([]byte, 32)}); !errors.Is(err, errRecordIntegrity) {
 		t.Fatal("missing group count accepted", err)
 	}
+	testGroupKeyReads(t, db, dataset)
 	if dir := os.Getenv("UKINFO_PERFORMANCE_REPORT_DIR"); dir != "" {
 		if err = os.MkdirAll(dir, 0700); err != nil {
 			t.Fatal(err)
@@ -208,4 +211,76 @@ func testGroupMemberPlans(t *testing.T, db *pgxpool.Pool, dataset int16) {
 			t.Fatal(err)
 		}
 	}
+}
+
+type groupKeyTracer struct {
+	calls, largest atomic.Int32
+	cancel         context.CancelFunc
+	cancelAfter    int32
+}
+
+func (t *groupKeyTracer) TraceQueryStart(ctx context.Context, _ *pgx.Conn, d pgx.TraceQueryStartData) context.Context {
+	if strings.HasPrefix(d.SQL, "SELECT id,group_key FROM research_keys") {
+		count := t.calls.Add(1)
+		ids := d.Args[1].([]int32)
+		for n := t.largest.Load(); int32(len(ids)) > n; n = t.largest.Load() {
+			if t.largest.CompareAndSwap(n, int32(len(ids))) {
+				break
+			}
+		}
+		if t.cancel != nil && count == t.cancelAfter {
+			t.cancel()
+		}
+	}
+	return ctx
+}
+func (*groupKeyTracer) TraceQueryEnd(context.Context, *pgx.Conn, pgx.TraceQueryEndData) {}
+func testGroupKeyReads(t *testing.T, db *pgxpool.Pool, dataset int16) {
+	t.Helper()
+	ctx := context.Background()
+	rows, err := db.Query(ctx, "SELECT id,group_key FROM research_keys WHERE dataset_id=$1 ORDER BY id LIMIT 129", dataset)
+	if err != nil {
+		t.Fatal(err)
+	}
+	positions := []paradePosition{}
+	want := map[[2]int32]string{}
+	for rows.Next() {
+		var id int32
+		var key []byte
+		if err = rows.Scan(&id, &key); err != nil {
+			t.Fatal(err)
+		}
+		positions = append(positions, paradePosition{Dataset: dataset, ID: id})
+		want[[2]int32{int32(dataset), id}] = hex.EncodeToString(key)
+	}
+	err = rows.Err()
+	rows.Close()
+	if err != nil || len(want) != 129 {
+		t.Fatal("invented source key population", err)
+	}
+	slices.Reverse(positions)
+	trace := &groupKeyTracer{}
+	cfg := db.Config()
+	cfg.ConnConfig.Tracer = trace
+	pool, err := pgxpool.NewWithConfig(ctx, cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Close()
+	api := NewAPI(pool)
+	got, err := api.paradeGroupKeys(ctx, positions)
+	if err != nil || !reflect.DeepEqual(got, want) {
+		t.Fatal("batched keys changed complete source mapping", err)
+	}
+	if trace.calls.Load() != 5 || trace.largest.Load() > 32 {
+		t.Fatal("unbounded source key read", trace.calls.Load(), trace.largest.Load())
+	}
+	canceled, cancel := context.WithCancel(ctx)
+	defer cancel()
+	trace.cancel, trace.cancelAfter = cancel, trace.calls.Load()+2
+	partial, err := api.paradeGroupKeys(canceled, positions)
+	if err == nil || partial != nil {
+		t.Fatal("cancelled key read returned partial mapping", err)
+	}
+	waitForPoolIdle(t, pool)
 }

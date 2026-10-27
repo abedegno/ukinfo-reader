@@ -7,6 +7,9 @@ import (
 	"encoding/json"
 	"errors"
 	"slices"
+	"sync"
+
+	"golang.org/x/sync/errgroup"
 )
 
 // Grouping is ordered by the canonical name/first pair and then group key. A
@@ -165,30 +168,55 @@ func (a *API) paradeGroupKeys(ctx context.Context, positions []paradePosition) (
 		requested[p.Dataset] = append(requested[p.Dataset], p.ID)
 	}
 	out := map[[2]int32]string{}
+	// A wide pair can scatter source IDs across hundreds of heap pages. Bound
+	// each read and overlap at most two within the existing source pool, rather
+	// than leaving one long streaming statement on the request's critical path.
+	type batch struct {
+		dataset int16
+		ids     []int32
+	}
+	batches := []batch{}
 	for dataset, ids := range requested {
-		rows, e := a.searchRows(ctx, "group_members", "SELECT id,group_key FROM research_keys WHERE dataset_id=$1 AND id=ANY($2::integer[])", []any{dataset, ids}, false)
-		if e != nil {
-			return nil, e
+		slices.Sort(ids)
+		for start := 0; start < len(ids); start += 32 {
+			batches = append(batches, batch{dataset, ids[start:min(start+32, len(ids))]})
 		}
-		for rows.Next() {
-			var id int32
-			var key []byte
-			if e = rows.Scan(&id, &key); e != nil {
-				break
+	}
+	var mu sync.Mutex
+	group, ctx := errgroup.WithContext(ctx)
+	group.SetLimit(2)
+	for _, b := range batches {
+		group.Go(func() error {
+			rows, e := a.searchRows(ctx, "group_members", "SELECT id,group_key FROM research_keys WHERE dataset_id=$1 AND id=ANY($2::integer[])", []any{b.dataset, b.ids}, false)
+			if e != nil {
+				return e
 			}
-			if len(key) != 32 {
-				e = recordIntegrity("invalid grouped source key")
-				break
+			defer rows.Close()
+			found := map[[2]int32]string{}
+			for rows.Next() {
+				var id int32
+				var key []byte
+				if e = rows.Scan(&id, &key); e != nil {
+					return e
+				}
+				if len(key) != 32 {
+					return recordIntegrity("invalid grouped source key")
+				}
+				found[[2]int32{int32(b.dataset), id}] = hex.EncodeToString(key)
 			}
-			out[[2]int32{int32(dataset), id}] = hex.EncodeToString(key)
-		}
-		if e == nil {
-			e = rows.Err()
-		}
-		rows.Close()
-		if e != nil {
-			return nil, e
-		}
+			if e = rows.Err(); e != nil {
+				return e
+			}
+			mu.Lock()
+			for key, value := range found {
+				out[key] = value
+			}
+			mu.Unlock()
+			return nil
+		})
+	}
+	if err := group.Wait(); err != nil {
+		return nil, err
 	}
 	if len(out) != len(positions) {
 		return nil, recordIntegrity("missing grouped source key")
