@@ -1,5 +1,6 @@
 "use strict";
 const { _electron: electron } = require("playwright");
+const { expect } = require("@playwright/test");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -470,13 +471,8 @@ const assert = require("node:assert/strict");
       .locator("#catalogue-message")
       .filter({ hasText: "Research lists and notes are preserved" })
       .waitFor();
-    assert.equal(
-      await reopened
-        .locator(".catalogue-edition")
-        .filter({ hasText: "Synthetic demo" })
-        .count(),
-      0,
-    );
+    // Success feedback precedes the asynchronous catalogue refresh.
+    await expect(demoCard).toHaveCount(0);
     const preserved = JSON.parse(
       fs.readFileSync(path.join(directory, "research-lists.json"), "utf8"),
     );
