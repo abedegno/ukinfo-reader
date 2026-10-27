@@ -104,7 +104,8 @@ func testParallelNamePrefix(t *testing.T, db *pgxpool.Pool) {
 	failed := NewAPI(pool)
 	w := httptest.NewRecorder()
 	failed.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/search?"+input, nil).WithContext(canceled))
-	if w.Code != 503 || strings.Contains(w.Body.String(), `"items"`) || pool.Stat().AcquiredConns() != 0 {
-		t.Fatal("failed source branch returned partial results or leaked its sibling", w.Code)
+	if w.Code != 503 || strings.Contains(w.Body.String(), `"items"`) {
+		t.Fatal("failed source branch returned partial results", w.Code)
 	}
+	waitForPoolIdle(t, pool)
 }

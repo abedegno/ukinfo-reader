@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 )
 
 func TestRecordCacheBudgetAndIsolation(t *testing.T) {
@@ -130,5 +131,17 @@ func testRequestBlockReuse(t *testing.T, db *pgxpool.Pool) {
 	f, _, err := a.candidateFilters(planned, q)
 	if err != nil || f.q.Cursor != "next-page" || f.q.Limit != 1 || trace.queries.Load() != before {
 		t.Fatal("refinement batch repeated planning or lost cursor", err)
+	}
+}
+
+// pgx destroys cancelled connections asynchronously after Release returns.
+func waitForPoolIdle(t *testing.T, pool *pgxpool.Pool) {
+	t.Helper()
+	deadline := time.Now().Add(2 * time.Second)
+	for pool.Stat().AcquiredConns() != 0 {
+		if time.Now().After(deadline) {
+			t.Fatalf("cancelled connection was not released: %d acquired", pool.Stat().AcquiredConns())
+		}
+		time.Sleep(time.Millisecond)
 	}
 }

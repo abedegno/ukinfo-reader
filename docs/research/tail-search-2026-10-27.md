@@ -193,3 +193,12 @@ Collector startup failure was retried separately and passed; no production
 Collector credentials or configuration were used by that test. Hosted acceptance
 and the contained scheduled-runner rehearsal are recorded in homelab after the
 reviewed image rollout; their resource profile differs from this private trial.
+
+## Release provenance
+
+The JSON records the measured commit and complete server tree. The runtime source
+SHA-256 hashes `git ls-tree -r --full-tree <commit> server` lines, preserving their
+newlines and excluding only paths ending `_test.go`. Release validation compares
+that digest with the final image source. A subsequent CI correction allows a
+bounded wait for pgx's asynchronous cancellation cleanup in tests; it changes no
+runtime source and does not replace the measured tree identity.

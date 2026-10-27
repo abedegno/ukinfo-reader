@@ -370,9 +370,10 @@ func testMultipleBlocksAndBatches(t *testing.T, db *pgxpool.Pool) {
 	defer cancel()
 	trace.cancel, trace.cancelAfter = cancel, trace.reads.Load()+3
 	partial, err := api.loadRecords(canceled, dataset, ids)
-	if err == nil || len(partial) != 0 || reader.Stat().AcquiredConns() != 0 {
-		t.Fatal("canceled parallel read returned partial records or leaked a connection", err, len(partial), reader.Stat().AcquiredConns())
+	if err == nil || len(partial) != 0 {
+		t.Fatal("canceled parallel read returned partial records", err, len(partial))
 	}
+	waitForPoolIdle(t, reader)
 }
 
 // An old catalogue is copied through a read-only pool into new partitions. The
