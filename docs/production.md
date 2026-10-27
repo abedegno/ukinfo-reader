@@ -295,3 +295,7 @@ Keep native indexes. Read the [control, diagnostics and rollout evidence](resear
 before changing the pinned extension or removing retained derived data.
 
 The [grouped source-read follow-up](research/grouped-search-2026-10-27.md) records the expanded contained regression, its retained failures and the unchanged cold/load gates.
+
+For manifest-driven builds, exact-main CI gates, staged acceptance and automatic
+application rollback, use the [hosted release workflow](hosted-releases.md).
+Database/schema/extension changes remain separate reviewed operations.

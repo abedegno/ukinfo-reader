@@ -2,14 +2,24 @@
 
 ## Unreleased
 
+- Extend optional hybrid routing to validated grouped/address, alphabetical postcode/
+  classification, broad exact-surname and nearby/address shapes; retain native
+  fallback before execution and unchanged pools, deadlines and public quotas.
+- Bound scattered source record reads and group-key reads, reuse target prepared
+  plans, and resolve only candidate postcodes through the source geography index.
+  Combine grouped canonical records/counts in a covered source-index pass.
+- Add separate deterministic expanded search coverage, independent native references,
+  complete paging/cancellation/work-budget tests and numeric private NAS regression
+  evidence. Preserve earlier failures and distinguish measured latency from capacity.
+
 - Build hosted and desktop backends with Go 1.26.10 for
   [GO-2026-6809](https://pkg.go.dev/vuln/GO-2026-6809).
 
 - Update the pinned desktop Electron runtime to 44.9.3 for
   [the compromised-intermediate-certificate mitigation](https://github.com/advisories/GHSA-jr5w-w6x2-84p9).
 
-- Route the optional ParadeDB adapter only to address-filter searches, retaining
-  native name/postcode and grouped/nearby paths. Validate the complete frozen
+- Introduce the initial address-filter-only ParadeDB selector, subsequently expanded
+  to the validated shapes listed above. Validate the complete frozen
   workload and isolated cold file caches, preserving failures and source privacy.
 - Add an opt-in hosted ParadeDB search adapter with a separate resumable index
   builder, complete-generation selection, compatible cursors, original-record
