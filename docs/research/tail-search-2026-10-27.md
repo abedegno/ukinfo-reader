@@ -151,5 +151,45 @@ The private source clone is reused without a new database copy. Source file page
 are evicted only while its processes are stopped; there is no production-source,
 derived-target or global cache flush. Target caches are shared/uncontrolled.
 
-Final aggregate measurements and deployment acceptance are recorded separately
-once the final combined protocol completes.
+## Final private acceptance
+
+The [value-free aggregate](tail-search-2026-10-27.json) records the complete final
+protocol. All original 294 cases appeared in both rounds, through up to ten pages;
+there were **zero candidate errors and zero content mismatches**. Baseline failures
+remain in the outcome counts. The separate twelve-case comparison and all 64
+full-native page/cursor checks passed. Later paired pages remain selected by both
+servers succeeding; no failed case was recalibrated out of the fixed load cohort.
+The grouped first-page check is separately labeled as pre-change hybrid.
+
+| Fixed 292-case load | Previous build | Candidate |
+| --- | ---: | ---: |
+| C1 p95 | 109 ms | 100 ms |
+| C1 throughput | 36.6 requests/s | 42.1 requests/s |
+| C4 p95, first pair | 278 ms | 214 ms |
+| C4 p95, reverse-order repeat | 230 ms | 208 ms |
+| C4 throughput, first pair | 62.1 requests/s | 79.7 requests/s |
+| C4 throughput, repeat | 69.3 requests/s | 80.6 requests/s |
+
+Every measured case occurred twice per closed-loop phase, plus the unchanged
+initial 292 checks. All candidate initial/measured requests succeeded. The separate
+expanded suite does not replace or reweight this load population.
+
+At 20 scheduled arrivals/second, both runs delivered all 584 requests with no
+candidate errors or generator drops. Candidate p95 was 232/195 ms; baseline was
+328/587 ms. Earlier candidate spikes remain documented above. There are only two
+repeats, the target cache/maintenance is uncontrolled, and these results do not
+establish a universal equal-rate improvement or a maximum hosting capacity.
+
+All ten independent source-only cold probes passed the three-second gate and
+matched their frozen references. The original six were 0.57–1.08 seconds; the new
+wildcard/given-name query was 1.69 seconds; the 50 km unit/sector cases were
+1.05/1.15 seconds; broad grouped-address search was 2.39 seconds. The latter uses
+the explicitly labeled pre-change hybrid snapshot. API/SQL deadlines, public source and
+derived-target service identities, source records and derived schema stayed unchanged.
+
+Native/race integration, pinned-extension compatibility and execution-work tests,
+Go race/vet, and isolated Collector privacy/export checks passed. The earlier
+Collector startup failure was retried separately and passed; no production
+Collector credentials or configuration were used by that test. Hosted acceptance
+and the contained scheduled-runner rehearsal are recorded in homelab after the
+reviewed image rollout; their resource profile differs from this private trial.

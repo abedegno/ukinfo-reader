@@ -99,7 +99,7 @@ locals {
     }
     regression_cold = {
       name    = "Private regression source-cold maximum (seconds)"
-      program = "data('ukinfo_regression_source_cold_max_seconds').max().publish(label='Original source-cold maximum')\ndata('ukinfo_regression_coverage_source_cold_max_seconds').max().publish(label='Expanded nearby source-cold maximum')"
+      program = "data('ukinfo_regression_source_cold_max_seconds').max().publish(label='Original source-cold maximum')\ndata('ukinfo_regression_coverage_source_cold_max_seconds').max().publish(label='Expanded source-cold maximum')\ndata('ukinfo_regression_grouped_source_cold_max_seconds').max().publish(label='Grouped source-cold maximum')"
     }
     regression_c4 = {
       name    = "Private regression C4 p95 (seconds)"
