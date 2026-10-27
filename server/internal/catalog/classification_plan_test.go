@@ -140,6 +140,6 @@ func testClassificationProbeWork(t *testing.T, db *pgxpool.Pool) {
 			t.Fatal(err)
 		}
 	}
-	testGroupRepresentativePlans(t, db, dataset)
+	testGroupMemberPlans(t, db, dataset)
 
 }
