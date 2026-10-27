@@ -78,7 +78,7 @@ GitHub outages; they do not build or promote unreviewed images. They retain publ
 controls and serving data. Keep previous images until their recovery window ends.
 Never delete a data volume or flush global/serving-target caches to recover an app.
 A crashed operator can leave the NAS release lease: inspect its run label and
-confirm no operator/build remains before removing only that stopped lease record.
+confirm no operator/build remains before stopping/removing only that owned lease container.
 
 As of 27 October 2026, homelab's GitHub jobs cannot start because of account
 billing/spending limits. Release planning reports this missing/failed gate and
