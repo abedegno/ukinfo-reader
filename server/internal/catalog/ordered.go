@@ -228,19 +228,9 @@ func (a *API) finishOrderedCandidates(ctx context.Context, q query, f candidateF
 			groups = append(groups, g)
 		}
 		var e error
-		members, e = a.groupRepresentatives(ctx, f.datasetIDs, groups)
+		members, e = a.groupMembers(ctx, f.datasetIDs, groups)
 		if e != nil {
 			return searchResult{}, nil, 503, sourceReadError(e)
-		}
-
-		counts, e := a.groupOccurrences(ctx, f.datasetIDs, groups)
-		if e != nil {
-			return searchResult{}, nil, 503, sourceReadError(e)
-		}
-		for key, count := range counts {
-			m := members[key]
-			m.count, m.editions = count.count, count.editions
-			members[key] = m
 		}
 	}
 	requested := map[int16][]int32{}

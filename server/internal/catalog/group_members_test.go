@@ -16,7 +16,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func testGroupRepresentativePlans(t *testing.T, db *pgxpool.Pool, dataset int16) {
+func testGroupMemberPlans(t *testing.T, db *pgxpool.Pool, dataset int16) {
 	t.Helper()
 	ctx := context.Background()
 	rows, err := db.Query(ctx, "SELECT id,group_key FROM research_keys WHERE dataset_id=$1 AND id=ANY(ARRAY[1,25000,50000]) ORDER BY id", dataset)
@@ -64,7 +64,7 @@ func testGroupRepresentativePlans(t *testing.T, db *pgxpool.Pool, dataset int16)
 			a := NewAPI(probe)
 			// Reverse edition input and lower ordinals in the later edition must not
 			// change the original min(dataset_id,id) representative contract.
-			members, err := a.groupRepresentatives(ctx, []int16{later, dataset}, groups)
+			members, err := a.groupMembers(ctx, []int16{later, dataset}, groups)
 			if err != nil || len(members) != 3 {
 				t.Fatal("group representatives", err)
 			}
@@ -73,13 +73,13 @@ func testGroupRepresentativePlans(t *testing.T, db *pgxpool.Pool, dataset int16)
 					t.Fatal("wrong representative")
 				}
 			}
-			if a.metrics.phases[phaseKey{"group_members", "ok"}].Count != 1 {
-				t.Fatal("unnecessary later-edition probes")
+			if a.metrics.phases[phaseKey{"group_members", "ok"}].Count != 3 {
+				t.Fatal("expected metadata plus one combined probe per edition")
 			}
-			if _, err = a.groupRepresentatives(ctx, []int16{later, dataset}, [][]byte{make([]byte, 32)}); !errors.Is(err, errRecordIntegrity) {
+			if _, err = a.groupMembers(ctx, []int16{later, dataset}, [][]byte{make([]byte, 32)}); !errors.Is(err, errRecordIntegrity) {
 				t.Fatal("missing group accepted", err)
 			}
-			if _, err = probe.Exec(ctx, "PREPARE representative_work(smallint,bytea[]) AS "+groupRepresentativeSQL); err != nil {
+			if _, err = probe.Exec(ctx, "PREPARE representative_work(smallint,bytea[]) AS "+groupMemberSQL); err != nil {
 				t.Fatal(err)
 			}
 			literals := []string{}
@@ -105,8 +105,8 @@ func testGroupRepresentativePlans(t *testing.T, db *pgxpool.Pool, dataset int16)
 			walk = func(n map[string]any) {
 				if relation, ok := n["Relation Name"].(string); ok && strings.HasPrefix(relation, "research_d") && n["Actual Loops"] != float64(0) {
 					scans++
-					if relation != fmt.Sprintf("research_d%d", dataset) || n["Node Type"] != "Index Only Scan" || n["Heap Fetches"] != float64(0) || n["Actual Rows"].(float64) > 1 {
-						t.Fatal("representative must prune editions and stop after one covered row per group", mode)
+					if relation != fmt.Sprintf("research_d%d", dataset) || n["Node Type"] != "Index Only Scan" || n["Heap Fetches"] != float64(0) {
+						t.Fatal("combined member probe must prune editions and use the covered group index", mode)
 					}
 				}
 				if children, ok := n["Plans"].([]any); ok {
@@ -139,8 +139,11 @@ func testGroupRepresentativePlans(t *testing.T, db *pgxpool.Pool, dataset int16)
 	if _, err = db.Exec(ctx, `INSERT INTO research_keys SELECT $1,1,source_hash,group_key,'','' FROM research_keys WHERE dataset_id=$2 AND id=4`, third, later); err != nil {
 		t.Fatal(err)
 	}
+	if _, err = db.Exec(ctx, `INSERT INTO research_keys SELECT $1,5,source_hash,group_key,'','' FROM research_keys WHERE dataset_id=$1 AND id=4`, later); err != nil {
+		t.Fatal(err)
+	}
 	probe := NewAPI(db)
-	members, err := probe.groupRepresentatives(ctx, []int16{third, later, dataset}, [][]byte{unique})
+	members, err := probe.groupMembers(ctx, []int16{third, later, dataset}, [][]byte{unique})
 	if err != nil || len(members) != 1 || members[hex.EncodeToString(unique)].dataset != later || members[hex.EncodeToString(unique)].id != 4 {
 		t.Fatal("parallel representative changed canonical source order", err)
 	}
@@ -164,11 +167,33 @@ func testGroupRepresentativePlans(t *testing.T, db *pgxpool.Pool, dataset int16)
 	if err != nil {
 		t.Fatal(err)
 	}
-	gotCounts, err := probe.groupOccurrences(ctx, countDatasets, countGroups)
+	// The old complete source query is independent of the per-edition merge.
+	representativeRows, err := db.Query(ctx, `SELECT DISTINCT ON(group_key) group_key,dataset_id,id FROM research_keys WHERE group_key=ANY($1::bytea[]) AND dataset_id=ANY($2::smallint[]) ORDER BY group_key,dataset_id,id`, countGroups, countDatasets)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for representativeRows.Next() {
+		var key []byte
+		var dataset int16
+		var id int32
+		if err = representativeRows.Scan(&key, &dataset, &id); err != nil {
+			t.Fatal(err)
+		}
+		k := hex.EncodeToString(key)
+		m := wantCounts[k]
+		m.dataset, m.id = dataset, id
+		wantCounts[k] = m
+	}
+	err = representativeRows.Err()
+	representativeRows.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
+	gotCounts, err := probe.groupMembers(ctx, countDatasets, countGroups)
 	if err != nil || !reflect.DeepEqual(gotCounts, wantCounts) {
 		t.Fatal("parallel group counts or database edition order changed", err)
 	}
-	if _, err = probe.groupOccurrences(ctx, countDatasets, [][]byte{make([]byte, 32)}); !errors.Is(err, errRecordIntegrity) {
+	if _, err = probe.groupMembers(ctx, countDatasets, [][]byte{make([]byte, 32)}); !errors.Is(err, errRecordIntegrity) {
 		t.Fatal("missing group count accepted", err)
 	}
 	if dir := os.Getenv("UKINFO_PERFORMANCE_REPORT_DIR"); dir != "" {
