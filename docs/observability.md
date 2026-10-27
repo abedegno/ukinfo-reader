@@ -97,6 +97,23 @@ explicitly using the deployment's Compose/Portainer lifecycle.
 
 ## Signals, privacy and cost controls
 
+The NAS also runs a weekly private-data regression protocol, configured in the
+homelab repository under `docker/ukinfo/regression/`. It checks frozen native
+references, complete paging, fixed C1/C4 workloads and five independently
+source-cold requests. An isolated process supervisor uses the existing private
+source clone; it has no Docker socket or published ports. Saved real searches
+never pass through the public URL.
+
+The Collector scrapes flat numeric `ukinfo_regression_*` metrics internally:
+heartbeat, running/last-pass state, overdue time, candidate errors/mismatches,
+source-cold maximum and baseline/candidate C1/C4 p95. Terraform manages four
+charts and detectors for failed, overdue and missing-telemetry conditions.
+Workload files, response hashes, cursors and logs remain on the NAS. Its combined
+container resource profile differs from the original separate-container
+benchmark; compare its results within that profile. Target caches remain shared
+and uncontrolled. See the [measured follow-up](research/cold-search-2026-10-26.md)
+for the original results and limitations.
+
 Request spans contain only a fixed route, bounded HTTP method, response status and
 search category. Child operations are `db.pool.acquire`, `db.query`, `search.records`
 and `address.select`. Database spans measure duration without SQL text, parameters,
