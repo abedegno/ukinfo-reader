@@ -57,14 +57,29 @@ func TestRecordCacheBudgetAndIsolation(t *testing.T) {
 }
 
 type blockReadTracer struct {
-	reads   atomic.Int32
-	queries atomic.Int32
+	reads       atomic.Int32
+	queries     atomic.Int32
+	largest     atomic.Int32
+	cancel      context.CancelFunc
+	cancelAfter int32
 }
 
 func (t *blockReadTracer) TraceQueryStart(ctx context.Context, _ *pgx.Conn, d pgx.TraceQueryStartData) context.Context {
 	t.queries.Add(1)
 	if strings.Contains(d.SQL, "SELECT id,payload FROM record_blocks") {
-		t.reads.Add(1)
+		n := t.reads.Add(1)
+		if t.cancel != nil && n == t.cancelAfter {
+			t.cancel()
+		}
+		if len(d.Args) == 2 {
+			if ids, ok := d.Args[1].([]int32); ok {
+				for n := t.largest.Load(); int32(len(ids)) > n; n = t.largest.Load() {
+					if t.largest.CompareAndSwap(n, int32(len(ids))) {
+						break
+					}
+				}
+			}
+		}
 	}
 	return ctx
 }

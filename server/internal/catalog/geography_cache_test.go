@@ -47,6 +47,14 @@ func TestGeographyCache(t *testing.T) {
 	if calls.Load() != beforeBoundary+1 {
 		t.Fatal("district and sector shared a centre cache entry")
 	}
+	// A cached centre has no full-radius postcode map and must never satisfy a
+	// native radius lookup, or vice versa.
+	beforeCentre := calls.Load()
+	key.centreOnly = true
+	_, _, _ = cache.lookup(context.Background(), key, load)
+	if calls.Load() != beforeCentre+1 {
+		t.Fatal("centre-only lookup reused a full-radius cache entry")
+	}
 	for i := 0; i < 9; i++ {
 		key.near = fmt.Sprint(i)
 		if _, _, err := cache.lookup(context.Background(), key, load); err != nil {

@@ -13,6 +13,10 @@ func TestParadeHybridRouting(t *testing.T) {
 		want  bool
 	}{
 		{"surname=Invented", false},
+		{"surname=Invented&sort=name", true},
+		{"surname=Invented&first_name=June&sort=name", false},
+		{"surname=Invented&sort=name&group=listing", false},
+		{"surname=Inv*&sort=name", false},
 		{"surname=Inv*&first_name=June", false},
 		{"postcode=AA1", false},
 		{"surname=Invented&postcode=AA1+1AA&sort=name", true},
@@ -48,7 +52,7 @@ func TestParadeHybridRouting(t *testing.T) {
 				t.Fatal("incorrect backend selection")
 			}
 			backend, err := ParadeTrialBackend(ParadeTrialCase{Path: "/api/search", Query: "dataset=all&" + tc.query})
-			if err != nil || (backend == "paradedb") != tc.want {
+			if err != nil || (backend == "paradedb" || backend == "selective") != tc.want {
 				t.Fatal("operator metadata disagrees with serving")
 			}
 			if !tc.want {

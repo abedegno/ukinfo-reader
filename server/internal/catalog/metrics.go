@@ -81,7 +81,7 @@ func queryClass(r *http.Request) string {
 }
 func (m *apiMetrics) plan(name string) {
 	switch name {
-	case "paradedb", "paradedb_fallback", "address", "source", "indexed_source", "reverse_intersection", "place_postings", "business_projection", "fallback", "error":
+	case "paradedb", "paradedb_fallback", "paradedb_radius_stream", "source_prefix_parallel", "address", "source", "indexed_source", "reverse_intersection", "place_postings", "business_projection", "fallback", "error":
 	default:
 		return
 	}

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"net/http/httptest"
 	"net/url"
 	"os"
@@ -219,6 +220,7 @@ func TestParadeIntegration(t *testing.T) {
 	rc.ConnConfig.RuntimeParams["role"] = role
 	rc.ConnConfig.RuntimeParams["default_transaction_read_only"] = "on"
 	rc.ConnConfig.RuntimeParams["statement_timeout"] = "4000"
+	rc.ConnConfig.RuntimeParams["plan_cache_mode"] = "force_generic_plan"
 	reader, err := pgxpool.NewWithConfig(ctx, rc)
 	if err != nil {
 		t.Fatal(err)
@@ -228,17 +230,50 @@ func TestParadeIntegration(t *testing.T) {
 	// retired postcodes and an empty radius, without adding source records.
 	if _, err = source.Exec(ctx, `
  INSERT INTO geography_releases(release,source_url,sha256,scope,entries,located,excluded_ni,excluded_other)
- VALUES('2026-08','https://example.org/invented-onspd',repeat('a',64),'GB',3,3,0,0);
+ VALUES('2026-08','https://example.org/invented-onspd',repeat('a',64),'GB',10004,10004,0,0);
  CREATE TABLE postcode_locations_parade PARTITION OF postcode_locations FOR VALUES IN ('2026-08');
  INSERT INTO postcode_locations(release,postcode,introduced,terminated,country,quality,latitude,longitude)
  VALUES('2026-08','AA11AA','198001','','E92000001',1,51,-1),
  ('2026-08','BB11BB','198001','200102','E92000001',8,51.001,-1),
- ('2026-08','CC11CC','198001','','E92000001',1,52,-1);
+ ('2026-08','CC11CC','198001','','E92000001',1,52,-1),
+ ('2026-08','W111AA','198001','','E92000001',1,51.3,-1);
+
+ -- Unused but real dictionary IDs make both radius sets exceed the SQL-term
+ -- budget. One set surrounds AA1; the other surrounds the empty CC1 centre.
+ INSERT INTO terms(key)
+ SELECT 'ZX'||area::text||(n/676)::text||chr(65+(n%676)/26)||chr(65+n%26)
+ FROM generate_series(1,2) area CROSS JOIN generate_series(0,4999)n;
+ INSERT INTO postcode_locations(release,postcode,introduced,terminated,country,quality,latitude,longitude)
+ SELECT '2026-08','ZX'||area::text||(n/676)::text||chr(65+(n%676)/26)||chr(65+n%26),
+ '198001','','E92000001',1,50.1+area,-1
+ FROM generate_series(1,2) area CROSS JOIN generate_series(0,4999)n;
  INSERT INTO geography_active(singleton,release) VALUES(true,'2026-08');`); err != nil {
 		t.Fatal(err)
 	}
 	native, parade := NewAPI(source), NewAPI(source)
 	parade.ParadeDB = reader
+	// A three-postcode batch must use the existing postcode primary key rather
+	// than scan the 10,000 unrelated points. Dictionary C collation must not
+	// silently make the database-default geography index unusable.
+	if _, err = source.Exec(ctx, "ANALYZE terms; ANALYZE postcode_locations"); err != nil {
+		t.Fatal(err)
+	}
+	var geoIDs []int32
+	if err = source.QueryRow(ctx, "SELECT array_agg(id) FROM terms WHERE key=ANY($1::text[])", []string{"AA11AA", "BB11BB", "W111AA"}).Scan(&geoIDs); err != nil {
+		t.Fatal(err)
+	}
+	var geoPlan []byte
+	if err = source.QueryRow(ctx, "EXPLAIN(ANALYZE,BUFFERS,FORMAT JSON) "+candidateGeographySQL, "2026-08", geoIDs, unitPosition(51, -1), 2*math.Sin(1000/(2*earthRadius))).Scan(&geoPlan); err != nil {
+		t.Fatal(err)
+	}
+	var geoPlans []map[string]any
+	if json.Unmarshal(geoPlan, &geoPlans) != nil || len(geoPlans) != 1 {
+		t.Fatal("invalid candidate geography plan")
+	}
+	geoRoot := geoPlans[0]["Plan"].(map[string]any)
+	if geoRoot["Actual Rows"] != float64(2) || geoRoot["Shared Hit Blocks"].(float64)+geoRoot["Shared Read Blocks"].(float64) > 64 {
+		t.Fatal("candidate geography scanned unrelated postcodes")
+	}
 	metrics := httptest.NewRecorder()
 	parade.Metrics().ServeHTTP(metrics, httptest.NewRequest("GET", "/metrics", nil))
 	if !strings.Contains(metrics.Body.String(), "ukinfo_parade_pool_max ") || !strings.Contains(metrics.Body.String(), "ukinfo_parade_pool_canceled_acquires_total ") {
@@ -305,6 +340,36 @@ func TestParadeIntegration(t *testing.T) {
 	testParadeGroupWork(t, source, reader)
 	for _, key := range keys {
 		check("dataset=" + key + "&surname=Researchonly&limit=2")
+	}
+	// Deep pages cross the ten-page real-data boundary. Both backends and
+	// cursor exchanges must also agree with the independently known total.
+	for _, suffix := range []string{"sort=name", "group=listing"} {
+		q := "dataset=parade-dense&town=Dense+Town&limit=7&" + suffix
+		check(q)
+		if rows := paradeWalk(t, parade, parade, q); len(rows) != 320 {
+			t.Fatal("deep traversal lost dense-pair occurrences", len(rows))
+		}
+	}
+	for _, q := range []string{
+		"dataset=all&surname=Res*&first_name=Na*&first_match=prefix&street=Invented*&limit=1",
+		"dataset=all&street=Invented*&sort=name&limit=7",
+		"dataset=all&town=Invented*&group=listing&limit=1",
+		"dataset=parade-postal&town=Boundary+Town&near=AA11AA&radius_m=50000&limit=1",
+		"dataset=parade-postal&town=Boundary+Town&near=AA1&radius_m=50000&limit=1",
+		"dataset=parade-postal&town=Boundary+Town&near=AA1+1&radius_m=50000&limit=1",
+	} {
+		check(q)
+	}
+	check("dataset=parade-dense&town=Dense+Town&near=CC11CC&radius_m=50000&limit=1")
+	if rows := paradeWalk(t, parade, parade, "dataset=parade-dense&town=Dense+Town&near=CC11CC&radius_m=50000&limit=1"); len(rows) != 0 {
+		t.Fatal("large radius silently discarded its postcode membership test")
+	}
+	far := paradeWalk(t, parade, parade, "dataset=parade-postal&town=Boundary+Town&near=AA11AA&radius_m=50000&limit=1")
+	if len(far) != 1 || far[0].Distance == nil || *far[0].Distance < 30000 || *far[0].Distance > 35000 {
+		t.Fatal("maximum radius did not include the known distant postcode")
+	}
+	if close := paradeWalk(t, parade, parade, "dataset=parade-postal&town=Boundary+Town&near=AA11AA&radius_m=1000&limit=1"); len(close) != 0 {
+		t.Fatal("small radius included the distant postcode")
 	}
 	if parade.metrics.plans["paradedb"] == 0 {
 		t.Fatal("checks only exercised fallback")

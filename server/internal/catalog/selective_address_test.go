@@ -247,11 +247,14 @@ INSERT INTO geography_active VALUES(true,'2026-08'); ANALYZE;`); err != nil {
 		}
 	}
 	testOrderedSurnameWindows(t, db)
+	testOrderedExactNames(t, db)
 	testOrderedVocabularyBatch(t, db)
 	testSourceProbeReuse(t, db)
+	testParadeNamePopulation(t, db)
 	testBusinessAddressIntersection(t, db)
 	testSearchPhaseRows(t, db)
 	testClassificationProbeWork(t, db)
+	testParallelNamePrefix(t, db)
 }
 
 func testAddressLookupIntegrity(t *testing.T, db *pgxpool.Pool) {

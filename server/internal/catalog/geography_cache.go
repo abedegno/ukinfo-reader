@@ -11,6 +11,7 @@ type geographyKey struct {
 	release, near      string
 	radius, nearLength int
 	generation         int16
+	centreOnly         bool
 }
 type geographyEntry struct {
 	ready  chan struct{}

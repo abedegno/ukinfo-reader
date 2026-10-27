@@ -81,6 +81,9 @@ func run() error {
 	if *stage == "metadata" {
 		return metadataWithParent(*cases, *output, *seeds)
 	}
+	if *stage == "extend-coverage" {
+		return extendCoverage(*cases, *output, *aggregateReport)
+	}
 	if *stage == "cursors" {
 		return checkCursors(ctx, *cases, *output)
 	}

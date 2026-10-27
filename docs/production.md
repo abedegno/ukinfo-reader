@@ -274,7 +274,9 @@ candidates for address filters, including grouped default/alphabetical searches
 and ungrouped edition ordering. The
 [cold/concurrency follow-up](research/cold-search-2026-10-26.md) extends this to
 ungrouped alphabetical postcode/classification searches and default-order nearby
-searches with address filters. Simple names, default-order postcodes/classifications,
+searches with address filters. The [tail-latency follow-up](research/tail-search-2026-10-27.md)
+adds bounded selection for broad exact-surname alphabetical searches, target prepared-plan
+reuse and candidate-only nearby location checks. Other simple names, default-order postcodes/classifications,
 nearby without address filters, nearest ordering and grouped nearby/edition-sorted
 searches retain native execution. Native alphabetical business searches also reuse
 the existing complete business projection. Desktop keeps its native backend.

@@ -2,7 +2,8 @@
 
 The hosted Go service can use a **separate, derived ParadeDB database** to
 accelerate address-filter searches, alphabetical postcode/classification searches
-and default-order nearby searches combined with address filters. Enable it with
+broad alphabetical exact-surname searches, and default-order nearby searches
+combined with address filters. Enable it with
 `serve --search-backend paradedb` and a SELECT-only `PARADE_DATABASE_URL`.
 The default remains `native`; desktop continues using its existing PostgreSQL
 package. Original records, edition visibility and archival identities remain in
@@ -29,8 +30,10 @@ The hybrid selector uses ParadeDB for these validated shapes:
   and ungrouped edition order.
 - Ungrouped alphabetical postcode or business-classification searches.
 - Ungrouped default-order nearby searches with a street/locality/town/county filter.
+- Ungrouped exact-surname-only alphabetical person searches above 4,096 occurrences.
+  A bounded source probe selects this path; narrow surname searches remain native.
 
-Name-only, default-order postcode and default-order classification searches retain
+Other name-only, default-order postcode and default-order classification searches retain
 native execution. This avoids the broad-postcode and simple-name regressions found
 in the original serving trial. The
 [cold/concurrency follow-up](research/cold-search-2026-10-26.md) measures the added shapes.
@@ -51,9 +54,12 @@ ordering queries newer dates first and stops only once older dates cannot enter
 the page. Tied dates retain the original name/dataset/record ordering.
 Nearby searches without address filters, non-default nearby ordering, grouped nearby
 searches and grouped edition ordering retain native execution. Nearby acceleration
-resolves the complete radius using the authoritative ONSPD reference, then applies
-its exact numeric postcode IDs to the derived query. Distance, quality, termination
-and centre metadata still come from that source reference. Empty radii match no rows.
+resolves the centre using the authoritative ONSPD reference, then checks each complete
+100-candidate address batch against that release before loading records. This avoids
+resolving tens of thousands of unrelated postcode IDs for a large radius. Rejected
+batches continue until the page/lookahead or exhaustion; there is no scan cutoff.
+Distance, quality, termination and centre metadata come from the same source
+reference. Missing locations and empty radii match no rows.
 Group membership, record detail, maps, exports and archival lookup retain their
 existing permission and original-record checks. Exports use the same search
 selector and pagination as the interactive API.
@@ -85,7 +91,14 @@ escaped and bound as a parameter; user regex syntax is never accepted. The
 original scalar range and district/sector precision predicates remain in place,
 so the prefilter changes candidate work without changing search semantics.
 
-The native alphabetical postcode/classification paths batch distinct vocabulary reads for up
+The target connection pool uses prepared generic plans for the pinned projection
+queries; the source pool retains its existing planning policy. Source record reads
+use at most four compressed blocks per statement and two concurrent reads within
+the unchanged source pool, under the same request deadline.
+The [tail-latency follow-up](research/tail-search-2026-10-27.md) records measurements,
+retained failed experiments and the separate expanded coverage suite.
+
+The native alphabetical exact-name/postcode/classification paths batch distinct vocabulary reads for up
 to 65,536 name pairs, then orders the same complete population. An overflowing
 probe uses the complete SQL path; the ceiling never limits successful results.
 Alphabetical business searches can use the existing complete business projection.
@@ -206,6 +219,8 @@ defaults disabled. These are **synthetic all-edition compatibility checks**, not
 new benchmark of the complete real archive or historical format decoders.
 
 Fixed observability labels `paradedb`/`paradedb_fallback` identify selection;
+`paradedb_radius_stream` identifies candidate location filtering;
+`source_prefix_parallel` identifies bounded native wildcard/name conjunctions;
 `parade_inventory`/`parade_candidates` measure target phases. Existing original
 record-load signals remain; `parade_pair` measures dense grouped-pair drains.
 Query text, names and postcode values are not labels.

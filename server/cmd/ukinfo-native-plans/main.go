@@ -8,8 +8,8 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"sort"
 	"strconv"
@@ -55,20 +55,6 @@ func (t *tracer) TraceQueryEnd(ctx context.Context, _ *pgx.Conn, _ pgx.TraceQuer
 	}
 }
 
-type discard struct {
-	header http.Header
-	status int
-}
-
-func (d *discard) Header() http.Header { return d.header }
-func (d *discard) WriteHeader(s int)   { d.status = s }
-func (d *discard) Write(p []byte) (int, error) {
-	if d.status == 0 {
-		d.status = 200
-	}
-	return len(p), nil
-}
-
 type node struct {
 	HeapFetches   float64 `json:"heap_fetches"`
 	Filtered      float64 `json:"rows_removed_filter"`
@@ -81,19 +67,25 @@ type node struct {
 	Temp          float64 `json:"temp_blocks"`
 	EstimatedRows float64 `json:"estimated_rows"`
 	EstimatedCost float64 `json:"estimated_cost"`
+	TopK          bool    `json:"top_k"`
 }
 type observation struct {
-	Pool       string  `json:"pool"`
-	Phase      string  `json:"phase"`
-	Case       int     `json:"case"`
-	Rank       int     `json:"rank"`
-	Status     int     `json:"status"`
-	RequestMS  float64 `json:"request_ms"`
-	OriginalMS float64 `json:"original_ms"`
-	ExplainMS  float64 `json:"explain_ms"`
-	Outcome    string  `json:"outcome"`
-	JITMS      float64 `json:"jit_ms"`
-	Nodes      []node  `json:"nodes"`
+	Pool           string  `json:"pool"`
+	Phase          string  `json:"phase"`
+	Case           int     `json:"case"`
+	Page           int     `json:"page"`
+	Rank           int     `json:"rank"`
+	Status         int     `json:"status"`
+	RequestMS      float64 `json:"request_ms"`
+	OriginalMS     float64 `json:"original_ms"`
+	ExplainMS      float64 `json:"explain_ms"`
+	Outcome        string  `json:"outcome"`
+	JITMS          float64 `json:"jit_ms"`
+	PlanningMS     float64 `json:"planning_ms"`
+	TargetPlanMode string  `json:"target_plan_mode"`
+	SourcePlanMode string  `json:"source_plan_mode"`
+	Nodes          []node  `json:"nodes"`
+	ArraySizes     []int   `json:"parameter_array_sizes,omitempty"`
 }
 
 func summarize(root map[string]any) []node {
@@ -102,7 +94,7 @@ func summarize(root map[string]any) []node {
 	num := func(m map[string]any, k string) float64 { v, _ := m[k].(float64); return v }
 	walk = func(m map[string]any) {
 		kind, _ := m["Node Type"].(string)
-		out = append(out, node{num(m, "Heap Fetches"), num(m, "Rows Removed by Filter"), kind, num(m, "Actual Rows"), num(m, "Actual Loops"), num(m, "Actual Total Time"), num(m, "Shared Hit Blocks"), num(m, "Shared Read Blocks"), num(m, "Temp Read Blocks") + num(m, "Temp Written Blocks"), num(m, "Plan Rows"), num(m, "Total Cost")})
+		out = append(out, node{num(m, "Heap Fetches"), num(m, "Rows Removed by Filter"), kind, num(m, "Actual Rows"), num(m, "Actual Loops"), num(m, "Actual Total Time"), num(m, "Shared Hit Blocks"), num(m, "Shared Read Blocks"), num(m, "Temp Read Blocks") + num(m, "Temp Written Blocks"), num(m, "Plan Rows"), num(m, "Total Cost"), m["Exec Method"] == "TopKScanExecState"})
 		children, _ := m["Plans"].([]any)
 		for _, c := range children {
 			if n, ok := c.(map[string]any); ok {
@@ -117,10 +109,22 @@ func run() error {
 	file := flag.String("cases", "", "NAS-only cases file")
 	ords := flag.String("ordinals", "56,91,92,212", "up to 12 private case ordinals")
 	output := flag.String("output", "", "new aggregate report")
+	page := flag.Int("page", 1, "diagnose this cursor page, 1..100; earlier pages stay private")
 	estimate := flag.Bool("estimate-only", false, "capture estimated structure without executing EXPLAIN ANALYZE")
 	analysisMS := flag.Int("analysis-ms", 10000, "private diagnostic statement budget, 1000..60000 ms; API deadlines stay unchanged")
 	backend := flag.String("backend", "native", "native or paradedb; explicit SELECT-only DSNs required")
+	planMode := flag.String("target-plan-cache-mode", "force_generic_plan", "target session: auto, force_custom_plan or force_generic_plan; source remains auto")
+	sourcePlanMode := flag.String("source-plan-cache-mode", "auto", "diagnostic source session only: auto, force_custom_plan or force_generic_plan")
 	flag.Parse()
+	if *page < 1 || *page > 100 {
+		return errors.New("invalid page")
+	}
+	if *planMode != "auto" && *planMode != "force_custom_plan" && *planMode != "force_generic_plan" {
+		return errors.New("invalid target plan policy")
+	}
+	if *sourcePlanMode != "auto" && *sourcePlanMode != "force_custom_plan" && *sourcePlanMode != "force_generic_plan" {
+		return errors.New("invalid source plan policy")
+	}
 	if *backend != "native" && *backend != "paradedb" {
 		return errors.New("invalid diagnostic backend")
 	}
@@ -142,6 +146,7 @@ func run() error {
 	cfg.MaxConns = 8
 	cfg.ConnConfig.RuntimeParams["statement_timeout"] = "2000"
 	cfg.ConnConfig.RuntimeParams["default_transaction_read_only"] = "on"
+	cfg.ConnConfig.RuntimeParams["plan_cache_mode"] = *sourcePlanMode
 	cfg.ConnConfig.ConnectTimeout = 5 * time.Second
 	tr := &tracer{}
 	cfg.ConnConfig.Tracer = tr
@@ -163,6 +168,7 @@ func run() error {
 		targetConfig.MaxConns = 4
 		targetConfig.ConnConfig.RuntimeParams["default_transaction_read_only"] = "on"
 		targetConfig.ConnConfig.RuntimeParams["statement_timeout"] = "4000"
+		targetConfig.ConnConfig.RuntimeParams["plan_cache_mode"] = *planMode
 		targetConfig.ConnConfig.Tracer = targetTrace
 		target, e = pgxpool.NewWithConfig(ctx, targetConfig)
 		if e != nil {
@@ -183,18 +189,37 @@ func run() error {
 			return errors.New("invalid ordinal")
 		}
 		c := cases[ci]
-		tr.Lock()
-		tr.calls = nil
-		tr.enabled = true
-		tr.Unlock()
-		targetTrace.Lock()
-		targetTrace.calls = nil
-		targetTrace.enabled = true
-		targetTrace.Unlock()
-		w := &discard{header: make(http.Header)}
-		requestStart := time.Now()
-		handler.ServeHTTP(w, httptest.NewRequest("GET", c.Path+"?"+c.Query, nil).WithContext(ctx))
-		requestMS := float64(time.Since(requestStart).Microseconds()) / 1000
+		values, e := url.ParseQuery(c.Query)
+		if e != nil {
+			return errors.New("invalid private query")
+		}
+		actualPage, status := 1, 0
+		var requestMS float64
+		for p := 1; p <= *page; p++ {
+			tr.Lock()
+			tr.calls, tr.enabled = nil, true
+			tr.Unlock()
+			targetTrace.Lock()
+			targetTrace.calls, targetTrace.enabled = nil, true
+			targetTrace.Unlock()
+			w := httptest.NewRecorder()
+			requestStart := time.Now()
+			handler.ServeHTTP(w, httptest.NewRequest("GET", c.Path+"?"+values.Encode(), nil).WithContext(ctx))
+			requestMS = float64(time.Since(requestStart).Microseconds()) / 1000
+			actualPage, status = p, w.Code
+			// Diagnose the first failing page, even if the requested deep page
+			// cannot be reached. Body and continuation tokens stay in memory.
+			if status != 200 || p == *page {
+				break
+			}
+			var body struct {
+				Next string `json:"next_cursor"`
+			}
+			if json.Unmarshal(w.Body.Bytes(), &body) != nil || body.Next == "" {
+				return errors.New("private page traversal exhausted before requested page")
+			}
+			values.Set("cursor", body.Next)
+		}
 		tr.Lock()
 		tr.enabled = false
 		calls := append([]*call(nil), tr.calls...)
@@ -214,7 +239,15 @@ func run() error {
 				break
 			}
 			rank++
-			ob := observation{Case: ci, Rank: rank, Status: w.status, RequestMS: requestMS, OriginalMS: c.ms, Outcome: "bounded_explain_failed", Nodes: []node{}}
+			ob := observation{Case: ci, Page: actualPage, Rank: rank, Status: status, RequestMS: requestMS, OriginalMS: c.ms, TargetPlanMode: *planMode, SourcePlanMode: *sourcePlanMode, Outcome: "bounded_explain_failed", Nodes: []node{}}
+			for _, argument := range c.args {
+				switch value := argument.(type) {
+				case []int32:
+					ob.ArraySizes = append(ob.ArraySizes, len(value))
+				case []int16:
+					ob.ArraySizes = append(ob.ArraySizes, len(value))
+				}
+			}
 			pool := db
 			ob.Pool, ob.Phase = "source", diagnosticPhase(c.sql)
 			if c.target {
@@ -239,6 +272,7 @@ func run() error {
 			if e == nil {
 				var plans []map[string]any
 				if json.Unmarshal(raw, &plans) == nil && len(plans) == 1 {
+					ob.PlanningMS, _ = plans[0]["Planning Time"].(float64)
 					if jit, ok := plans[0]["JIT"].(map[string]any); ok {
 						if timing, ok := jit["Timing"].(map[string]any); ok {
 							ob.JITMS, _ = timing["Total"].(float64)

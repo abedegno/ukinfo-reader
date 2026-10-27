@@ -437,6 +437,26 @@ func (a *API) nearby(ctx context.Context, q *query) (map[int32]postcodeDistance,
 	return a.geographyCache.lookup(ctx, geographyKey{release: reference.Release, near: q.Near, radius: q.Radius, nearLength: q.NearLength, generation: reference.Generation}, func() (map[int32]postcodeDistance, *GeographySearch, error) { return a.loadNearby(ctx, q, reference) })
 }
 func (a *API) loadNearby(ctx context.Context, q *query, reference GeographyRelease) (map[int32]postcodeDistance, *GeographySearch, error) {
+	return a.loadNearbyGeography(ctx, q, reference, false)
+}
+
+// Derived address searches already have a selective ordered candidate stream.
+// Resolve its centre without discovering every postcode inside the radius.
+func (a *API) nearbyCentre(ctx context.Context, q *query) (info *GeographySearch, err error) {
+	ctx, end := a.searchPhase(ctx, "geography")
+	defer func() { end(err) }()
+	reference, err := activeGeography(ctx, a.DB)
+	if err != nil {
+		return nil, &geographyError{503, "Nearby search needs an imported ONSPD reference"}
+	}
+	q.GeoRelease = reference.Release
+	_, info, err = a.geographyCache.lookup(ctx, geographyKey{release: reference.Release, near: q.Near, radius: q.Radius, nearLength: q.NearLength, generation: reference.Generation, centreOnly: true}, func() (map[int32]postcodeDistance, *GeographySearch, error) {
+		return a.loadNearbyGeography(ctx, q, reference, true)
+	})
+	return info, err
+}
+
+func (a *API) loadNearbyGeography(ctx context.Context, q *query, reference GeographyRelease, centreOnly bool) (map[int32]postcodeDistance, *GeographySearch, error) {
 	select {
 	case a.geographySlots <- struct{}{}:
 		defer func() { <-a.geographySlots }()
@@ -480,6 +500,9 @@ func (a *API) loadNearby(ctx context.Context, q *query, reference GeographyRelea
 		}
 		return nil, nil, geographyUnavailable()
 	}
+	if centreOnly {
+		return nil, info, nil
+	}
 
 	origin := unitPosition(info.Latitude, info.Longitude)
 	chord := 2 * math.Sin(float64(q.Radius)/(2*earthRadius))
@@ -503,4 +526,54 @@ func (a *API) loadNearby(ctx context.Context, q *query, reference GeographyRelea
 		return nil, nil, geographyUnavailable()
 	}
 	return distances, info, nil
+}
+
+const candidateGeographySQL = `WITH candidates AS MATERIALIZED (SELECT id,key FROM terms WHERE id=ANY($2::integer[]))
+ SELECT t.id,public.cube_distance(p.position,public.cube($3::double precision[])),p.quality,p.terminated
+ FROM candidates t JOIN postcode_locations p ON p.postcode=(t.key COLLATE "default") AND p.release=$1
+ WHERE p.position IS NOT NULL AND p.quality NOT IN (6,9)
+ AND public.cube_distance(p.position,public.cube($3::double precision[])) <= $4`
+
+// Test only the complete current batch, before loading original records. The
+// immutable source geography controls inclusion, distance and quality; a missing
+// location is excluded. Subsequent batches continue until page/lookahead or EOF.
+func (a *API) nearbyCandidateDistances(ctx context.Context, info *GeographySearch, positions []paradePosition) (distances map[int32]postcodeDistance, err error) {
+	ctx, end := a.searchPhase(ctx, "geography")
+	defer func() { end(err) }()
+	ids := make([]int32, 0, len(positions))
+	seen := map[int32]bool{}
+	for _, p := range positions {
+		if p.PostcodeID > 0 && !seen[p.PostcodeID] {
+			seen[p.PostcodeID] = true
+			ids = append(ids, p.PostcodeID)
+		}
+	}
+	distances = map[int32]postcodeDistance{}
+	if len(ids) == 0 {
+		return distances, nil
+	}
+	origin := unitPosition(info.Latitude, info.Longitude)
+	chord := 2 * math.Sin(float64(info.Radius)/(2*earthRadius))
+	// Dictionary keys use C collation; ONSPD's existing postcode primary key uses
+	// database-default collation. These normalized ASCII codes compare identically,
+	// but matching the index collation avoids a national geography-table scan.
+	rows, err := a.DB.Query(ctx, candidateGeographySQL, info.Reference.Release, ids, origin, chord)
+	if err != nil {
+		return nil, geographyUnavailable()
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id int32
+		var d float64
+		var quality int16
+		var terminated string
+		if err = rows.Scan(&id, &d, &quality, &terminated); err != nil {
+			return nil, geographyUnavailable()
+		}
+		distances[id] = postcodeDistance{2 * earthRadius * math.Asin(math.Min(1, d/2)), quality, terminated}
+	}
+	if err = rows.Err(); err != nil {
+		return nil, geographyUnavailable()
+	}
+	return distances, nil
 }

@@ -157,7 +157,8 @@ type query struct {
 	Cursor                                                string
 	// Derived execution state; source cursor fingerprints contain only the
 	// requested centre/radius and immutable geography release.
-	nearbyPostcodes []int32
+	nearbyPostcodes       []int32
+	nearbyCandidateStream bool
 }
 type cursor struct {
 	Query    string `json:"q"`
@@ -767,33 +768,30 @@ func (a *API) searchCandidates(ctx context.Context, q query) (searchResult, int,
 		if len(termCTEs) > 0 {
 			sql = "WITH " + strings.Join(termCTEs, ", ") + " " + sql
 		}
-		rows, e := a.searchRows(ctx, "candidates", sql, args, q.hasAddress())
+		var selected []cursor
+		var e error
+		if parallelNamePrefix(q) && len(datasetIDs) > 1 && len(termCTEs) == 0 {
+			a.metrics.plan("source_prefix_parallel")
+			selected, e = a.sourceNamePrefixPage(ctx, queryArgs, conditions, datasetIDs, q.Limit-len(ids)+1)
+		} else {
+			selected, e = a.sourceCandidatePositions(ctx, sql, args, q.hasAddress())
+		}
 		if e != nil {
 			log.Printf("Search query failed: %v", e)
 			return searchResult{}, 503, searchReadError(e)
 		}
-		for rows.Next() {
-			var id, name, first, postcode int32
-			var dataset int16
-			if err = rows.Scan(&dataset, &id, &name, &first, &postcode); err != nil {
-				rows.Close()
-				return searchResult{}, 503, errors.New("Search unavailable")
-			}
+		for _, c := range selected {
 			if len(ids) == q.Limit {
 				b, _ := json.Marshal(last)
 				next = base64.RawURLEncoding.EncodeToString(b)
 				break
 			}
-			ids = append(ids, id)
-			recordDatasets = append(recordDatasets, dataset)
-			recordPostcodes = append(recordPostcodes, postcode)
-			last = cursor{Query: q.fingerprint(), Name: name, First: first, ID: id, Dataset: dataset, Postcode: postcode}
-			positions = append(positions, last)
-		}
-		err = rows.Err()
-		rows.Close()
-		if err != nil {
-			return searchResult{}, 503, searchReadError(err)
+			ids = append(ids, c.ID)
+			recordDatasets = append(recordDatasets, c.Dataset)
+			recordPostcodes = append(recordPostcodes, c.Postcode)
+			c.Query = q.fingerprint()
+			last = c
+			positions = append(positions, c)
 		}
 		if next != "" || !areaOnly || batchStart >= len(nearbyIDs) {
 			break
@@ -859,42 +857,14 @@ func (a *API) loadRecords(ctx context.Context, dataset int16, ids []int32) (out 
 		}
 		groups[block] = append(groups[block], id)
 	}
-	if len(blockIDs) > 0 {
-		rows, e := a.DB.Query(ctx, "SELECT id,payload FROM record_blocks WHERE dataset_id=$1 AND id=ANY($2::integer[])", dataset, blockIDs)
-		if e != nil {
-			return nil, e
-		}
-		defer rows.Close()
-		for rows.Next() {
-			if e = ctx.Err(); e != nil {
-				return nil, e
-			}
-			var block int32
-			var compressed []byte
-			if e = rows.Scan(&block, &compressed); e != nil {
-				return nil, e
-			}
-			raw, err := unpackBlock(a.decoder, compressed)
-			if err != nil {
-				return nil, err
-			}
-			cache.put(recordBlockKey{dataset, block}, raw)
-			if cache != nil && cache.observe != nil {
-				cache.observe.decodedBlocks.Add(1)
-			}
-			for _, id := range groups[block] {
-				r, err := recordAt(raw, int((id-1)%blockRows))
-				if err != nil {
-					return nil, err
-				}
-				found[id] = r
-			}
-		}
-		if e = rows.Err(); e != nil {
-			return nil, e
-		}
-		rows.Close()
+	loaded, err := a.readRecordBlocks(ctx, dataset, blockIDs, groups, cache)
+	if err != nil {
+		return nil, err
 	}
+	for id, record := range loaded {
+		found[id] = record
+	}
+
 	var manifest Manifest
 	var rawManifest []byte
 	if e := a.DB.QueryRow(ctx, "SELECT manifest FROM datasets WHERE id=$1", dataset).Scan(&rawManifest); e != nil {

@@ -71,7 +71,8 @@ func TestWireExportExcludesSQLValuesAndErrors(t *testing.T) {
 	tracer.TraceQueryEnd(query, nil, pgx.TraceQueryEndData{Err: errors.New("SECRET_DATABASE_ERROR")})
 	_, child := Operation(ctx, "SECRET_OPERATION")
 	End(child, errors.New("SECRET_RECORD"))
-	for _, name := range []string{"search.vocabulary", "search.address_dictionary"} {
+	stages := []string{"search.vocabulary", "search.address_dictionary", "search.geography", "search.parade_inventory", "search.parade_candidates", "search.parade_pair"}
+	for _, name := range stages {
 		_, stage := Operation(ctx, name)
 		End(stage, nil)
 	}
@@ -92,10 +93,12 @@ func TestWireExportExcludesSQLValuesAndErrors(t *testing.T) {
 			t.Fatal("sensitive data exported")
 		}
 		count := 0
+		seen := map[string]bool{}
 		for _, resource := range request.ResourceSpans {
 			for _, scope := range resource.ScopeSpans {
 				for _, span := range scope.Spans {
 					count++
+					seen[span.Name] = true
 					rootID := root.SpanContext().SpanID()
 					if span.Name != "HTTP /api/search" && !bytes.Equal(span.ParentSpanId, rootID[:]) {
 						t.Fatal("operation lost its request parent")
@@ -106,8 +109,13 @@ func TestWireExportExcludesSQLValuesAndErrors(t *testing.T) {
 				}
 			}
 		}
-		if count != 6 {
-			t.Fatalf("got %d spans, expected request, pool, query, operation and two search stages", count)
+		if count != 4+len(stages) {
+			t.Fatalf("got %d spans, expected request, pool, query, operation and fixed search stages", count)
+		}
+		for _, name := range stages {
+			if !seen[name] {
+				t.Fatal("missing fixed search stage", name)
+			}
 		}
 	case <-time.After(3 * time.Second):
 		t.Fatal("no OTLP export")

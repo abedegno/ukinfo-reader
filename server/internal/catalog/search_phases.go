@@ -13,7 +13,7 @@ type phaseKey struct{ Name, Outcome string }
 
 func searchPhaseName(name string) string {
 	switch name {
-	case "parade_inventory", "parade_candidates", "parade_pair", "vocabulary", "source_probe", "address_probe", "address_blocks", "address_dictionary", "candidates", "ordered", "group_members", "records":
+	case "parade_inventory", "parade_candidates", "parade_pair", "geography", "vocabulary", "source_probe", "address_probe", "address_blocks", "address_dictionary", "candidates", "ordered", "group_members", "records":
 		return name
 	default:
 		return "other"
