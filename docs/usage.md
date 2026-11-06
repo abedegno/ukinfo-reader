@@ -182,7 +182,7 @@ folder; its wider physical records cannot be decoded as a renamed SE edition.
 | --- | --- |
 | `phone_code_raw`, `fax_code_raw` | Packed four-byte source telephone/fax values |
 | `phone_prefix`, `fax_prefix` | Source prefix text; may include subscriber digits |
-| `postcode_flags`, `source_co1` | Raw residential postcode controls and the original CO1-labelled bit; no broader meaning inferred |
+| `postcode_flags`, `source_co1` | Raw residential postcode controls and the original CO1-labelled removal-request bit; archival output retains it |
 | `county_source_id`, `town_source_id` | Parent references stored on the selected locality row |
 | `resolved_county_source_id` | County reached through the resolved town parent |
 
@@ -191,3 +191,5 @@ fields remain zero because the stored prefix is not necessarily an area code.
 Malformed prefixes and out-of-range prefix references produce an empty display
 and an explicit source warning. `legacy_locality_override_ignored` identifies
 stored parent joins that intentionally differ from stale original-program overrides.
+
+The [explicit hosted v14 selection](hosted-v14.md) excludes CO1-flagged occurrences; default archival exports remain unchanged.
