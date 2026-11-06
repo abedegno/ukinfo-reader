@@ -110,6 +110,8 @@ def entry_codes(record, deleted=False):
 
 class ResidenceStream:
     postcode_table = "d6new"
+    postcode_offset = 4
+    postcode_mask = 0x1FFFFF
     decode = staticmethod(decode_residence)
     length = staticmethod(residential_length)
 
@@ -355,12 +357,10 @@ class ModernDatabase:
                 "\ufffd" in value for value in [first, *common.values()] if isinstance(value, str)
             ):
                 row_warnings.append("invalid_dictionary_text")
-            area = (record.optional_pc20 or 0) if entry_type == "telephone" else 0
-            subscriber = (
-                subscriber_text(record.optional_kind16, legacy=self.legacy_phone)
-                if entry_type == "telephone"
-                else ""
+            phones, phone_warning = self.residential_phone(
+                record if entry_type == "telephone" else None
             )
+            row_warnings.append(phone_warning)
             yield dict(
                 dict.fromkeys((f["name"] for f in self.fields), ""),
                 **common,
@@ -369,14 +369,39 @@ class ModernDatabase:
                 firstName=first,
                 name_code=code,
                 name_flags=code & ~self.name_mask,
-                phone_area_code=area,
-                phone_subscriber=subscriber,
-                phone=f"0{area} {subscriber}" if area and subscriber else "",
+                **phones,
                 source_warning=";".join(sorted(set(filter(None, row_warnings)))),
             )
 
+    def residential_phone(self, record):
+        area = (record.optional_pc20 or 0) if record else 0
+        subscriber = (
+            subscriber_text(record.optional_kind16, legacy=self.legacy_phone) if record else ""
+        )
+        return dict(
+            phone_area_code=area,
+            phone_subscriber=subscriber,
+            phone=f"0{area} {subscriber}" if area and subscriber else "",
+        ), ""
+
+    def business_phones(self, record):
+        subscriber = subscriber_text(record.subscriber, legacy=True)
+        fax = subscriber_text(record.fax_subscriber, legacy=True)
+        return dict(
+            phone_area_code=record.area or 0,
+            phone_subscriber=subscriber,
+            phone=f"0{record.area} {subscriber}" if record.area and subscriber else "",
+            fax_area_code=record.fax_area or 0,
+            fax_subscriber=fax,
+            fax=f"0{record.fax_area} {fax}" if record.fax_area and fax else "",
+        ), ()
+
     def records(self):
         yield from self.search()
+
+    def validate_residential_record(self, record):
+        """Edition-specific source warnings checked during the complete scan."""
+        return ()
 
     def search(
         self,
@@ -453,7 +478,15 @@ class ModernDatabase:
                     if offset + length > end:
                         raise FormatError("Surname group ends inside residential record")
                     pc_id = (
-                        int.from_bytes(stream.data[offset + 4 : offset + 7], "little") & 0x1FFFFF
+                        int.from_bytes(
+                            stream.data[
+                                offset + stream.postcode_offset : offset
+                                + stream.postcode_offset
+                                + 3
+                            ],
+                            "little",
+                        )
+                        & stream.postcode_mask
                     )
                     if target_pc or target_sector:
                         pc = (

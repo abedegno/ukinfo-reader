@@ -2,9 +2,16 @@
 extracted/
 data/
 private/
+/UK-Info_v14_Instal/
+/UK-Info_v14_data/
 *.[iI][sS][oO]
 *.[bB][iI][nN]
 *.[cC][uU][eE]
+*.[mM][dD][fF]
+*.[mM][dD][sS]
+*.[iI][mM][gG]
+*.[cC][cC][dD]
+*.[sS][uU][bB]
 *.[dD][aA][tT]
 *.[iI][dD][xX]
 *.[dD][lL][lL]

@@ -1,0 +1,35 @@
+{
+  "inspection_date": "2026-11-06",
+  "distribution": "Your Family Tree issue 14 DVD",
+  "volume_label": "YFT14",
+  "product_label": "UK-Info V9 2004 SE",
+  "source_directory": "PC Software/Full/UK-InfoDisk",
+  "matching_edition": "se2004-pcp218-2004-07",
+  "method": "SHA-256 comparison of the main database and all InstallShield cabinet/header files against the retained PC Plus 218 distribution; existing extracted profile independently reverified with ukinfo-read --identify.",
+  "files": [
+    {
+      "name": "uk.dat",
+      "bytes": 540263828,
+      "sha256": "9e808616da93dff7e376b26e8244af8b878da4e8cf42b2c70d2d20a3d5ef2336"
+    },
+    {
+      "name": "data1.hdr",
+      "bytes": 15046,
+      "sha256": "4b22f072a8b0f8ec4cfe00c1cdb791a4fe1fca11a5a632c777eb4c7ef618fac9"
+    },
+    {
+      "name": "data1.cab",
+      "bytes": 470378,
+      "sha256": "7e367b30b6c44c8c98a5499908c63251a853ae2d3b04929332ccef9139c43e9d"
+    },
+    {
+      "name": "data2.cab",
+      "bytes": 58887797,
+      "sha256": "b408cdd25840982092b0976285f598757b1deb3a6aaeb0378f5506bf7bdd24c3"
+    }
+  ],
+  "all_listed_files_identical": true,
+  "whole_disc_hashed": false,
+  "new_decoder_required": false,
+  "additional_catalogue_import_required": false
+}

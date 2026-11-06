@@ -1,6 +1,6 @@
 # Documentation
 
-UK-Info Archive supports five verified historical UK-Info editions. Choose a guide
+UK-Info Archive supports six verified historical UK-Info editions. Choose a guide
 for your task; dated investigation reports describe the evidence at the time.
 
 ## Start here
@@ -46,6 +46,7 @@ for your task; dated investigation reports describe the evidence at the time.
 - [1999: SE 4.0](formats/se4.md)
 - [2003 SE: prefix-table addresses, residential and business records](formats/2003-se.md)
 - [2004/2005: address joins, residential/business updates and source anomalies](formats/modern-se.md)
+- [2008: v14 two-disc preparation, wider records and telephone prefix coding](formats/v14.md)
 - [PostgreSQL catalogue representation](formats/catalogue.md)
 - [Validation overview and complete source reports](validation-overview.md)
 - [Adding support for another edition](adding-editions.md)

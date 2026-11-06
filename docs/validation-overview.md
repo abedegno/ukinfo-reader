@@ -49,4 +49,14 @@ inputs; source anomalies and the absent industry-description dictionary remain
 explicit in the [report](validation/se2003-dpcs0104.json).
 
 
+The supplied [v14 source](formats/v14.md), mastered March 2008, has a distinct
+reader and [complete validation report](validation/v14-2008-03.json): **43,799,502**
+occurrences, including **6,092,008 businesses**. Physical/telephone comparisons
+cover **9,868 invented cases** with zero mismatches. A separate
+[all-locality comparison](validation/v14-2008-03-locality-comparison.json) accounts
+for 50 intentional flagged differences from stale original formatter overrides,
+with zero unexplained differences across 27,957 locality rows. Source-wide checks
+establish internal consistency, not independent historical accuracy. The hosted
+archive has not imported or performance-qualified v14.
+
 [Edition identities and provenance](editions.md) · [Binary format reference](../FORMAT.md)

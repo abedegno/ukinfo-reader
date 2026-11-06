@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Support the exact supplied UK-Info Disk v14 two-disc release, mastered March 2008:
+  residential/business readers, raw-image preparation, source telephone-prefix
+  extraction, folder imports and complete source validation. Preserve malformed
+  prefixes and partial-address precision as explicit warnings; keep the edition
+  off the hosted archive until a separately authorized import and acceptance.
+
 - Extend optional hybrid routing to validated grouped/address, alphabetical postcode/
   classification, broad exact-surname and nearby/address shapes; retain native
   fallback before execution and unchanged pools, deadlines and public quotas.

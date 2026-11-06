@@ -1,0 +1,19 @@
+{
+  "edition": "v14-2008-03",
+  "decoder_sha256": "3424b039abe88e9b7486e9540cc9165ab497d52d927efcab58f12b3299c42dd6",
+  "method": "Original field readers and physical-length callbacks executed in local x86 emulation with invented inputs; allocation/array runtime stubbed. No Windows installer or UI executed.",
+  "residential_cases": 640,
+  "residential_co1_flag_verified": true,
+  "business_cases": 3072,
+  "mismatches": 0,
+  "original_functions": {
+    "field_reader": "0x10013500",
+    "residential_length": "0x1000e500",
+    "business_length": "0x10001970",
+    "telephone_formatter": "0x100170d0"
+  },
+  "limitations": [
+    "Does not independently establish dictionary joins or compare with the running Windows UI."
+  ],
+  "telephone_formatter_cases": 6156
+}

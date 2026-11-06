@@ -88,6 +88,7 @@ def validate_database(db, directory, progress=None):
                 counts["building_corrections_applied"] += 1
             if record.optional_pc80 not in (None, 0, 10):
                 warnings["partial_postcode_source"] += 1
+            warnings.update(db.validate_residential_record(record))
             if indexed:
                 counts["indexed_physical_records"] += 1
                 for entry_type, _, code in entry_codes(record, offset in stream.deleted):
