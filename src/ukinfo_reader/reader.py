@@ -25,6 +25,10 @@ class Database:
     def __new__(cls, directory="extracted"):
         if cls is Database:
             format_name = identify_edition(directory).format
+            if format_name == "v14":
+                from .v14 import V14Database
+
+                return V14Database(directory)
             if format_name == "pcf78":
                 from .pcf78 import PCF78Database
 

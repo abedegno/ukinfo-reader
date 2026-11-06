@@ -108,7 +108,7 @@ def inspect(directory):
         known = identify_edition(directory)
     except UnsupportedEditionError:
         known = None
-    if known is not None and known.format == "modern2003":
+    if known is not None and known.format in ("modern2003", "v14"):
         from .validation import validate
 
         return validate(directory)

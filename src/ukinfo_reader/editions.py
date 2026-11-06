@@ -85,11 +85,41 @@ SE2003_DPCS0104 = Edition(
     ),
     format="modern2003",
 )
+V14 = Edition(
+    id="v14-2008-03",
+    title="UK-Info Disk v14 — supplied two-disc release, March 2008",
+    files=(
+        ("uk.dat", 334327804, "d037965a97905b0cf778ec7a4a0cb35a396959ddefd444a6fbb082a0b2c886be"),
+        ("d1.dat", 1568768, "f0fcd630587646b30aea71b0eb7fc3a2206233ab6f95e849b143765f0c8e4d74"),
+        ("d2.dat", 58404864, "2f01a605b92db1a5ba3f65e09a3ffd15e15431796542d685bcfe66097eba8b61"),
+        ("d3.dat", 48828416, "09732da0c79f2682ee4a2e4009cd2c733781ebb9a02afab34a1b0070848214b4"),
+        ("d4.dat", 520192, "2df8a3b1d4aa506395d7effcd6cb63a3d1e80d4f8ae784fe1cd36336d28fee94"),
+        ("d5.dat", 14101884, "9c99949330a2279cbd42851abeeb09eee072d11968a5e0f71c1a6616ed394ef2"),
+        ("d6new.dat", 40132608, "a6568a479f6572d091566d22ca39397adaeda24dfbfe3cc2aa2c4dff02800b4b"),
+        ("d7.dat", 6309099, "1424a20640dfca269c7f2ee84ce275d763feb308697b2ca7e753265419148de4"),
+        ("d8.dat", 315392, "678222c2b7baa2df96fabeae642fd9428daddce21260b9af14ef774683008104"),
+        ("ukspos.idx", 6934528, "7d737710fa1296dddd279b86f5f486c4b5f683bd38bb3b5d6c08f13505133b28"),
+        ("bus.dat", 146554212, "b5a42abf6c4c4f3fe0f61075b7ebe784bf6ee2275a22fef597620dd112576f04"),
+        ("dd.dat", 7482430, "1b1ba8b16b7e883809c33c2d065189efadc12eef4e8dfcc9f1838d099ae7defd"),
+        ("dbsic.dat", 8192, "782b9f9532b64e46c06a9ec225375634be27cb63a22b8cb723061c4c3ef24d4f"),
+        (
+            "lobdesc.dat",
+            29324834,
+            "bb50d56a6592b760ba8c75e3c252c1c1b0de6a4f65b749d2d892a82b93f8fff4",
+        ),
+        (
+            "telephone-prefixes.dat",
+            19124,
+            "45976c281a86f993042caf8635eed494804c00a28f74af0f271459ef3f715a7a",
+        ),
+    ),
+    format="v14",
+)
 MODERN_EDITIONS = tuple(
     Edition(id=source_id, title=title, files=files, format="modern")
     for source_id, title, files in MODERN_PROFILE_DATA
 )
-SUPPORTED_EDITIONS = (SE4_PCF94, PCF78, SE2003_DPCS0104) + MODERN_EDITIONS
+SUPPORTED_EDITIONS = (SE4_PCF94, PCF78, SE2003_DPCS0104) + MODERN_EDITIONS + (V14,)
 
 
 def identify_edition(directory):

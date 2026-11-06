@@ -1,0 +1,17 @@
+{
+  "edition": "v14-2008-03",
+  "locality_rows": 27957,
+  "original_formatter": "0x1000d490",
+  "method": "Original v14 locality formatter run for every source locality; only c-tree row I/O stubbed. Results compared at declared 30-byte text width.",
+  "intentional_source_relationship_differences": 50,
+  "unaccounted_differences": 0,
+  "source_warnings_by_locality": {
+    "unterminated_place_text": 80,
+    "legacy_locality_override_ignored": 50
+  },
+  "original_decoder_sha256": "3424b039abe88e9b7486e9540cc9165ab497d52d927efcab58f12b3299c42dd6",
+  "limitations": [
+    "v14 retains stale original formatter overrides; reader follows stored county/town parents and flags divergence.",
+    "This compares dictionary joins, not the running Windows UI or factual geography."
+  ]
+}

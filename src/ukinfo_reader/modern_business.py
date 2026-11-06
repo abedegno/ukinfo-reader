@@ -4,7 +4,7 @@ from functools import lru_cache
 
 from .codecs import FormatError
 from .modern import ModernFixedTable, ModernLeafIndex, decode_business
-from .modern_reader import subscriber_text, word
+from .modern_reader import word
 
 
 class BusinessStream:
@@ -95,8 +95,8 @@ def joined_business(db, stream_index, stream, record):
                 address[field] = ""
     industry, industry_offset, industry_warning = stream.industry_text(record.lob_reference)
     warnings.append(industry_warning)
-    subscriber = subscriber_text(record.subscriber, legacy=True)
-    fax_subscriber = subscriber_text(record.fax_subscriber, legacy=True)
+    phones, phone_warnings = db.business_phones(record)
+    warnings.extend(phone_warnings)
     row = dict.fromkeys((field["name"] for field in db.fields), "")
     row.update(
         address,
@@ -119,12 +119,7 @@ def joined_business(db, stream_index, stream, record):
         building_reference=reference,
         building_reference_raw=reference,
         subbuilding=db._cached_word(stream_index, "subbuilding", record.subbuilding_id or 0),
-        phone_area_code=record.area or 0,
-        phone_subscriber=subscriber,
-        phone=f"0{record.area} {subscriber}" if record.area and subscriber else "",
-        fax_area_code=record.fax_area or 0,
-        fax_subscriber=fax_subscriber,
-        fax=f"0{record.fax_area} {fax_subscriber}" if record.fax_area and fax_subscriber else "",
+        **phones,
     )
     if any("\ufffd" in value for value in row.values() if isinstance(value, str)):
         warnings.append("invalid_dictionary_text")

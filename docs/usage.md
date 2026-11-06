@@ -170,3 +170,24 @@ appropriate to that format. Progress goes
 to stderr; the final JSON report is printed to stdout and saved to `--output`. Reports contain
 metadata, hashes and counts, not directory records. See the [SE 4.0](formats/se4.md) and [PC Format 78](formats/pcf78.md) format documents
 for the checks and their limits.
+
+## v14 output fields
+
+The supplied [March 2008 v14 source](formats/v14.md) uses the same search/export
+commands and joined residential/business fields. It contains **43,799,502 source
+occurrences**, including **6,092,008 businesses**. Keep it in a separate prepared
+folder; its wider physical records cannot be decoded as a renamed SE edition.
+
+| Additional field | Meaning |
+| --- | --- |
+| `phone_code_raw`, `fax_code_raw` | Packed four-byte source telephone/fax values |
+| `phone_prefix`, `fax_prefix` | Source prefix text; may include subscriber digits |
+| `postcode_flags`, `source_co1` | Raw residential postcode controls and the original CO1-labelled bit; no broader meaning inferred |
+| `county_source_id`, `town_source_id` | Parent references stored on the selected locality row |
+| `resolved_county_source_id` | County reached through the resolved town parent |
+
+`phone_subscriber`/`fax_subscriber` retain six-digit suffixes, while area-code
+fields remain zero because the stored prefix is not necessarily an area code.
+Malformed prefixes and out-of-range prefix references produce an empty display
+and an explicit source warning. `legacy_locality_override_ignored` identifies
+stored parent joins that intentionally differ from stale original-program overrides.
