@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add an explicit hosted v14 CO1 selection: exclude 54,869 flagged residential
+  occurrences, retain raw archival output, and verify source/exclusion/type counts
+  plus a fresh selected-stream digest before issuing the terminal import frame.
+
 - Support the exact supplied UK-Info Disk v14 two-disc release, mastered March 2008:
   residential/business readers, raw-image preparation, source telephone-prefix
   extraction, folder imports and complete source validation. Preserve malformed

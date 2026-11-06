@@ -27,6 +27,7 @@ for your task; dated investigation reports describe the evidence at the time.
 ## Manage and operate an archive
 
 - [Hosted release automation and recovery](hosted-releases.md)
+- [v14 CO1 selection and private import acceptance](hosted-v14.md)
 
 - [Search performance checks](search-performance.md) — invented CI matrices, work budgets and private HDD diagnostics.
 - [Production deployment, monitoring and recovery](production.md) — separate serving credentials, TLS ingress, backups and isolated restore checks.

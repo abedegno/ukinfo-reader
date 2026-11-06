@@ -1,0 +1,27 @@
+{
+  "edition": "v14-2008-03",
+  "source_bytes_scanned": 334327804,
+  "counts": {
+    "flagged_physical_records": 29410,
+    "electoral_entries": 40694,
+    "entries": 54869,
+    "nonzero_name_code_entries": 46536,
+    "telephone_entries": 14175
+  },
+  "kinds": {
+    "0": 15235,
+    "3": 8427,
+    "4": 5677,
+    "5": 71
+  },
+  "seconds": 120.86,
+  "method": "Complete original-source scan; CO1 bit read from verified physical decoder; occurrence counts use existing entry selection.",
+  "help_document": "data_sources.htm from original v14 help.chm",
+  "help_sha256": "8ad557dde3423e2ff74da8fad4471061304f86d185ae3fda9655df27fdc29fd0",
+  "help_evidence": "The publisher describes its CO1 form as a record-removal request mechanism.",
+  "interpretation": "The physical field is named CO1 by the original constructor; hosted selection excludes every occurrence on a flagged physical record.",
+  "original_windows_ui_filtering": "Not independently executed; no claim of full Windows UI equivalence.",
+  "hosted_selection": "exclude-source-co1-v1",
+  "hosted_expected": 43744633,
+  "complete_six_edition_expected": 292695740
+}
