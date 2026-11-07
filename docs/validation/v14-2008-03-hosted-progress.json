@@ -1,5 +1,5 @@
 {
-  "as_of_utc": "2026-11-07T16:10:00Z",
+  "as_of_utc": "2026-11-07T16:13:48Z",
   "status": "blocked-on-cursor-and-legacy-errors",
   "published": false,
   "dataset": "v14-2008-03:co1-excluded",
@@ -366,6 +366,42 @@
       "records": 3,
       "parade_candidates": 2,
       "per_request_attribution_established": false
+    },
+    "serving_phase_probe": {
+      "qualifying": false,
+      "prespecified_requests": 6,
+      "errors": 1,
+      "serving_binary_unchanged": true,
+      "load_binary_unchanged": true,
+      "diagnostic_helper_cpu": 0.1,
+      "client_timings_are_not_acceptance_measurements": true,
+      "cohort_16": {
+        "route": "/api/address",
+        "scope": "all",
+        "request_ms": 5024.030334,
+        "errors": 1,
+        "successful_record_loads": 5,
+        "successful_record_load_seconds": 3.670614364,
+        "failed_record_loads": 1,
+        "failed_record_load_seconds": 0.666040801
+      },
+      "cohort_219": {
+        "route": "/api/address",
+        "scope": "all",
+        "request_ms": 4436.183755,
+        "errors": 0,
+        "successful_record_loads": 7,
+        "successful_record_load_seconds": 3.800864503
+      },
+      "cohort_261": {
+        "route": "/api/search",
+        "request_ms": 936.322282,
+        "errors": 0,
+        "parade_candidate_seconds": 0.800686093,
+        "record_load_seconds": 0.020820141
+      },
+      "legacy_errors": 0,
+      "original_failures_retained": true
     }
   }
 }

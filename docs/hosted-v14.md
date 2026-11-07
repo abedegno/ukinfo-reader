@@ -155,3 +155,16 @@ The serving API's existing cumulative metrics contain three failed record-loadin
 phases and two failed ParadeDB-candidate phases. These counters identify affected
 operations; they do not map every failure to an individual request. Further work
 must address those serving failures as well as the remaining reference error.
+
+A later one-pass phase probe reproduced a serving failure on `/api/address` with
+all-edition scope: five record loads succeeded in 3.671 seconds total before a
+sixth hit the five-second request deadline. Another all-edition address request
+spent 3.801 seconds in seven record loads and completed near the deadline. The
+main BM25 search in that pass spent 0.801 seconds selecting candidates and 0.021
+seconds loading records. The helper used 0.1 CPU, so client timings are diagnostic
+only; this pass is not acceptance or a replacement for the failed runs.
+
+Address views currently scan each edition's postcode candidates sequentially and
+check full source records against the anchor's premises identity. This path is
+separate from BM25 person/business search. It needs a serving-path optimisation;
+an index used only by the independent verifier cannot establish that it is fixed.
