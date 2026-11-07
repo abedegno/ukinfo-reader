@@ -1,6 +1,6 @@
 {
-  "as_of_utc": "2026-11-07T13:10:34.620970+00:00",
-  "status": "private-driver-fixed-source-preparation",
+  "as_of_utc": "2026-11-07T15:41:00Z",
+  "status": "blocked-on-cursor-and-legacy-errors",
   "published": false,
   "dataset": "v14-2008-03:co1-excluded",
   "raw_source_occurrences": 43799502,
@@ -233,7 +233,7 @@
     "all_evidence_retained": true
   },
   "reference_attempt_7": {
-    "status": "preparing-source-snapshot",
+    "status": "paired-passed-cursor-and-legacy-failed",
     "native_reference_method": "packed prepared source projection v5; private driver parameter reference clearing; consistent source snapshot; original native SQL predicates/grouping/order/cursors",
     "source_only_reader": true,
     "candidate_ids_used": false,
@@ -254,6 +254,97 @@
     "candidate_client_seconds": 8,
     "native_memory_mib": 512,
     "native_go_soft_memory_mib": 256,
-    "qualified": false
+    "qualified": false,
+    "source_preparation_passed": true,
+    "source_preparation_seconds": 540.742741013,
+    "person_occurrences": 1179789,
+    "cache_bytes": 103789874,
+    "targeted_pairs": 4,
+    "targeted_native_errors": 0,
+    "targeted_candidate_errors": 0,
+    "targeted_mismatches": 0,
+    "targeted_native_max_ms": 84755.548958,
+    "targeted_candidate_max_ms": 1679.347174,
+    "derived_samples": 1536,
+    "derived_fields_matched": 1536,
+    "derived_independent_matched": 1536,
+    "candidate_preparation_requests": 355,
+    "candidate_preparation_errors": 0,
+    "full_paired_comparison": {
+      "cases": 355,
+      "pairs": 896,
+      "matching_pairs": 896,
+      "native_errors": 0,
+      "candidate_errors": 0,
+      "mismatches": 0,
+      "budget_exhausted": false,
+      "requests_attempted": 1792,
+      "wall_seconds": 1533.83726804,
+      "native_max_ms": 87873.561251,
+      "candidate_p95_ms": 619.432665,
+      "candidate_max_ms": 4045.836403,
+      "candidate_serving_performance_measurement": false
+    },
+    "sampled_native_memory_maximum_bytes": 478035968,
+    "sampled_memory_is_process_peak": false,
+    "cursor_check": {
+      "cases": 355,
+      "first_matches": 342,
+      "continuations": 75,
+      "native_errors": 1,
+      "candidate_errors": 1,
+      "mismatches": 0,
+      "binding_checks": 2,
+      "binding_rejected": 2,
+      "passed": false
+    },
+    "calibration": {
+      "cases": 355,
+      "native_errors": 0,
+      "candidate_errors": 0,
+      "mismatches": 0,
+      "passed": true
+    },
+    "legacy_check": {
+      "requests": 250,
+      "matches": 247,
+      "query_timeouts": 3,
+      "hash_mismatches": 0,
+      "passed": false
+    },
+    "nonqualifying_load_diagnostic": {
+      "initial_requests": 355,
+      "initial_errors": 1,
+      "fixed_rounds": 2,
+      "requests_per_concurrency": 710,
+      "concurrency_1_errors": 0,
+      "concurrency_1_p95_ms": 218.578327,
+      "concurrency_4_errors": 0,
+      "concurrency_4_p95_ms": 446.180169,
+      "passed": false,
+      "reason": "Initial request failed; passing measured rounds do not qualify the run."
+    },
+    "source_plan_ab": {
+      "matching_pairs": 10,
+      "errors": 0,
+      "mismatches": 0,
+      "source_auto_p95_ms": 691.5221,
+      "source_custom_p95_ms": 709.108,
+      "setting_changed": false
+    },
+    "native_street_reproductions": {
+      "case_ordinal": 261,
+      "first_status": 200,
+      "first_ms": 108377.10214406252,
+      "second_status": 200,
+      "second_ms": 28828.963611274958,
+      "first_wait_sampler_available": false,
+      "second_wait_samples": 90,
+      "second_active_samples": 23,
+      "second_cpu_samples": 6,
+      "second_io_samples": 17,
+      "second_lock_samples": 0,
+      "cold_performance_qualified": false
+    }
   }
 }

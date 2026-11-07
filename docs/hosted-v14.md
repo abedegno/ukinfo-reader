@@ -63,11 +63,11 @@ passed acceptance.
 | Exact-image invented-data page/cursor equivalence | 374 comparisons passed |
 | SQL decoding boundaries and source-generation invalidation | Passed |
 | Two targeted shapes and their continuation pages | Four matching pairs; zero errors |
-| Frozen full cohort, up to ten pages per case | 355 cases; qualification running |
-| Cursor continuation and query binding | Required; pending |
-| Full-cohort calibration | Required; pending |
-| Existing-edition reference hashes | 250 required; pending |
-| Two fixed candidate load rounds at concurrency 1 and 4 | Required; p95 limits 500/1,000 ms |
+| Frozen full cohort, up to ten pages per case | Passed: 355 cases, 896 matching pairs, zero errors/mismatches |
+| Cursor continuation and query binding | Failed: one native and one candidate error; two binding checks rejected correctly |
+| Full-cohort calibration | Passed: 355 cases, zero errors/mismatches |
+| Existing-edition reference hashes | Failed: 247/250 matched; three query timeouts |
+| Two fixed candidate load rounds at concurrency 1 and 4 | Not qualified: diagnostic measured rounds met limits, but initial cohort had one error |
 | Publication and real release-client checks | Required: public inventory, 12 internal searches and 77 release checks |
 
 Public/candidate deadlines, quotas, resource limits, serving executable and normal
@@ -122,7 +122,7 @@ success; merged percentiles are computed across all observations.
 | Prepared snapshot, first memory attempt | Native OOM; archived 473 pairs, 264 native errors and one candidate error |
 | Prepared snapshot, lower soft-memory attempt | Native OOM on grouped case 91 page four; 475 pairs, 211 equal, 264 native errors; zero candidate errors/mismatches; seven preparation errors |
 | Packed transport | Source preparation, 1,536 samples and four targeted pairs passed; three preparation errors; full run operator-stopped for driver review, not OOM-killed or fully qualified |
-| Private driver fix | Exact-image synthetic and targeted checks passed; fresh full qualification running |
+| Private driver fix | Exact-image synthetic, source and targeted checks passed; all 896 paired pages matched and calibration passed; cursor and legacy errors block publication |
 
 The earlier source proofs, failed observations, stopped containers and partial
 reports remain on the NAS. Real queries, records, IDs, coordinates, cursors and
