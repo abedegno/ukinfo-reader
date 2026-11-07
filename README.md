@@ -66,8 +66,9 @@ establish compatibility; use [edition identification and fingerprints](docs/edit
 **292,750,609 source occurrences** across the six validated editions. These are not distinct
 people. The public archive’s edition selector lists imports that are ready to search;
 operators can also check the [live catalogue](https://ukinfo.6153112.xyz/api/datasets).
-v14 is supported by the reader and folder importer; it has not been published to the
-hosted archive. Dates above identify distribution/mastering, not verified electoral-roll reference dates.
+v14 is supported by the reader and folder importer. Its selected hosted import is
+verified privately and awaits search acceptance; see [hosted status](docs/hosted-v14.md).
+Dates above identify distribution/mastering, not verified electoral-roll reference dates.
 The supplied 2004 SE media has no separate business listings.
 
 Select the matching file inside each Internet Archive item:
@@ -77,7 +78,7 @@ Select the matching file inside each Internet Archive item:
 - **2004:** `PCP218_DVD.iso`.
 - **2005:** `PCF175DVD2_06_05.7z`. UK-Info is on **DVD 2**, despite `dvd-1` in the item URL.
 
-All five supported editions have complete validation reports. Known source defects and
+All six supported editions have complete source validation reports. Known source defects and
 uncertain field meanings are documented in the [validation overview](docs/validation-overview.md)
 and [format references](FORMAT.md). Other editions, Standard and Pro releases need
 separate investigation and validation.
