@@ -124,3 +124,20 @@ passed all 374 page/cursor comparisons, integer-width boundary decoding and
 source-generation race/invalidation tests. A new source snapshot and targeted
 continuation proof precede another complete qualification. Hard limits, deadlines,
 all 355 cases and the publication gates remain unchanged.
+
+The packed reference passed fresh source preparation (518.647 seconds and
+103,789,874 accounted bytes), all four targeted pairs and all 1,536 field samples.
+All 355 candidate preparation requests ran, retaining three errors. The full
+comparison was operator-stopped shortly after starting to investigate a separately
+reproduced driver retention issue. This attempt was not OOM-killed and is not
+completed full acceptance; its partial reports and both image proofs are retained.
+
+An invented 4-MiB parameter query followed by a smaller query retained 4,194,308
+bytes in unused driver parameter slots. A one-line reset fix clears those
+references in the private correctness build only. Its dependency source has an
+exact checksum guard and uses a private vendor copy; the shared module cache,
+serving binary and normal load client remain unchanged. Review confirmed parameter
+bytes are copied into the protocol buffer before reset. The new exact image
+passed the driver regression, SQL boundaries and all 374 synthetic page/cursor
+comparisons. Fresh source/full gates are still required to establish the actual
+memory improvement. No hard cap, deadline or case has been relaxed.
