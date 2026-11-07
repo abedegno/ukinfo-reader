@@ -1,6 +1,6 @@
 {
-  "as_of_utc": "2026-11-07T12:04:27.094911+00:00",
-  "status": "private-native-memory-experiment",
+  "as_of_utc": "2026-11-07T12:30:25.093833+00:00",
+  "status": "private-packed-transport-source-preparation",
   "published": false,
   "dataset": "v14-2008-03:co1-excluded",
   "raw_source_occurrences": 43799502,
@@ -138,7 +138,7 @@
     "native_only_setting": true
   },
   "reference_attempt_5": {
-    "status": "repeating-source-preparation-with-lower-private-go-soft-memory-target",
+    "status": "stopped-after-repeated-native-oom",
     "native_reference_method": "consistent source snapshot; compact source-only projection; original native SQL grouping/order/cursors",
     "source_only_reader": true,
     "candidate_ids_used": false,
@@ -168,6 +168,49 @@
     "experiment_go_soft_memory_mib": 256,
     "native_hard_memory_mib_unchanged": 512,
     "candidate_public_settings_unchanged": true,
+    "qualified": false,
+    "repeated_preparation_seconds": 436.584236818,
+    "repeated_full_comparison": {
+      "cases": 355,
+      "pairs": 475,
+      "matching_pairs": 211,
+      "native_errors": 264,
+      "candidate_errors": 0,
+      "mismatches": 0,
+      "native_oom_killed": true,
+      "native_exit_code": 137,
+      "first_failed_case_ordinal": 91,
+      "first_failed_page": 4,
+      "native_memory_limit_mib": 512,
+      "go_soft_memory_mib": 256,
+      "candidate_preparation_requests": 355,
+      "candidate_preparation_errors": 7,
+      "all_evidence_retained": true
+    }
+  },
+  "reference_attempt_6": {
+    "status": "preparing-source-snapshot",
+    "native_reference_method": "packed prepared source projection v4; consistent source snapshot; original native SQL predicates/grouping/order/cursors",
+    "source_only_reader": true,
+    "candidate_ids_used": false,
+    "wire_bytes_per_occurrence_before": 46,
+    "wire_bytes_per_occurrence_after": 22,
+    "additional_packed_storage_included_in_cache_cap": true,
+    "cache_maximum_bytes": 134217728,
+    "native_preparation_seconds_limit": 600,
+    "native_request_seconds": 120,
+    "native_sql_seconds": 120,
+    "baseline_client_seconds": 130,
+    "candidate_client_seconds": 8,
+    "native_memory_mib": 512,
+    "native_go_soft_memory_mib": 256,
+    "synthetic_page_cursor_comparisons": 374,
+    "synthetic_seconds": 5.59,
+    "synthetic_equivalence_passed": true,
+    "postgresql_integer_boundary_decoding_passed": true,
+    "source_generation_race_and_invalidation_tests_passed": true,
+    "public_candidate_settings_unchanged": true,
+    "targeted_continuation_proof_required": true,
     "qualified": false
   }
 }

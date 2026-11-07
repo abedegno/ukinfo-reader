@@ -109,3 +109,18 @@ one candidate error. The controller refused to continue with the dead service.
 A same-binary experiment lowers its Go soft target from 384 to 256 MiB to test
 encoding/buffer headroom, repeating bounded source preparation. No hard resource
 cap, deadline or public/candidate setting is relaxed. v14 remains private.
+
+That memory experiment also failed on the fourth grouped page. Its full report
+retains 475 pairs: 211 equal pairs, 264 native errors and zero candidate errors or
+mismatches. The repeated source preparation passed in 436.584 seconds; the fixed
+candidate preparation retained seven errors. Neither attempt qualifies acceptance.
+
+The next private reference changes transport only: six projection columns use
+22 fixed-width bytes per occurrence rather than 46 bytes in PostgreSQL binary
+arrays with per-element lengths. PostgreSQL decodes the values before applying the
+same native predicates, grouping, ordering and cursor SQL. Additional packed
+storage counts against the same 128-MiB cache cap. Exact-image isolated checks
+passed all 374 page/cursor comparisons, integer-width boundary decoding and
+source-generation race/invalidation tests. A new source snapshot and targeted
+continuation proof precede another complete qualification. Hard limits, deadlines,
+all 355 cases and the publication gates remain unchanged.
