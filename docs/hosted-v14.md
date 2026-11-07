@@ -41,103 +41,96 @@ IDs and source flags. Complete catalogue verification checks that stored blocks
 and projections match the selected stream's digest. No independent identity
 matching or retrospective cross-edition removal is inferred from this source bit.
 
-## Operations and acceptance
+## Hosted status and acceptance
 
-Homelab holds the reproducible staging/import/index/verification/publication
-controls. Keep v14 hidden from the serving role until all source/research/business
-and derived indexes, verification and six-edition search acceptance finish. The
-existing five editions and hidden 2003 rollback copy are retained. The expected
-six-edition hosted total is **292,695,740**; the six raw reader profiles total
-292,750,609 occurrences.
+As of 7 November 2026, the complete selected source and derived indexes are
+committed on the NAS. All 1,536 spread field samples match both original records
+and independent source projections across six editions. v14 remains private while
+full search qualification runs; the public service has **five editions and
+248,951,107 source occurrences**. Publishing the selected v14 would bring it to
+**six editions and 292,695,740 occurrences**. These are listings, not unique people.
+The existing editions and hidden 2003 rollback copy are retained.
 
-Real queries, source IDs, records, coordinates and response hashes stay on NAS.
-Public smoke uses inventory/health/UI and invented input. Aggregate reports must
-separate shared-cache full-source measurements from the older isolated fixture's
-cold tests; neither is a claim of sustained Internet capacity. The existing CPU,
-memory, pool, timeout and quota limits remain acceptance constraints.
+The [aggregate progress report](validation/v14-2008-03-hosted-progress.json) records
+completed checks and every earlier failed attempt. No failed run is treated as
+passed acceptance.
 
-Status on 7 November 2026: the complete selected source is committed and verified,
-the derived index and native maintenance are complete, and all 1,536 spread field
-samples match both original records and independent source projections. The
-[aggregate progress report](validation/v14-2008-03-hosted-progress.json) retains the
-initial timeouts and subsequent observations.
+| Required check | Current result |
+| --- | --- |
+| Complete selected import and source digest | Passed: 43,744,633 entries |
+| Source address/research/business and derived indexes | Complete |
+| Direct and independent field samples | 1,536/1,536 matched |
+| Exact-image invented-data page/cursor equivalence | 374 comparisons passed |
+| SQL decoding boundaries and source-generation invalidation | Passed |
+| Two targeted shapes and their continuation pages | Four matching pairs; zero errors |
+| Frozen full cohort, up to ten pages per case | 355 cases; qualification running |
+| Cursor continuation and query binding | Required; pending |
+| Full-cohort calibration | Required; pending |
+| Existing-edition reference hashes | 250 required; pending |
+| Two fixed candidate load rounds at concurrency 1 and 4 | Required; p95 limits 500/1,000 ms |
+| Publication and real release-client checks | Required: public inventory, 12 internal searches and 77 release checks |
 
-Publication remains blocked by strict search acceptance. The first attempt matched
-348 of 355 calibration cases with seven native timeouts and no candidate errors or
-mismatches. A slower private native reference subsequently completed 851 paired
-pages: 846 matched, five native requests exceeded 120 seconds, and the candidate
-had no errors or mismatches. That attempt also retained six candidate preparation
-timeouts and one timeout across 250 legacy references. These are retained failed
-attempts, rather than passed acceptance or cold-latency qualification.
+Public/candidate deadlines, quotas, resource limits, serving executable and normal
+load client remain unchanged. Each API has 1 CPU/512 MiB; each PostgreSQL service
+has 2 CPU/6 GiB. A failed gate prevents publication. A post-publication failure
+attempts transactional hiding before reading inventory, then verifies the original
+five-edition baseline. Unconfirmed recovery is reported explicitly.
 
-A fresh private reference now enumerates the complete matching source address
-population before applying the original native ordering, grouping and cursors.
-Nearby searches independently apply the authoritative source postcode geography to
-every source member. No candidate record IDs or results select this population.
-Incomplete indexes, duplicate/invalid IDs and populations over eight million fail
-closed; results are never truncated to meet a deadline. The method passed 374
-complete-page/cursor comparisons against the stock native path using six invented
-editions on an isolated NAS PostgreSQL instance.
+## Independent private reference
 
-The complete-source reference improved the paired result to 876 matching pairs
-out of 878 across all 355 cases, with zero candidate errors or mismatches. Two
-native town searches still reached 120 seconds, so the run was stopped before
-further cursor/load work. Its two preparation timeouts and all reports remain
-retained. A private follow-up batches source labels and grouping keys, then keeps
-the original native SQL for grouping, ordering and cursor pagination. It must pass
-fresh exact-image synthetic and targeted continuation tests before another full
-qualification. No serving code or candidate access path changes.
+The slow native source reference is a correctness oracle, with no published port,
+administrative credentials or candidate data access. It reads the complete source
+address population, independently applies source geography where needed, and
+preserves the original native predicates, grouping, ordering and cursor semantics.
+Invalid, incomplete, duplicate or oversized populations fail closed; results are
+never truncated to meet a deadline. Source indexes must cover every selected row.
 
-Every frozen case remains required in the fresh real-source qualification.
-The private native request/SQL budget is 120 seconds; public/candidate deadlines,
-resources, serving binary and normal performance client remain unchanged. Native
-reference timings are not serving-performance measurements. Publication still
-requires full source verification, all 355 cases, paging/cursors, all 250 legacy
-references, and unchanged zero-error C1/C4 load gates at p95 <=500/1000 ms, followed
-by public inventory, internal hosted and frozen release-client checks. The public
-site continues to serve five editions while these checks run.
+For the two broad town query shapes, preparation reads a consistent, read-only
+repeatable-read snapshot. Its compact projection contains every matching person
+occurrence across the six editions, using source labels and group keys. Source
+metadata is checked after preparation and before use; changes invalidate the
+reference. No candidate result, record ID or response hash selects this population.
 
-The next private image passed 374 synthetic page/cursor comparisons and prepared
-1,179,789 person occurrences from a consistent source snapshot in 515.595 seconds,
-using 77,834,516 bytes against a 128-MiB cache bound. Both pages of the two retained
-shapes matched (four pairs, zero errors/mismatches). Source-generation checks
-reject concurrent changes. This targeted result did not qualify the full suite.
+The current preparation covers 1,179,789 occurrences in 103,789,874 accounted
+bytes, within a 128-MiB cache cap, and took 540.743 seconds against a 600-second
+bound. Six projection columns use 22 fixed-width wire bytes per occurrence rather
+than 46 in binary arrays; PostgreSQL decodes them before the original native SQL.
+A checksum-guarded private dependency overlay clears retained parameter references.
+An invented-data regression demonstrated 4,194,308 retained bytes before the fix and
+zero afterward. Protocol lifetime safety, integer boundaries, all 374 synthetic
+pages/cursors and four real targeted pairs passed on the exact private image.
 
-The subsequent full attempt hit the private native service's 512-MiB hard memory
-limit at case 91; its archived reports contain 473 pairs, 264 native errors and
-one candidate error. The controller refused to continue with the dead service.
-A same-binary experiment lowers its Go soft target from 384 to 256 MiB to test
-encoding/buffer headroom, repeating bounded source preparation. No hard resource
-cap, deadline or public/candidate setting is relaxed. v14 remains private.
+The native SQL/request deadline is 120 seconds and its client deadline 130 seconds;
+the candidate client remains eight seconds. The source-only URI uses custom query
+planning, proven in a nonprivileged read-only session. No role default, public
+setting or candidate access path changes. Full comparison uses two disjoint,
+ordered batches of 178 and 177 cases, preserving every original case, request
+alternation and page limit. Each comparator must exit successfully and report
+success; merged percentiles are computed across all observations.
 
-That memory experiment also failed on the fourth grouped page. Its full report
-retains 475 pairs: 211 equal pairs, 264 native errors and zero candidate errors or
-mismatches. The repeated source preparation passed in 436.584 seconds; the fixed
-candidate preparation retained seven errors. Neither attempt qualifies acceptance.
+## Retained validation history
 
-The next private reference changes transport only: six projection columns use
-22 fixed-width bytes per occurrence rather than 46 bytes in PostgreSQL binary
-arrays with per-element lengths. PostgreSQL decodes the values before applying the
-same native predicates, grouping, ordering and cursor SQL. Additional packed
-storage counts against the same 128-MiB cache cap. Exact-image isolated checks
-passed all 374 page/cursor comparisons, integer-width boundary decoding and
-source-generation race/invalidation tests. A new source snapshot and targeted
-continuation proof precede another complete qualification. Hard limits, deadlines,
-all 355 cases and the publication gates remain unchanged.
+| Attempt | Retained outcome |
+| --- | --- |
+| Initial legacy check | 245/250 matched; five timeouts |
+| Initial fixed warmup | 355 requests per backend; native 29 errors, candidate three |
+| Fresh initial legacy check | 250/250 matched |
+| Initial paired/calibration checks | 24 native errors in 742 pairs; seven native calibration errors; no candidate errors or mismatches |
+| First slower reference | Five native errors in 851 pairs; six preparation errors and one legacy timeout |
+| Complete source-address reference | Two native timeouts in 878 pairs; two preparation errors; no candidate errors or mismatches |
+| Request-bound projection and custom-plan probes | Two native 120-second failures in each probe; no full qualification |
+| Prepared snapshot, first memory attempt | Native OOM; archived 473 pairs, 264 native errors and one candidate error |
+| Prepared snapshot, lower soft-memory attempt | Native OOM on grouped case 91 page four; 475 pairs, 211 equal, 264 native errors; zero candidate errors/mismatches; seven preparation errors |
+| Packed transport | Source preparation, 1,536 samples and four targeted pairs passed; three preparation errors; full run operator-stopped for driver review, not OOM-killed or fully qualified |
+| Private driver fix | Exact-image synthetic and targeted checks passed; fresh full qualification running |
 
-The packed reference passed fresh source preparation (518.647 seconds and
-103,789,874 accounted bytes), all four targeted pairs and all 1,536 field samples.
-All 355 candidate preparation requests ran, retaining three errors. The full
-comparison was operator-stopped shortly after starting to investigate a separately
-reproduced driver retention issue. This attempt was not OOM-killed and is not
-completed full acceptance; its partial reports and both image proofs are retained.
+The earlier source proofs, failed observations, stopped containers and partial
+reports remain on the NAS. Real queries, records, IDs, coordinates, cursors and
+response hashes stay there; repository reports contain aggregates only.
 
-An invented 4-MiB parameter query followed by a smaller query retained 4,194,308
-bytes in unused driver parameter slots. A one-line reset fix clears those
-references in the private correctness build only. Its dependency source has an
-exact checksum guard and uses a private vendor copy; the shared module cache,
-serving binary and normal load client remain unchanged. Review confirmed parameter
-bytes are copied into the protocol buffer before reset. The new exact image
-passed the driver regression, SQL boundaries and all 374 synthetic page/cursor
-comparisons. Fresh source/full gates are still required to establish the actual
-memory improvement. No hard cap, deadline or case has been relaxed.
+Measurements use shared NAS caches and the prescribed cohort preparation. Candidate
+serving performance is measured with the unchanged load executable after strict
+correctness passes. Six-edition cold performance and sustained Internet capacity
+have not been qualified; the original isolated five-edition cold fixture is
+unchanged. Homelab holds the reproducible import, validation, publication and
+recovery controls.
