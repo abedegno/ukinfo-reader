@@ -56,5 +56,15 @@ separate shared-cache full-source measurements from the older isolated fixture's
 cold tests; neither is a claim of sustained Internet capacity. The existing CPU,
 memory, pool, timeout and quota limits remain acceptance constraints.
 
-Status: selection implemented and tested; NAS staging/import and acceptance are
-in progress. v14 is not yet published to the public website.
+Status on 7 November 2026: the complete selected source is committed and verified,
+the derived index and native maintenance are complete, and all 1,536 spread field
+samples match both original records and independent source projections. The
+[aggregate progress report](validation/v14-2008-03-hosted-progress.json) retains the
+initial timeouts and subsequent observations.
+
+Publication remains blocked by the strict search acceptance. Calibration matched
+348 of 355 cases; seven native searches timed out, with zero candidate errors or
+mismatches. The fresh legacy probe matched all 250 references. These observations
+follow one fixed whole-cohort warmup and do not qualify six-edition cold latency.
+Concurrent load gates have not run. The public site still serves five editions;
+v14 is private while native-reference validation is resolved.
