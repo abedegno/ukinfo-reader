@@ -1,5 +1,5 @@
 {
-  "as_of_utc": "2026-11-07T15:41:00Z",
+  "as_of_utc": "2026-11-07T16:10:00Z",
   "status": "blocked-on-cursor-and-legacy-errors",
   "published": false,
   "dataset": "v14-2008-03:co1-excluded",
@@ -345,6 +345,27 @@
       "second_io_samples": 17,
       "second_lock_samples": 0,
       "cold_performance_qualified": false
+    },
+    "source_street_sql_diagnostics": {
+      "population_occurrences": 750243,
+      "person_rows": 647376,
+      "ordered_rows_compared": 51,
+      "same_source_result": true,
+      "per_row_labels_ms": 11646.06,
+      "batch_labels_ms": 7624.74,
+      "custom_planning_ms": 401.832,
+      "custom_execution_ms": 3408.398,
+      "generic_planning_ms": 46.329,
+      "generic_execution_ms": 4135.667,
+      "entry_scan_postgresql_read_blocks": 360322,
+      "physical_disk_bytes_established": false,
+      "full_api_acceptance_measurement": false,
+      "new_source_index_built": false
+    },
+    "serving_cumulative_phase_errors": {
+      "records": 3,
+      "parade_candidates": 2,
+      "per_request_attribution_established": false
     }
   }
 }

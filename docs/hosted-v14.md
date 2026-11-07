@@ -134,3 +134,24 @@ correctness passes. Six-edition cold performance and sustained Internet capacity
 have not been qualified; the original isolated five-edition cold fixture is
 unchanged. Homelab holds the reproducible import, validation, publication and
 recovery controls.
+
+## Search index and remaining diagnostics
+
+ParadeDB BM25 remains the hosted search index. The independent native reference
+uses the source catalogue to verify its results; tuning that reference is separate
+from tuning the serving path. No additional source covering index was built during
+these diagnostics.
+
+A complete source street population contains 750,243 occurrences (647,376 people).
+Warm source SQL experiments returned identical 51-row ordered results with per-row
+and batched dictionary lookups, taking 11.646 and 7.625 seconds respectively. A
+separate parameterized-array experiment measured custom planning/execution at
+0.402/3.408 seconds and generic planning/execution at 0.046/4.136 seconds. These
+are diagnostic equivalents, not full API acceptance measurements. PostgreSQL
+reported 360,322 entry-scan block reads; these can be served from the operating
+system cache and do not establish physical-disk bytes read.
+
+The serving API's existing cumulative metrics contain three failed record-loading
+phases and two failed ParadeDB-candidate phases. These counters identify affected
+operations; they do not map every failure to an individual request. Further work
+must address those serving failures as well as the remaining reference error.
