@@ -62,9 +62,50 @@ samples match both original records and independent source projections. The
 [aggregate progress report](validation/v14-2008-03-hosted-progress.json) retains the
 initial timeouts and subsequent observations.
 
-Publication remains blocked by the strict search acceptance. Calibration matched
-348 of 355 cases; seven native searches timed out, with zero candidate errors or
-mismatches. The fresh legacy probe matched all 250 references. These observations
-follow one fixed whole-cohort warmup and do not qualify six-edition cold latency.
-Concurrent load gates have not run. The public site still serves five editions;
-v14 is private while native-reference validation is resolved.
+Publication remains blocked by strict search acceptance. The first attempt matched
+348 of 355 calibration cases with seven native timeouts and no candidate errors or
+mismatches. A slower private native reference subsequently completed 851 paired
+pages: 846 matched, five native requests exceeded 120 seconds, and the candidate
+had no errors or mismatches. That attempt also retained six candidate preparation
+timeouts and one timeout across 250 legacy references. These are retained failed
+attempts, rather than passed acceptance or cold-latency qualification.
+
+A fresh private reference now enumerates the complete matching source address
+population before applying the original native ordering, grouping and cursors.
+Nearby searches independently apply the authoritative source postcode geography to
+every source member. No candidate record IDs or results select this population.
+Incomplete indexes, duplicate/invalid IDs and populations over eight million fail
+closed; results are never truncated to meet a deadline. The method passed 374
+complete-page/cursor comparisons against the stock native path using six invented
+editions on an isolated NAS PostgreSQL instance.
+
+The complete-source reference improved the paired result to 876 matching pairs
+out of 878 across all 355 cases, with zero candidate errors or mismatches. Two
+native town searches still reached 120 seconds, so the run was stopped before
+further cursor/load work. Its two preparation timeouts and all reports remain
+retained. A private follow-up batches source labels and grouping keys, then keeps
+the original native SQL for grouping, ordering and cursor pagination. It must pass
+fresh exact-image synthetic and targeted continuation tests before another full
+qualification. No serving code or candidate access path changes.
+
+Every frozen case remains required in the fresh real-source qualification.
+The private native request/SQL budget is 120 seconds; public/candidate deadlines,
+resources, serving binary and normal performance client remain unchanged. Native
+reference timings are not serving-performance measurements. Publication still
+requires full source verification, all 355 cases, paging/cursors, all 250 legacy
+references, and unchanged zero-error C1/C4 load gates at p95 <=500/1000 ms, followed
+by public inventory, internal hosted and frozen release-client checks. The public
+site continues to serve five editions while these checks run.
+
+The next private image passed 374 synthetic page/cursor comparisons and prepared
+1,179,789 person occurrences from a consistent source snapshot in 515.595 seconds,
+using 77,834,516 bytes against a 128-MiB cache bound. Both pages of the two retained
+shapes matched (four pairs, zero errors/mismatches). Source-generation checks
+reject concurrent changes. This targeted result did not qualify the full suite.
+
+The subsequent full attempt hit the private native service's 512-MiB hard memory
+limit at case 91; its archived reports contain 473 pairs, 264 native errors and
+one candidate error. The controller refused to continue with the dead service.
+A same-binary experiment lowers its Go soft target from 384 to 256 MiB to test
+encoding/buffer headroom, repeating bounded source preparation. No hard resource
+cap, deadline or public/candidate setting is relaxed. v14 remains private.
