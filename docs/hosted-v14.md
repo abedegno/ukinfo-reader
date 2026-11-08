@@ -43,6 +43,11 @@ matching or retrospective cross-edition removal is inferred from this source bit
 
 ## Hosted status and acceptance
 
+**Later 8 November:** the [postcode-ID I/O comparison](research/postcode-io-comparison-2026-11-08.md)
+rejected the proposed query change: six numeric-variant timeouts, increased total
+storage reads and worse latency. The current BM25 query remains. The NAS has no
+SSD data pool, so no storage migration was performed.
+
 **8 November:** the private [postcode I/O investigation](research/postcode-io-profile-2026-11-08.md)
 reproduced 11 errors with the original serving binary. Long sampled queries waited
 on storage reads in the derived database. The approved [Bitcoin pause comparison](research/bitcoin-contention-comparison-2026-11-08.md)
