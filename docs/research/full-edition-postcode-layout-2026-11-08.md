@@ -1,6 +1,6 @@
 # Full-edition postcode layout experiment — 8 November 2026
 
-**Status: separate recovery launched; no performance results yet. Nothing deployed.**
+**Status: recovery reattached after Mac crash; build continues on NAS. No performance results yet. Nothing deployed.**
 The complete export succeeded: 59,886,841 rows / 8,625,509,916 bytes in 462 seconds.
 The helper was then OOM-killed (exit 137, 384 MiB limit) during baseline import,
 after its last progress report at 708,837,376 bytes. Docker confirms the OOM;
@@ -103,3 +103,21 @@ input-file cache; sampled anonymous memory remained about 30 MiB. This is eviden
 for bounded client buffering under the real import, not a completed full restore
 or a performance result. Public origin health and serving identity were rechecked;
 Bitcoin remains running and unpaused.
+
+## Mac crash and adoption
+
+The Mac crash removed temporary local logs and the controller, while the NAS
+helper, private PostgreSQL and maintenance lease continued running. The baseline
+completed full-copy verification, index creation and vacuum: four segments,
+59,886,841 documents and 3,062,773,029 visible segment bytes. The partitioned table
+also completed import and its exact count/ID-range checks; its full checksum
+verification is currently running in the original detached build process.
+
+A reviewed, tested `adopt.py` in homelab reattached to that same process, with no
+re-export, import/index restart or measurement replay. It preserves the original
+six-hour build budget, restores memory/space monitoring, refuses partial/active
+workloads, and continues the existing benchmark only after both full build proofs
+pass. The NAS records adoption under `control/adoption-1/`; durable, gitignored
+Mac logs/state now live under `private/operations/` rather than `/private/tmp`.
+Five adoption guard tests pass. Public origin health and serving image were
+rechecked unchanged, and Bitcoin remains running/unpaused. No deployment occurred.
