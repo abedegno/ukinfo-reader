@@ -43,16 +43,16 @@ matching or retrospective cross-edition removal is inferred from this source bit
 
 ## Hosted status and acceptance
 
-**Later 8 November:** the [postcode-ID I/O comparison](research/postcode-io-comparison-2026-11-08.md)
-rejected the proposed query change: six numeric-variant timeouts, increased total
-storage reads and worse latency. The current BM25 query remains. The NAS has no
-SSD data pool, so no storage migration was performed.
+**8 November — latest:** the isolated [postcode-partitioned index pilot](research/postcode-index-layout-pilot-2026-11-08.md)
+passed its fixed gate on one million 2003 rows: first-query median 2.02 to 0.96 s,
+private-container reads 700 to 351 MiB, 64 successful queries and 25 matching page
+comparisons. A full-sized private edition and mixed concurrent validation are still
+required. The live BM25 query/indexes remain unchanged and v14 stays hidden.
 
-**8 November:** the private [postcode I/O investigation](research/postcode-io-profile-2026-11-08.md)
-reproduced 11 errors with the original serving binary. Long sampled queries waited
-on storage reads in the derived database. The approved [Bitcoin pause comparison](research/bitcoin-contention-comparison-2026-11-08.md)
-had no errors in either paused or resumed phases, with cache warming preventing
-a causal conclusion. Bitcoin is resumed; no new fix is deployed and v14 remains hidden.
+Earlier investigation reports retain the [failed I/O reproduction](research/postcode-io-profile-2026-11-08.md),
+the [cache-confounded Bitcoin comparison](research/bitcoin-contention-comparison-2026-11-08.md)
+and [rejected numeric-ID rewrite](research/postcode-io-comparison-2026-11-08.md).
+Bitcoin is running. The NAS has no SSD pool; no storage migration occurred.
 
 As of 7 November 2026, the complete selected source and derived indexes are
 committed on the NAS. All 1,536 spread field samples match both original records
