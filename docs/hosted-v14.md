@@ -46,8 +46,9 @@ matching or retrospective cross-edition removal is inferred from this source bit
 **8 November — latest:** the isolated [postcode-partitioned index pilot](research/postcode-index-layout-pilot-2026-11-08.md)
 passed its fixed gate on one million 2003 rows: first-query median 2.02 to 0.96 s,
 private-container reads 700 to 351 MiB, 64 successful queries and 25 matching page
-comparisons. A full-sized private edition and mixed concurrent validation are still
-required. The live BM25 query/indexes remain unchanged and v14 stays hidden.
+comparisons. The [full-edition follow-up](research/full-edition-postcode-layout-2026-11-08.md)
+is now running privately, including mixed concurrent validation; its results are
+pending. The live BM25 query/indexes remain unchanged and v14 stays hidden.
 
 Earlier investigation reports retain the [failed I/O reproduction](research/postcode-io-profile-2026-11-08.md),
 the [cache-confounded Bitcoin comparison](research/bitcoin-contention-comparison-2026-11-08.md)
