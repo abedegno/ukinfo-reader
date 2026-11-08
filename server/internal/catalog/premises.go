@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
 	"net/http"
 	"net/url"
 	"sort"
@@ -326,79 +325,16 @@ func (a *API) address(w http.ResponseWriter, r *http.Request) {
 		fail(w, 503, "Source postcode index unavailable; catalogue needs verification")
 		return
 	}
-	items := []result{}
-	next := ""
-	last := after
-	for _, dataset := range datasets[start:] {
-		scanned := int32(0)
-		if dataset.ID == after.Dataset {
-			scanned = after.ID
+	items, next, err := collectPremisesEditions(ctx, datasets[start:], after, limit, fingerprint,
+		func(ctx context.Context, dataset premisesDataset, scanned int32, want int) ([]result, error) {
+			return a.premisesEdition(ctx, dataset, postcode, identityKey, scanned, want)
+		})
+	if err != nil {
+		if ctx.Err() != nil {
+			err = sourceReadError(ctx.Err())
 		}
-		for {
-			// Explicit kind branches preserve the existing postcode B-tree prefix. Only
-			// this displayed full postcode is scanned; names and raw postcodes are unused.
-			rows, e := a.DB.Query(ctx, `SELECT id FROM (
-    (SELECT id FROM entries WHERE dataset_id=$1 AND kind=0 AND postcode_id=$2 AND id>$3 ORDER BY id LIMIT 256)
-    UNION ALL
-    (SELECT id FROM entries WHERE dataset_id=$1 AND kind=1 AND postcode_id=$2 AND id>$3 ORDER BY id LIMIT 256)
-   ) candidates ORDER BY id LIMIT 256`, dataset.ID, postcode, scanned)
-			if e != nil {
-				fail(w, 503, "Address lookup unavailable or timed out")
-				return
-			}
-			ids := []int32{}
-			for rows.Next() {
-				var id int32
-				if e = rows.Scan(&id); e != nil {
-					break
-				}
-				ids = append(ids, id)
-			}
-			if e == nil {
-				e = rows.Err()
-			}
-			rows.Close()
-			if e != nil {
-				fail(w, 503, "Address lookup unavailable or timed out")
-				return
-			}
-			if len(ids) == 0 {
-				break
-			}
-			records, e := a.loadRecords(ctx, dataset.ID, ids)
-			if e != nil {
-				failError(w, 503, sourceReadError(e))
-				return
-			}
-			for _, item := range records {
-				key, reason, e := premisesRecord(item.Record)
-				if e != nil {
-					fail(w, 503, "Source record unavailable")
-					return
-				}
-				if reason != "" || key.key() != identityKey {
-					continue
-				}
-				if len(items) == limit {
-					raw, _ := json.Marshal(last)
-					next = base64.RawURLEncoding.EncodeToString(raw)
-					break
-				}
-				item.Dataset = dataset.Key
-				items = append(items, item)
-				last = premisesCursor{fingerprint, dataset.ID, int32(item.ID)}
-			}
-			if next != "" {
-				break
-			}
-			scanned = ids[len(ids)-1]
-			if len(ids) < 256 || scanned == math.MaxInt32 {
-				break
-			}
-		}
-		if next != "" {
-			break
-		}
+		failError(w, 503, err)
+		return
 	}
 	if v.Get("format") == "jsonl" {
 		writeRecordLines(w, items)
