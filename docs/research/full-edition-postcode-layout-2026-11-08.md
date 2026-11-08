@@ -1,6 +1,15 @@
 # Full-edition postcode layout experiment — 8 November 2026
 
-**Status: running privately; results pending. Nothing deployed.**
+**Status: stopped during import; no performance results. Nothing deployed.**
+The complete export succeeded: 59,886,841 rows / 8,625,509,916 bytes in 462 seconds.
+The helper was then OOM-killed (exit 137, 384 MiB limit) during baseline import,
+after its last progress report at 708,837,376 bytes. Docker confirms the OOM;
+the precise import-memory cause still needs investigation. No indexes, pagination
+comparisons or performance measurements completed. Automatic cleanup stopped the
+helper, private PostgreSQL and maintenance lease; the public origin remains
+healthy with its original image and Bitcoin running. All artifacts, including
+the completed export, remain retained.
+
 The user authorised this follow-up to the promising
 [one-million-row pilot](postcode-index-layout-pilot-2026-11-08.md).
 It compares two complete copies of the 59,886,841-entry 2003 edition on the
@@ -44,9 +53,8 @@ pure tests also passed locally, with the driver import stubbed for those tests.
 The private database/helper have a combined limit of 2 CPU/1,920 MiB, no published
 ports and a new internal database network. Preflight found about 22 TiB free on
 NAS. A 100 GiB free-space watchdog covers long stages, with explicit stage timeouts
-and cleanup of owned services/lease. The controller runs detached on the Mac with
-sleep inhibition and logs aggregate progress, so it can finish without this chat
-remaining open. Network/controller failure still needs operator inspection; do
+and cleanup of owned services/lease. The controller ran detached on the Mac with
+sleep inhibition and aggregate progress logging; it exited after this failure. Network/controller failure still needs operator inspection; do
 not start a second run or replay the dated commands while its lease is active.
 
 This experiment does not deploy automatically, even if its gates pass. The public
