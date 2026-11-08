@@ -87,6 +87,11 @@ func testPremises(t *testing.T, db *pgxpool.Pool) {
 	importRows("premises-2005", "invented-2005-06", false, rows[:3])
 	importRows("premises-1999", "invented-1999-04", false, rows)
 	importRows("premises-sample", "invented-2005-06", true, rows[:2])
+	// Six real editions exercise overlapped reads and every cross-edition page
+	// boundary, while the redundant sample must remain excluded.
+	for year := 2006; year <= 2009; year++ {
+		importRows(fmt.Sprintf("premises-%d", year), fmt.Sprintf("invented-%d-06", year), false, rows[:2])
+	}
 	handler := NewAPI(db).Handler()
 	fetch := func(path string, status int) []byte {
 		t.Helper()
@@ -126,7 +131,7 @@ func testPremises(t *testing.T, db *pgxpool.Pool) {
 	for _, tc := range []struct {
 		scope string
 		count int
-	}{{"edition", 300}, {"all", 303}} {
+	}{{"edition", 300}, {"all", 311}} {
 		seen := map[string]bool{}
 		cursor := ""
 		business := false
