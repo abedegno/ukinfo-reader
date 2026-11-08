@@ -43,8 +43,10 @@ other NAS workloads were uncontrolled. Monitoring itself adds overhead.
 The observed long waits are dominated by derived-search storage reads. This
 capture does not justify replacing BM25, changing query plans, extending timeouts
 or raising CPU/memory limits. A fixed comparison with Bitcoin paused briefly
-would test the storage-contention hypothesis; that separate service has not been
-paused, and explicit approval is pending. Preserve this failed run independently
+would test the storage-contention hypothesis; the user subsequently approved the
+[paused/resumed comparison](bitcoin-contention-comparison-2026-11-08.md). Both warm
+phases passed, with cache differences preventing a causal conclusion; Bitcoin
+is running again. Preserve this failed run independently
 of any later comparison. Fresh full correctness and release gates remain required.
 
 ## Operations

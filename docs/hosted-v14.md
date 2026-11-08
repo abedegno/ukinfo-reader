@@ -45,8 +45,9 @@ matching or retrospective cross-edition removal is inferred from this source bit
 
 **8 November:** the private [postcode I/O investigation](research/postcode-io-profile-2026-11-08.md)
 reproduced 11 errors with the original serving binary. Long sampled queries waited
-on storage reads in the derived database. A controlled contention comparison is
-pending; no new fix is deployed and v14 remains hidden.
+on storage reads in the derived database. The approved [Bitcoin pause comparison](research/bitcoin-contention-comparison-2026-11-08.md)
+had no errors in either paused or resumed phases, with cache warming preventing
+a causal conclusion. Bitcoin is resumed; no new fix is deployed and v14 remains hidden.
 
 As of 7 November 2026, the complete selected source and derived indexes are
 committed on the NAS. All 1,536 spread field samples match both original records
