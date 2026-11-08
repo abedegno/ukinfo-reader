@@ -51,7 +51,7 @@ func TestPremisesPrefetchOverlapsAndPreservesOrder(t *testing.T) {
 		}
 		return []result{{ID: int64(d.ID) * 10}}, nil
 	}
-	items, next, err := collectPremisesEditions(ctx, editions, premisesCursor{Dataset: 1, ID: 7}, 3, "query", read)
+	items, next, err := collectPremisesTestPages(ctx, editions, premisesCursor{Dataset: 1, ID: 7}, 3, "query", read)
 	if err != nil || next != "" || len(items) != 3 {
 		t.Fatalf("page: %+v %q %v", items, next, err)
 	}
@@ -70,7 +70,7 @@ func TestPremisesPrefetchOverlapsAndPreservesOrder(t *testing.T) {
 
 func TestPremisesPrefetchCursorAndUnusedError(t *testing.T) {
 	boom := errors.New("unused future edition")
-	items, next, err := collectPremisesEditions(context.Background(), []premisesDataset{{ID: 1, Key: "old"}, {ID: 2, Key: "new"}, {ID: 3, Key: "unused"}}, premisesCursor{}, 2, "fingerprint", func(ctx context.Context, d premisesDataset, after int32, want int) ([]result, error) {
+	items, next, err := collectPremisesTestPages(context.Background(), []premisesDataset{{ID: 1, Key: "old"}, {ID: 2, Key: "new"}, {ID: 3, Key: "unused"}}, premisesCursor{}, 2, "fingerprint", func(ctx context.Context, d premisesDataset, after int32, want int) ([]result, error) {
 		if d.ID == 3 {
 			t.Error("read beyond bounded lookahead")
 		}
@@ -97,7 +97,7 @@ func TestPremisesPrefetchCursorAndUnusedError(t *testing.T) {
 
 func TestPremisesPrefetchRequiresLookaheadAcrossEditionBoundary(t *testing.T) {
 	boom := errors.New("required edition failed")
-	_, _, err := collectPremisesEditions(context.Background(), []premisesDataset{{ID: 1}, {ID: 2}}, premisesCursor{}, 2, "query", func(ctx context.Context, d premisesDataset, after int32, want int) ([]result, error) {
+	_, _, err := collectPremisesTestPages(context.Background(), []premisesDataset{{ID: 1}, {ID: 2}}, premisesCursor{}, 2, "query", func(ctx context.Context, d premisesDataset, after int32, want int) ([]result, error) {
 		if d.ID == 2 {
 			return nil, boom
 		}
@@ -111,7 +111,7 @@ func TestPremisesPrefetchRequiresLookaheadAcrossEditionBoundary(t *testing.T) {
 func TestPremisesPrefetchCancelsAndJoinsUnusedWorker(t *testing.T) {
 	started := make(chan struct{})
 	stopped := make(chan struct{})
-	_, _, err := collectPremisesEditions(context.Background(), []premisesDataset{{ID: 1}, {ID: 2}}, premisesCursor{}, 1, "query", func(ctx context.Context, d premisesDataset, after int32, want int) ([]result, error) {
+	_, _, err := collectPremisesTestPages(context.Background(), []premisesDataset{{ID: 1}, {ID: 2}}, premisesCursor{}, 1, "query", func(ctx context.Context, d premisesDataset, after int32, want int) ([]result, error) {
 		if d.ID == 2 {
 			close(started)
 			<-ctx.Done()
@@ -134,7 +134,7 @@ func TestPremisesPrefetchCancelsAndJoinsUnusedWorker(t *testing.T) {
 func TestPremisesPrefetchParentCancellation(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	var started, stopped atomic.Int32
-	_, _, err := collectPremisesEditions(ctx, []premisesDataset{{ID: 1}, {ID: 2}, {ID: 3}}, premisesCursor{}, 1, "query", func(ctx context.Context, d premisesDataset, after int32, want int) ([]result, error) {
+	_, _, err := collectPremisesTestPages(ctx, []premisesDataset{{ID: 1}, {ID: 2}, {ID: 3}}, premisesCursor{}, 1, "query", func(ctx context.Context, d premisesDataset, after int32, want int) ([]result, error) {
 		if started.Add(1) == 2 {
 			cancel()
 		}
@@ -155,7 +155,7 @@ func TestPremisesPrefetchPaginationMatchesSequentialOrder(t *testing.T) {
 		after := premisesCursor{Query: "fingerprint"}
 		start := 0
 		for page := 0; page < 20; page++ {
-			items, next, err := collectPremisesEditions(context.Background(), editions[start:], after, limit, "fingerprint", func(ctx context.Context, d premisesDataset, after int32, want int) ([]result, error) {
+			items, next, err := collectPremisesTestPages(context.Background(), editions[start:], after, limit, "fingerprint", func(ctx context.Context, d premisesDataset, after int32, want int) ([]result, error) {
 				matches := []result{}
 				for _, id := range data[d.ID] {
 					if id > int64(after) {
@@ -198,5 +198,53 @@ func TestPremisesPrefetchPaginationMatchesSequentialOrder(t *testing.T) {
 		if !reflect.DeepEqual(seen, expected) {
 			t.Fatalf("limit=%d: %+v", limit, seen)
 		}
+	}
+}
+
+func TestPremisesPrefetchSufficientPrefixBeforeLaterError(t *testing.T) {
+	items, next, err := collectPremisesTestPages(context.Background(), []premisesDataset{{ID: 1}, {ID: 2}}, premisesCursor{}, 2, "query", func(ctx context.Context, d premisesDataset, after int32, want int) ([]result, error) {
+		if d.ID == 1 {
+			return []result{{ID: 1}}, nil
+		}
+		return []result{{ID: 2}, {ID: 3}}, errors.New("later batch failed after sufficient prefix")
+	})
+	if err != nil || len(items) != 2 || next == "" {
+		t.Fatalf("sufficient prefix discarded: %d %q %v", len(items), next, err)
+	}
+}
+
+// Adapt finite fake pages to the production ordered stream, including the
+// terminal-error-after-prefix condition found during review.
+func collectPremisesTestPages(ctx context.Context, datasets []premisesDataset, after premisesCursor, limit int, fingerprint string, read func(context.Context, premisesDataset, int32, int) ([]result, error)) ([]result, string, error) {
+	return collectPremisesEditions(ctx, datasets, after, limit, fingerprint, func(ctx context.Context, d premisesDataset, after int32, emit func(result) error) error {
+		items, err := read(ctx, d, after, limit+1)
+		for _, item := range items {
+			if sendErr := emit(item); sendErr != nil {
+				return sendErr
+			}
+		}
+		return err
+	})
+}
+
+func TestPremisesPrefetchStreamsBeforeEditionCompletion(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	var joined atomic.Bool
+	items, next, err := collectPremisesEditions(ctx, []premisesDataset{{ID: 1}, {ID: 2}}, premisesCursor{}, 2, "query", func(ctx context.Context, d premisesDataset, after int32, emit func(result) error) error {
+		if d.ID == 1 {
+			return emit(result{ID: 1})
+		}
+		for _, id := range []int64{2, 3} {
+			if err := emit(result{ID: id}); err != nil {
+				return err
+			}
+		}
+		<-ctx.Done()
+		joined.Store(true)
+		return errors.New("unneeded later read failed")
+	})
+	if err != nil || next == "" || len(items) != 2 || !joined.Load() {
+		t.Fatalf("stream blocked on unneeded tail: %d %q %v joined=%v", len(items), next, err, joined.Load())
 	}
 }

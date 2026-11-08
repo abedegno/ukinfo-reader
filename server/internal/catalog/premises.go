@@ -326,8 +326,8 @@ func (a *API) address(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	items, next, err := collectPremisesEditions(ctx, datasets[start:], after, limit, fingerprint,
-		func(ctx context.Context, dataset premisesDataset, scanned int32, want int) ([]result, error) {
-			return a.premisesEdition(ctx, dataset, postcode, identityKey, scanned, want)
+		func(ctx context.Context, dataset premisesDataset, scanned int32, emit func(result) error) error {
+			return a.premisesEdition(ctx, dataset, postcode, identityKey, scanned, emit)
 		})
 	if err != nil {
 		if ctx.Err() != nil {
