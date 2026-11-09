@@ -48,8 +48,10 @@ confirmed fresh Top-K/generic plans and all 635 frozen response hashes. C1 p95
 passed at 370 ms; C4 p95 missed its 1 s target at 1.306 s. The 127-case subset
 includes 39 business cases but no HTTP cursor cases; other editions remain outside
 this check. All private services/lease are closed and quotas restored. No live
-index change or v14 publication occurred. Address/ordered-tail profiling, HTTP
-cursor traversal and broader edition qualification remain necessary.
+index change or v14 publication occurred. The [fixed tail profile](research/2003-http-tail-profile-2026-11-09.md) then
+reproduced C4 p95 at 1.330 s with all responses correct. Candidate-query time and
+private PG CPU throttling dominate the evidence; a controlled CPU-budget test,
+HTTP cursor traversal and broader edition qualification remain necessary.
 
 Earlier investigation reports retain the [failed I/O reproduction](research/postcode-io-profile-2026-11-08.md),
 the [cache-confounded Bitcoin comparison](research/bitcoin-contention-comparison-2026-11-08.md)

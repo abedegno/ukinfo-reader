@@ -95,3 +95,8 @@ Next: profile the slow address/ordered request phases and CPU throttling, then
 predeclare any changed resource allocation or code variant before measuring it.
 Keep the 1 s C4 gate and original observations. HTTP cursor traversal and eventual
 multi-edition staging also remain required before a broad rollout.
+
+Follow-up: the [single instrumented reproduction](2003-http-tail-profile-2026-11-09.md)
+completed with C4 p95 1.330 s, all 635 responses correct and significant private
+PG CPU throttling. It preserves this failed qualification and prioritises a
+controlled CPU-budget experiment over source-record prefetch for this cohort.
