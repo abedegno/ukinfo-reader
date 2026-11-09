@@ -59,6 +59,11 @@ The [private street-prefix spike](research/2003-street-prefix-spike-2026-11-09.m
 passed 28 synthetic cases and three real pages; its fixed SQL observations fell
 from 604/558 ms to 178/195 ms. This supports a serving implementation trial,
 with unchanged HTTP/cursor and broader edition qualification still required.
+The [serving implementation](research/2003-street-prefix-http-2026-11-09.md)
+then passed all 635 frozen responses and synthetic/full candidate paging checks,
+but C4 p95 remained 1.299 s. The preserved baseline timed out on a diagnostic
+continuation page; full real-page comparison remains incomplete. PR #48 is a draft;
+no deployment or v14 publication is qualified.
 
 Earlier investigation reports retain the [failed I/O reproduction](research/postcode-io-profile-2026-11-08.md),
 the [cache-confounded Bitcoin comparison](research/bitcoin-contention-comparison-2026-11-08.md)
