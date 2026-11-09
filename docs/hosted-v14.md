@@ -43,15 +43,14 @@ matching or retrospective cross-edition removal is inferred from this source bit
 
 ## Hosted status and acceptance
 
-**8 November — latest:** the isolated [postcode-partitioned index pilot](research/postcode-index-layout-pilot-2026-11-08.md)
-passed its fixed gate on one million 2003 rows: first-query median 2.02 to 0.96 s,
-private-container reads 700 to 351 MiB, 64 successful queries and 25 matching page
-comparisons. The [full-edition follow-up](research/full-edition-postcode-layout-2026-11-08.md)
-completed its full export but stopped on a helper OOM during baseline import.
-No performance measurements ran in that attempt. A distinct recovery with bounded
-COPY buffering imported both full tables. Its surviving NAS build was reattached
-after a Mac crash; baseline indexing is complete, with candidate verification/indexing
-still pending. Performance results remain pending. The live BM25 query/indexes remain unchanged and v14 stays hidden.
+**9 November — latest:** the [full-edition layout experiment](research/full-edition-postcode-layout-2026-11-08.md)
+completed on both full 2003 copies. The postcode-partitioned candidate had zero
+cold/mixed query errors; the baseline had seven cold timeouts. All 94 page
+comparisons matched, and all 1,600 mixed requests succeeded. Candidate C4 p95 was
+167 ms versus 268 ms. The archived formal gate remains false because of baseline
+errors and an unproven Top-K diagnostic flag. Private services/lease are closed;
+no live index change or v14 publication occurred. Broader end-to-end qualification
+and an explicit plan check remain required.
 
 Earlier investigation reports retain the [failed I/O reproduction](research/postcode-io-profile-2026-11-08.md),
 the [cache-confounded Bitcoin comparison](research/bitcoin-contention-comparison-2026-11-08.md)

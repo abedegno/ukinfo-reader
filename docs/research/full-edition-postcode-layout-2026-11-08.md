@@ -1,6 +1,73 @@
 # Full-edition postcode layout experiment — 8 November 2026
 
-**Status: recovery reattached after Mac crash; build continues on NAS. No performance results yet. Nothing deployed.**
+**Completed 8 November, reviewed 9 November: candidate improved measured searches;
+formal gate remains false. Nothing deployed.**
+
+Both complete 59,886,841-row copies matched the original binary digest and ID
+range, with four segments each. All 94 pagination comparisons matched: zero
+errors, duplicates or ordering failures; the empty control stayed empty.
+
+| Measure | Baseline | Postcode partitioned |
+| --- | ---: | ---: |
+| Cold diagnostic median, 16 requests each | 3.642 s* | 1.671 s |
+| Cold diagnostic sample p95/max | 4.495 s* | 2.938 s |
+| Cold SQL timeouts | 7 / 16 | 0 / 16 |
+| Cold container block reads | 4,561,903,616 bytes | 1,793,417,216 bytes |
+| Mixed C1 p95, 400 requests each | 102.3 ms | 59.7 ms |
+| Mixed C4 p95, 400 requests each | 268.0 ms | 167.3 ms |
+| Mixed errors across both concurrency levels | 0 / 800 | 0 / 800 |
+
+*Baseline cold timings include seven SQL cancellations (57014). They are censored
+request durations, not completed-query latency; do not describe their ratio as a
+precise query speedup. All failed observations remain in the reports. Actual cold
+read counters were nonzero in both variants. Read totals bracket private-container
+work and are not exclusively attributable to query execution.
+
+The 1,600 mixed requests completed without errors or flagged per-shape tail
+regressions under the fixed thresholds. There were 50 cases across 13 shapes,
+including an empty control, sampled from four source-ID positions; overlapping
+cases and repeated requests are not representative national traffic. Three county
+cases were explicitly omitted for absent source fields. Neither these SQL timings
+nor the cold EXPLAIN timings measure HTTP/source-hydration/cross-edition capacity.
+
+### Why the formal result is still false
+
+The predeclared gate requires zero errors in both variants; the seven baseline
+cold timeouts fail that condition. Separately, the Top-K detector checks exact
+`"TopK"`, while existing integration tests identify `TopKScanExecState`. All 57
+successful diagnostic queries recorded one generic plan and zero custom plans,
+but their recorded Top-K flags are false. Raw plans were not retained, so this
+run's historical Top-K condition remains unproven. Do not change the archived
+flags or reinterpret this as a passed gate. A separate plan check can correct
+that diagnostic limitation without replacing any timed observation.
+
+The candidate itself had zero errors in all 32 cold/repeat diagnostic requests
+and 800 mixed requests. That is promising evidence for postcode partitioning;
+it is not a production release qualification. The next useful step is explicit
+candidate plan verification and the existing broader end-to-end regression suite
+against the private candidate, including the previously failing common-name
+searches. No production rebuild is justified solely by this sampled SQL test.
+
+### Completed operations
+
+Full import/digest/index preparation took 13,563 seconds (about 3 h 46 min),
+including the controller crash/adoption interval. Visible segment bytes were
+3,062,773,029 baseline and 3,150,419,512 candidate (about 2.9% more); these are not
+whole-database disk footprints. The bounded import writer held peak RSS at
+44,880 KiB under the unchanged 384 MiB helper limit.
+
+All private database/helper/cache services and the maintenance lease are stopped.
+The helper's shutdown exit 137 has `OOMKilled=false`; all result stages completed
+before shutdown. The original OOM failure, export, both copies, every timed
+observation and numeric analysis remain retained on NAS. Public origin health
+and original serving image were checked unchanged on 9 November. No SSD pool,
+Bitcoin pause, public index change or v14 publication was involved.
+
+The original protocol and infrastructure history follow; references there to
+pending/running stages describe their dated checkpoints, not current status.
+
+## Original attempt and protocol
+
 The complete export succeeded: 59,886,841 rows / 8,625,509,916 bytes in 462 seconds.
 The helper was then OOM-killed (exit 137, 384 MiB limit) during baseline import,
 after its last progress report at 708,837,376 bytes. Docker confirms the OOM;
