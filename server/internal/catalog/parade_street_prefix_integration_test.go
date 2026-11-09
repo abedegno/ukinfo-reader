@@ -71,6 +71,13 @@ func TestParadeStreetPrefixIntegration(t *testing.T) {
 				if kind == "business" {
 					r["entry_type"] = "business"
 					r["organisation"] = "Tied"
+					r["sic"] = []string{"1234", "1235", "0012", "12.3", "c++"}[i]
+					if i == 0 && prefix == "école" {
+						r["sic"] = "é12"
+					}
+					if i == 0 && prefix == "東京" {
+						r["sic"] = "東京12"
+					}
 				}
 				if i == 1 {
 					r["street"] = "Unrelated"
@@ -142,6 +149,7 @@ func TestParadeStreetPrefixIntegration(t *testing.T) {
 			t.Fatal("combined/refinement paging differs")
 		}
 	}
+	t.Run("SICCursorEquality", func(t *testing.T) { testParadeSICPaging(t, native, candidate, records) })
 	if candidate.metrics.plans["paradedb"] == 0 {
 		t.Fatal("only exercised fallback")
 	}

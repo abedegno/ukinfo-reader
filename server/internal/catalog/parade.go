@@ -438,6 +438,17 @@ func paradeSQLBounds(q query, d paradeEdition, after paradePosition, prefilter b
 		args = append(args, regexp.QuoteMeta(strings.TrimSuffix(q.Street, "*"))+".*")
 		conditions = append(conditions, fmt.Sprintf("(street @@@ pdb.regex($%d) OR street_2 @@@ pdb.regex($%d))", len(args), len(args)))
 	}
+	// SIC scalar checks remain authoritative. A literal term/prefix condition
+	// avoids evaluating classification expressions over all business rows.
+	if prefilter && q.SIC != "" {
+		if strings.HasSuffix(q.SIC, "*") {
+			args = append(args, regexp.QuoteMeta(strings.TrimSuffix(q.SIC, "*"))+".*")
+			conditions = append(conditions, fmt.Sprintf("sic @@@ pdb.regex($%d)", len(args)))
+		} else {
+			args = append(args, q.SIC)
+			conditions = append(conditions, fmt.Sprintf("sic === $%d", len(args)))
+		}
+	}
 	conditions = append(conditions, "id @@@ pdb.all()")
 	order := []string{}
 	for _, key := range paradeOrder(q) {
