@@ -63,7 +63,11 @@ The [serving implementation](research/2003-street-prefix-http-2026-11-09.md)
 then passed all 635 frozen responses and synthetic/full candidate paging checks,
 but C4 p95 remained 1.299 s. The preserved baseline timed out on a diagnostic
 continuation page; full real-page comparison remains incomplete. PR #48 is a draft;
-no deployment or v14 publication is qualified.
+no deployment or v14 publication is qualified. The [subsequent SIC trial](research/2003-sic-tail-2026-11-09.md)
+kept all 635 responses and street/SIC paging correct but still failed C4 at 1.485 s.
+Its extra SIC runtime predicate was removed; the expanded regression tests remain.
+Actual SQL and paired plans showed mixed benefit, and versioned engine source
+corrected the earlier interpretation of deferred query-expression nodes.
 
 Earlier investigation reports retain the [failed I/O reproduction](research/postcode-io-profile-2026-11-08.md),
 the [cache-confounded Bitcoin comparison](research/bitcoin-contention-comparison-2026-11-08.md)

@@ -1,7 +1,7 @@
 # Failed 2003 ordered-query plan — 9 November 2026
 
-**The query uses Top-K, but its street-prefix predicates remain expression
-filters inside the search executor.** One fresh read-only execution returned
+**The query uses Top-K and its serialized plan retains parameterized query
+expressions.** One fresh read-only execution returned
 51 candidates in 705 ms while recording 18,239 shared-buffer reads. This
 identifies a concrete query-optimization hypothesis; nothing was deployed.
 
@@ -90,3 +90,9 @@ released, original private PG limits restored to 1.5 CPU/1,536 MiB, and public
 health OK on its original image. Read-only inventory supervisors were boundedly
 stopped (sleep exit 137); the SQL helper exited zero. No source/live restart,
 index rebuild, storage change, Bitcoin pause or v14 publication occurred.
+
+Interpretation update: [the subsequent SIC investigation](2003-sic-tail-2026-11-09.md)
+checked the versioned engine source. PostgresExpression query-builder nodes are
+resolved before scanning; their serialized appearance alone does not establish
+per-row filtering or absent index pushdown. The earlier wording was too strong.
+All timings/work counters and failed qualification gates above remain unchanged.
