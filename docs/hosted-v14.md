@@ -55,8 +55,10 @@ private PG CPU throttling dominate that profile. The subsequent
 HTTP 503 in its first control; no higher-CPU arm ran. That control also showed
 substantially more database reads. The [single-query plan inspection](research/2003-ordered-query-plan-2026-11-09.md)
 then confirmed Top-K with costly columnar work on a broad street-prefix query.
-A selective street-prefix prefilter is the next hypothesis; HTTP cursor traversal
-and broader edition qualification remain necessary.
+The [private street-prefix spike](research/2003-street-prefix-spike-2026-11-09.md)
+passed 28 synthetic cases and three real pages; its fixed SQL observations fell
+from 604/558 ms to 178/195 ms. This supports a serving implementation trial,
+with unchanged HTTP/cursor and broader edition qualification still required.
 
 Earlier investigation reports retain the [failed I/O reproduction](research/postcode-io-profile-2026-11-08.md),
 the [cache-confounded Bitcoin comparison](research/bitcoin-contention-comparison-2026-11-08.md)
