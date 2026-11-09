@@ -22,6 +22,9 @@ func testParadeSICPaging(t *testing.T, native, candidate *API, records []map[str
 		}
 		for _, order := range []string{"name", "edition", "catalogue"} {
 			v := url.Values{"dataset": {"street-prefix"}, "kind": {"business"}, "sic": {sic}, "sort": {order}, "limit": {"3"}}
+			if sic == "" {
+				v.Set("postcode", "AA1")
+			} // Keep absence valid while including empty-SIC rows.
 			query := v.Encode()
 			want := paradeWalk(t, native, native, query)
 			if len(want) != expected {
