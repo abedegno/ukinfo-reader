@@ -432,6 +432,12 @@ func paradeSQLBounds(q query, d paradeEdition, after paradePosition, prefilter b
 		args = append(args, regexp.QuoteMeta(q.Postcode)+".*")
 		conditions = append(conditions, fmt.Sprintf("postcode @@@ pdb.regex($%d)", len(args)))
 	}
+	// Retain the complete scalar OR above. This redundant literal prefix narrows
+	// indexed candidates before columnar checks and lexical Top-K ordering.
+	if prefilter && strings.HasSuffix(q.Street, "*") {
+		args = append(args, regexp.QuoteMeta(strings.TrimSuffix(q.Street, "*"))+".*")
+		conditions = append(conditions, fmt.Sprintf("(street @@@ pdb.regex($%d) OR street_2 @@@ pdb.regex($%d))", len(args), len(args)))
+	}
 	conditions = append(conditions, "id @@@ pdb.all()")
 	order := []string{}
 	for _, key := range paradeOrder(q) {
