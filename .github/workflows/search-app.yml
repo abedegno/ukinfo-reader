@@ -126,7 +126,7 @@ jobs:
             ${{ job.services.parade.id }} sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" exec psql -X -v ON_ERROR_STOP=1 -U postgres -d parade_test -f /tmp/parade-reader.sql'
       - name: All-edition compatibility, publication, rollback and Top-K plans
         working-directory: server
-        run: go test -race -count=1 -run '^TestParadeIntegration$' ./internal/catalog
+        run: go test -race -count=1 -run '^TestParade(Integration|StreetPrefixIntegration)$' ./internal/catalog
       - name: Grouped and ordered search work evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
