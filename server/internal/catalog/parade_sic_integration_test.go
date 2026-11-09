@@ -15,7 +15,7 @@ func testParadeSICPaging(t *testing.T, native, candidate *API, records []map[str
 			if r["entry_type"] != "business" {
 				continue
 			}
-			value, _ := r["sic"].(string)
+			value, _ := r["sic_code"].(string)
 			if sic == "" || strings.HasSuffix(sic, "*") && value != "" && strings.HasPrefix(value, strings.TrimSuffix(sic, "*")) || value == sic {
 				expected++
 			}

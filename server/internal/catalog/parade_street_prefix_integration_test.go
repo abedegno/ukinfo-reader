@@ -71,12 +71,12 @@ func TestParadeStreetPrefixIntegration(t *testing.T) {
 				if kind == "business" {
 					r["entry_type"] = "business"
 					r["organisation"] = "Tied"
-					r["sic"] = []string{"1234", "1235", "0012", "12.3", "c++"}[i]
+					r["sic_code"] = []string{"1234", "1235", "0012", "12.3", "c++"}[i]
 					if i == 0 && prefix == "école" {
-						r["sic"] = "é12"
+						r["sic_code"] = "é12"
 					}
 					if i == 0 && prefix == "東京" {
-						r["sic"] = "東京12"
+						r["sic_code"] = "東京12"
 					}
 				}
 				if i == 1 {
