@@ -48,6 +48,11 @@ candidate plan verification and the existing broader end-to-end regression suite
 against the private candidate, including the previously failing common-name
 searches. No production rebuild is justified solely by this sampled SQL test.
 
+A [separate 9 November qualification](2003-http-qualification-2026-11-09.md)
+now confirms fresh Top-K/generic plans through the actual API role and view.
+All 635 frozen HTTP requests matched, but the C4 p95 gate failed (1.306 s).
+The historical false result above remains unchanged; no deployment occurred.
+
 ### Completed operations
 
 Full import/digest/index preparation took 13,563 seconds (about 3 h 46 min),

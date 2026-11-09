@@ -43,14 +43,13 @@ matching or retrospective cross-edition removal is inferred from this source bit
 
 ## Hosted status and acceptance
 
-**9 November — latest:** the [full-edition layout experiment](research/full-edition-postcode-layout-2026-11-08.md)
-completed on both full 2003 copies. The postcode-partitioned candidate had zero
-cold/mixed query errors; the baseline had seven cold timeouts. All 94 page
-comparisons matched, and all 1,600 mixed requests succeeded. Candidate C4 p95 was
-167 ms versus 268 ms. The archived formal gate remains false because of baseline
-errors and an unproven Top-K diagnostic flag. Private services/lease are closed;
-no live index change or v14 publication occurred. Broader end-to-end qualification
-and an explicit plan check remain required.
+**9 November — latest:** the [separate 2003 HTTP qualification](research/2003-http-qualification-2026-11-09.md)
+confirmed fresh Top-K/generic plans and all 635 frozen response hashes. C1 p95
+passed at 370 ms; C4 p95 missed its 1 s target at 1.306 s. The 127-case subset
+includes 39 business cases but no HTTP cursor cases; other editions remain outside
+this check. All private services/lease are closed and quotas restored. No live
+index change or v14 publication occurred. Address/ordered-tail profiling, HTTP
+cursor traversal and broader edition qualification remain necessary.
 
 Earlier investigation reports retain the [failed I/O reproduction](research/postcode-io-profile-2026-11-08.md),
 the [cache-confounded Bitcoin comparison](research/bitcoin-contention-comparison-2026-11-08.md)
