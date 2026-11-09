@@ -68,6 +68,13 @@ kept all 635 responses and street/SIC paging correct but still failed C4 at 1.48
 Its extra SIC runtime predicate was removed; the expanded regression tests remain.
 Actual SQL and paired plans showed mixed benefit, and versioned engine source
 corrected the earlier interpretation of deferred query-expression nodes.
+The [existing-route SIC comparison](research/2003-native-sic-comparison-2026-11-09.md)
+then found nine native failures in 66 searches versus zero for ParadeDB; nine
+page pairs matched. At unchanged existing database limits, ParadeDB C4 p95 was
+405/405 ms versus native 4,567/4,648 ms on these three selected cases. This small
+diagnostic supports retaining ParadeDB routing, not publishing v14 or qualifying
+the different private index layout. Next establish the full frozen 2003 workload
+on the existing target at its operating limits.
 
 Earlier investigation reports retain the [failed I/O reproduction](research/postcode-io-profile-2026-11-08.md),
 the [cache-confounded Bitcoin comparison](research/bitcoin-contention-comparison-2026-11-08.md)
