@@ -53,8 +53,10 @@ reproduced C4 p95 at 1.330 s with all responses correct. Candidate-query time an
 private PG CPU throttling dominate that profile. The subsequent
 [CPU-budget experiment](research/2003-cpu-budget-2026-11-09.md) stopped after one
 HTTP 503 in its first control; no higher-CPU arm ran. That control also showed
-substantially more database reads. Private query/plan investigation, HTTP cursor
-traversal and broader edition qualification remain necessary.
+substantially more database reads. The [single-query plan inspection](research/2003-ordered-query-plan-2026-11-09.md)
+then confirmed Top-K with costly columnar work on a broad street-prefix query.
+A selective street-prefix prefilter is the next hypothesis; HTTP cursor traversal
+and broader edition qualification remain necessary.
 
 Earlier investigation reports retain the [failed I/O reproduction](research/postcode-io-profile-2026-11-08.md),
 the [cache-confounded Bitcoin comparison](research/bitcoin-contention-comparison-2026-11-08.md)
