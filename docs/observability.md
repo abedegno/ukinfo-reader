@@ -350,8 +350,8 @@ private fixed-protocol qualification. It is **not active on the public service**
 The guarded live rollout matched 11/12 native checks; one exact person-name/town
 search in one edition returned 503/`query_timeout` after 2.33 s. Automatic rollback
 restored `hosted-2026-10-27.3` before ParadeDB acceptance. The same frozen query
-had passed both private baseline/candidate rounds; its live SQL/cache cause is
-unproven. No deadline, fixture or gate was relaxed and no rollout retry was made.
+had passed both private baseline/candidate rounds in ParadeDB mode. Those results
+do not validate the live native-only path; the timeout cause remains unproven. No deadline, fixture or gate was relaxed and no rollout retry was made.
 
 The validated Collector policy and two managed edition charts are applied.
 Existing metrics, sanitized logs and sampled traces were verified in Splunk.

@@ -17,7 +17,9 @@ app and policy CI passed. The normal controller attempted promotion, but native
 acceptance matched 11/12 checks: an exact person-name/town search in one edition
 returned 503/`query_timeout` after 2.33 s. The controller restored the previous
 stack before ParadeDB acceptance. The same frozen search had succeeded in both
-private baseline and candidate rounds; the cause of its live timeout is unproven.
+private baseline and candidate rounds. Both comparison processes used ParadeDB
+mode; those successes do not validate the live native-only path or establish its
+timeout cause.
 No search replay, retry-until-green, changed fixture or relaxed deadline was used.
 
 Actual running release remains `hosted-2026-10-27.3`. Exact previous images were
