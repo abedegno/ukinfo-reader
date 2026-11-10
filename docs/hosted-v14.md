@@ -43,7 +43,17 @@ matching or retrospective cross-edition removal is inferred from this source bit
 
 ## Hosted status and acceptance
 
-**10 November — latest:** the [private hybrid SIC routing trial](research/2003-hybrid-sic-routing-2026-11-10.md)
+**10 November — latest:** the [broader binary regression](research/2003-hybrid-broad-regression-2026-11-10.md)
+ran all 355 frozen cases / 1,775 requests against the retained six-edition target.
+C1/C4 p95 passed at 176/393 ms, but seven initial and one C1 HTTP 503s fail the
+zero-error gate. All 344 pageable first-page pairs and 76 own/cross-flag
+continuations passed, with both binding checks rejected. Failures concern person
+postcode/name-order and all-edition town/grouping shapes; offline classification
+made no new search requests. The absent SIC registry correctly kept the original
+path; combined hybrid layouts remain unqualified. All private services stopped,
+production remains unchanged and v14 stays hidden.
+
+**10 November — preceding 2003 trial:** the [private hybrid SIC routing trial](research/2003-hybrid-sic-routing-2026-11-10.md)
 passed all 635 frozen 2003 responses with zero errors: C1 p95 136 ms, C4 p95
 256 ms against unchanged 500/1,000 ms limits. All 40 response/cursor checks passed
 in both flag directions; exactly 70 expected SIC-route decisions were observed.

@@ -112,3 +112,8 @@ Configuration and safe numeric evidence live in homelab
 `/home/jonw/ukinfo-backups/hybrid-sic-routing-2026-11-10`.
 Queries, rows, IDs, original ordinals, response hashes, raw plans, credentials
 and cursor tokens stay on the NAS and are excluded from git.
+
+Follow-up: the [broader binary regression](2003-hybrid-broad-regression-2026-11-10.md)
+passed cursor portability but failed the zero-error load gate on person-search
+shapes. It used the retained six-edition main index with no SIC registry, not a
+combined hybrid layout; this original 2003 trial result remains unchanged.
