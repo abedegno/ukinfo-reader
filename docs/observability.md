@@ -342,3 +342,21 @@ roll it out separately from search/layout changes. Collector privacy tests use
 invented string/numeric canaries on both variants; no credentials or archive data
 are needed. Homelab's collector must receive the matching policy before relying
 on these labels in hosted dashboards.
+
+## Hosted rollout status — 10 November 2026
+
+Edition telemetry is merged and tagged as `hosted-2026-11-10.1`, with passing
+private fixed-protocol qualification. It is **not active on the public service**.
+The guarded live rollout matched11/12 native checks; one exact person-name/town
+search in one edition returned503/`query_timeout` after2.33 s. Automatic rollback
+restored `hosted-2026-10-27.3` before ParadeDB acceptance. The same frozen query
+had passed both private baseline/candidate rounds; its live SQL/cache cause is
+unproven. No deadline, fixture or gate was relaxed and no rollout retry was made.
+
+The validated Collector policy and two managed edition charts are applied.
+Existing metrics, sanitized logs and sampled traces were verified in Splunk.
+New edition metric/span delivery remains unverified because its application was
+rolled back. The failed request had no downloadable APM trace. Five editions /
+248,951,107 occurrences remain public and v14 stays hidden. Resolve and qualify
+the native timeout before repeating the normal release. See the
+[rollout report](research/edition-observability-rollout-2026-11-10.md).
