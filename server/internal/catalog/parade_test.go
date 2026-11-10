@@ -564,6 +564,7 @@ func testParadeGroupWork(t *testing.T, source, target *pgxpool.Pool) {
 	if e != nil {
 		t.Fatal(e)
 	}
+	testEditionQueryPaths(t, a, q, editions)
 	sql, args := paradeSQLBounds(q, editions[0], paradePosition{}, true, &paradeNamePair{Name: Normalize("Denseonly"), First: Normalize("June")})
 	var rawPlan []byte
 	if e = target.QueryRow(ctx, "EXPLAIN(ANALYZE,BUFFERS,FORMAT JSON) "+sql, args...).Scan(&rawPlan); e != nil {

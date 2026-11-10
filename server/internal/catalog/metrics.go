@@ -37,6 +37,7 @@ type apiMetrics struct {
 	active        int
 	plans         map[string]uint64
 	phases        map[phaseKey]requestMetric
+	editions      map[editionMetricKey]requestMetric
 	classes       map[queryMetricKey]uint64
 	failures      map[failureMetricKey]uint64
 	cacheHits     atomic.Uint64
@@ -48,7 +49,7 @@ type apiMetrics struct {
 var latencyBounds = [...]float64{0.05, 0.1, 0.25, 0.5, 1, 2, 5}
 
 func newAPIMetrics() *apiMetrics {
-	return &apiMetrics{requests: make(map[metricKey]requestMetric), plans: map[string]uint64{}, phases: map[phaseKey]requestMetric{}, classes: map[queryMetricKey]uint64{}, failures: map[failureMetricKey]uint64{}}
+	return &apiMetrics{requests: make(map[metricKey]requestMetric), plans: map[string]uint64{}, phases: map[phaseKey]requestMetric{}, editions: map[editionMetricKey]requestMetric{}, classes: map[queryMetricKey]uint64{}, failures: map[failureMetricKey]uint64{}}
 }
 func metricRoute(path string) string {
 	switch path {
@@ -214,6 +215,29 @@ func (a *API) Metrics() http.Handler {
 			fmt.Fprintf(w, "ukinfo_search_phase_duration_seconds_bucket{phase=%q,outcome=%q,le=\"+Inf\"} %d\n", key.Name, key.Outcome, item.Count)
 			fmt.Fprintf(w, "ukinfo_search_phase_duration_seconds_count{phase=%q,outcome=%q} %d\n", key.Name, key.Outcome, item.Count)
 			fmt.Fprintf(w, "ukinfo_search_phase_duration_seconds_sum{phase=%q,outcome=%q} %g\n", key.Name, key.Outcome, item.Seconds)
+		}
+
+		fmt.Fprintln(w, "# TYPE ukinfo_parade_edition_queries_total counter")
+		durations := map[editionDurationKey]requestMetric{}
+		for key, item := range a.metrics.editions {
+			fmt.Fprintf(w, "ukinfo_parade_edition_queries_total{edition=%q,stage=%q,outcome=%q} %d\n", key.Edition, key.Stage, key.Outcome, item.Count)
+			k := editionDurationKey{key.Edition, key.Stage}
+			total := durations[k]
+			total.Count += item.Count
+			total.Seconds += item.Seconds
+			for i := range total.Buckets {
+				total.Buckets[i] += item.Buckets[i]
+			}
+			durations[k] = total
+		}
+		fmt.Fprintln(w, "# TYPE ukinfo_parade_edition_duration_seconds histogram")
+		for key, item := range durations {
+			for i, bound := range latencyBounds {
+				fmt.Fprintf(w, "ukinfo_parade_edition_duration_seconds_bucket{edition=%q,stage=%q,le=%q} %d\n", key.Edition, key.Stage, fmt.Sprint(bound), item.Buckets[i])
+			}
+			fmt.Fprintf(w, "ukinfo_parade_edition_duration_seconds_bucket{edition=%q,stage=%q,le=\"+Inf\"} %d\n", key.Edition, key.Stage, item.Count)
+			fmt.Fprintf(w, "ukinfo_parade_edition_duration_seconds_count{edition=%q,stage=%q} %d\n", key.Edition, key.Stage, item.Count)
+			fmt.Fprintf(w, "ukinfo_parade_edition_duration_seconds_sum{edition=%q,stage=%q} %g\n", key.Edition, key.Stage, item.Seconds)
 		}
 		fmt.Fprintln(w, "# TYPE ukinfo_query_requests_total counter")
 		for key, count := range a.metrics.classes {

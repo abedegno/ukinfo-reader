@@ -243,8 +243,10 @@ func (a *API) drainParadePair(ctx context.Context, q query, editions []paradeEdi
 		}
 		for {
 			sql, args := paradeSQLBounds(q, d, after, true, pair)
-			rows, e := a.ParadeDB.Query(ctx, sql, args...)
+			queryCtx, end := a.paradeEditionQuery(ctx, d.Key, "pair_drain")
+			rows, e := a.ParadeDB.Query(queryCtx, sql, args...)
 			if e != nil {
+				end(e)
 				failure = e
 				return e
 			}
@@ -263,6 +265,7 @@ func (a *API) drainParadePair(ctx context.Context, q query, editions []paradeEdi
 				e = rows.Err()
 			}
 			rows.Close()
+			end(e)
 			if e != nil {
 				failure = e
 				return e

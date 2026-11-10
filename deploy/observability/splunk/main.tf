@@ -61,6 +61,14 @@ locals {
       name    = "Search p95 stage latency (seconds, bucket estimate)"
       program = "histogram('ukinfo_search_phase_duration_seconds').percentile(pct=95, by=['phase']).publish(label='Stage p95 seconds')"
     }
+    edition_latency = {
+      name    = "Edition query p95 latency (seconds, includes failures)"
+      program = "histogram('ukinfo_parade_edition_duration_seconds').percentile(pct=95, by=['edition', 'stage']).publish(label='Edition query p95 seconds')"
+    }
+    edition_outcomes = {
+      name    = "Edition query executions / second by outcome"
+      program = "data('ukinfo_parade_edition_queries_total', rollup='rate').sum(by=['edition', 'stage', 'outcome']).publish(label='Edition executions/s')"
+    }
     search_backend = {
       name    = "Search plan selection / second"
       program = "data('ukinfo_address_plans_total', rollup='rate').sum(by=['plan']).publish(label='Plans/s')"

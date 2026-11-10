@@ -45,7 +45,11 @@ processors:
           - set(attributes["service.name"], "ukinfo-server")
       - context: span
         statements:
-          - keep_keys(attributes, ["http.route", "http.request.method", "http.response.status_code", "ukinfo.query.class"])
+          - keep_keys(attributes, ["http.route", "http.request.method", "http.response.status_code", "ukinfo.query.class", "ukinfo.backend", "ukinfo.edition", "ukinfo.parade.stage", "ukinfo.outcome"])
+          - set(attributes["ukinfo.backend"], "other") where attributes["ukinfo.backend"] != nil and (not IsString(attributes["ukinfo.backend"]) or not IsMatch(attributes["ukinfo.backend"], "^(paradedb|other)$"))
+          - set(attributes["ukinfo.edition"], "other") where attributes["ukinfo.edition"] != nil and (not IsString(attributes["ukinfo.edition"]) or not IsMatch(attributes["ukinfo.edition"], "^(se-pcf78-1998-01|se4-pcf94-1999-04|se2003-dpcs0104|se2004-pcp218-2004-07|se2005-pcf175-2005-06|v14-2008-03:co1-excluded|other)$"))
+          - set(attributes["ukinfo.parade.stage"], "other") where attributes["ukinfo.parade.stage"] != nil and (not IsString(attributes["ukinfo.parade.stage"]) or not IsMatch(attributes["ukinfo.parade.stage"], "^(positions|pair_drain|other)$"))
+          - set(attributes["ukinfo.outcome"], "error") where attributes["ukinfo.outcome"] != nil and (not IsString(attributes["ukinfo.outcome"]) or not IsMatch(attributes["ukinfo.outcome"], "^(ok|deadline|canceled|query_canceled|error)$"))
       - context: spanevent
         statements:
           - keep_keys(attributes, [])
@@ -79,11 +83,14 @@ processors:
           - set(attributes["service.name"], "ukinfo-server")
       - context: datapoint
         statements:
-          - keep_keys(attributes, ["route", "status", "class", "plan", "result", "le", "reason"])
+          - keep_keys(attributes, ["route", "status", "class", "plan", "result", "le", "reason", "phase", "outcome", "edition", "stage"])
+          - set(attributes["edition"], "other") where attributes["edition"] != nil and (not IsString(attributes["edition"]) or not IsMatch(attributes["edition"], "^(se-pcf78-1998-01|se4-pcf94-1999-04|se2003-dpcs0104|se2004-pcp218-2004-07|se2005-pcf175-2005-06|v14-2008-03:co1-excluded|other)$"))
+          - set(attributes["stage"], "other") where attributes["stage"] != nil and (not IsString(attributes["stage"]) or not IsMatch(attributes["stage"], "^(positions|pair_drain|other)$"))
+          - set(attributes["outcome"], "error") where attributes["outcome"] != nil and (not IsString(attributes["outcome"]) or not IsMatch(attributes["outcome"], "^(ok|deadline|canceled|query_canceled|error)$"))
   # Prometheus histograms are cumulative; Splunk percentiles need delta buckets.
   cumulativetodelta/latency:
     include:
-      metrics: [ukinfo_api_request_duration_seconds]
+      metrics: [ukinfo_api_request_duration_seconds, ukinfo_search_phase_duration_seconds, ukinfo_parade_edition_duration_seconds]
       match_type: strict
     initial_value: drop
   batch:
