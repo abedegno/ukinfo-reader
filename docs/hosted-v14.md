@@ -85,6 +85,12 @@ then confirmed the existing prefix constraint and Top-K with a warm113ms plan.
 Warm candidate selection took156–234ms versus8–9ms record loading; original
 timeout cause remains unknown. Two instrumented requests and one analysis do
 not qualify a release. No SQL change, database restart or deployment occurred.
+The [matched-budget private layout test](research/2003-postcode-layout-matched-2026-11-10.md)
+then compared retained full copies at2CPU/6GiB in one private PG, restarting only
+it before each arm. Unpartitioned timed out once and took3,989ms once; partitioned
+took2,319/337ms. Three page pairs matched. OS caches were uncontrolled; the next
+gate is the complete frozen2003HTTP workload on the partitioned target at these
+limits. Public configuration and v14 visibility remain unchanged.
 
 Earlier investigation reports retain the [failed I/O reproduction](research/postcode-io-profile-2026-11-08.md),
 the [cache-confounded Bitcoin comparison](research/bitcoin-contention-comparison-2026-11-08.md)

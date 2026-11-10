@@ -84,6 +84,10 @@ layout at matched resource budgets, collecting first-request I/O/cache telemetry
 Keep shared-cache and true cold-storage claims separate; never flush/restart live
 databases for that comparison. This is a diagnostic direction, not approval to
 deploy or publish v14. Prior failed HTTP/page/all-edition gates remain unchanged.
+The [matched-budget retained-layout comparison](2003-postcode-layout-matched-2026-11-10.md)
+subsequently completed: both partitioned arms succeeded; baseline timed out once
+and nearly reached4s once. Three page pairs matched, supporting a full private
+HTTP test at matched limits without changing any release gate.
 
 Homelab `docker/ukinfo/postcode-name-plan/` preserves protocol, guarded
 continuations, tests and numeric summaries. NAS roots under
