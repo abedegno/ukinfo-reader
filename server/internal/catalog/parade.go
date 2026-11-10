@@ -474,14 +474,16 @@ func (a *API) paradePositions(ctx context.Context, q query, editions []paradeEdi
 	var failure error
 	defer func() { end(failure) }()
 	out := []paradePosition{}
-	read := func(ctx context.Context, d paradeEdition) ([]paradePosition, error) {
+	read := func(ctx context.Context, d paradeEdition) (batch []paradePosition, err error) {
+		ctx, end := a.paradeEditionQuery(ctx, d.Key, "positions")
+		defer func() { end(err) }()
 		sql, args := paradeSQL(q, d, after)
 		rows, err := a.ParadeDB.Query(ctx, sql, args...)
 		if err != nil {
 			return nil, err
 		}
 		defer rows.Close()
-		batch := []paradePosition{}
+		batch = []paradePosition{}
 		edition := d.sortEdition()
 		for rows.Next() {
 			p := paradePosition{Dataset: d.ID, Edition: edition}

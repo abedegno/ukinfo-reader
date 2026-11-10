@@ -303,3 +303,42 @@ describe the source pool. Fixed `paradedb`/`paradedb_fallback` plan counters and
 readiness work and candidate execution from original-record retrieval. The
 managed Splunk dashboard includes plan selection, derived pool utilisation and
 waits. No SQL text or search values are added to labels or logs.
+
+## Individual edition queries
+
+Each derived candidate query emits `search.parade_edition` under its request's
+search stage. Its `db.query` and `db.pool.acquire` children retain that context.
+Attributes are fixed: `ukinfo.backend=paradedb`, `ukinfo.edition`,
+`ukinfo.parade.stage` (`positions`, `pair_drain`, `other`) and `ukinfo.outcome`
+(`ok`, `deadline`, `canceled`, `query_canceled`, `error`). Only the six known full
+archive keys are named; arbitrary imports and samples become `other`.
+SQLSTATE 57014 means server cancellation, not proof of a statement timeout.
+Raw SQL, bound values, IDs, PIDs, exception messages and query strings are excluded.
+
+Metrics cover every execution even with tracing disabled or a head-unsampled
+request. `ukinfo_parade_edition_queries_total{edition,stage,outcome}` counts query
+outcomes. `ukinfo_parade_edition_duration_seconds{edition,stage}` is a histogram
+including all outcomes, timed from query setup through acquisition, row decoding
+and close. It is not a server-only timer; parallel durations overlap and must
+not be added as HTTP wall time. A canceled sibling is another query outcome, not
+another failed HTTP request. Histograms merge buckets across outcomes; counters
+retain outcome detail. Existing buckets give at most 315 extra Prometheus series
+(7 editions × 3 stages × 10 histogram series + 7 × 3 × 5 counters), allocated only
+when observed; normal usage is sparser. The Collector scrape limit stays 2,000.
+
+Both Collector variants preserve and normalize the bounded labels, strip
+unrecognized attributes and convert the new latency histogram to delta buckets.
+The Terraform dashboard adds edition/stage p95 latency and executions by outcome.
+Histogram percentile values are bucket estimates; metrics alone cannot attach
+one failure to a specific request. Head sampling is unchanged, so a particular
+failed trace can still be absent. Correlate sampled slow edition spans and
+always-on counters with infrastructure disk/CPU/memory metrics; these signals do
+not by themselves identify a slow query's physical I/O cause.
+
+The edition feature is based on the deployed `ce6117f` source and contains no
+street-prefix/SIC-layout experiments or private SQL-audit hooks. It does not fix
+or clear the earlier load reliability gate. Validate the change in isolation and
+roll it out separately from search/layout changes. Collector privacy tests use
+invented string/numeric canaries on both variants; no credentials or archive data
+are needed. Homelab's collector must receive the matching policy before relying
+on these labels in hosted dashboards.
