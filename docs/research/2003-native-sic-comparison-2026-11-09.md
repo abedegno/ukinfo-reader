@@ -82,6 +82,9 @@ effects cannot be separated from these different experiments.
 Next, establish the complete frozen 127-case 2003 workload on the existing
 derived target at unchanged operating limits. A subsequent layout comparison
 must match those budgets before choosing another runtime or index change.
+The [subsequent full cohort](2003-operating-budget-http-2026-11-09.md) passed C1/C4
+at 120/230 ms but retained one initial postcode/name timeout; its overall gate
+remains false. No adaptive retry was added outside the fixed cohort.
 Earlier failed HTTP, baseline-page and v14 gates remain unchanged; PR #48 stays
 draft and nothing is deployed.
 

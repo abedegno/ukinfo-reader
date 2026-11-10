@@ -75,6 +75,11 @@ page pairs matched. At unchanged existing database limits, ParadeDB C4 p95 was
 diagnostic supports retaining ParadeDB routing, not publishing v14 or qualifying
 the different private index layout. Next establish the full frozen 2003 workload
 on the existing target at its operating limits.
+That [full 2003 operating-budget run](research/2003-operating-budget-http-2026-11-09.md)
+completed all 635 requests: C1/C4 p95 passed at 120/230 ms, but one initial
+postcode-only person search in name order timed out. The overall gate remains
+false; 634 successful responses matched. Next inspect that request path's actual
+SQL/plan before another serving change. Production and v14 visibility unchanged.
 
 Earlier investigation reports retain the [failed I/O reproduction](research/postcode-io-profile-2026-11-08.md),
 the [cache-confounded Bitcoin comparison](research/bitcoin-contention-comparison-2026-11-08.md)
