@@ -29,6 +29,8 @@ type paradeEdition struct {
 	Manifest json.RawMessage
 	Entries  int64
 	Imported time.Time
+	// Request-local routing only; unexported to preserve persisted generation JSON.
+	searchTable string
 }
 
 func (d paradeEdition) generation() string {
@@ -40,6 +42,9 @@ func (d paradeEdition) generation() string {
 	return fmt.Sprintf("%x", sha256.Sum256(b))
 }
 func (d paradeEdition) table() string {
+	if d.searchTable != "" {
+		return d.searchTable
+	}
 	return "d" + strconv.Itoa(int(d.ID)) + "_" + d.generation()[:24]
 }
 
@@ -181,7 +186,16 @@ func (a *API) paradeResults(ctx context.Context, q query) (searchResult, int, bo
 			return searchResult{}, 0, false, nil
 		}
 	}
+	var sicLayout bool
+	editions, sicLayout, err = a.paradeSICLayout(inventoryCtx, q, editions)
+	if err != nil {
+		end(err)
+		return searchResult{}, 503, true, searchReadError(err)
+	}
 	end(nil)
+	if sicLayout {
+		a.metrics.plan("paradedb_sic_unpartitioned")
+	}
 	a.metrics.plan("paradedb")
 	var distances map[int32]postcodeDistance
 	var geography *GeographySearch

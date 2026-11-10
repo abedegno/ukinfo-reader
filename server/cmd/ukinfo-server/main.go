@@ -52,6 +52,7 @@ func run() error {
 	placePostings := flags.Bool("experimental-place-postings", false, "private town/county posting experiment; disabled by default")
 	disableBusiness := flags.Bool("disable-business-search", false, "use the legacy classification path for comparison or rollback")
 	addressProbe := flags.Bool("experimental-address-probe", false, "opt-in bounded address probe experiment; disabled by default")
+	sicUnpartitioned := flags.Bool("experimental-sic-unpartitioned", false, "private generation-checked SIC layout experiment; disabled by default")
 	searchBackend := flags.String("search-backend", "native", "serve: native or hybrid paradedb address search (requires PARADE_DATABASE_URL; preview)")
 	trustedProxy := flags.String("trusted-proxy", "", "public-limits: comma-separated socket peer CIDRs trusted for CF-Connecting-IP; never trust arbitrary forwarded headers")
 	data := flags.String("data-dir", "", "desktop: app-managed data directory")
@@ -70,6 +71,9 @@ func run() error {
 	}
 	if *searchBackend != "native" && *searchBackend != "paradedb" {
 		return errors.New("search-backend must be native or paradedb")
+	}
+	if *sicUnpartitioned && (*searchBackend != "paradedb" || command != "serve" || *data != "" || *desktopControl) {
+		return errors.New("experimental-sic-unpartitioned requires hosted ParadeDB serve")
 	}
 	if *searchBackend == "paradedb" && (command != "serve" || *data != "" || *desktopControl) {
 		return errors.New("paradedb requires hosted serve; desktop continues to use native search")
@@ -343,6 +347,7 @@ func run() error {
 	api.ExperimentalAddressProbe = *addressProbe
 	api.ExperimentalPlacePostings = *placePostings
 	api.DisableBusinessSearch = *disableBusiness
+	api.ExperimentalSICUnpartitioned = *sicUnpartitioned
 	if *searchBackend == "paradedb" {
 		if os.Getenv("PARADE_DATABASE_URL") == "" {
 			return errors.New("paradedb requires PARADE_DATABASE_URL")

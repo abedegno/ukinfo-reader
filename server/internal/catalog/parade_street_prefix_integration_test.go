@@ -150,6 +150,7 @@ func TestParadeStreetPrefixIntegration(t *testing.T) {
 		}
 	}
 	t.Run("SICCursorEquality", func(t *testing.T) { testParadeSICPaging(t, native, candidate, records) })
+	t.Run("SICLayoutRouting", func(t *testing.T) { testParadeSICLayoutRouting(t, native, candidate, records) })
 	if candidate.metrics.plans["paradedb"] == 0 {
 		t.Fatal("only exercised fallback")
 	}

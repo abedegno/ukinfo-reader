@@ -25,6 +25,10 @@ import (
 type API struct {
 	// Optional derived-search database. Nil keeps the compact backend.
 	ParadeDB *pgxpool.Pool
+
+	// Optional second layout; initialize before serving. Default off.
+	ExperimentalSICUnpartitioned bool
+
 	// Private access-path experiments. Initialize before serving; default off.
 	ExperimentalAddressProbe  bool
 	ExperimentalPlacePostings bool
