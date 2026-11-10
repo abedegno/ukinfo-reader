@@ -88,6 +88,10 @@ is false because A1 timed out. No historical failed gate was reclassified. Next
 run the frozen 127-case/635-request HTTP cohort on the private partitioned target
 at these matched limits, including its initial requests and original thresholds.
 Do not promote on this single-query SQL result or hide the slower B1 observation.
+The [subsequent full HTTP cohort](2003-partitioned-budget-http-2026-11-10.md)
+matched all 635 responses without errors, but C4 p95 missed at1,024.685ms. Offline
+ranking identifies SIC filters without postcode in all eleven over1s cases;
+the original release gate remains false.
 
 Pre-launch review corrected lease retention on live drift, exact option checks
 and missing-counter handling. Six contract tests pass, including seek ordering
