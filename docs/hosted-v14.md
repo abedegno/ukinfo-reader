@@ -80,6 +80,11 @@ completed all 635 requests: C1/C4 p95 passed at 120/230 ms, but one initial
 postcode-only person search in name order timed out. The overall gate remains
 false; 634 successful responses matched. Next inspect that request path's actual
 SQL/plan before another serving change. Production and v14 visibility unchanged.
+The [postcode/name SQL diagnostic](research/2003-postcode-name-plan-2026-11-10.md)
+then confirmed the existing prefix constraint and Top-K with a warm113ms plan.
+Warm candidate selection took156–234ms versus8–9ms record loading; original
+timeout cause remains unknown. Two instrumented requests and one analysis do
+not qualify a release. No SQL change, database restart or deployment occurred.
 
 Earlier investigation reports retain the [failed I/O reproduction](research/postcode-io-profile-2026-11-08.md),
 the [cache-confounded Bitcoin comparison](research/bitcoin-contention-comparison-2026-11-08.md)

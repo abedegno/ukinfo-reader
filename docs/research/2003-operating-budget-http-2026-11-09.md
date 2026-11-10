@@ -76,6 +76,9 @@ retrieval or record loading caused that failure before changing code or widening
 the cohort. A matched-budget layout comparison remains separate work. Earlier
 failed gates and the draft status of PR #48 remain unchanged; this is not an
 all-edition, v14, cold-storage or sustained-capacity qualification.
+The [subsequent actual-SQL capture](2003-postcode-name-plan-2026-11-10.md) observed
+the existing postcode prefix constraint and Top-K, with one warm113ms plan. It
+did not reproduce or explain the original timeout; the failed gate remains.
 
 ## Reproduction and closeout
 
