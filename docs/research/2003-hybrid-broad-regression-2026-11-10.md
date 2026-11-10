@@ -142,3 +142,7 @@ resolved the counts-only readiness gap before launch.
 
 Final independent review verified accounting/privacy/cleanup and clarified that
 metadata-session automatic planning is distinct from the API's forced generic plans.
+
+Follow-up: [saved-failure and original-order tracing](broad-failure-evidence-2026-11-10.md)
+matched seven isolated cases and a separate 355-request pass, without reproducing
+the failure. This does not clear this run's zero-error gate or establish its cause.

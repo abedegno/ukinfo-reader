@@ -43,7 +43,17 @@ matching or retrospective cross-edition removal is inferred from this source bit
 
 ## Hosted status and acceptance
 
-**10 November — latest:** the [broader binary regression](research/2003-hybrid-broad-regression-2026-11-10.md)
+**10 November — latest:** [saved-failure diagnostics](research/broad-failure-evidence-2026-11-10.md)
+confirmed all seven original initial failures were query timeouts. All seven
+isolated requests and a separately declared 355-case original-order trace pass
+now matched; neither reproduced a failure or clears the original broad gate.
+Twenty-two later plans used generic Top-K/four segments without sort/spill;
+2004/2005 postcode requests showed target I/O samples, while pool acquisition
+maxima were 9.650/13.713 ms. Original per-request cause remains unproven; no SQL,
+layout or deadline change was made. All five helpers stopped; production unchanged,
+v14 hidden. Next bounded per-edition observability for the next genuine failure.
+
+**10 November — preceding broad regression:** the [broader binary regression](research/2003-hybrid-broad-regression-2026-11-10.md)
 ran all 355 frozen cases / 1,775 requests against the retained six-edition target.
 C1/C4 p95 passed at 176/393 ms, but seven initial and one C1 HTTP 503s fail the
 zero-error gate. All 344 pageable first-page pairs and 76 own/cross-flag
