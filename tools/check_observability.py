@@ -176,6 +176,27 @@ def validate_signals(raw):
         "ukinfo.outcome": "error",
     } in labels, "Poisoned span labels not normalized"
 
+    allowed_edition_spans = [
+        {
+            "ukinfo.edition": "se2003-dpcs0104",
+            "ukinfo.parade.stage": "positions",
+            "ukinfo.backend": "paradedb",
+            "ukinfo.outcome": "query_canceled",
+        },
+        {
+            "ukinfo.edition": "other",
+            "ukinfo.parade.stage": "other",
+            "ukinfo.backend": "other",
+            "ukinfo.outcome": "error",
+        },
+    ]
+    assert all(label in allowed_edition_spans for label in labels), (
+        "Non-string edition span values escaped normalization"
+    )
+    assert sum(label == allowed_edition_spans[1] for label in labels) >= 2, (
+        "Both string and numeric canaries must survive as bounded other/error labels"
+    )
+
 
 def run(*args, **kwargs):
     return subprocess.run(args, check=True, text=True, capture_output=True, **kwargs)
