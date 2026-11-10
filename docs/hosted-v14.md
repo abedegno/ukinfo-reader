@@ -96,6 +96,11 @@ matched all635 responses with zero errors. C1p95 passed334ms; C4p95 missed the
 unchanged1s limit at1,024.685ms. All eleven cases with a C4 observation over1s
 used business SIC without postcode. Next isolate that tail in a matched-layout
 comparison; no wider qualification or deployment follows from the failed gate.
+That [SIC layout comparison](research/2003-sic-layout-matched-2026-11-10.md) verified
+all132 timed SQL results and nine page pairs. Unpartitioned C4p95 was480/480ms,
+partitioned1,213/2,061ms at identical limits. Next is an opt-in private routing
+trial for postcode versus SIC/no-postcode access, with full HTTP/cursor checks.
+No release gate was reclassified; production and v14 visibility stay unchanged.
 
 Earlier investigation reports retain the [failed I/O reproduction](research/postcode-io-profile-2026-11-08.md),
 the [cache-confounded Bitcoin comparison](research/bitcoin-contention-comparison-2026-11-08.md)

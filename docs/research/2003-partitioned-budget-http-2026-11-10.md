@@ -90,6 +90,10 @@ unpartitioned and partitioned copies on these SIC shapes under identical setting
 and load, preserving result/order checks. Only then consider whether postcode
 and non-postcode searches need different index access paths. Do not repeat the
 rejected redundant-SIC predicate experiment without new evidence.
+The [matched-layout SIC comparison](2003-sic-layout-matched-2026-11-10.md) then
+verified132 timed SQL results and nine page pairs. Unpartitioned C4p95 was480/480ms
+versus partitioned1,213/2,061ms under identical private settings. This supports a
+private routing trial, not clearing this failed HTTP gate or deploying globally.
 
 Homelab docker/ukinfo/partitioned-budget-http preserves protocol/controllers,
 offline ranking and numeric evidence. NAS root:
