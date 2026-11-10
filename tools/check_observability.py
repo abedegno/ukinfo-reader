@@ -68,9 +68,7 @@ else: raise SystemExit('Collector did not export both signals')
 def validate_signals(raw):
     assert "SECRET" not in raw, "Collector leaked a canary attribute"
     assert "invented_private" not in raw, "Non-UKInfo metric was exported"
-    assert "scrape_samples" not in raw and '"name":"up"' not in raw, (
-        "Scraper internals exported"
-    )
+    assert "scrape_samples" not in raw and '"name":"up"' not in raw, "Scraper internals exported"
     assert '"service.name"' in raw, "Service identity missing"
     signals = [json.loads(line) for line in raw.splitlines() if line.strip()]
     names = {
@@ -80,9 +78,7 @@ def validate_signals(raw):
         for scope in resource.get("scopeMetrics", [])
         for metric in scope.get("metrics", [])
     }
-    assert "ukinfo_record_blocks_decoded_total" in names, (
-        f"Unexpected counter translation: {names}"
-    )
+    assert "ukinfo_record_blocks_decoded_total" in names, f"Unexpected counter translation: {names}"
     histograms = [
         metric["histogram"]
         for item in signals
@@ -90,7 +86,11 @@ def validate_signals(raw):
         for scope in resource.get("scopeMetrics", [])
         for metric in scope.get("metrics", [])
         if metric["name"]
-        in {"ukinfo_api_request_duration_seconds", "ukinfo_search_phase_duration_seconds", "ukinfo_parade_edition_duration_seconds"}
+        in {
+            "ukinfo_api_request_duration_seconds",
+            "ukinfo_search_phase_duration_seconds",
+            "ukinfo_parade_edition_duration_seconds",
+        }
     ]
     assert "ukinfo_search_phase_duration_seconds" in names, "Search phase histogram missing"
     phase_points = [
@@ -116,17 +116,66 @@ def validate_signals(raw):
         for point in points
     ), "Delta histogram did not preserve interval counts"
 
+    edition_points = [
+        p
+        for item in signals
+        for r in item.get("resourceMetrics", [])
+        for sc in r.get("scopeMetrics", [])
+        for m in sc.get("metrics", [])
+        if m["name"] == "ukinfo_parade_edition_duration_seconds"
+        for p in m["histogram"]["dataPoints"]
+    ]
+    labels = [
+        {a["key"]: a["value"].get("stringValue") for a in p.get("attributes", [])}
+        for p in edition_points
+    ]
+    assert {"edition": "se2003-dpcs0104", "stage": "positions"} in labels and {
+        "edition": "other",
+        "stage": "other",
+    } in labels, "Edition labels lost or not normalized"
+    outcomes = [
+        p
+        for item in signals
+        for r in item.get("resourceMetrics", [])
+        for sc in r.get("scopeMetrics", [])
+        for m in sc.get("metrics", [])
+        if m["name"] == "ukinfo_parade_edition_queries_total"
+        for p in m["sum"]["dataPoints"]
+    ]
+    labels = [
+        {a["key"]: a["value"].get("stringValue") for a in p.get("attributes", [])} for p in outcomes
+    ]
+    assert {
+        "edition": "se2003-dpcs0104",
+        "stage": "positions",
+        "outcome": "query_canceled",
+    } in labels and {"edition": "other", "stage": "other", "outcome": "error"} in labels, (
+        "Edition outcome counter missing"
+    )
+    spans = [
+        s
+        for item in signals
+        for r in item.get("resourceSpans", [])
+        for sc in r.get("scopeSpans", [])
+        for s in sc.get("spans", [])
+        if s["name"] == "search.parade_edition"
+    ]
+    labels = [
+        {a["key"]: a["value"].get("stringValue") for a in s.get("attributes", [])} for s in spans
+    ]
+    assert {
+        "ukinfo.edition": "se2003-dpcs0104",
+        "ukinfo.parade.stage": "positions",
+        "ukinfo.backend": "paradedb",
+        "ukinfo.outcome": "query_canceled",
+    } in labels, "Edition span attributes lost"
+    assert {
+        "ukinfo.edition": "other",
+        "ukinfo.parade.stage": "other",
+        "ukinfo.backend": "other",
+        "ukinfo.outcome": "error",
+    } in labels, "Poisoned span labels not normalized"
 
-    edition_points = [p for item in signals for r in item.get("resourceMetrics", []) for sc in r.get("scopeMetrics", []) for m in sc.get("metrics", []) if m["name"] == "ukinfo_parade_edition_duration_seconds" for p in m["histogram"]["dataPoints"]]
-    labels = [{a["key"]: a["value"].get("stringValue") for a in p.get("attributes", [])} for p in edition_points]
-    assert {"edition": "se2003-dpcs0104", "stage": "positions"} in labels and {"edition": "other", "stage": "other"} in labels, "Edition labels lost or not normalized"
-    outcomes = [p for item in signals for r in item.get("resourceMetrics", []) for sc in r.get("scopeMetrics", []) for m in sc.get("metrics", []) if m["name"] == "ukinfo_parade_edition_queries_total" for p in m["sum"]["dataPoints"]]
-    labels = [{a["key"]: a["value"].get("stringValue") for a in p.get("attributes", [])} for p in outcomes]
-    assert {"edition": "se2003-dpcs0104", "stage": "positions", "outcome": "query_canceled"} in labels and {"edition": "other", "stage": "other", "outcome": "error"} in labels, "Edition outcome counter missing"
-    spans = [s for item in signals for r in item.get("resourceSpans", []) for sc in r.get("scopeSpans", []) for s in sc.get("spans", []) if s["name"] == "search.parade_edition"]
-    labels = [{a["key"]: a["value"].get("stringValue") for a in s.get("attributes", [])} for s in spans]
-    assert {"ukinfo.edition": "se2003-dpcs0104", "ukinfo.parade.stage": "positions", "ukinfo.backend": "paradedb", "ukinfo.outcome": "query_canceled"} in labels, "Edition span attributes lost"
-    assert {"ukinfo.edition": "other", "ukinfo.parade.stage": "other", "ukinfo.backend": "other", "ukinfo.outcome": "error"} in labels, "Poisoned span labels not normalized"
 
 def run(*args, **kwargs):
     return subprocess.run(args, check=True, text=True, capture_output=True, **kwargs)
@@ -161,7 +210,9 @@ def main(config_path):
         )
         # Test-only HEC endpoint/certificate substitution. No log payload is sent
         # here; the separate log fixture exercises its privacy pipeline.
-        config = config.replace("${env:SPLUNK_HEC_ENDPOINT}", "http://127.0.0.1:18088/services/collector").replace("    tls:\n      ca_file: /etc/otelcol/splunk-ca.pem\n", "")
+        config = config.replace(
+            "${env:SPLUNK_HEC_ENDPOINT}", "http://127.0.0.1:18088/services/collector"
+        ).replace("    tls:\n      ca_file: /etc/otelcol/splunk-ca.pem\n", "")
         (directory / "hec-token").write_bytes(b"invented-hec-token")
         # The file provider preserves bytes, including newlines. HTTP headers
         # require exactly the token value with no trailing line ending.
