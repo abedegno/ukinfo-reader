@@ -43,7 +43,15 @@ matching or retrospective cross-edition removal is inferred from this source bit
 
 ## Hosted status and acceptance
 
-**9 November — latest:** the [separate 2003 HTTP qualification](research/2003-http-qualification-2026-11-09.md)
+**10 November — latest:** the [private hybrid SIC routing trial](research/2003-hybrid-sic-routing-2026-11-10.md)
+passed all 635 frozen 2003 responses with zero errors: C1 p95 136 ms, C4 p95
+256 ms against unchanged 500/1,000 ms limits. All 40 response/cursor checks passed
+in both flag directions; exactly 70 expected SIC-route decisions were observed.
+The experimental flag remains default off. Other 228 cases and v14 remain
+unqualified; production is unchanged. All private helpers/PG/lease stopped and
+original quotas restored. Earlier failed gates remain recorded below.
+
+**9 November — preceding qualification:** the [separate 2003 HTTP qualification](research/2003-http-qualification-2026-11-09.md)
 confirmed fresh Top-K/generic plans and all 635 frozen response hashes. C1 p95
 passed at 370 ms; C4 p95 missed its 1 s target at 1.306 s. The 127-case subset
 includes 39 business cases but no HTTP cursor cases; other editions remain outside

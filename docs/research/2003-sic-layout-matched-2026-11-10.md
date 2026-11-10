@@ -103,3 +103,7 @@ Fresh verification: all six helpers stopped; private PG stopped/restored to
 1.5 CPU / 1,536 MiB, MemorySwap 3 GiB; lease released; public health/image and live
 source/target identity/start/limits unchanged. No deployment or storage/Bitcoin
 change occurred.
+
+Follow-up: the [private hybrid routing HTTP trial](2003-hybrid-sic-routing-2026-11-10.md)
+passed the unchanged 2003 gate and bidirectional cursor checks. It does not
+qualify other editions or publication.
