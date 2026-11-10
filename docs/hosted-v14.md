@@ -43,7 +43,17 @@ matching or retrospective cross-edition removal is inferred from this source bit
 
 ## Hosted status and acceptance
 
-**10 November — latest:** [saved-failure diagnostics](research/broad-failure-evidence-2026-11-10.md)
+**10 November — latest:** [per-edition observability](research/edition-observability-2026-11-10.md)
+is implemented in draft [PR #51](https://github.com/abedegno/ukinfo-reader/pull/51),
+based on the deployed source without experimental routing changes. All final PR
+workflows passed, including real Collector privacy tests, disposable query/cancel
+paths, Terraform validation and three desktop packages. Bounded edition/stage/
+outcome counters cover unsampled failures; sampled child spans carry query timing
+without SQL, values, IDs or raw errors. Matching homelab policy is prepared, not
+applied. Production unchanged; original broader reliability gate remains failed
+and v14 hidden. Deployment still uses the normal reviewed-main release controller.
+
+**10 November — preceding diagnosis:** [saved-failure diagnostics](research/broad-failure-evidence-2026-11-10.md)
 confirmed all seven original initial failures were query timeouts. All seven
 isolated requests and a separately declared 355-case original-order trace pass
 now matched; neither reproduced a failure or clears the original broad gate.
