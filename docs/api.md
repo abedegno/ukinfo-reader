@@ -48,9 +48,15 @@ The 2003 SE reader exposes the same joined interface through a distinct source
 layout. See [2003 fields, prefix joins and source limitations](formats/2003-se.md).
 It adds raw postcode flags/grid codes and preserves unresolved names explicitly.
 
+The [v14 reader](formats/v14.md) also exposes this joined interface, including
+business searches. Telephone/fax numbers use source prefix tables instead of area
+codes. Additional fields preserve the packed phone/fax codes, prefix text and raw
+versus resolved county references. Stale original address overrides are flagged;
+they are not silently substituted for v14's stored parent links.
+
 `ukinfo_reader.modern_inspect.inspect(directory)` remains available for structural-only
 reports for the 2004/2005 sources using the smaller file profile. Its status is
-`structural-only`; 2003 dispatches to the full validator. Use
+`structural-only`; 2003 and v14 dispatch to the full validator. Use
 `ukinfo_reader.validation.validate(directory)` with all query files for complete
 residential checks. Low-level primitives in `ukinfo_reader.modern` retain physical values;
 `decode_residence()` does not apply joins or entry selection by itself.

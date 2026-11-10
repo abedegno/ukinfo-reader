@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Search historical UK-Info directories without the original Windows software.
-Explore people and businesses across five verified disc editions from 1998–2005,
+Explore people and businesses across six verified disc editions from 1998–2008,
 with a web interface, an Electron desktop preview and a documented Python reader.
 
 **[Search the archive](https://ukinfo.6153112.xyz)** ·
@@ -54,18 +54,21 @@ contains and fuzzy name matching are not implemented.
 Support applies to these exact distributions. Matching product names alone do not
 establish compatibility; use [edition identification and fingerprints](docs/editions.md).
 
-| Edition | Cover disc | Source entries | Internet Archive |
+| Edition | Distribution | Source entries | Source |
 | --- | --- | ---: | --- |
 | UK-Info Disk SE | PC Format 78 · January 1998 | 27,983,545 | [PC Format 78](https://archive.org/details/pc-format-78) |
 | UK-Info Disk SE 4.0 | PC Format 94 · April 1999 | 46,355,850 | [PC Format 94b](https://archive.org/details/pcf-94b-apr-1999-uk-info) |
 | UK-Info 2003 SE · residential + business | DPCS0104DVD | 59,886,841 | [Supplied-disc fingerprints](docs/formats/2003-se.md) |
 | UK-Info 2004 SE · residential | PC Plus 218 · July 2004 | 63,373,974 | [PC Plus 218 DVD](https://archive.org/details/pcp-218-dvd) |
 | UK-Info Disk V10.5 SE · residential + business | PC Format 175 · June 2005 | 51,350,897 | [PC Format 175 DVDs](https://archive.org/details/pcf-175-dvd-1-06-05.7z) |
+| UK-Info Disk v14 · residential + business | Supplied installation/data CDs · mastered March 2008 | 43,799,502 | [Source fingerprints and preparation](docs/formats/v14.md) |
 
-**248,951,107 source occurrences** across the five validated editions. These are not distinct
+**292,750,609 source occurrences** across the six validated editions. These are not distinct
 people. The public archive’s edition selector lists imports that are ready to search;
 operators can also check the [live catalogue](https://ukinfo.6153112.xyz/api/datasets).
-Dates above identify cover discs, not verified electoral-roll reference dates.
+v14 is supported by the reader and folder importer. Its selected hosted import is
+verified privately and awaits search acceptance; see [hosted status](docs/hosted-v14.md).
+Dates above identify distribution/mastering, not verified electoral-roll reference dates.
 The supplied 2004 SE media has no separate business listings.
 
 Select the matching file inside each Internet Archive item:
@@ -75,7 +78,7 @@ Select the matching file inside each Internet Archive item:
 - **2004:** `PCP218_DVD.iso`.
 - **2005:** `PCF175DVD2_06_05.7z`. UK-Info is on **DVD 2**, despite `dvd-1` in the item URL.
 
-All five supported editions have complete validation reports. Known source defects and
+All six supported editions have complete source validation reports. Known source defects and
 uncertain field meanings are documented in the [validation overview](docs/validation-overview.md)
 and [format references](FORMAT.md). Other editions, Standard and Pro releases need
 separate investigation and validation.
@@ -87,8 +90,9 @@ The **Python reader** decodes original files and streams verified imports. The
 The **Electron app** runs the same service and a private local PostgreSQL instance.
 Hosted deployments can optionally accelerate selected searches with a
 separate [ParadeDB index](docs/paradedb-preview.md); desktop and default deployments
-retain native search. See the [measured rollout](docs/research/parade-rollout-2026-10-26.md)
-and [tail-latency follow-up](docs/research/tail-search-2026-10-27.md) for results and limits.
+retain native search. See the [measured rollout](docs/research/parade-rollout-2026-10-26.md),
+[tail-latency follow-up](docs/research/tail-search-2026-10-27.md), and
+[latest grouped-read acceptance](docs/research/grouped-search-2026-10-27.md) for results and limits.
 Search requests do not run Python; the original Windows executables are never run.
 
 Desktop packages include their runtimes. Archive data normally lives in the OS

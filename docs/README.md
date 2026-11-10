@@ -1,6 +1,6 @@
 # Documentation
 
-UK-Info Archive supports five verified historical UK-Info editions. Choose a guide
+UK-Info Archive supports six verified historical UK-Info editions. Choose a guide
 for your task; dated investigation reports describe the evidence at the time.
 
 ## Start here
@@ -26,6 +26,12 @@ for your task; dated investigation reports describe the evidence at the time.
 
 ## Manage and operate an archive
 
+- [Hosted release automation and recovery](hosted-releases.md)
+- [v14 CO1 selection and private import acceptance](hosted-v14.md)
+
+- [Search performance checks](search-performance.md) — invented CI matrices, work budgets and private HDD diagnostics.
+- [Production deployment, monitoring and recovery](production.md) — separate serving credentials, TLS ingress, backups and isolated restore checks.
+
 - [Catalogue inventory, removal, backup and restore](catalogue-management.md)
 - [OpenTelemetry and Splunk backend setup](observability.md)
 - [Desktop diagnostics and safe issue reports](diagnostics.md)
@@ -41,6 +47,7 @@ for your task; dated investigation reports describe the evidence at the time.
 - [1999: SE 4.0](formats/se4.md)
 - [2003 SE: prefix-table addresses, residential and business records](formats/2003-se.md)
 - [2004/2005: address joins, residential/business updates and source anomalies](formats/modern-se.md)
+- [2008: v14 two-disc preparation, wider records and telephone prefix coding](formats/v14.md)
 - [PostgreSQL catalogue representation](formats/catalogue.md)
 - [Validation overview and complete source reports](validation-overview.md)
 - [Adding support for another edition](adding-editions.md)
@@ -58,6 +65,3 @@ research and measurement records, rather than promises about every deployment:
 - [Product review](research/product-review-2026-10-19.md) · [Implementation follow-up](review-implementation.md)
 
 [Back to the project](../README.md)
-
-- [Search performance checks](search-performance.md) — invented CI matrices, work budgets and private HDD diagnostics.
-- [Production deployment, monitoring and recovery](production.md) — separate serving credentials, TLS ingress, backups and isolated restore checks.

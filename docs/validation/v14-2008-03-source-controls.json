@@ -1,0 +1,14 @@
+{
+  "edition": "v14-2008-03",
+  "source_file": "uk.dat",
+  "source_sha256": "d037965a97905b0cf778ec7a4a0cb35a396959ddefd444a6fbb082a0b2c886be",
+  "covered_bytes": 334327804,
+  "physical_records": 23601871,
+  "source_co1_control_mask": 64,
+  "source_co1_flag_records": 29410,
+  "method": "Complete physical scan using verified v14 record lengths; raw postcode flag byte inspected for every record.",
+  "limitations": [
+    "CO1 is the original field label. Broader meaning or original Windows UI filtering is not inferred.",
+    "The reader preserves this flag and does not invent an exclusion rule from its name."
+  ]
+}

@@ -9,7 +9,8 @@ The required `search` job runs complementary matrices and retains the
 | --- | --- | --- |
 | PostgreSQL candidate plans | 50,000 invented entries in two editions; 70% dominant surname, rare names, 1,970 first-name terms, 727 postcode terms, 5% businesses; full postcode, sector/district, given-name variants, all editions and page-two cursors | Results/order differ from a sequential reference; any candidate heap fetch or non-index-only scan; 1,500 or more shared buffer accesses per plan |
 | Business classification probes | 50,000 invented business projections; a broad industry prefix and 50 selected postcode records; actual API predicates under forced custom/generic plans | Wrong IDs/order; classification range used as the per-record index condition; non-index-only research access or heap fetches; 800 or more shared buffers |
-| Group representatives | 50,000 invented research keys; earliest-edition identity with reversed edition input; actual representative SQL under forced custom/generic plans | Wrong representative; unnecessary later-edition requests; wrong/unpruned research partition; heap fetches; more than one row per exact group probe; 100 or more shared buffers for three probes |
+| Group members | 50,000 invented research keys; canonical min(dataset,id), complete counts and database edition collation compared with independent complete SQL; custom/generic plans | Wrong source/count/order, unpruned partition, non-covering access, heap fetches or 100+ shared buffers for three groups |
+| Scattered source keys/records | Complete 129-key mapping and multi-block record fixtures; original identities and cancellation | Key batch exceeds 32 IDs, compressed read exceeds four blocks, missing/reordered values, partial results or unreleased connections after cancellation |
 | Bounded address pages | 4,500 selected sources plus 100,000 invented distinct-name projections; actual source-batch SQL under forced custom/generic plans | More than 128 returned IDs; wrong order; unselective source walks, covering-index heap fetches, lossy bitmap or more than 64 bitmap heap pages; 1,000 or more shared buffers |
 | Business search projection | Actual API SQL under custom/generic plans, positive classifications, mixed-edition metadata, prefixes, address/refinement paging and complete legacy comparison | Wrong bodies/cursors; missing fallback; wrong partition; non-covering access, heap fetches or more than 1,000 shared buffers |
 | Business/address pagination | 5,000 invented businesses with industry/SIC prefixes and separated town ranges | Missing or duplicate occurrences across complete default, name-sorted and grouped pagination |
@@ -276,3 +277,19 @@ transactions already use four seconds. Hybrid adds database resources. The
 retains the improvement with uniformly four-second SQL backstops in the control;
 production deadlines remain unchanged. Recovery exercises were explicitly skipped
 in favour of regenerating derived data from original media.
+
+## Current private NAS protocol
+
+The separately configured weekly coordinator retains the original 294-case paired
+comparison and matched 292-case load cohort. It adds twelve expanded cases, 64
+full-native page/cursor checks and ten independent source-cold probes. Limits are
+zero candidate errors/mismatches, C1 p95 <=500 ms, C4 p95 <=1 s and source-cold
+requests <=3 s. Its 4-CPU/8-GiB profile, source-only eviction, shared target caches,
+retained failures and exact source provenance are documented in the
+[grouped source-read acceptance](research/grouped-search-2026-10-27.md).
+
+These private tests do not run on GitHub-hosted runners or replay real queries
+through the public URL. CI uses invented fixtures and work/correctness budgets;
+fixed millisecond budgets apply to the private NAS protocol. Passing short runs
+does not establish sustained Internet capacity. The latest accepted expanded
+cold maximum, 2.927 s, remains close to its three-second limit.

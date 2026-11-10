@@ -24,6 +24,11 @@ editions are rejected. Select one disc at a time. The original media is unchange
 Installers stored in other container formats are not supported by direct import;
 use **Choose source folder…** after extracting the required files yourself.
 
+For **v14**, first [prepare both supplied raw CD images](formats/v14.md), then
+choose **Choose source folder…** and select that verified output. Direct two-disc
+MDF/IMG selection is not implemented. The app must be built from a revision with
+v14 support; older draft packages will reject this source.
+
 ### Temporary storage
 
 For a 7z containing an ISO, allow space for its uncompressed ISO plus required

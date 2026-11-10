@@ -1,7 +1,7 @@
 # Adding support for another edition
 
-Five exact distributions are supported: the 1998 SE, 1999 SE 4.0, 2003 SE,
-2004 SE and V10.5 SE (2005) releases listed in [supported editions](editions.md).
+Six exact source profiles are supported: the 1998 SE, 1999 SE 4.0, 2003 SE,
+2004 SE, V10.5 SE (2005) and v14 (2008) releases listed in [supported editions](editions.md).
 Unknown file sizes are rejected and source fingerprints are verified on request.
 Matching product names or a partly readable table do not establish compatibility.
 

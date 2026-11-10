@@ -1,0 +1,73 @@
+{
+  "as_of_utc": "2026-11-07T03:56:50.078415+00:00",
+  "status": "private-native-reference-diagnosis",
+  "published": false,
+  "dataset": "v14-2008-03:co1-excluded",
+  "raw_source_occurrences": 43799502,
+  "excluded_co1_occurrences": 54869,
+  "selected_entries": 43744633,
+  "business_entries": 6092008,
+  "public_editions": 5,
+  "public_entries": 248951107,
+  "expected_six_edition_entries": 292695740,
+  "source_verification": {
+    "entries": 43744633,
+    "blocks": 341755,
+    "seconds": 1527.677,
+    "projection_checked": true,
+    "source_digest_matched": true
+  },
+  "derived_index_complete": true,
+  "native_maintenance_complete": true,
+  "derived_field_verification": {
+    "editions": 6,
+    "samples": 1536,
+    "fields_matched": 1536,
+    "independent_matched": 1536
+  },
+  "first_legacy_probe": {
+    "requests": 250,
+    "matches": 245,
+    "query_timeouts": 5,
+    "evidence_preserved": true
+  },
+  "fixed_warmup": {
+    "rounds_per_backend": 1,
+    "cases_per_backend": 355,
+    "native_errors": 29,
+    "candidate_errors": 3
+  },
+  "fresh_legacy_probe": {
+    "requests": 250,
+    "matches": 250,
+    "errors": 0
+  },
+  "paired_comparison": {
+    "cases": 355,
+    "requests_per_backend": 742,
+    "matching_pairs": 718,
+    "native_errors": 24,
+    "candidate_errors": 0,
+    "candidate_mismatches": 0
+  },
+  "calibration": {
+    "cases": 355,
+    "matching_cases": 348,
+    "native_errors": 7,
+    "candidate_errors": 0,
+    "mismatches": 0
+  },
+  "strict_acceptance_passed": false,
+  "load_benchmarks_completed": false,
+  "six_edition_cold_qualified": false,
+  "cache_conditions": "shared NAS caches; one prescribed complete-cohort warmup after first legacy failure; no global flush",
+  "resource_limits": {
+    "api_cpu": 1,
+    "api_memory_mib": 512,
+    "source_postgresql_cpu": 2,
+    "source_postgresql_memory_gib": 6,
+    "derived_postgresql_cpu": 2,
+    "derived_postgresql_memory_gib": 6
+  },
+  "privacy": "Only aggregate evidence exported. Queries, records, coordinates, source IDs, cursors and response hashes remain on NAS."
+}

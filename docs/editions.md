@@ -7,8 +7,9 @@
 | `se2003-dpcs0104` | UK-Info 2003 SE | Supplied DPCS0104DVD image | Supported residential and business searches/exports; source anomalies documented |
 | `se2004-pcp218-2004-07` | UK-Info 2004 SE | PC Plus issue 218, July 2004 | Supported residential searches/exports; source anomalies documented |
 | `se2005-pcf175-2005-06` | UK-Info Disk V10.5 SE | PC Format issue 175, June 2005 | Supported residential and business searches/exports, including updates/deletions |
+| `v14-2008-03` | UK-Info Disk v14 | Supplied installation/data CDs, mastered March 2008 | Supported residential and business searches/exports; source anomalies documented |
 
-**Other editions and Standard/Pro releases are not supported.** Matching product
+**Other distributions, including unverified Standard/Pro variants, are not supported.** Matching product
 names or familiar filenames do not establish format compatibility. To propose another
 release, follow [Adding editions](adding-editions.md).
 
@@ -27,6 +28,14 @@ No public archive source has been verified for this particular supplied image.
 
 ## 2004 SE and V10.5 SE (2005)
 
+The **Your Family Tree issue 14** DVD (volume `YFT14`), inspected on
+6 November 2026, distributes **UK-Info V9 2004 SE** under
+`PC Software/Full/UK-InfoDisk/`. Its `uk.dat`, `data1.hdr`, `data1.cab`
+and `data2.cab` match the PC Plus 218 distribution byte for byte by SHA-256.
+It therefore contains the same supported 2004 database, rather than an additional
+edition to import. The reader retains the existing `se2004-pcp218-2004-07`
+identity for this data. See the [distribution comparison](validation/se2004-yft14-distribution.json).
+
 These exact sources are in `SUPPORTED_EDITIONS`. `Database`, `ukinfo-read`
 and `ukinfo-validate` support them. Extraction requires additional address files beyond
 the smaller profiles used by the earlier structural inspector. See
@@ -35,6 +44,22 @@ No other 2004/2005 distribution is implicitly supported; matching product names 
 do not establish compatible source identity. V10.5 SE business records are included. The supplied 2004 SE media contains a business
 word index/dictionary but no `bus.dat`, so it supplies no separate business listings.
 The 2005 query profile now requires the nine additional business files listed in the format guide.
+
+## v14 — supplied March 2008 two-disc release
+
+The supplied `UK-Info_v14_Instal` and `UK-Info_v14_data` folders contain
+Alcohol MDF/MDS and CloneCD IMG/CCD/SUB images respectively. ISO metadata records
+mastering on **27 March 2008**, not a verified electoral-roll reference date.
+The exact source supports **43,799,502 entries**, including **6,092,008 businesses**.
+It has a distinct `v14` decoder family; familiar filenames do not make it a 2005 SE source.
+
+See [preparation, format differences and limitations](formats/v14.md),
+[media fingerprints](validation/v14-2008-media-inventory.json),
+[complete validation](validation/v14-2008-03.json) and
+[original-decoder comparisons](validation/v14-2008-03-reference-comparison.json).
+The reader retains raw codes and source warnings for partial postcodes and malformed
+telephone prefixes. Its selected hosted import is verified privately, but search
+acceptance is unfinished and it is not published. See [hosted status and selection](hosted-v14.md).
 
 ## Identify your copy
 

@@ -1,7 +1,7 @@
 # Optional ParadeDB search preview
 
 The hosted Go service can use a **separate, derived ParadeDB database** to
-accelerate address-filter searches, alphabetical postcode/classification searches
+accelerate address-filter searches, alphabetical postcode/classification searches,
 broad alphabetical exact-surname searches, and default-order nearby searches
 combined with address filters. Enable it with
 `serve --search-backend paradedb` and a SELECT-only `PARADE_DATABASE_URL`.
@@ -95,6 +95,11 @@ The target connection pool uses prepared generic plans for the pinned projection
 queries; the source pool retains its existing planning policy. Source record reads
 use at most four compressed blocks per statement and two concurrent reads within
 the unchanged source pool, under the same request deadline.
+Grouped counts and canonical min(dataset,id) records use one covered source-index
+pass per selected edition. Source group keys are read in complete 32-ID batches
+with at most two concurrent reads; failed siblings discard the partial mapping.
+The [grouped-read follow-up](research/grouped-search-2026-10-27.md) records the
+complete passing contained protocol and earlier failed attempts.
 The [tail-latency follow-up](research/tail-search-2026-10-27.md) records measurements,
 retained failed experiments and the separate expanded coverage suite.
 
@@ -104,7 +109,8 @@ probe uses the complete SQL path; the ceiling never limits successful results.
 Alphabetical business searches can use the existing complete business projection.
 Broad classifications retain a complete projection sort when the pair probe overflows.
 See the [ordered-search follow-up](research/ordered-search-2026-10-26.md) for
-measurements, source-cold checks and remaining concurrency timeouts.
+the earlier measurements and then-remaining concurrency timeouts; use the latest
+[grouped-read report](research/grouped-search-2026-10-27.md) for current acceptance.
 
 ## Build privately
 

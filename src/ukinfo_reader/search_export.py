@@ -11,8 +11,10 @@ import json
 import signal
 import struct
 import sys
+from collections import Counter
 
 from . import __version__
+from .hosted_selection import get_selection
 from .reader import Database
 
 COUNTS = {
@@ -22,6 +24,7 @@ COUNTS = {
     "se2003-dpcs0104": 59_886_841,
     "se2004-pcp218-2004-07": 63_373_974,
     "se2005-pcf175-2005-06": 51_350_897,
+    "v14-2008-03": 43_799_502,
 }
 
 
@@ -39,9 +42,13 @@ def source_id(row):
     return str(row["entry_id"])
 
 
-def emit(db, directory, output, limit=None):
+def emit(db, directory, output, limit=None, *, selection=None):
     hashes = db.edition.verify(directory)
-    dataset = db.edition.id + (f":sample:{limit}" if limit else "")
+    policy = get_selection(db.edition.id, selection)
+    dataset = (
+        db.edition.id + (policy.suffix if policy else "") + (f":sample:{limit}" if limit else "")
+    )
+    expected = limit or (policy.expected if policy else COUNTS[db.edition.id])
 
     def write(frame):
         output.write(json.dumps(frame, ensure_ascii=True, separators=(",", ":")) + "\n")
@@ -52,16 +59,20 @@ def emit(db, directory, output, limit=None):
             protocol=2,
             dataset=dataset,
             edition=db.edition.id,
-            title=db.edition.title,
+            title=db.edition.title + (" — CO1 exclusions applied" if policy else ""),
             reader_version=__version__,
             sha256=hashes,
             sample=limit is not None,
-            expected=limit or COUNTS[db.edition.id],
+            expected=expected,
+            **({"selection": policy.manifest()} if policy else {}),
         )
     )
     digest = hashlib.sha256()
     count = 0
     stream = records(db)
+    seen, excluded = Counter(), Counter()
+    if policy:
+        stream = policy.records(stream, seen, excluded)
     if limit:
         stream = itertools.islice(stream, limit)
     for count, row in enumerate(stream, 1):
@@ -75,7 +86,8 @@ def emit(db, directory, output, limit=None):
         output.write(
             '{"type":"record","source_id":' + json.dumps(identity) + ',"record":' + raw + "}\n"
         )
-    expected = limit or COUNTS[db.edition.id]
+    if policy and limit is None:
+        policy.verify_counts(seen, excluded)
     if count != expected:
         raise ValueError(f"Decoded {count:,} entries; expected {expected:,}; import rejected")
     # Recheck the source after decoding so an ordinary concurrent change fails closed.
@@ -97,9 +109,17 @@ def main():
         "--identify", action="store_true", help="identify and verify without exporting"
     )
     parser.add_argument("--limit", type=int, help="explicitly import a labelled partial sample")
+    parser.add_argument(
+        "--selection",
+        choices=["exclude-source-co1"],
+        help="explicit hosted v14 selection; excludes CO1-flagged residential occurrences",
+    )
     args = parser.parse_args()
     if args.limit is not None and args.limit < 1:
         parser.error("--limit must be positive")
+
+    if args.selection and (args.prepare_media or args.demo):
+        parser.error("--selection requires a verified --data source")
 
     if args.prepare_media:
         from .media import prepare
@@ -119,18 +139,27 @@ def main():
 
     def run(db):
         if args.identify:
+            policy = get_selection(db.edition.id, args.selection)
             print(
                 json.dumps(
                     dict(
                         edition=db.edition.id,
-                        title=db.edition.title,
-                        entries=COUNTS[db.edition.id],
+                        title=db.edition.title + (" — CO1 exclusions applied" if policy else ""),
+                        entries=policy.expected if policy else COUNTS[db.edition.id],
+                        **(
+                            {
+                                "dataset": db.edition.id + policy.suffix,
+                                "selection": policy.manifest(),
+                            }
+                            if policy
+                            else {}
+                        ),
                         sha256=db.edition.verify(args.data),
                     )
                 )
             )
         else:
-            emit(db, args.data, sys.stdout, args.limit)
+            emit(db, args.data, sys.stdout, args.limit, selection=args.selection)
 
     if args.demo:
         from .demo import database

@@ -1,0 +1,70 @@
+{
+  "2003": {
+    "edition": "se2003-dpcs0104",
+    "totals": {
+      "entries": 59886841,
+      "electoral_entries": 44959860,
+      "telephone_entries": 12455943,
+      "business_entries": 2471038
+    },
+    "seconds": 364.9,
+    "source_warnings": {
+      "base": {
+        "building_reference_inside_string": 25,
+        "invalid_name_reference": 17
+      }
+    },
+    "business_warnings": {
+      "base": {
+        "industry_dictionary_missing": 2093749,
+        "partial_postcode_source": 4144,
+        "unterminated_place_text": 4262,
+        "missing_source_locality": 455
+      }
+    }
+  },
+  "2004": {
+    "edition": "se2004-pcp218-2004-07",
+    "totals": {
+      "entries": 63373974,
+      "electoral_entries": 53936980,
+      "telephone_entries": 9436994
+    },
+    "seconds": 392.0,
+    "source_warnings": {
+      "base": {
+        "building_reference_inside_string": 981500,
+        "partial_postcode_source": 138198,
+        "unknown_telephone_name": 17465
+      }
+    },
+    "business_warnings": {}
+  },
+  "2005": {
+    "edition": "se2005-pcf175-2005-06",
+    "totals": {
+      "entries": 51350897,
+      "electoral_entries": 32062644,
+      "telephone_entries": 13135957,
+      "business_entries": 6152296
+    },
+    "seconds": 445.6,
+    "source_warnings": {
+      "base": {
+        "building_reference_out_of_range": 4272,
+        "unknown_telephone_name": 5
+      },
+      "update": {}
+    },
+    "business_warnings": {
+      "base": {
+        "industry_reference_wrap_recovered": 121513,
+        "ambiguous_industry_reference": 9101,
+        "unterminated_place_text": 10277
+      },
+      "update": {
+        "unterminated_place_text": 2005
+      }
+    }
+  }
+}

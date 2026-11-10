@@ -1,0 +1,158 @@
+{
+  "status": "Exact source identity established; see v14-2008-03.json for complete reader validation.",
+  "images": [
+    {
+      "name": "UK-Info V14 INST.mdf",
+      "bytes": 637314768,
+      "sha256": "e6a85e73d17e4c6c49b2b26b072a740baa264e79b0ca830e1c73f19d3b1a3e9a",
+      "sector_bytes": 2448,
+      "payload_offset": 24,
+      "volume_label": "UK_INFO_V14_INST",
+      "creation_timestamp_raw": "3230303830333237313831323539353600",
+      "files": [
+        {
+          "name": "AUTORUN.INF",
+          "bytes": 42,
+          "sha256": "3feeabdc2fd68b7aee7e553f49589bd45406441f72c021ac6d33eadfc8c74342"
+        },
+        {
+          "name": "DATA1.CAB",
+          "bytes": 485543,
+          "sha256": "9f54fab3e83c24cc2c462088744c921f98e16db5187cf6dec99a41809f3619d1"
+        },
+        {
+          "name": "DATA1.HDR",
+          "bytes": 106414,
+          "sha256": "66c43d31050ae167240ea6efdd03e80863d524d9ef798d7aa4c5dca6a6b4a8c3"
+        },
+        {
+          "name": "DATA2.CAB",
+          "bytes": 523485231,
+          "sha256": "bf1f70f94a3e685a48249d004d475df364921d7d58a35a60c5956d2c9b9310ab"
+        },
+        {
+          "name": "HELP.CHM",
+          "bytes": 709346,
+          "sha256": "74d028cc0e6bf3e01022f1a151261721092774e993e13b0ab36623574275e737"
+        },
+        {
+          "name": "ICD_14.DLL",
+          "bytes": 401408,
+          "sha256": "3424b039abe88e9b7486e9540cc9165ab497d52d927efcab58f12b3299c42dd6"
+        },
+        {
+          "name": "IKERNEL.EX_",
+          "bytes": 346602,
+          "sha256": "fbf95719b956b548b947436e29feb18bb884e01f75ae31b05c030ebd76605249"
+        },
+        {
+          "name": "LAYOUT.BIN",
+          "bytes": 508,
+          "sha256": "396e9b3752a2d335ec94064531f3fcc2224147d9ee12e3fc166ac04e229b5dd4"
+        },
+        {
+          "name": "SETUP.BMP",
+          "bytes": 589554,
+          "sha256": "050cf90f0bdf3fc5b3564753178a3379ae42f25c574e905292c5e9da6b77dbec"
+        },
+        {
+          "name": "SETUP.EXE",
+          "bytes": 56320,
+          "sha256": "ab9e0291a763efc32e84e7117f9a0fbc99b681c96df0bb27a66433a726667e5c"
+        },
+        {
+          "name": "SETUP.INI",
+          "bytes": 147,
+          "sha256": "7eec946ef83391492c4209471444bd094a37301cfdf6af525efd979b9b932809"
+        },
+        {
+          "name": "SETUP.INX",
+          "bytes": 146294,
+          "sha256": "1f2654164ce6c9c99f87ae6bac6aeae68be464567931f285cef06e95a6a58b71"
+        },
+        {
+          "name": "UKID.EXE",
+          "bytes": 6447104,
+          "sha256": "59588e5ba22a141b447111795279047b6a318840bac0d3500f95e2d142783fb1"
+        }
+      ]
+    },
+    {
+      "name": "IMAGE.img",
+      "bytes": 481052208,
+      "sha256": "787f799d074c1ecf015c45ea6fba62f42a8d520bc588e3c69fd39ae4a0db76a3",
+      "sector_bytes": 2352,
+      "payload_offset": 24,
+      "volume_label": "NEEDS RMPS2_0___00000001_0000_00",
+      "creation_timestamp_raw": "3230303830333237313832323435303000",
+      "files": [
+        {
+          "name": "BUSW1.IDX",
+          "bytes": 7507968,
+          "sha256": "a8c55443ea72406d3c17880eac749adb3d719f03c567bc34e1e470945cd87fa1"
+        },
+        {
+          "name": "D5.DAT",
+          "bytes": 14101884,
+          "sha256": "9c99949330a2279cbd42851abeeb09eee072d11968a5e0f71c1a6616ed394ef2"
+        },
+        {
+          "name": "ICD.DAT",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "name": "LOBDESC.DAT",
+          "bytes": 29324834,
+          "sha256": "bb50d56a6592b760ba8c75e3c252c1c1b0de6a4f65b749d2d892a82b93f8fff4"
+        },
+        {
+          "name": "LOBDESC.IDX",
+          "bytes": 331776,
+          "sha256": "97103fd5a2d9d7bd20fd571bd9ae15d8b5e90c38631ce6798ed9926d0794bf32"
+        },
+        {
+          "name": "MLOB.IDX",
+          "bytes": 21368832,
+          "sha256": "71fa2acb1d4c6e817f40654dec231b722299bab2a9150e48af64442026b462b5"
+        },
+        {
+          "name": "UK.DAT",
+          "bytes": 334327804,
+          "sha256": "d037965a97905b0cf778ec7a4a0cb35a396959ddefd444a6fbb082a0b2c886be"
+        },
+        {
+          "name": "UKSTR.IDX",
+          "bytes": 11522048,
+          "sha256": "0754b90dcab3e14b5851710bff65e0086e5f70ef936f676e5015f4e03cf206e0"
+        }
+      ]
+    }
+  ],
+  "sidecars": [
+    {
+      "name": "UK-Info V14 INST.mds",
+      "bytes": 500,
+      "sha256": "05028214a28aae61d511ee65b8ce1a4b6f9fbc78cfe7acf567137e9b877d2984",
+      "required_for_this_extraction": false
+    },
+    {
+      "name": "IMAGE.ccd",
+      "bytes": 773,
+      "sha256": "b3b4ca9d02c79b9d0b31f986bba2ea5508d129d002ab666213e600408c393aa9",
+      "required_for_this_extraction": false
+    },
+    {
+      "name": "IMAGE.cue",
+      "bytes": 69,
+      "sha256": "1b93aa8725cf331f65510124f2f4216a62d58770445786f2f644ff76ea4a9167",
+      "required_for_this_extraction": false
+    },
+    {
+      "name": "IMAGE.sub",
+      "bytes": 19634784,
+      "sha256": "ee485fb0fdd20b0fc55a8481a649a8c1364af4bb9e0409e650ce21750e68f702",
+      "required_for_this_extraction": false
+    }
+  ]
+}

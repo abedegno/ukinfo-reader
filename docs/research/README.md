@@ -7,6 +7,9 @@ Short warm tests do not establish cold-storage or public-service capacity.
 
 ## Storage and query execution
 
+- [Grouped cold source reads](grouped-search-2026-10-27.md): retained failures, bounded source reads and complete contained acceptance.
+- [Tail latency and broader search coverage](tail-search-2026-10-27.md): target plan reuse, bounded surname selection and complete large-radius streaming; frozen original and separate extended suites.
+
 - [Source-cold postcode/nearby searches and concurrency follow-up](cold-search-2026-10-26.md) — complete native references, fixed workload, identified business-sort tail and repeated C4 checks.
 - [Grouped, edition and alphabetical postcode search follow-up](ordered-search-2026-10-26.md) — independent source references, fixed workload, concurrency and source-cold checks.
 - [Equal-budget hybrid control and hosted rollout](parade-rollout-2026-10-26.md) — complete fixed cohort, remaining tails and deployment evidence.
@@ -38,7 +41,3 @@ Short warm tests do not establish cold-storage or public-service capacity.
 
 Reports and result files contain aggregate measurements. Private query fixtures,
 responses and source media are excluded from this repository.
-
-- [Tail latency and broader search coverage](tail-search-2026-10-27.md): target plan reuse, bounded surname selection and complete large-radius streaming; frozen original and separate extended suites.
-
-- [Grouped cold source reads](grouped-search-2026-10-27.md): retained failures, bounded source reads and complete contained acceptance.

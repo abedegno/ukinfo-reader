@@ -99,24 +99,28 @@ explicitly using the deployment's Compose/Portainer lifecycle.
 
 The NAS also runs a weekly private-data regression protocol, configured in the
 homelab repository under `docker/ukinfo/regression/`. It checks frozen native
-references, complete paging, fixed C1/C4 workloads and five independently
-source-cold requests. An isolated process supervisor uses the existing private
+references (64 page/cursor checks), complete paging, the original 294-case
+comparison and 292-case fixed C1/C4 workload, twelve separate expanded cases and
+ten independently source-cold requests. The grouped cold snapshot is a separate
+pre-change hybrid reference, not a full-native oracle. An isolated process supervisor uses the existing private
 source clone; it has no Docker socket or published ports. Saved real searches
 never pass through the public URL.
 
 The Collector scrapes flat numeric `ukinfo_regression_*` metrics internally:
 heartbeat, running/last-pass state, overdue time, candidate errors/mismatches,
-source-cold maximum and baseline/candidate C1/C4 p95. Terraform manages four
+original/expanded/grouped source-cold maxima and baseline/candidate C1/C4 p95. Terraform manages four
 charts and detectors for failed, overdue and missing-telemetry conditions.
 Workload files, response hashes, cursors and logs remain on the NAS. Its combined
 container resource profile differs from the original separate-container
 benchmark; compare its results within that profile. Target caches remain shared
-and uncontrolled. See the [measured follow-up](research/cold-search-2026-10-26.md)
-for the original results and limitations.
+and uncontrolled. See the [latest complete contained acceptance](research/grouped-search-2026-10-27.md)
+and its retained failures/limits; the slowest expanded cold check was 2.927 s
+against an unchanged 3 s gate.
 
 Request spans contain only a fixed route, bounded HTTP method, response status and
-search category. Child operations are `db.pool.acquire`, `db.query`, `search.records`
-and `address.select`. Database spans measure duration without SQL text, parameters,
+search category. Child operations are `db.pool.acquire`, `db.query`, `search.records`,
+`address.select`, and fixed `search.*` phases for geography, source groups and
+derived candidate/inventory/pair work. Database spans measure duration without SQL text, parameters,
 connection details or error messages. Record loading includes decompression time;
 there is no per-record span or identifier.
 

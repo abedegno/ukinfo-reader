@@ -95,3 +95,10 @@ searches scan compressed columns; PC Format 78 surname searches use its original
 
 
 [All documentation](README.md) · [Supported editions](editions.md)
+
+### UK-Info Disk v14 (two discs, 2008)
+
+v14 uses a distinct reader and requires tables from both supplied discs. Follow
+[the v14 preparation guide](formats/v14.md) to create a verified folder, then use
+the ordinary name/postcode/business searches and exports. The desktop wizard can
+import that prepared folder; direct two-disc selection is not implemented.
