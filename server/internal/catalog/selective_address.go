@@ -38,6 +38,7 @@ func (a *API) matchSelectiveAddresses(ctx context.Context, f *candidateFilters) 
 	}
 	plan := "fallback"
 	sourceOverflow := false
+	streamReady := false
 	defer func() {
 		if err != nil {
 			a.metrics.plan("error")
@@ -66,6 +67,12 @@ func (a *API) matchSelectiveAddresses(ctx context.Context, f *candidateFilters) 
 				return err
 			}
 			sourceOverflow = count > selectiveAddressLimit
+			// Use only the published reverse projection, and keep unrelated
+			// broad/ordered searches and private probe experiments unchanged.
+			streamReady = sourceOverflow && !a.ExperimentalAddressProbe && q.Kind == "person" &&
+				q.Surname != "" && q.Match == "exact" && !strings.HasSuffix(q.Surname, "*") &&
+				q.Town != "" && q.Street == "" && q.Locality == "" && q.County == "" && q.Group == "" && q.Sort == ""
+
 			if !sourceOverflow {
 				matched, available, err := a.indexedAddressCandidates(ctx, q, candidates)
 				if err != nil {
@@ -94,6 +101,11 @@ func (a *API) matchSelectiveAddresses(ctx context.Context, f *candidateFilters) 
 		if !q.hasRefinements() || f.missing {
 			return nil
 		}
+	}
+	if streamReady && !f.addressMatched {
+		f.addressStream = true
+		plan = "reverse_intersection"
+		return nil
 	}
 	// A source-side probe is useful only with an independent indexed anchor.
 	if !f.addressMatched && q.Surname == "" && q.Organisation == "" && q.Postcode == "" && q.Near == "" && !q.hasBusinessFilters() {

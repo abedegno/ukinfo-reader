@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -257,4 +258,195 @@ func testBusinessAddressIntersection(t *testing.T, db *pgxpool.Pool) {
 	}
 	testPositiveProjectionBenchmark(t, db)
 	testBusinessSearch(t, db)
+}
+
+// Large source and town sets require reverse filtering beyond the first batch.
+// Records define the oracle independently of the address lookup projection.
+func testNativeTownStream(t *testing.T, db *pgxpool.Pool) {
+	t.Helper()
+	ctx := context.Background()
+	var input bytes.Buffer
+	enc := json.NewEncoder(&input)
+	_ = enc.Encode(Manifest{Type: "manifest", Protocol: 1, Dataset: "native-town-stream", Edition: "native-town-stream", Title: "Invented native town stream", Expected: 5000, SHA256: map[string]string{"invented": "invented"}})
+	for i := 0; i < 5000; i++ {
+		town := "Elsewhere Town"
+		if i >= 3750 {
+			town = "Target Town"
+		}
+		_ = enc.Encode(map[string]any{"type": "record", "source_id": fmt.Sprint(i), "record": map[string]any{"surname": "Townstream", "firstName": "June A", "town": town, "street": "Invented Road", "houseno": fmt.Sprint(i)}})
+	}
+	_ = enc.Encode(map[string]any{"type": "end", "count": 5000})
+	if _, err := Import(ctx, db, &input); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := IndexAddresses(ctx, db, "native-town-stream", AddressIndexOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(ctx, "SELECT build_address_record_lookup('native-town-stream')"); err != nil {
+		t.Fatal(err)
+	}
+	// A second complete edition has matching records at the same source IDs.
+	// This checks the dataset tie-breaker and occurrence preservation.
+	input.Reset()
+	enc = json.NewEncoder(&input)
+	_ = enc.Encode(Manifest{Type: "manifest", Protocol: 1, Dataset: "native-town-second", Edition: "native-town-second", Title: "Invented second native edition", Expected: 5000, SHA256: map[string]string{"invented": "invented"}})
+	for i := 0; i < 5000; i++ {
+		name := "Othername"
+		if i >= 3750 && i < 3950 {
+			name = "Townstream"
+		}
+		_ = enc.Encode(map[string]any{"type": "record", "source_id": fmt.Sprint(i), "record": map[string]any{"surname": name, "firstName": "June A", "town": "Target Town", "street": "Invented Road", "houseno": fmt.Sprint(i)}})
+	}
+	_ = enc.Encode(map[string]any{"type": "end", "count": 5000})
+	if _, err := Import(ctx, db, &input); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := IndexAddresses(ctx, db, "native-town-second", AddressIndexOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(ctx, "SELECT build_address_record_lookup('native-town-second')"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(ctx, "INSERT INTO terms(key) SELECT 'jaaa'||lpad(i::text,6,'0') FROM generate_series(1,8193)i ON CONFLICT DO NOTHING; ANALYZE"); err != nil {
+		t.Fatal(err)
+	}
+	var firstPage []byte
+	base := "dataset=native-town-stream&kind=person&match=exact&surname=Townstream&first_name=J*&town=Target+Town&limit=100"
+	for _, raw := range []string{base, strings.Replace(base, "dataset=native-town-stream", "dataset=all", 1), strings.Replace(base, "first_name=J*", "first_name=June&first_match=given", 1)} {
+		api := NewAPI(db)
+		cursor := ""
+		seen := map[string]bool{}
+		for page := 0; page < 20; page++ {
+			w := httptest.NewRecorder()
+			api.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/search?"+raw+"&cursor="+url.QueryEscape(cursor), nil))
+			if w.Code != 200 {
+				t.Fatal("native stream search failed", w.Code, w.Body.String())
+			}
+			if raw == base && page == 0 {
+				firstPage = append([]byte(nil), w.Body.Bytes()...)
+			}
+			var result searchResult
+			if err := json.Unmarshal(w.Body.Bytes(), &result); err != nil {
+				t.Fatal(err)
+			}
+			for _, row := range result.Items {
+				id, err := strconv.Atoi(row.SourceID)
+				key := row.Dataset + ":" + row.SourceID
+				valid := row.Dataset == "native-town-stream" && id >= 3750 && id < 5000
+				if strings.Contains(raw, "dataset=all") && row.Dataset == "native-town-second" {
+					valid = id >= 3750 && id < 3950
+				}
+				if err != nil || !valid || seen[key] {
+					t.Fatal("wrong/repeated late town match")
+				}
+				seen[key] = true
+			}
+			if db.Stat().AcquiredConns() != 0 {
+				t.Fatal("source stream leaked a pool connection")
+			}
+			cursor = result.Next
+			if cursor == "" {
+				break
+			}
+		}
+		want := 1250
+		if strings.Contains(raw, "dataset=all") {
+			want = 1450
+		}
+		if cursor != "" || len(seen) != want {
+			t.Fatal("native stream lost or truncated matches", len(seen))
+		}
+		if api.metrics.phases[phaseKey{"address_blocks", "ok"}].Count == 0 {
+			t.Fatal("overflowing native town search expanded forward postings instead of bounded reverse blocks")
+		}
+		api.decoder.Close()
+	}
+	testNativeTownSmallPools(t, db, base, firstPage)
+	testNativeTownCancellation(t, db, base)
+	// Missing optional coverage retains the original complete forward path.
+	if _, err := db.Exec(ctx, `CREATE TABLE saved_native_town_lookup AS SELECT * FROM address_record_indexes WHERE dataset_id=(SELECT id FROM datasets WHERE key='native-town-stream');
+ DELETE FROM address_record_indexes WHERE dataset_id=(SELECT id FROM datasets WHERE key='native-town-stream')`); err != nil {
+		t.Fatal(err)
+	}
+	fallback := NewAPI(db)
+	defer fallback.decoder.Close()
+	w := httptest.NewRecorder()
+	fallback.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/search?"+base, nil))
+	if w.Code != 200 || !bytes.Equal(firstPage, w.Body.Bytes()) {
+		t.Fatal("missing optional lookup changed first page/cursor")
+	}
+	if _, err := db.Exec(ctx, `INSERT INTO address_record_indexes SELECT * FROM saved_native_town_lookup; DROP TABLE saved_native_town_lookup;
+ DELETE FROM address_record_blocks WHERE dataset_id=(SELECT id FROM datasets WHERE key='native-town-stream') AND block_id=0`); err != nil {
+		t.Fatal(err)
+	}
+	broken := NewAPI(db)
+	defer broken.decoder.Close()
+	w = httptest.NewRecorder()
+	broken.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/search?"+base, nil))
+	if w.Code != 503 {
+		t.Fatal("incomplete reverse lookup silently omitted an early source block", w.Code)
+	}
+	if db.Stat().AcquiredConns() != 0 {
+		t.Fatal("corrupt lookup leaked a source connection")
+	}
+	testNativeTownPrefixOverflow(t, db)
+}
+
+// A match beyond the source-prefix budget must use the complete fallback, never
+// report a false end of results. Subsequent pages still use exact source cursors.
+func testNativeTownPrefixOverflow(t *testing.T, db *pgxpool.Pool) {
+	t.Helper()
+	ctx := context.Background()
+	var input bytes.Buffer
+	enc := json.NewEncoder(&input)
+	_ = enc.Encode(Manifest{Type: "manifest", Protocol: 1, Dataset: "native-town-budget", Edition: "native-town-budget", Title: "Invented source-prefix budget", Expected: 70000, SHA256: map[string]string{"invented": "invented"}})
+	for i := 0; i < 70000; i++ {
+		town := "Elsewhere Town"
+		if i >= 68750 {
+			town = "Target Town"
+		}
+		_ = enc.Encode(map[string]any{"type": "record", "source_id": fmt.Sprint(i), "record": map[string]any{"surname": "Prefixbudget", "firstName": "June A", "town": town, "street": "Invented Road", "houseno": fmt.Sprint(i)}})
+	}
+	_ = enc.Encode(map[string]any{"type": "end", "count": 70000})
+	if _, err := Import(ctx, db, &input); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := IndexAddresses(ctx, db, "native-town-budget", AddressIndexOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(ctx, "SELECT build_address_record_lookup('native-town-budget')"); err != nil {
+		t.Fatal(err)
+	}
+	api := NewAPI(db)
+	defer api.decoder.Close()
+	cursor := ""
+	seen := map[string]bool{}
+	for page := 0; page < 20; page++ {
+		w := httptest.NewRecorder()
+		api.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/search?dataset=native-town-budget&kind=person&match=exact&surname=Prefixbudget&first_name=J*&town=Target+Town&limit=100&cursor="+url.QueryEscape(cursor), nil))
+		if w.Code != 200 {
+			t.Fatal("prefix-budget fallback failed", w.Code, w.Body.String())
+		}
+		var result searchResult
+		if err := json.Unmarshal(w.Body.Bytes(), &result); err != nil {
+			t.Fatal(err)
+		}
+		for _, row := range result.Items {
+			id, err := strconv.Atoi(row.SourceID)
+			if err != nil || id < 68750 || id >= 70000 || seen[row.SourceID] {
+				t.Fatal("wrong or repeated post-budget match")
+			}
+			seen[row.SourceID] = true
+		}
+		cursor = result.Next
+		if cursor == "" {
+			break
+		}
+	}
+	if cursor != "" || len(seen) != 1250 {
+		t.Fatal("prefix budget truncated the result universe", len(seen))
+	}
+	if db.Stat().AcquiredConns() != 0 {
+		t.Fatal("prefix fallback leaked a source connection")
+	}
 }
