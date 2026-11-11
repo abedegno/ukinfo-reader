@@ -293,3 +293,26 @@ through the public URL. CI uses invented fixtures and work/correctness budgets;
 fixed millisecond budgets apply to the private NAS protocol. Passing short runs
 does not establish sustained Internet capacity. The latest accepted expanded
 cold maximum, 2.927 s, remains close to its three-second limit.
+
+
+### Native exact-name and town intersection
+
+Exact person surname searches with a broad first-name prefix can overflow the
+bounded vocabulary probe. These now use relational term membership rather than
+a large runtime array. When both the source and town probes overflow, catalogue
+order searches use the existing reverse address projection over an ordered source
+prefix. The source connection is released before address metadata is read.
+
+The prefix is bounded to 65,536 IDs plus a sentinel. If it cannot prove a complete
+page, the full forward route remains available; matches after that prefix are not
+silently dropped. Other address filters and ordering retain their existing routes.
+Synthetic PostgreSQL regression tests cover all pages, multi-edition ties,
+projection fallback and integrity, cancellation, small shared pools and matches
+beyond the prefix. They run in the existing Search application CI job.
+
+A private replay of the request that blocked the 10 November observability rollout
+returned HTTP 200 in 895 ms with the corrected candidate, versus HTTP 503 in about
+2.3 seconds before it. This was a warm read-only diagnostic under the existing
+serving deadlines, not a cold-cache or capacity result. Release qualification and
+public promotion remain separate gates. See the
+[implementation evidence](superpowers/plans/2026-11-11-native-term-membership.md).

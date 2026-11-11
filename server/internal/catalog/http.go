@@ -413,6 +413,7 @@ type candidateFilters struct {
 	missing, areaOnly    bool
 	addressMatched       bool
 	addressLookup        bool
+	addressStream        bool
 	placePostings        bool
 	businessSearch       bool
 	geography            *GeographySearch
@@ -589,8 +590,16 @@ func (a *API) buildCandidateFiltersWith(ctx context.Context, q query, planAddres
 				predicate += fmt.Sprintf(" AND (length(key)=$%d OR key=$%d)", len(args), len(args)-2)
 			}
 			name := fmt.Sprintf("matching_terms_%d", len(termCTEs))
-			termCTEs = append(termCTEs, fmt.Sprintf("%s AS MATERIALIZED (SELECT array_agg(id) AS ids FROM terms WHERE %s)", name, predicate))
-			conditions = append(conditions, fmt.Sprintf("%s=ANY((SELECT ids FROM %s)::integer[])", filter.column, name))
+			// With an exact surname anchor, keep broad first names as rows.
+			// A run-time array can make the source index probe the full
+			// dictionary; relational membership permits a selective set join.
+			if filter.column == "first_id" && q.Surname != "" && q.Match == "exact" && !strings.HasSuffix(q.Surname, "*") {
+				termCTEs = append(termCTEs, fmt.Sprintf("%s AS MATERIALIZED (SELECT id FROM terms WHERE %s)", name, predicate))
+				conditions = append(conditions, fmt.Sprintf("%s IN (SELECT id FROM %s)", filter.column, name))
+			} else {
+				termCTEs = append(termCTEs, fmt.Sprintf("%s AS MATERIALIZED (SELECT array_agg(id) AS ids FROM terms WHERE %s)", name, predicate))
+				conditions = append(conditions, fmt.Sprintf("%s=ANY((SELECT ids FROM %s)::integer[])", filter.column, name))
+			}
 			continue
 		}
 		if len(ids) == 0 {
@@ -689,6 +698,17 @@ func (a *API) searchCandidates(ctx context.Context, q query) (searchResult, int,
 		nearbyIDs = nearbyIDs[sort.Search(len(nearbyIDs), func(i int) bool { return nearbyIDs[i] >= afterPostcode }):]
 		if len(nearbyIDs) == 0 {
 			missing = true
+		}
+	}
+	if f.addressStream && !f.addressMatched && !missing {
+		f.args, f.conditions = args, conditions
+		matched, proven, e := a.streamAddressPage(ctx, f, q.Limit+1)
+		if e != nil {
+			return searchResult{}, 503, searchReadError(e)
+		}
+		if proven {
+			f.useAddressCandidates(matched)
+			args, conditions, missing = f.args, f.conditions, f.missing
 		}
 	}
 	if q.hasAddress() && f.addressLookup && !f.addressMatched && !missing {

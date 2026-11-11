@@ -62,6 +62,10 @@ func (a *API) reverseAddressPage(ctx context.Context, f candidateFilters, limit 
 }
 
 func addressSourceBatchSQL(f candidateFilters, after addressCandidate) (string, []any) {
+	return addressSourceSQL(f, after, addressIntersectionBatch)
+}
+
+func addressSourceSQL(f candidateFilters, after addressCandidate, limit int) (string, []any) {
 	args := append([]any(nil), f.args...)
 	args = append(args, after.id, after.dataset)
 	seek := fmt.Sprintf("(id,dataset_id)>($%d,$%d)", len(args)-1, len(args))
@@ -73,9 +77,16 @@ func addressSourceBatchSQL(f candidateFilters, after addressCandidate) (string, 
 		// Fix the indexed source set before applying ID order. Otherwise a generic
 		// plan can walk the source primary key, fetching heaps until a rare name hits.
 		ctes = append(ctes, fmt.Sprintf("%s AS MATERIALIZED (SELECT dataset_id,id FROM entries WHERE %s AND dataset_id=$%d AND %s)", name, strings.Join(f.conditions, " AND "), len(args), seek))
-		branches = append(branches, fmt.Sprintf("(SELECT dataset_id,id FROM %s ORDER BY id LIMIT %d)", name, addressIntersectionBatch))
+		branch := "SELECT dataset_id,id FROM " + name
+		if limit > 0 {
+			branch += fmt.Sprintf(" ORDER BY id LIMIT %d", limit)
+		}
+		branches = append(branches, "("+branch+")")
 	}
-	sql := fmt.Sprintf("SELECT dataset_id,id FROM (%s) source_batch ORDER BY id,dataset_id LIMIT %d", strings.Join(branches, " UNION ALL "), addressIntersectionBatch)
+	sql := fmt.Sprintf("SELECT dataset_id,id FROM (%s) source_batch ORDER BY id,dataset_id", strings.Join(branches, " UNION ALL "))
+	if limit > 0 {
+		sql += fmt.Sprintf(" LIMIT %d", limit)
+	}
 	if len(ctes) > 0 {
 		sql = "WITH " + strings.Join(ctes, ",") + " " + sql
 	}
