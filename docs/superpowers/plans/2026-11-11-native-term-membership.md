@@ -25,7 +25,17 @@ Source IDs occupy about 512 KiB per request. Closing rows before metadata lookup
 - [x] Run the isolated PostgreSQL catalog suite: passed in 39.138 seconds. The separate pg_search integration requires its dedicated CI service and was skipped in this source-only fixture.
 - [x] Run local Go tests and vet; independent review found no remaining blockers.
 - [x] Replay the saved failing request once with the final candidate: HTTP 200 in 895.169 ms, with normal serving JIT and unchanged deadlines. This is a warm diagnostic, not a cold or capacity claim.
-- [ ] Pass application CI, merge and qualify the exact immutable runtime through the unchanged private protocol.
+- [x] Pass application CI and merge PR #53 at `ddc83ec`; all four exact-main workflows passed.
+- [x] Run fresh exact-runtime qualification: failed in 771.5 seconds with two request errors outside the corrected path, zero mismatches, 64 clean references, passing load/cold budgets. Retain the failed result; do not promote.
 - [ ] Promote through the guarded release controller; retain failures and verify public catalogue and telemetry.
 
 SQL, query values, case IDs, hashes and raw plans remain NAS-only. Live diagnostics are read-only; synthetic PostgreSQL is networkless and tmpfs-only. No public saved-search replay, database copies, cache eviction, relaxed gates or unrelated worktree changes.
+
+
+Follow-up: the failed routes were `/api/address` and postcode-only `/api/search`.
+A single private live-source diagnostic per case returned HTTP 200, with source
+record-block retrieval dominating the postcode request. That is not a reproduction
+of the private-clone failures or proof of root cause. Fresh retrieval/I/O diagnosis
+is needed before an evidenced correction and another qualification. Production
+remains `hosted-2026-10-27.3`; v14 remains hidden and the new edition signals are
+not live. Full numeric evidence is maintained in homelab.

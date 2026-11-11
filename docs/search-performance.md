@@ -316,3 +316,15 @@ returned HTTP 200 in 895 ms with the corrected candidate, versus HTTP 503 in abo
 serving deadlines, not a cold-cache or capacity result. Release qualification and
 public promotion remain separate gates. See the
 [implementation evidence](superpowers/plans/2026-11-11-native-term-membership.md).
+
+
+The corrected runtime's 11 November private qualification completed in 771.5
+seconds but failed: two candidate request errors, zero content mismatches,
+1,387 original and 99 expanded paging pairs, and 64 clean native references.
+C1/C4 candidate p95 was 112.9/211.2 ms; all ten source-cold probes stayed below
+three seconds. The errors were an address-household lookup and an all-edition
+postcode-only search, outside the new exact-name/town path. One follow-up
+live-source replay of each succeeded, with record-block reads dominating the
+postcode request; that does not reproduce or explain the private-clone failures.
+The original failed acceptance is retained and the candidate remains undeployed.
+See [current homelab evidence](https://github.com/abedegno/homelab/tree/main/docker/ukinfo/native-town-20261111).
