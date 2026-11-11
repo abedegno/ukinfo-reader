@@ -80,7 +80,11 @@ Never delete a data volume or flush global/serving-target caches to recover an a
 A crashed operator can leave the NAS release lease: inspect its run label and
 confirm no operator/build remains before stopping/removing only that owned lease container.
 
-As of 27 October 2026, homelab's GitHub jobs cannot start because of account
-billing/spending limits. Release planning reports this missing/failed gate and
-production promotion stays blocked. Resolve billing and pass/merge configuration
-checks; a privileged NAS GitHub runner or disabled checks is not the workaround.
+The initial homelab billing/spending block was resolved before the 10 November
+attempt. Exact-main policy checks passed, but guarded native acceptance failed
+and the controller restored the previous release. Reader PR #53 subsequently
+fixed that native exact-name/town path. Its fresh 11 November qualification still
+failed on two other request errors, so that candidate was not promoted. See
+[homelab current state](https://github.com/abedegno/homelab/blob/main/docker/ukinfo/CURRENT.md)
+and the retained numeric investigation there. Neither a green PR nor a successful
+warm replay replaces fresh runtime acceptance; failed checks are never bypassed.
