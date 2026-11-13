@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -31,6 +32,7 @@ type query struct {
 	Started      time.Time
 	Phase        string
 	Milliseconds float64
+	Target       bool
 	Failed       bool
 }
 type queryKey struct{}
@@ -38,30 +40,36 @@ type tracer struct {
 	mu      sync.Mutex
 	queries []*query
 	explain bool
+	root    *tracer
+	target  bool
 }
 
 func (t *tracer) TraceQueryStart(ctx context.Context, _ *pgx.Conn, d pgx.TraceQueryStartData) context.Context {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	if t.explain {
+	owner := t
+	if t.root != nil {
+		owner = t.root
+	}
+	owner.mu.Lock()
+	defer owner.mu.Unlock()
+	if owner.explain {
 		return ctx
 	}
 	phase := "metadata"
-	if s, ok := trace.SpanFromContext(ctx).(interface{ Name() string }); ok {
-		name := strings.TrimPrefix(s.Name(), "search.")
-		switch name {
-		case "vocabulary", "source_probe", "address_probe", "address_blocks", "address_dictionary", "candidates", "ordered", "group_members", "records":
-			phase = name
-		}
+	if span, ok := trace.SpanFromContext(ctx).(interface{ Name() string }); ok {
+		phase = profilePhase(span.Name())
 	}
-	q := &query{SQL: d.SQL, Args: d.Args, Started: time.Now(), Phase: phase}
-	t.queries = append(t.queries, q)
+	q := &query{SQL: d.SQL, Args: d.Args, Started: time.Now(), Phase: phase, Target: t.target}
+	owner.queries = append(owner.queries, q)
 	return context.WithValue(ctx, queryKey{}, q)
 }
 func (t *tracer) TraceQueryEnd(ctx context.Context, _ *pgx.Conn, d pgx.TraceQueryEndData) {
 	if q, ok := ctx.Value(queryKey{}).(*query); ok {
-		t.mu.Lock()
-		defer t.mu.Unlock()
+		owner := t
+		if t.root != nil {
+			owner = t.root
+		}
+		owner.mu.Lock()
+		defer owner.mu.Unlock()
 		q.Milliseconds = float64(time.Since(q.Started)) / float64(time.Millisecond)
 		q.Failed = d.Err != nil
 	}
@@ -98,8 +106,13 @@ func run(args []string) error {
 	limit := f.Int("max-cases", 20, "maximum cases (1-100)")
 	duration := f.Duration("max-duration", 5*time.Minute, "overall budget (up to 15 minutes)")
 	slow := f.Duration("plan-after", 100*time.Millisecond, "explain queries slower than this; failed reads always explained")
+	page := f.Int("page", 1, "last cursor page to profile, 1..10")
+	ioEnabled := f.Bool("io-stats", false, "private isolated source only: read database-wide IO counters")
+	repeats := f.Int("repeats", 1, "bounded repetitions, 1 or 2")
+	plans := f.Bool("plans", true, "capture estimated plans after requests; disable for cold/warm profiling")
+	backend := f.String("backend", "native", "native or paradedb with explicit TARGET_DATABASE_URL")
 	addressProbe := f.Bool("address-probe", false, "enable the opt-in address probe experiment")
-	if f.Parse(args) != nil || *limit < 1 || *limit > 100 || *duration <= 0 || *duration > 15*time.Minute || *slow < 0 || *output == "" {
+	if f.Parse(args) != nil || *page < 1 || *page > 10 || (*limit)*(*repeats)*(*page) > 200 || (*repeats != 1 && *repeats != 2) || (*backend != "native" && *backend != "paradedb") || *limit < 1 || *limit > 100 || *duration <= 0 || *duration > 15*time.Minute || *slow < 0 || *output == "" {
 		return errors.New("invalid profiling configuration")
 	}
 	data, err := os.ReadFile(*casesPath)
@@ -125,6 +138,9 @@ func run(args []string) error {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), *duration)
 	defer cancel()
+	if os.Getenv("DATABASE_URL") == "" {
+		return errors.New("explicit source reader required")
+	}
 	cfg, err := pgxpool.ParseConfig(os.Getenv("DATABASE_URL"))
 	if err != nil {
 		return errors.New("invalid private database configuration")
@@ -142,64 +158,135 @@ func run(args []string) error {
 	defer db.Close()
 	// Recording spans supply fixed stage names, with no exporter or network egress.
 	previous := otel.GetTracerProvider()
-	provider := sdktrace.NewTracerProvider(sdktrace.WithSampler(sdktrace.AlwaysSample()))
+	spans := &phaseRecorder{}
+	provider := sdktrace.NewTracerProvider(sdktrace.WithSampler(sdktrace.AlwaysSample()), sdktrace.WithSpanProcessor(spans))
 	otel.SetTracerProvider(provider)
 	defer otel.SetTracerProvider(previous)
 	defer provider.Shutdown(context.Background())
 	api := catalog.NewAPI(db)
+
 	api.ExperimentalAddressProbe = *addressProbe
+	if *backend == "paradedb" {
+		dsn := os.Getenv("TARGET_DATABASE_URL")
+		if dsn == "" {
+			return errors.New("explicit target reader required")
+		}
+		target, err := pgxpool.ParseConfig(dsn)
+		if err != nil {
+			return errors.New("invalid target reader")
+		}
+		target.MaxConns = 4
+		target.ConnConfig.RuntimeParams["default_transaction_read_only"] = "on"
+		target.ConnConfig.RuntimeParams["statement_timeout"] = "4000"
+		target.ConnConfig.RuntimeParams["plan_cache_mode"] = "force_generic_plan"
+		target.ConnConfig.Tracer = &tracer{root: t, target: true}
+		api.ParadeDB, err = pgxpool.NewWithConfig(ctx, target)
+		if err != nil {
+			return errors.New("target pool unavailable")
+		}
+		defer api.ParadeDB.Close()
+	}
 	reports := []any{}
 	failed := 0
-	for i, c := range cases {
-		if ctx.Err() != nil {
-			break
-		}
-		t.mu.Lock()
-		t.queries = nil
-		t.explain = false
-		t.mu.Unlock()
-		w := httptest.NewRecorder()
-		started := time.Now()
-		req, requestErr := http.NewRequestWithContext(ctx, "GET", "http://localhost"+c.Path+"?"+c.Query, nil)
-		if requestErr != nil {
-			return errors.New("invalid private request")
-		}
-		api.Handler().ServeHTTP(w, req)
-		elapsed := time.Since(started)
-		status := w.Code
-		if status != 200 {
-			failed++
-		}
-		t.mu.Lock()
-		steps := append([]*query(nil), t.queries...)
-		t.explain = true
-		t.mu.Unlock()
-		observations := []any{}
-		for _, q := range steps {
-			row := map[string]any{"phase": q.Phase, "milliseconds": q.Milliseconds, "failed": q.Failed}
-			if strings.Contains(q.SQL, ") source_batch ORDER BY id,dataset_id LIMIT") {
-				row["access_path"] = "reverse_address_batch"
+	pageExhausted := false
+	for repeat := 1; repeat <= *repeats; repeat++ {
+		for i, c := range cases {
+			values, e := url.ParseQuery(c.Query)
+			if e != nil {
+				return errors.New("invalid private query")
 			}
-			text := strings.ToUpper(strings.TrimSpace(q.SQL))
-			if (q.Failed || q.Milliseconds >= float64(*slow)/float64(time.Millisecond)) && (strings.HasPrefix(text, "SELECT ") || strings.HasPrefix(text, "WITH ")) {
-				var raw []byte
-				if e := db.QueryRow(ctx, "EXPLAIN (FORMAT JSON) "+q.SQL, q.Args...).Scan(&raw); e != nil {
-					row["plan_unavailable"] = true
-				} else {
-					var p []map[string]any
-					if json.Unmarshal(raw, &p) == nil && len(p) > 0 {
-						row["plan"] = cleanPlan(p[0]["Plan"].(map[string]any))
-						row["jit_planned"] = p[0]["JIT"] != nil
+			for currentPage := 1; currentPage <= *page; currentPage++ {
+				if ctx.Err() != nil {
+					break
+				}
+				t.mu.Lock()
+				t.queries = nil
+				t.explain = false
+				t.mu.Unlock()
+				var beforeIO ioStats
+				if *ioEnabled {
+					t.mu.Lock()
+					t.explain = true
+					t.mu.Unlock()
+					beforeIO = readIO(ctx, db)
+				}
+				t.mu.Lock()
+				t.queries = nil
+				t.explain = false
+				t.mu.Unlock()
+				w := httptest.NewRecorder()
+				spans.reset()
+				acquired := db.Stat().AcquireDuration()
+				empty := db.Stat().EmptyAcquireCount()
+				cpu := processCPU()
+				started := time.Now()
+				req, requestErr := http.NewRequestWithContext(ctx, "GET", "http://localhost"+c.Path+"?"+values.Encode(), nil)
+				if requestErr != nil {
+					return errors.New("invalid private request")
+				}
+				api.Handler().ServeHTTP(w, req)
+				elapsed := time.Since(started)
+				cpu = processCPU().minus(cpu)
+				acquireMS := float64(db.Stat().AcquireDuration()-acquired) / float64(time.Millisecond)
+				emptyAcquires := db.Stat().EmptyAcquireCount() - empty
+				phaseMS := spans.snapshot()
+				status := w.Code
+				if status != 200 {
+					failed++
+				}
+				t.mu.Lock()
+				steps := append([]*query(nil), t.queries...)
+				t.explain = true
+				t.mu.Unlock()
+				var ioDelta ioStats
+				if *ioEnabled {
+					ioDelta = readIO(ctx, db).minus(beforeIO)
+				}
+				observations := []any{}
+				for _, q := range steps {
+					row := map[string]any{"phase": q.Phase, "milliseconds": q.Milliseconds, "failed": q.Failed, "target": q.Target}
+					if strings.Contains(q.SQL, ") source_batch ORDER BY id,dataset_id LIMIT") {
+						row["access_path"] = "reverse_address_batch"
 					}
+					text := strings.ToUpper(strings.TrimSpace(q.SQL))
+					if *plans && (q.Failed || q.Milliseconds >= float64(*slow)/float64(time.Millisecond)) && (strings.HasPrefix(text, "SELECT ") || strings.HasPrefix(text, "WITH ")) {
+						var raw []byte
+						pool := db
+						if q.Target {
+							pool = api.ParadeDB
+						}
+						if e := pool.QueryRow(ctx, "EXPLAIN (FORMAT JSON) "+q.SQL, q.Args...).Scan(&raw); e != nil {
+							row["plan_unavailable"] = true
+						} else {
+							var p []map[string]any
+							if json.Unmarshal(raw, &p) == nil && len(p) > 0 {
+								row["plan"] = cleanPlan(p[0]["Plan"].(map[string]any))
+								row["jit_planned"] = p[0]["JIT"] != nil
+							}
+						}
+					}
+					observations = append(observations, row)
+				}
+				reports = append(reports, map[string]any{"case": i, "page": currentPage, "status": status, "milliseconds": float64(elapsed) / float64(time.Millisecond), "queries": observations, "repeat": repeat, "phase_ms": phaseMS, "record_query_wall_ms": queryWallMS(steps, "records"), "pool_acquire_ms": acquireMS, "empty_acquires": emptyAcquires, "cpu": cpu, "database_io": ioDelta})
+				if status != 200 {
+					break
+				}
+				if currentPage < *page {
+					var body struct {
+						Next string `json:"next_cursor"`
+					}
+					if json.Unmarshal(w.Body.Bytes(), &body) != nil || body.Next == "" {
+						pageExhausted = true
+						break
+					}
+					values.Set("cursor", body.Next)
 				}
 			}
-			observations = append(observations, row)
 		}
-		reports = append(reports, map[string]any{"case": i, "status": status, "milliseconds": float64(elapsed) / float64(time.Millisecond), "queries": observations})
 	}
 	metrics := httptest.NewRecorder()
 	api.Metrics().ServeHTTP(metrics, httptest.NewRequest("GET", "/metrics", nil))
-	result := map[string]any{"schema_version": 1, "cases_requested": len(cases), "cases_profiled": len(reports), "failed_requests": failed, "budget_exhausted": ctx.Err() != nil, "cases": reports, "metrics": metrics.Body.String(), "notes": []string{"Plans are estimates, not EXPLAIN ANALYZE; failed queries are not re-executed.", "SQL, arguments, predicates, query values, response bodies and raw errors are omitted.", "Uses read-only transactions, eight connections and existing API statement/request deadlines."}}
+	result := map[string]any{"schema_version": 2, "last_page_requested": *page, "page_exhausted": pageExhausted, "cases_requested": len(cases), "cases_profiled": len(reports), "io_stats_enabled": *ioEnabled, "repeats": *repeats, "backend": *backend, "plans_enabled": *plans, "failed_requests": failed, "budget_exhausted": ctx.Err() != nil, "cases": reports, "metrics": metrics.Body.String(), "notes": []string{"Plans are estimates, not EXPLAIN ANALYZE; failed queries are not re-executed.", "SQL, arguments, predicates, query values, response bodies and raw errors are omitted.", "Uses eight source/four target connections and existing API statement/request deadlines; no external span exporter.", "IO counters are database-wide and include stats-query overhead; canceled backends may publish stats asynchronously. Availability is successful observation, not exact attribution. Read timing requires private track_io_timing.", "Acquisition duration is all successful source-pool acquisition time, not pure contention wait; target acquisition is not included.", "Phase spans and query durations overlap. Record-query wall time is their interval union. CPU covers the whole handler; phase residuals are not exact decoder time."}}
 	raw, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
 		return errors.New("cannot encode aggregate profile")

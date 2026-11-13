@@ -326,6 +326,29 @@ func (a *API) address(w http.ResponseWriter, r *http.Request) {
 		fail(w, 503, "Source postcode index unavailable; catalogue needs verification")
 		return
 	}
+	indexed, e := a.premisesIndexReady(ctx, datasets)
+	if e != nil {
+		fail(w, 503, "Premises index unavailable")
+		return
+	}
+	hash := sha256.Sum256([]byte(identityKey))
+	if indexed {
+		anchorDataset := int16(0)
+		for _, d := range datasets {
+			if d.Key == ref.Dataset {
+				anchorDataset = d.ID
+			}
+		}
+		if anchorDataset == 0 {
+			indexed = false
+		} else {
+			var stored []byte
+			if err = a.DB.QueryRow(ctx, "SELECT premises_key FROM premises_keys WHERE dataset_id=$1 AND id=$2", anchorDataset, ref.ID).Scan(&stored); err != nil || !bytes.Equal(stored, hash[:]) {
+				failError(w, 503, recordIntegrity("premises anchor key differs from source"))
+				return
+			}
+		}
+	}
 	items := []result{}
 	next := ""
 	last := after
@@ -337,11 +360,19 @@ func (a *API) address(w http.ResponseWriter, r *http.Request) {
 		for {
 			// Explicit kind branches preserve the existing postcode B-tree prefix. Only
 			// this displayed full postcode is scanned; names and raw postcodes are unused.
-			rows, e := a.DB.Query(ctx, `SELECT id FROM (
+			batchLimit := 256
+			var rows pgx.Rows
+			var e error
+			if indexed {
+				batchLimit = limit + 1 - len(items)
+				rows, e = a.DB.Query(ctx, "SELECT id FROM premises_keys WHERE dataset_id=$1 AND premises_key=$2 AND id>$3 ORDER BY id LIMIT $4", dataset.ID, hash[:], scanned, batchLimit)
+			} else {
+				rows, e = a.DB.Query(ctx, `SELECT id FROM (
     (SELECT id FROM entries WHERE dataset_id=$1 AND kind=0 AND postcode_id=$2 AND id>$3 ORDER BY id LIMIT 256)
     UNION ALL
     (SELECT id FROM entries WHERE dataset_id=$1 AND kind=1 AND postcode_id=$2 AND id>$3 ORDER BY id LIMIT 256)
    ) candidates ORDER BY id LIMIT 256`, dataset.ID, postcode, scanned)
+			}
 			if e != nil {
 				fail(w, 503, "Address lookup unavailable or timed out")
 				return
@@ -392,7 +423,7 @@ func (a *API) address(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 			scanned = ids[len(ids)-1]
-			if len(ids) < 256 || scanned == math.MaxInt32 {
+			if len(ids) < batchLimit || scanned == math.MaxInt32 {
 				break
 			}
 		}
