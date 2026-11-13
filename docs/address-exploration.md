@@ -109,3 +109,31 @@ A timeout is an error, not a silently truncated address result.
 
 [Validation results and limits](research/premises-exploration.md) describe the invented
 regressions and the small, independent full-catalogue postcode-reference comparison.
+
+## Optional compact premises index
+
+Large postcodes can scatter household candidates across many compressed source
+blocks on HDDs. The optional premises-key projection avoids hydrating unrelated
+houses and flats. It hashes the same conservative displayed-address identity used
+by this endpoint; original records are still checked before returning matches.
+Matching rules, edition order, record IDs and cursor fingerprints are unchanged.
+
+Build a complete edition as its catalogue owner after importing it:
+
+```sh
+go -C server run ./cmd/ukinfo-server index-premises --dataset EDITION_KEY
+```
+
+The command adds key-only tables and publishes readiness atomically after every
+source ID is scanned. Unsupported, unresolved or insufficiently precise addresses
+have no matchable key. Builds can be canceled and require database/WAL space;
+this is a separate owner maintenance operation, never a public request. The serving
+role needs only SELECT on `premises_keys` and `premises_indexes`. All selected
+editions must have matching complete coverage before the endpoint uses this path;
+missing schema, permissions or coverage retains the full postcode scan. Invalid
+anchor metadata fails explicitly. There is no relaxation of matching or deadlines.
+
+The 13 November implementation has passed invented-data comparison, pagination,
+partial-coverage, interrupted-build, collision and source-integrity tests. Full
+real-data building and fresh qualification are separate requirements; this text
+does not claim a public rollout.

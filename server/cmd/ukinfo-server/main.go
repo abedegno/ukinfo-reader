@@ -81,8 +81,8 @@ func run() error {
 	if *trustedProxy != "" && !*publicLimits {
 		return errors.New("trusted-proxy requires public-limits")
 	}
-	if command != "serve" && command != "migrate" && command != "import" && command != "verify" && command != "repack-v1" && command != "stats" && command != "import-onspd" && command != "index-addresses" && command != "index-address-lookup" && command != "lock-archive" && command != "index-research" && command != "index-business-search" {
-		return fmt.Errorf("command must be serve, migrate, import, verify, stats, repack-v1, import-onspd, index-addresses, index-address-lookup, index-research or index-business-search")
+	if command != "serve" && command != "migrate" && command != "import" && command != "verify" && command != "repack-v1" && command != "stats" && command != "import-onspd" && command != "index-addresses" && command != "index-address-lookup" && command != "lock-archive" && command != "index-research" && command != "index-business-search" && command != "index-premises" {
+		return fmt.Errorf("command must be serve, migrate, import, verify, stats, repack-v1, import-onspd, index-addresses, index-address-lookup, index-research, index-business-search or index-premises")
 	}
 	if *desktopControl {
 		host, _, e := net.SplitHostPort(*listen)
@@ -147,7 +147,7 @@ func run() error {
 		return fmt.Errorf("database configuration failed")
 	}
 	defer db.Close()
-	if command == "migrate" || command == "import-onspd" || command == "index-address-lookup" || command == "index-business-search" || (command == "index-addresses" || command == "index-research") || *data != "" {
+	if command == "migrate" || command == "import-onspd" || command == "index-address-lookup" || command == "index-business-search" || command == "index-premises" || (command == "index-addresses" || command == "index-research") || *data != "" {
 		if err = catalog.Migrate(ctx, db); err != nil {
 			return err
 		}
@@ -202,6 +202,16 @@ func run() error {
 		}
 		fmt.Fprintf(os.Stderr, "Imported %d entries\n", n)
 		return nil
+	}
+	if command == "index-premises" {
+		if *datasetKey == "" {
+			return errors.New("index-premises requires --dataset")
+		}
+		report, e := catalog.IndexPremises(ctx, db, *datasetKey, catalog.AddressIndexOptions{CheckResources: checkAddressResources, Progress: progress})
+		if e != nil {
+			return e
+		}
+		return json.NewEncoder(os.Stdout).Encode(report)
 	}
 	if command == "index-business-search" {
 		if *datasetKey == "" {
