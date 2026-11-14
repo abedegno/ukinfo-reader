@@ -382,14 +382,36 @@ func paradeSQL(q query, d paradeEdition, after paradePosition) (string, []any) {
 	return paradeSQLPrefix(q, d, after, true)
 }
 func paradeSQLPrefix(q query, d paradeEdition, after paradePosition, prefilter bool) (string, []any) {
-	return paradeSQLBounds(q, d, after, prefilter, nil)
+	return paradeSQLBuild(q, d, after, prefilter, nil, paradeFirstResidual(q))
+}
+
+// Broad first-name ranges can dominate an otherwise selective exact name/town
+// query. Select that complete population first, then apply first-name semantics
+// in PostgreSQL. The materialization has no early limit or candidate cap.
+func paradeFirstResidual(q query) bool {
+	if q.Kind != "person" || q.First == "" || q.Surname == "" || q.Match != "exact" || strings.HasSuffix(q.Surname, "*") || q.Town == "" || strings.HasSuffix(q.Town, "*") || q.Near != "" || q.Group != "" {
+		return false
+	}
+	mode := q.FirstMatch
+	if mode == "" {
+		mode = q.Match
+	}
+	return strings.HasSuffix(q.First, "*") || mode == "prefix" || mode == "given" && strings.Contains(q.First, " ")
 }
 
 type paradeNamePair struct{ Name, First string }
 
 func paradeSQLBounds(q query, d paradeEdition, after paradePosition, prefilter bool, pair *paradeNamePair) (string, []any) {
+	return paradeSQLBuild(q, d, after, prefilter, pair, false)
+}
+
+func paradeSQLBuild(q query, d paradeEdition, after paradePosition, prefilter bool, pair *paradeNamePair, firstResidual bool) (string, []any) {
 	args := []any{}
-	conditions := searchFieldConditions(q, &args)
+	fields := q
+	if firstResidual {
+		fields.First = ""
+	}
+	conditions := searchFieldConditions(fields, &args)
 	if q.Near != "" && !q.streamRadius() {
 		// Resolve the complete radius against authoritative ONSPD first. Empty or
 		// unresolved state matches nothing; it can never remove the radius filter.
@@ -456,11 +478,18 @@ func paradeSQLBounds(q query, d paradeEdition, after paradePosition, prefilter b
 			conditions = append(conditions, "("+strings.Join(clauses, " OR ")+")")
 		}
 	}
-	args = append(args, q.Limit)
 	projection := "id,name_id,first_id,postcode_id,name,first_full"
 	if q.Sort != "name" && q.Sort != "edition" {
 		projection = "id,name_id,first_id,postcode_id,''::text,''::text"
 	}
+	if firstResidual {
+		inner := "SELECT id,name_id,first_id,postcode_id,name,first_full,given,kind FROM ukinfo_search." + d.table() + " WHERE " + strings.Join(conditions, " AND ")
+		first := query{Kind: q.Kind, First: q.First, FirstMatch: q.FirstMatch, Match: q.Match}
+		outer := searchFieldConditions(first, &args)
+		args = append(args, q.Limit)
+		return "WITH first_candidates AS MATERIALIZED (" + inner + ") SELECT " + projection + " FROM first_candidates WHERE " + strings.Join(outer, " AND ") + " ORDER BY " + strings.Join(order, ",") + fmt.Sprintf(" LIMIT $%d", len(args)), args
+	}
+	args = append(args, q.Limit)
 	return "SELECT " + projection + " FROM ukinfo_search." + d.table() + " WHERE " + strings.Join(conditions, " AND ") + " ORDER BY " + strings.Join(order, ",") + fmt.Sprintf(" LIMIT $%d", len(args)), args
 }
 func (a *API) paradePositions(ctx context.Context, q query, editions []paradeEdition, after paradePosition) ([]paradePosition, error) {
