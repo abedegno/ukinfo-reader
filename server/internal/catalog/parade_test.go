@@ -95,10 +95,15 @@ func TestParadeIntegration(t *testing.T) {
 	enc.Encode(Manifest{Type: "manifest", Protocol: 1, Dataset: "parade-sparse", Edition: "invented-sparse", Title: "Invented sparse test", SHA256: map[string]string{"invented": strings.Repeat("b", 64)}, Expected: 260})
 	for i := 0; i < 260; i++ {
 		house := "1"
+		first := "June Adeletta"
 		if i == 98 || i == 198 || i >= 257 {
 			house = "999"
+			first = "June Adele"
 		}
-		enc.Encode(map[string]any{"type": "record", "source_id": fmt.Sprint(i), "record": map[string]any{"surname": "Sparseonly", "firstName": "June", "houseno": house, "postcode": "AA1 1AA", "town": "Invented Sparse Town"}})
+		if i == 258 {
+			first = "June Adele B"
+		}
+		enc.Encode(map[string]any{"type": "record", "source_id": fmt.Sprint(i), "record": map[string]any{"surname": "Sparseonly", "firstName": first, "houseno": house, "postcode": "AA1 1AA", "town": "Invented Sparse Town"}})
 	}
 	enc.Encode(map[string]any{"type": "end", "count": 260})
 	if _, err = Import(ctx, source, &sparse); err != nil {
@@ -112,11 +117,13 @@ func TestParadeIntegration(t *testing.T) {
 	}
 	var postal bytes.Buffer
 	postalEncoder := json.NewEncoder(&postal)
-	postalEncoder.Encode(Manifest{Type: "manifest", Protocol: 1, Dataset: "parade-postal", Edition: "invented-postal", Title: "Invented postcode boundaries", SHA256: map[string]string{"invented": strings.Repeat("c", 64)}, Expected: 4})
-	for i, postcode := range []string{"W1 1AA", "W11 1AA", "W11", ""} {
+	postalEncoder.Encode(Manifest{Type: "manifest", Protocol: 1, Dataset: "parade-postal", Edition: "invented-postal", Title: "Invented postcode boundaries", SHA256: map[string]string{"invented": strings.Repeat("c", 64)}, Expected: 6})
+	// Historic source text can contain unusual suffix characters. The redundant
+	// index regex must count characters just like the authoritative SQL length.
+	for i, postcode := range []string{"W1 1AA", "W11 1AA", "W11", "", "W1 1Åß", "W11 1Åß"} {
 		postalEncoder.Encode(map[string]any{"type": "record", "source_id": fmt.Sprint(i), "record": map[string]any{"surname": "Boundaryonly", "firstName": "June", "postcode": postcode, "postcode_raw": "W1 1AA", "town": "Boundary Town"}})
 	}
-	postalEncoder.Encode(map[string]any{"type": "end", "count": 4})
+	postalEncoder.Encode(map[string]any{"type": "end", "count": 6})
 	if _, err = Import(ctx, source, &postal); err != nil {
 		t.Fatal(err)
 	}
@@ -142,6 +149,30 @@ func TestParadeIntegration(t *testing.T) {
 	if _, err = IndexResearch(ctx, source, "parade-dense", AddressIndexOptions{}); err != nil {
 		t.Fatal(err)
 	}
+	// A large exact name/town anchor exercises materialization work, with rare
+	// first-name matches at its end. Use a separate postcode/town so unrelated
+	// small-page fixtures keep their independently known populations.
+	const largeEntries = 50000
+	var large bytes.Buffer
+	largeEncoder := json.NewEncoder(&large)
+	largeEncoder.Encode(Manifest{Type: "manifest", Protocol: 1, Dataset: "parade-large-anchor", Edition: "invented-large", Title: "Invented large name/town population", SHA256: map[string]string{"invented": strings.Repeat("e", 64)}, Expected: largeEntries})
+	for i := 0; i < largeEntries; i++ {
+		first := "Common Name"
+		if i >= largeEntries-5 {
+			first = "Rare Name"
+		}
+		largeEncoder.Encode(map[string]any{"type": "record", "source_id": fmt.Sprint(i), "record": map[string]any{"surname": "Largeonly", "firstName": first, "postcode": "XY9 9ZZ", "town": "Large Town"}})
+	}
+	largeEncoder.Encode(map[string]any{"type": "end", "count": largeEntries})
+	if _, err = Import(ctx, source, &large); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = IndexAddresses(ctx, source, "parade-large-anchor", AddressIndexOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = IndexResearch(ctx, source, "parade-large-anchor", AddressIndexOptions{}); err != nil {
+		t.Fatal(err)
+	}
 	role := fmt.Sprintf("parade_reader_%d", time.Now().UnixNano())
 	if _, err = target.Exec(ctx, "CREATE ROLE "+role+" NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS"); err != nil {
 		t.Fatal(err)
@@ -163,14 +194,14 @@ func TestParadeIntegration(t *testing.T) {
 		t.Fatal("interrupted preparation", err)
 	}
 	options.CheckResources = nil
-	if n, e := BuildParadeIndex(ctx, source, target, "all", options); e != nil || n != 624 {
+	if n, e := BuildParadeIndex(ctx, source, target, "all", options); e != nil || n != 626+largeEntries {
 		t.Fatal("complete visible editions", n, e)
 	}
-	if n, e := BuildParadeIndex(ctx, source, target, "all", options); e != nil || n != 624 {
+	if n, e := BuildParadeIndex(ctx, source, target, "all", options); e != nil || n != 626+largeEntries {
 		t.Fatal("idempotent resume", n, e)
 	}
 	verification, e := VerifyParadeTrial(ctx, source, target, 8)
-	if e != nil || !verification.Passed || len(verification.Editions) != 8 {
+	if e != nil || !verification.Passed || len(verification.Editions) != 9 {
 		t.Fatal("all-edition verification", verification, e)
 	}
 	pilot, e := VerifyParadeEditionTrial(ctx, source, target, keys[0], 8)
@@ -362,6 +393,23 @@ func TestParadeIntegration(t *testing.T) {
 	} {
 		check(q)
 	}
+	// A two-word given name accepts an exact value or a following word, while
+	// rejecting the longer final word. Its five matches begin after 98 earlier
+	// rows, so limiting the inner candidates would silently lose whole pages.
+	for _, sort := range []string{"", "name", "edition"} {
+		raw := "dataset=parade-sparse&surname=Sparseonly&town=Invented+Sparse+Town&first_name=June+Adele&first_match=given&limit=2&sort=" + sort
+		check(raw)
+		if rows := paradeWalk(t, parade, parade, raw); len(rows) != 5 {
+			t.Fatal("first-name residual truncated sparse matches or lost word boundaries", len(rows))
+		}
+	}
+	check("dataset=parade-sparse&surname=Sparseonly&town=Invented+Sparse+Town&first_name=June+Adel*&first_match=prefix&sort=name&limit=7")
+	check("dataset=parade-sparse&surname=Sparseonly&town=Invented+Sparse+Town&first_name=June+Adele&first_match=given&group=listing&limit=1")
+	largeQuery := "dataset=parade-large-anchor&surname=Largeonly&town=Large+Town&first_name=Rare+Na*&first_match=prefix&limit=2"
+	check(largeQuery)
+	if rows := paradeWalk(t, parade, parade, largeQuery); len(rows) != 5 {
+		t.Fatal("large anchor lost rare first-name matches", len(rows))
+	}
 	testParadeGroupWork(t, source, reader)
 	for _, key := range keys {
 		check("dataset=" + key + "&surname=Researchonly&limit=2")
@@ -458,7 +506,7 @@ func TestParadeIntegration(t *testing.T) {
 	// Unindexed explicit sample must fall back; all must never include that sample.
 	check("dataset=parade-sample&surname=Researchonly&limit=2")
 	var count int
-	if err = target.QueryRow(ctx, "SELECT count(*) FROM ukinfo_search.editions WHERE ready").Scan(&count); err != nil || count != 8 {
+	if err = target.QueryRow(ctx, "SELECT count(*) FROM ukinfo_search.editions WHERE ready").Scan(&count); err != nil || count != 9 {
 		t.Fatal("sample unexpectedly indexed", count, err)
 	}
 	if _, err = target.Exec(ctx, "UPDATE ukinfo_search.editions SET ready=false WHERE dataset_id=(SELECT min(dataset_id) FROM ukinfo_search.editions)"); err != nil {
