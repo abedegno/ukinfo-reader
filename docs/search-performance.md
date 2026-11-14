@@ -338,3 +338,10 @@ indexed household lookups. The optional group-key covering-index test now runs i
 search CI (`python3 tools/check_group_key_indexes.py`): two plan modes, zero heap
 fetches, exact source results and scoped/idempotent maintenance. These invented
 checks and diagnostic timings are not proof of a successful public rollout.
+
+
+The subsequent .14.4 private qualification passed with zero candidate errors or
+mismatches, 23 retained baseline errors and a 2.171-second worst cold probe within
+the unchanged 3-second gate. C1/C4 p95 was 116/205 ms. All 64 references, six load
+phases and ten cold probes completed; see the linked evidence for protocol,
+shared target-cache limitations and public deployment status.

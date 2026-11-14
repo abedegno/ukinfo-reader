@@ -73,6 +73,28 @@ unit tests/vet and targeted race checks. Synthetic source and target databases u
 the supported C-collation configuration; the first combined fixture attempt
 exposed an unrelated locale mismatch and is not counted as a passing run.
 
-Private covering-index build and fresh unchanged qualification are still pending.
+## Fresh accepted build
+
+Immutable `hosted-2026-11-14.4` at `b6410c09474d88283f59f0c0964ca497a8c90113`
+uses Go 1.26.11 and completed one fresh fixed qualification in 830.909 seconds:
+zero candidate errors or content mismatches, 23 retained baseline errors,
+64 frozen reference checks, six full load phases and ten source-cold probes.
+Candidate C1/C4 p95 was 116/205 ms; the slowest cold probe was 2.171 seconds
+against the original 3-second gate. Full numeric acceptance remains in
+[homelab](https://github.com/abedegno/homelab/blob/main/docker/ukinfo/hybrid-source/acceptance.json).
+
+The private index build completed all five editions / 248,951,107 entries in
+1,513.608 seconds. An earlier progress-writer failure is retained; the corrected
+operation validated the completed index before building the remainder. The
+index-only old-code diagnostic was slower than its earlier profile: storage/cache
+variability means the final improvement cannot be attributed to indexes alone.
+
+Homelab schema-v3 manifests require this actual source layout before and after
+promotion: matching visible editions/count, complete premises/research registries,
+valid covering index definitions and a read-only reader. Public index maintenance
+and guarded application promotion are separate operations. Consult
+[current hosted state](https://github.com/abedegno/homelab/blob/main/docker/ukinfo/CURRENT.md)
+for deployment progress; private acceptance does not establish live deployment.
+
 No timeout, pool size, acceptance client, reference, public quota or trace sampling
 has been increased. No database/archive copy or original-record rewrite is needed.
