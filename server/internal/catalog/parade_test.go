@@ -117,11 +117,13 @@ func TestParadeIntegration(t *testing.T) {
 	}
 	var postal bytes.Buffer
 	postalEncoder := json.NewEncoder(&postal)
-	postalEncoder.Encode(Manifest{Type: "manifest", Protocol: 1, Dataset: "parade-postal", Edition: "invented-postal", Title: "Invented postcode boundaries", SHA256: map[string]string{"invented": strings.Repeat("c", 64)}, Expected: 4})
-	for i, postcode := range []string{"W1 1AA", "W11 1AA", "W11", ""} {
+	postalEncoder.Encode(Manifest{Type: "manifest", Protocol: 1, Dataset: "parade-postal", Edition: "invented-postal", Title: "Invented postcode boundaries", SHA256: map[string]string{"invented": strings.Repeat("c", 64)}, Expected: 6})
+	// Historic source text can contain unusual suffix characters. The redundant
+	// index regex must count characters just like the authoritative SQL length.
+	for i, postcode := range []string{"W1 1AA", "W11 1AA", "W11", "", "W1 1Åß", "W11 1Åß"} {
 		postalEncoder.Encode(map[string]any{"type": "record", "source_id": fmt.Sprint(i), "record": map[string]any{"surname": "Boundaryonly", "firstName": "June", "postcode": postcode, "postcode_raw": "W1 1AA", "town": "Boundary Town"}})
 	}
-	postalEncoder.Encode(map[string]any{"type": "end", "count": 4})
+	postalEncoder.Encode(map[string]any{"type": "end", "count": 6})
 	if _, err = Import(ctx, source, &postal); err != nil {
 		t.Fatal(err)
 	}
@@ -192,10 +194,10 @@ func TestParadeIntegration(t *testing.T) {
 		t.Fatal("interrupted preparation", err)
 	}
 	options.CheckResources = nil
-	if n, e := BuildParadeIndex(ctx, source, target, "all", options); e != nil || n != 624+largeEntries {
+	if n, e := BuildParadeIndex(ctx, source, target, "all", options); e != nil || n != 626+largeEntries {
 		t.Fatal("complete visible editions", n, e)
 	}
-	if n, e := BuildParadeIndex(ctx, source, target, "all", options); e != nil || n != 624+largeEntries {
+	if n, e := BuildParadeIndex(ctx, source, target, "all", options); e != nil || n != 626+largeEntries {
 		t.Fatal("idempotent resume", n, e)
 	}
 	verification, e := VerifyParadeTrial(ctx, source, target, 8)

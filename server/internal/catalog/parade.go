@@ -442,10 +442,12 @@ func paradeSQLBuild(q query, d paradeEdition, after paradePosition, prefilter bo
 		after = paradePosition{}
 	}
 	// Keep the complete scalar range/precision predicate. The redundant literal
-	// token prefix lets the inverted index narrow candidates before fast-field
-	// range checks and sorting; user regex syntax is never accepted.
+	// token prefilter narrows candidates before fast-field checks and sorting.
+	// Match the stored partial itself or exactly the full district/sector length;
+	// a broad .* also expands neighbouring postcode precisions. Inputs are ASCII
+	// postcode syntax; stored suffix lengths count Unicode characters like SQL.
 	if prefilter && q.Postcode != "" && q.PostcodeLength > 0 {
-		args = append(args, regexp.QuoteMeta(q.Postcode)+".*")
+		args = append(args, regexp.QuoteMeta(q.Postcode)+fmt.Sprintf("(.{%d})?", q.PostcodeLength-len(q.Postcode)))
 		conditions = append(conditions, fmt.Sprintf("postcode @@@ pdb.regex($%d)", len(args)))
 	}
 	conditions = append(conditions, "id @@@ pdb.all()")
