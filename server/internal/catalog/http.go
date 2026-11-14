@@ -823,29 +823,19 @@ func (a *API) searchCandidates(ctx context.Context, q query) (searchResult, int,
 			break
 		}
 	}
-	// Batch source blocks by edition, then restore the interleaved search order.
-	type recordKey struct {
-		dataset int16
-		id      int32
-	}
+	// Read a bounded page across editions, then restore candidate order.
 	requestedRecords := map[int16][]int32{}
 	for i, id := range ids {
 		requestedRecords[recordDatasets[i]] = append(requestedRecords[recordDatasets[i]], id)
 	}
-	foundRecords := map[recordKey]result{}
-	for dataset, requestedIDs := range requestedRecords {
-		records, e := a.loadRecords(ctx, dataset, requestedIDs)
-		if e != nil {
-			return searchResult{}, 503, sourceReadError(e)
-		}
-		for _, record := range records {
-			record.Dataset = datasetKeys[dataset]
-			foundRecords[recordKey{dataset, int32(record.ID)}] = record
-		}
+	foundRecords, e := a.loadPageRecords(ctx, requestedRecords)
+	if e != nil {
+		return searchResult{}, 503, sourceReadError(e)
 	}
 	items := make([]result, 0, len(ids))
 	for i, id := range ids {
-		item := foundRecords[recordKey{recordDatasets[i], id}]
+		item := foundRecords[sourceRecordKey{recordDatasets[i], id}]
+		item.Dataset = datasetKeys[recordDatasets[i]]
 		if q.Near != "" {
 			location := distances[recordPostcodes[i]]
 			item.Distance = &location.Distance
