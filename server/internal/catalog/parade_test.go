@@ -43,6 +43,8 @@ func TestParadeIntegration(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	blockReads := &pageBlockTracer{}
+	cfg.ConnConfig.Tracer = blockReads
 	cfg.ConnConfig.RuntimeParams["search_path"] = schema
 	source, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
@@ -252,6 +254,29 @@ func TestParadeIntegration(t *testing.T) {
 	}
 	native, parade := NewAPI(source), NewAPI(source)
 	parade.ParadeDB = reader
+	t.Run("hybrid cross-edition hydration is globally batched", func(t *testing.T) {
+		path := "/api/search?dataset=all&kind=person&surname=Researchonly&street=Invented+Street&limit=100"
+		want := httptest.NewRecorder()
+		native.Handler().ServeHTTP(want, httptest.NewRequest("GET", path, nil))
+		if want.Code != 200 {
+			t.Fatal("native reference", want.Code, want.Body.String())
+		}
+		blockReads.blocks.Store(0)
+		blockReads.enabled.Store(true)
+		got := httptest.NewRecorder()
+		parade.Handler().ServeHTTP(got, httptest.NewRequest("GET", path, nil))
+		blockReads.enabled.Store(false)
+		if got.Code != 200 || !bytes.Equal(got.Body.Bytes(), want.Body.Bytes()) {
+			t.Fatal("hybrid page differs from native source reference", got.Code, got.Body.String())
+		}
+		var page searchResult
+		if e := json.Unmarshal(got.Body.Bytes(), &page); e != nil || len(page.Items) != 35 || page.Next != "" {
+			t.Fatal("incomplete cross-edition fixture", e)
+		}
+		if n := blockReads.blocks.Load(); n != 2 {
+			t.Fatalf("hybrid cross-edition page used %d record statements; want 2", n)
+		}
+	})
 	// A three-postcode batch must use the existing postcode primary key rather
 	// than scan the 10,000 unrelated points. Dictionary C collation must not
 	// silently make the database-default geography index unusable.

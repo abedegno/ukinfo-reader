@@ -245,20 +245,9 @@ func (a *API) finishOrderedCandidates(ctx context.Context, q query, f candidateF
 		}
 		requested[dataset] = append(requested[dataset], id)
 	}
-	type recordKey struct {
-		dataset int16
-		id      int32
-	}
-	found := map[recordKey]result{}
-	for dataset, ids := range requested {
-		records, e := a.loadRecords(ctx, dataset, ids)
-		if e != nil {
-			return searchResult{}, nil, 503, sourceReadError(e)
-		}
-		for _, item := range records {
-			item.Dataset = f.datasetKeys[dataset]
-			found[recordKey{dataset, int32(item.ID)}] = item
-		}
+	found, e := a.loadPageRecords(ctx, requested)
+	if e != nil {
+		return searchResult{}, nil, 503, sourceReadError(e)
 	}
 	for _, c := range positions {
 		dataset, id := c.Dataset, c.ID
@@ -266,7 +255,8 @@ func (a *API) finishOrderedCandidates(ctx context.Context, q query, f candidateF
 			m := members[c.Group]
 			dataset, id = m.dataset, m.id
 		}
-		item := found[recordKey{dataset, id}]
+		item := found[sourceRecordKey{dataset, id}]
+		item.Dataset = f.datasetKeys[dataset]
 		if q.Group != "" {
 			m := members[c.Group]
 			item.Group, item.Occurrences, item.Editions = c.Group, m.count, m.editions

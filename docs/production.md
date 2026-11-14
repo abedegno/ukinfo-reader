@@ -315,3 +315,12 @@ The accepted private qualification used hybrid routing for both reader binaries.
 Go 1.26.11 fixes GO-2026-6859 (HTTP/1 MaxBytesReader header race). A new tagged build,
 CI, advisory scan and private qualification are required before promotion; the
 older accepted compiler/image must not be silently relabeled as patched.
+
+
+### Optional source group-key index
+
+For HDD-hosted grouped search, the separately run
+`deploy/production/group-key-indexes.sql` adds a covering index to one explicit,
+complete research edition. It runs concurrently and is not part of API startup.
+Keep the original indexes and use guarded private validation before public builds.
+See [source retrieval evidence and maintenance](research/hybrid-source-retrieval-2026-11-14.md).
