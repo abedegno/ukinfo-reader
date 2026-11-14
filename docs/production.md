@@ -287,10 +287,10 @@ The existing target volume is promoted in place, with no database port published
 The API uses a dedicated SELECT-only reader. Existing public limits, proxy trust,
 Cloudflare protections and source deadlines are preserved.
 
-To roll back routing on this deployment, set `UKINFO_SEARCH_BACKEND=native` in
-`~/homelab/docker/ukinfo/.env`, then run `docker/ukinfo/deploy.sh up` from homelab.
-Native startup does not connect to the derived target. Use the current Go 1.26.10 patched image for native rollback. Older application
-images remain retained for investigation; they predate the certificate mitigation.
+For a native diagnostic, use the manifest controller’s `native` command described
+below. Native startup does not connect to the derived target, but cold searches
+can time out. New builds must use Go 1.26.11; existing live images are not patched
+until separately qualified and promoted. Retain previous images for recovery.
 Keep native indexes. Read the [control, diagnostics and rollout evidence](research/parade-rollout-2026-10-26.md)
 before changing the pinned extension or removing retained derived data.
 
@@ -299,3 +299,19 @@ The [grouped source-read follow-up](research/grouped-search-2026-10-27.md) recor
 For manifest-driven builds, exact-main CI gates, staged acceptance and automatic
 application rollback, use the [hosted release workflow](hosted-releases.md).
 Database/schema/extension changes remain separate reviewed operations.
+
+
+### Hosted dependency policy (14 November 2026)
+
+The hosted service requires ParadeDB. Homelab schema-v2 release manifests use the
+explicit `paradedb-required-v1` policy: stage hybrid directly, then compare the
+unchanged 12 basic, 64 frozen source and pre-change grouped references. Any failure
+restores the exact previous release. Schema-v1 manifests retain two-stage behavior.
+Global native mode is a diagnostic option with known cold-search timeouts; it is
+not a qualified full-service fallback. Hybrid still supports native query paths.
+The .14.1 native attempt matched 8/12 and rolled back; hybrid was not reached.
+The accepted private qualification used hybrid routing for both reader binaries.
+
+Go 1.26.11 fixes GO-2026-6859 (HTTP/1 MaxBytesReader header race). A new tagged build,
+CI, advisory scan and private qualification are required before promotion; the
+older accepted compiler/image must not be silently relabeled as patched.

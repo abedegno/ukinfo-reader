@@ -22,8 +22,9 @@
   complete paging/cancellation/work-budget tests and numeric private NAS regression
   evidence. Preserve earlier failures and distinguish measured latency from capacity.
 
-- Build hosted and desktop backends with Go 1.26.10 for
-  [GO-2026-6809](https://pkg.go.dev/vuln/GO-2026-6809).
+- Build hosted and desktop backends with Go 1.26.11 for
+  [GO-2026-6859](https://pkg.go.dev/vuln/GO-2026-6859), retaining the earlier
+  [GO-2026-6809](https://pkg.go.dev/vuln/GO-2026-6809) fix.
 
 - Update the pinned desktop Electron runtime to 44.9.3 for
   [the compromised-intermediate-certificate mitigation](https://github.com/advisories/GHSA-jr5w-w6x2-84p9).
