@@ -54,9 +54,13 @@ The deployment command holds a NAS-wide lease, waits for an idle fixture, checks
 image provenance and saves the previous stack privately. It permits only app,
 monitor and coordinator image changes plus the search-backend setting; database,
 network, volume, quota and other infrastructure differences need separate review.
-It stages native then hybrid mode, checking twelve internal references each, then
-all 64 native references and the separately labeled pre-change hybrid grouped
-snapshot. Real searches stay on private Docker networks. Public smoke uses only
+Schema-v1 manifests stage native then hybrid mode, checking twelve internal
+references each. Schema-v2 requires `rollout_policy: paradedb-required-v1`, stages
+hybrid directly and requires a healthy derived database. Both policies check all
+64 frozen native-source references and the separately labeled pre-change hybrid
+grouped snapshot against the running hybrid service. The operator selected v2
+after global native mode exposed cold-search timeouts; retained failures remain
+failed. Private qualification uses hybrid routing for both reader binaries. Real searches stay on private Docker networks. Public smoke uses only
 health, the UI and invented input. Serving database identities must stay unchanged.
 
 ## Recovery and verification
@@ -88,3 +92,6 @@ failed on two other request errors, so that candidate was not promoted. See
 [homelab current state](https://github.com/abedegno/homelab/blob/main/docker/ukinfo/CURRENT.md)
 and the retained numeric investigation there. Neither a green PR nor a successful
 warm replay replaces fresh runtime acceptance; failed checks are never bypassed.
+
+Global native mode is a diagnostic recovery option with known cold-search
+limitations, not a qualified full-service fallback under the v2 policy.

@@ -28,7 +28,7 @@ all desktop releases remain drafts.
 
 ## Requirements and edition scope
 
-- Go 1.26+ (tested with 1.26.10), PostgreSQL **18**, Python 3.10+ for importing discs.
+- Go 1.26+ (tested with 1.26.11), PostgreSQL **18**, Python 3.10+ for importing discs.
 - Node 22.12+ and npm for desktop development/browser tests, not hosted serving.
 - All six [verified release profiles](editions.md) can be imported from prepared folders.
   The five hosted editions (**248,951,107** occurrences) have passed PostgreSQL
