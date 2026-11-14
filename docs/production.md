@@ -304,7 +304,7 @@ Database/schema/extension changes remain separate reviewed operations.
 ### Hosted dependency policy (14 November 2026)
 
 The hosted service requires ParadeDB. Homelab schema-v2 release manifests use the
-explicit `paradedb-required-v1` policy: stage hybrid directly, then compare the
+explicit `paradedb-required-v1` policy (also retained in schema v3): stage hybrid directly, then compare the
 unchanged 12 basic, 64 frozen source and pre-change grouped references. Any failure
 restores the exact previous release. Schema-v1 manifests retain two-stage behavior.
 Global native mode is a diagnostic option with known cold-search timeouts; it is
@@ -323,4 +323,10 @@ For HDD-hosted grouped search, the separately run
 `deploy/production/group-key-indexes.sql` adds a covering index to one explicit,
 complete research edition. It runs concurrently and is not part of API startup.
 Keep the original indexes and use guarded private validation before public builds.
+The .14.4 private build and fixed qualification passed with Go 1.26.11. Homelab
+schema v3 declares the actual accepted source prerequisites and verifies them
+read-only before and after application promotion; missing coverage, incompatible
+indexes or reader permissions block rollout. Post-update loss triggers rollback.
+The public maintenance operation requires accepted private proof and exact-main
+CI, but remains separate from the application release controller.
 See [source retrieval evidence and maintenance](research/hybrid-source-retrieval-2026-11-14.md).
