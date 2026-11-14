@@ -328,3 +328,13 @@ live-source replay of each succeeded, with record-block reads dominating the
 postcode request; that does not reproduce or explain the private-clone failures.
 The original failed acceptance is retained and the candidate remains undeployed.
 See [current homelab evidence](https://github.com/abedegno/homelab/tree/main/docker/ukinfo/native-town-20261111).
+
+
+## Hybrid source retrieval follow-up (14 November 2026)
+
+[Measured investigation and validation](research/hybrid-source-retrieval-2026-11-14.md)
+records the shared bounded loader's adoption by ordered/ParadeDB pages and complete
+indexed household lookups. The optional group-key covering-index test now runs in
+search CI (`python3 tools/check_group_key_indexes.py`): two plan modes, zero heap
+fetches, exact source results and scoped/idempotent maintenance. These invented
+checks and diagnostic timings are not proof of a successful public rollout.

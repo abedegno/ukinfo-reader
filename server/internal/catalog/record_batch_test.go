@@ -125,6 +125,40 @@ func TestCrossEditionRecordBatchIntegration(t *testing.T) {
 			expected[key][r.ID] = r
 		}
 	}
+	// The shared ordered/grouped finisher also hydrates grouped ParadeDB pages.
+	t.Run("ordered page shares the bounded batch loader", func(t *testing.T) {
+		filters := candidateFilters{datasetKeys: map[int16]string{}}
+		positions := []orderCursor{}
+		for id := int32(1); id <= 2; id++ {
+			for i := 0; i < 5; i++ {
+				key := fmt.Sprintf("batch-%d", i)
+				var dataset int16
+				if e := db.QueryRow(ctx, "SELECT id FROM datasets WHERE key=$1", key).Scan(&dataset); e != nil {
+					t.Fatal(e)
+				}
+				filters.datasetKeys[dataset] = key
+				positions = append(positions, orderCursor{Dataset: dataset, ID: id})
+			}
+		}
+		trace.enabled.Store(true)
+		trace.blocks.Store(0)
+		got, _, status, e := api.finishOrderedCandidates(withRecordCache(ctx), query{Limit: 10}, filters, positions)
+		trace.enabled.Store(false)
+		if e != nil || status != 200 || len(got.Items) != 10 {
+			t.Fatal("ordered page", status, e)
+		}
+		for i, item := range got.Items {
+			key := fmt.Sprintf("batch-%d", i%5)
+			want := expected[key][int64(1+i/5)]
+			if item.Dataset != key || item.ID != want.ID || item.SourceID != want.SourceID || item.Archive != want.Archive || !bytes.Equal(item.Record, want.Record) {
+				t.Fatal("ordered hydration changed source identity or payload")
+			}
+		}
+		if n := trace.blocks.Load(); n != 2 {
+			t.Fatalf("ordered cross-edition records required %d statements; want 2", n)
+		}
+	})
+	trace.blocks.Store(0)
 	trace.enabled.Store(true)
 	w := httptest.NewRecorder()
 	api.Handler().ServeHTTP(w, httptest.NewRequest("GET", base, nil))

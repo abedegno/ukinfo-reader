@@ -352,83 +352,86 @@ func (a *API) address(w http.ResponseWriter, r *http.Request) {
 	items := []result{}
 	next := ""
 	last := after
-	for _, dataset := range datasets[start:] {
-		scanned := int32(0)
-		if dataset.ID == after.Dataset {
-			scanned = after.ID
+	if indexed {
+		items, next, err = a.indexedPremisesItems(ctx, datasets, start, after, identityKey, hash[:], limit, fingerprint)
+		if err != nil {
+			failError(w, 503, sourceReadError(err))
+			return
 		}
-		for {
-			// Explicit kind branches preserve the existing postcode B-tree prefix. Only
-			// this displayed full postcode is scanned; names and raw postcodes are unused.
-			batchLimit := 256
-			var rows pgx.Rows
-			var e error
-			if indexed {
-				batchLimit = limit + 1 - len(items)
-				rows, e = a.DB.Query(ctx, "SELECT id FROM premises_keys WHERE dataset_id=$1 AND premises_key=$2 AND id>$3 ORDER BY id LIMIT $4", dataset.ID, hash[:], scanned, batchLimit)
-			} else {
+	} else {
+		for _, dataset := range datasets[start:] {
+			scanned := int32(0)
+			if dataset.ID == after.Dataset {
+				scanned = after.ID
+			}
+			for {
+				// Explicit kind branches preserve the existing postcode B-tree prefix. Only
+				// this displayed full postcode is scanned; names and raw postcodes are unused.
+				batchLimit := 256
+				var rows pgx.Rows
+				var e error
 				rows, e = a.DB.Query(ctx, `SELECT id FROM (
     (SELECT id FROM entries WHERE dataset_id=$1 AND kind=0 AND postcode_id=$2 AND id>$3 ORDER BY id LIMIT 256)
     UNION ALL
     (SELECT id FROM entries WHERE dataset_id=$1 AND kind=1 AND postcode_id=$2 AND id>$3 ORDER BY id LIMIT 256)
    ) candidates ORDER BY id LIMIT 256`, dataset.ID, postcode, scanned)
-			}
-			if e != nil {
-				fail(w, 503, "Address lookup unavailable or timed out")
-				return
-			}
-			ids := []int32{}
-			for rows.Next() {
-				var id int32
-				if e = rows.Scan(&id); e != nil {
-					break
-				}
-				ids = append(ids, id)
-			}
-			if e == nil {
-				e = rows.Err()
-			}
-			rows.Close()
-			if e != nil {
-				fail(w, 503, "Address lookup unavailable or timed out")
-				return
-			}
-			if len(ids) == 0 {
-				break
-			}
-			records, e := a.loadRecords(ctx, dataset.ID, ids)
-			if e != nil {
-				failError(w, 503, sourceReadError(e))
-				return
-			}
-			for _, item := range records {
-				key, reason, e := premisesRecord(item.Record)
 				if e != nil {
-					fail(w, 503, "Source record unavailable")
+					fail(w, 503, "Address lookup unavailable or timed out")
 					return
 				}
-				if reason != "" || key.key() != identityKey {
-					continue
+				ids := []int32{}
+				for rows.Next() {
+					var id int32
+					if e = rows.Scan(&id); e != nil {
+						break
+					}
+					ids = append(ids, id)
 				}
-				if len(items) == limit {
-					raw, _ := json.Marshal(last)
-					next = base64.RawURLEncoding.EncodeToString(raw)
+				if e == nil {
+					e = rows.Err()
+				}
+				rows.Close()
+				if e != nil {
+					fail(w, 503, "Address lookup unavailable or timed out")
+					return
+				}
+				if len(ids) == 0 {
 					break
 				}
-				item.Dataset = dataset.Key
-				items = append(items, item)
-				last = premisesCursor{fingerprint, dataset.ID, int32(item.ID)}
+				records, e := a.loadRecords(ctx, dataset.ID, ids)
+				if e != nil {
+					failError(w, 503, sourceReadError(e))
+					return
+				}
+				for _, item := range records {
+					key, reason, e := premisesRecord(item.Record)
+					if e != nil {
+						fail(w, 503, "Source record unavailable")
+						return
+					}
+					if reason != "" || key.key() != identityKey {
+						continue
+					}
+					if len(items) == limit {
+						raw, _ := json.Marshal(last)
+						next = base64.RawURLEncoding.EncodeToString(raw)
+						break
+					}
+					item.Dataset = dataset.Key
+					items = append(items, item)
+					last = premisesCursor{fingerprint, dataset.ID, int32(item.ID)}
+				}
+				if next != "" {
+					break
+				}
+				scanned = ids[len(ids)-1]
+				if len(ids) < batchLimit || scanned == math.MaxInt32 {
+					break
+				}
 			}
 			if next != "" {
 				break
 			}
-			scanned = ids[len(ids)-1]
-			if len(ids) < batchLimit || scanned == math.MaxInt32 {
-				break
-			}
-		}
-		if next != "" {
-			break
 		}
 	}
 	if v.Get("format") == "jsonl" {

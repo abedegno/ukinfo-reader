@@ -234,7 +234,6 @@ func (a *API) paradeResults(ctx context.Context, q query) (searchResult, int, bo
 				return searchResult{}, 503, true, e
 			}
 		}
-		found := map[[2]int32]result{}
 		requested := map[int16][]int32{}
 		for _, p := range positions {
 			if q.streamRadius() {
@@ -244,15 +243,9 @@ func (a *API) paradeResults(ctx context.Context, q query) (searchResult, int, bo
 			}
 			requested[p.Dataset] = append(requested[p.Dataset], p.ID)
 		}
-		for dataset, ids := range requested {
-			records, e := a.loadRecords(ctx, dataset, ids)
-			if e != nil {
-				return searchResult{}, 503, true, sourceReadError(e)
-			}
-			for _, r := range records {
-				r.Dataset = keys[dataset]
-				found[[2]int32{int32(dataset), int32(r.ID)}] = r
-			}
+		found, e := a.loadPageRecords(ctx, requested)
+		if e != nil {
+			return searchResult{}, 503, true, sourceReadError(e)
 		}
 		for _, p := range positions {
 			if q.streamRadius() {
@@ -260,10 +253,11 @@ func (a *API) paradeResults(ctx context.Context, q query) (searchResult, int, bo
 					continue
 				}
 			}
-			item, ok := found[[2]int32{int32(p.Dataset), p.ID}]
+			item, ok := found[sourceRecordKey{p.Dataset, p.ID}]
 			if !ok {
 				return searchResult{}, 503, true, recordIntegrity("search source missing")
 			}
+			item.Dataset = keys[p.Dataset]
 			accepted, e := q.accepts(item.Record)
 			if e != nil {
 				return searchResult{}, 503, true, sourceReadError(e)
