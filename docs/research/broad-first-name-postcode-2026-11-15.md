@@ -1,8 +1,10 @@
 # Broad first names with a surname and postcode
 
+**Superseded candidate:** the subsequent `.15.3` qualification failed with three source-query timeouts. The correlated entry path described here was not deployed. The [replacement investigation](given-name-boundary-2026-11-15.md) moves given-name boundaries into vocabulary lookup while restoring the previous entry-membership path. The measurements below remain diagnostic history.
+
 A six-edition preparation search timed out while checking an exact surname, a broad first-name prefix and a partial postcode. Its native source plan produced one candidate but materialized 200,879 global dictionary terms. The entries lookup was already index-only; adding another covering index would not remove that dictionary work.
 
-For person searches with an exact surname and postcode, without address or nearby filters, broad first-name membership now looks up each candidate's first-name key by primary key. A planner fence preserves the candidate-driven lookup. Bound prefix predicates, given-name and middle-initial refinement, response ordering and continuation remain unchanged. Other broad search shapes keep their existing paths.
+For person searches with an exact surname and postcode, without address or nearby filters, that candidate’s broad first-name membership looked up each candidate's first-name key by primary key. A planner fence preserved the candidate-driven lookup. Bound prefix predicates, given-name and middle-initial refinement, response ordering and continuation remain unchanged. Other broad search shapes keep their existing paths.
 
 ## Verification
 
