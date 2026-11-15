@@ -545,6 +545,7 @@ func (a *API) buildCandidateFiltersWith(ctx context.Context, q query, planAddres
 			matching = q.FirstMatch
 		}
 		prefix := (!filter.postcode && (matching == "prefix" || matching == "given" || strings.HasSuffix(filter.key, "*"))) || (filter.postcode && q.PostcodeLength > 0)
+		given := filter.column == "first_id" && matching == "given" && !strings.HasSuffix(filter.key, "*")
 		ids := []int32{}
 		sql := "SELECT id,key FROM terms WHERE key=$1"
 		termArgs := []any{key}
@@ -555,6 +556,16 @@ func (a *API) buildCandidateFiltersWith(ctx context.Context, q query, planAddres
 				sql = "SELECT id,key FROM terms WHERE key >= $1 AND key < $2 AND (length(key)=$3 OR key=$1) ORDER BY key LIMIT 8193"
 				termArgs = append(termArgs, q.PostcodeLength)
 			}
+		}
+		if given {
+			// Given names match the complete first word(s), optionally followed
+			// by middle names. Two disjoint index ranges avoid expanding unrelated
+			// words such as Jane and John when looking for J. Keep each range
+			// indexable even under a generic plan, before the ordered probe limit.
+			// Under C collation, ! succeeds the trailing space and covers every
+			// UTF-8 suffix, including names containing the largest code point.
+			sql = "SELECT id,key FROM (SELECT id,key FROM terms WHERE key=$1 UNION ALL SELECT id,key FROM terms WHERE key >= $2 AND key < $3) given_terms ORDER BY key LIMIT 8193"
+			termArgs = []any{key, key + " ", key + "!"}
 		}
 		rows, e := a.searchRows(ctx, "vocabulary", sql, termArgs, false)
 		if e != nil {
@@ -583,8 +594,14 @@ func (a *API) buildCandidateFiltersWith(ctx context.Context, q query, planAddres
 		if observed > 8192 {
 			// Small expansions use bound integer arrays. Broad expansions stay in
 			// PostgreSQL and are shared by all edition branches, without truncation.
-			args = append(args, key, key+"\U0010ffff")
-			predicate := fmt.Sprintf("key >= $%d AND key < $%d", len(args)-1, len(args))
+			predicate := ""
+			if given {
+				args = append(args, key, key+" ", key+"!")
+				predicate = fmt.Sprintf("(key=$%d OR (key >= $%d AND key < $%d))", len(args)-2, len(args)-1, len(args))
+			} else {
+				args = append(args, key, key+"\U0010ffff")
+				predicate = fmt.Sprintf("key >= $%d AND key < $%d", len(args)-1, len(args))
+			}
 			if filter.postcode {
 				args = append(args, q.PostcodeLength)
 				predicate += fmt.Sprintf(" AND (length(key)=$%d OR key=$%d)", len(args), len(args)-2)
@@ -594,17 +611,8 @@ func (a *API) buildCandidateFiltersWith(ctx context.Context, q query, planAddres
 			// A run-time array can make the source index probe the full
 			// dictionary; relational membership permits a selective set join.
 			if filter.column == "first_id" && q.Surname != "" && q.Match == "exact" && !strings.HasSuffix(q.Surname, "*") {
-				if q.Kind == "person" && q.Postcode != "" && q.Near == "" && !q.hasAddress() {
-					// Surname and postcode already restrict the source candidates.
-					// Check their first-name keys instead of materializing the entire
-					// prefix dictionary. OFFSET fences the primary-key lookup from
-					// being flattened back into a global prefix scan. Given-name and
-					// middle-initial boundaries remain in record refinement.
-					conditions = append(conditions, fmt.Sprintf("EXISTS (SELECT 1 FROM (SELECT key FROM terms WHERE id=entries.first_id OFFSET 0) first_term WHERE %s)", predicate))
-				} else {
-					termCTEs = append(termCTEs, fmt.Sprintf("%s AS MATERIALIZED (SELECT id FROM terms WHERE %s)", name, predicate))
-					conditions = append(conditions, fmt.Sprintf("%s IN (SELECT id FROM %s)", filter.column, name))
-				}
+				termCTEs = append(termCTEs, fmt.Sprintf("%s AS MATERIALIZED (SELECT id FROM terms WHERE %s)", name, predicate))
+				conditions = append(conditions, fmt.Sprintf("%s IN (SELECT id FROM %s)", filter.column, name))
 			} else {
 				termCTEs = append(termCTEs, fmt.Sprintf("%s AS MATERIALIZED (SELECT array_agg(id) AS ids FROM terms WHERE %s)", name, predicate))
 				conditions = append(conditions, fmt.Sprintf("%s=ANY((SELECT ids FROM %s)::integer[])", filter.column, name))

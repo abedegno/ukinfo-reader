@@ -1,0 +1,10 @@
+# Push given-name boundaries into vocabulary lookup
+
+The unqualified .15.3 candidate completed its fixed five-edition qualification with three source-query timeouts across two surname/given-name/postcode searches. All completed content comparisons matched, load gates passed and all ten cold probes passed. The failed artifact remains authoritative; .15.3 was not deployed.
+
+The previous candidate-driven broad-prefix optimisation changed entry filtering. Given-name vocabulary lookup still reads the entire character prefix and discards unrelated first words in Go. Test the narrower alternative: look up the exact given name plus its space-delimited middle-name range, retaining relational membership and existing entry filtering. Preserve wildcard/prefix semantics, downstream refinement, pagination, source/target deadlines, pools and every acceptance workload.
+
+1. Reproduce vocabulary work with an invented 200,000-term unrelated prefix tail under custom/generic plans; observe the new resource test fail before implementation.
+2. Compare deployed .15.2, failed .15.3 and the throwaway boundary prototype in the same private fixture, including two failing cases and the earlier one-letter control. Keep SQL, queries, response bodies and identifiers on NAS. Report cache state and complete-response equality separately from qualification.
+3. If supported by evidence, replace candidate-correlated entry filtering with the original membership path and constrain given-mode vocabulary ranges. Keep the exact-name and space-prefix branches disjoint and indexable. Test broad valid given-name expansions beyond the cutoff, wildcard/prefix searches, middle initials, full/partial postcodes and complete pagination.
+4. Review and run the full server suite and hosted CI. Prepare a fresh immutable runtime only after those gates pass. Retain .15.3 failure, then run unchanged five-edition acceptance before deployment and fresh six-edition qualification. v14 remains hidden until the publication requirements pass.
