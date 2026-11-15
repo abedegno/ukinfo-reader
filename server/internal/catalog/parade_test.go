@@ -96,6 +96,14 @@ func TestParadeIntegration(t *testing.T) {
 	for i := 0; i < 260; i++ {
 		house := "1"
 		first := "June Adeletta"
+		// Given-name searches must reject longer first words, even when a
+		// surname prefix spans multiple editions and numeric cursor pages.
+		if i == 0 {
+			first = "Juneplate"
+		}
+		if i == 1 {
+			first = "Junebug"
+		}
 		if i == 98 || i == 198 || i >= 257 {
 			house = "999"
 			first = "June Adele"
@@ -347,6 +355,26 @@ func TestParadeIntegration(t *testing.T) {
 		}
 		if got = paradeWalk(t, parade, native, q); !reflect.DeepEqual(got, want) {
 			t.Fatalf("parade cursor not portable for %s", q)
+		}
+	}
+	// Assert actual derived routing rather than allowing a parity test to pass
+	// through native fallback. Five editions each contribute seven people; tied
+	// IDs and reversed source ordering must survive cross-backend continuations.
+	for _, tc := range []struct {
+		query string
+		total int
+	}{
+		{"dataset=all&surname=Res*&first_name=Name&first_match=given&limit=1", 35},
+		{"dataset=all&surname=Spar*&first_name=June&first_match=given&limit=7", 258},
+	} {
+		before := parade.metrics.plans["paradedb"]
+		nativeBefore := parade.metrics.plans["source_prefix_parallel"]
+		check(tc.query)
+		if got := paradeWalk(t, parade, parade, tc.query); len(got) != tc.total {
+			t.Fatal("prefix population or given-word boundary lost", len(got), tc.total)
+		}
+		if parade.metrics.plans["paradedb"] <= before || parade.metrics.plans["source_prefix_parallel"] != nativeBefore {
+			t.Fatal("prefix parity silently used native fallback")
 		}
 	}
 	for _, q := range []string{
