@@ -73,7 +73,7 @@ func searchEditions(ctx context.Context, db *pgxpool.Pool, scope string) ([]para
 
 // Select only the search shapes validated against native pages and cold/load trials.
 func paradeEligible(q query) bool {
-	if paradeNameProbe(q) {
+	if paradeNameProbe(q) || paradeNamePrefix(q) {
 		return true
 	}
 	if q.Near != "" {
@@ -81,6 +81,15 @@ func paradeEligible(q query) bool {
 	}
 	return q.hasAddress() && (q.Sort == "" || q.Sort == "name" || (q.Sort == "edition" && q.Group == "")) ||
 		(q.Postcode != "" || q.Kind == "business" && q.hasBusinessFilters()) && q.Sort == "name" && q.Group == ""
+}
+
+// The measured all-edition prefix/given-name shape avoids cold source B-tree
+// probes through the existing derived intersection and numeric cursor path.
+// Keep additional refinements and unmeasured name modes on their current routes.
+func paradeNamePrefix(q query) bool {
+	return q.Dataset == "all" && parallelNamePrefix(q) && q.FirstMatch == "given" &&
+		!strings.HasSuffix(q.First, "*") && len(strings.Fields(q.First)) == 1 &&
+		q.Organisation == "" && q.Middle == "" && q.House == "" && q.Building == "" && q.Flat == ""
 }
 
 // Full first-name discovery dominates broad alphabetical surnames. Keep narrow
@@ -128,7 +137,7 @@ func (a *API) paradeResults(ctx context.Context, q query) (searchResult, int, bo
 	if a.ParadeDB == nil {
 		return searchResult{}, 0, false, nil
 	}
-	// Default-order postcode and simple-name searches retain native execution.
+	// Unselected postcode and simple-name shapes retain native execution.
 	// Select before contacting the target so native-only shapes remain independent
 	// of the optional database.
 	if !paradeEligible(q) {
