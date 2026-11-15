@@ -799,6 +799,9 @@ func (a *API) searchCandidates(ctx context.Context, q query) (searchResult, int,
 		if parallelNamePrefix(q) && len(datasetIDs) > 1 && len(termCTEs) == 0 {
 			a.metrics.plan("source_prefix_parallel")
 			selected, e = a.sourceNamePrefixPage(ctx, queryArgs, conditions, datasetIDs, q.Limit-len(ids)+1)
+		} else if parallelPostcode(q) && len(datasetIDs) > 1 && len(termCTEs) == 0 {
+			a.metrics.plan("source_postcode_parallel")
+			selected, e = a.sourceParallelPage(ctx, queryArgs, conditions, datasetIDs, q.Limit-len(ids)+1, sourcePostcodeOrder)
 		} else {
 			selected, e = a.sourceCandidatePositions(ctx, sql, args, q.hasAddress())
 		}

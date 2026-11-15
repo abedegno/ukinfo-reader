@@ -18,6 +18,21 @@ func parallelNamePrefix(q query) bool {
 		q.Postcode == "" && q.Near == "" && !q.hasAddress() && !q.hasBusinessFilters()
 }
 
+// Restrict postcode overlap to the measured plain person-search path. The
+// caller additionally requires multiple editions and no shared term CTEs.
+func parallelPostcode(q query) bool {
+	return q.Kind == "person" && q.Postcode != "" && q.Surname == "" && q.First == "" && q.Organisation == "" &&
+		q.Sort == "" && q.Group == "" && q.Near == "" && !q.hasAddress() && !q.hasRefinements() &&
+		!q.needsResearch() && !q.hasBusinessFilters()
+}
+
+type sourceCandidateOrder uint8
+
+const (
+	sourceNameOrder sourceCandidateOrder = iota
+	sourcePostcodeOrder
+)
+
 func scanCandidatePositions(rows pgx.Rows) ([]cursor, error) {
 	defer rows.Close()
 	out := []cursor{}
@@ -43,7 +58,19 @@ func (a *API) sourceCandidatePositions(ctx context.Context, sql string, args []a
 // Every edition contributes a full page/lookahead; their exact numeric merge is
 // equivalent to the existing UNION ALL. Any failed probe cancels its sibling
 // and discards every partial candidate, under unchanged SQL/HTTP deadlines.
-func (a *API) sourceNamePrefixPage(ctx context.Context, args []any, conditions []string, datasets []int16, limit int) (out []cursor, err error) {
+func (a *API) sourceNamePrefixPage(ctx context.Context, args []any, conditions []string, datasets []int16, limit int) ([]cursor, error) {
+	return a.sourceParallelPage(ctx, args, conditions, datasets, limit, sourceNameOrder)
+}
+
+func (a *API) sourceParallelPage(ctx context.Context, args []any, conditions []string, datasets []int16, limit int, order sourceCandidateOrder) (out []cursor, err error) {
+	sqlOrder := "name_id,first_id,id,dataset_id"
+	switch order {
+	case sourceNameOrder:
+	case sourcePostcodeOrder:
+		sqlOrder = "postcode_id," + sqlOrder
+	default:
+		return nil, fmt.Errorf("unsupported source candidate order")
+	}
 	ctx, end := a.searchPhase(ctx, "candidates")
 	defer func() { end(err) }()
 	group, ctx := errgroup.WithContext(ctx)
@@ -52,7 +79,7 @@ func (a *API) sourceNamePrefixPage(ctx context.Context, args []any, conditions [
 	for _, dataset := range datasets {
 		group.Go(func() error {
 			queryArgs := append(slices.Clone(args), limit, dataset)
-			sql := fmt.Sprintf("SELECT dataset_id,id,name_id,first_id,postcode_id FROM entries WHERE %s AND dataset_id=$%d ORDER BY name_id,first_id,id,dataset_id LIMIT $%d", strings.Join(conditions, " AND "), len(queryArgs), len(queryArgs)-1)
+			sql := fmt.Sprintf("SELECT dataset_id,id,name_id,first_id,postcode_id FROM entries WHERE %s AND dataset_id=$%d ORDER BY %s LIMIT $%d", strings.Join(conditions, " AND "), len(queryArgs), sqlOrder, len(queryArgs)-1)
 			rows, err := a.DB.Query(ctx, sql, queryArgs...)
 			if err != nil {
 				return err
@@ -71,6 +98,11 @@ func (a *API) sourceNamePrefixPage(ctx context.Context, args []any, conditions [
 		return nil, err
 	}
 	slices.SortFunc(out, func(a, b cursor) int {
+		if order == sourcePostcodeOrder {
+			if c := cmp.Compare(a.Postcode, b.Postcode); c != 0 {
+				return c
+			}
+		}
 		for _, pair := range [][2]int32{{a.Name, b.Name}, {a.First, b.First}, {a.ID, b.ID}, {int32(a.Dataset), int32(b.Dataset)}} {
 			if c := cmp.Compare(pair[0], pair[1]); c != 0 {
 				return c
