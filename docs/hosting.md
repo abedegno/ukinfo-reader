@@ -8,6 +8,14 @@ editions (248,951,107 source occurrences) with no sample/demo datasets. The data
 a SELECT-only role, explicit tunnel-peer trust, per-client quotas and bounded work.
 See [public service controls](#public-service-through-cloudflare-tunnel).
 
+As of 15 November 2026, the live application is `hosted-2026-11-15.2`. Guarded
+rollout passed 12 basic, 64 source-reference and one grouped checks plus public
+smoke. Fresh fixed five-edition qualification had zero candidate errors or content
+mismatches, C1/C4 p95 of 95/150 ms and a maximum cold probe of 2.349 seconds under
+the unchanged three-second gate. Target cache was uncontrolled; this is measured
+acceptance, not a capacity guarantee. v14 remains hidden. Compatible patched
+engines and separate six-edition validation are required before publication.
+
 The original 17 October 2026 hosting shortlist below is a dated planning record.
 Prices, provider allowances and availability must be checked before provisioning.
 The complete 2005 catalogue measured **11.79 GiB**; the initial four-edition base together

@@ -335,18 +335,29 @@ failed trace can still be absent. Correlate sampled slow edition spans and
 always-on counters with infrastructure disk/CPU/memory metrics; these signals do
 not by themselves identify a slow query's physical I/O cause.
 
-The edition feature is based on the deployed `ce6117f` source and contains no
-street-prefix/SIC-layout experiments or private SQL-audit hooks. It does not fix
-or clear the earlier load reliability gate. Validate the change in isolation and
-roll it out separately from search/layout changes. Collector privacy tests use
+The original edition feature was developed against `ce6117f`, the source deployed
+at that time, without street-prefix/SIC-layout experiments or private SQL-audit
+hooks. It did not clear the earlier reliability gate and was required to be
+validated and rolled out separately from search/layout changes. Collector privacy tests use
 invented string/numeric canaries on both variants; no credentials or archive data
 are needed. Homelab's collector must receive the matching policy before relying
 on these labels in hosted dashboards.
 
-## Hosted rollout status — 10 November 2026
+## Hosted rollout status — 15 November 2026
+
+Edition telemetry is present in the live `hosted-2026-11-15.2` application. The
+five-edition guarded rollout passed, and the Collector was checked to share the
+current app's network namespace. Earlier five-stream metric delivery was verified
+in eu0 Observability Cloud; fresh sampled trace delivery was not independently
+rechecked for this rollout. Existing sampling and privacy rules are unchanged.
+Five editions / 248,951,107 listings remain public; v14 is hidden. The historical
+failed native rollout below remains retained, rather than being relabelled as a
+successful global-native fallback.
+
+## Retained rollout history — 10 November 2026
 
 Edition telemetry is merged and tagged as `hosted-2026-11-10.1`, with passing
-private fixed-protocol qualification. It is **not active on the public service**.
+private fixed-protocol qualification. It was **not active on the public service**.
 The guarded live rollout matched 11/12 native checks; one exact person-name/town
 search in one edition returned 503/`query_timeout` after 2.33 s. Automatic rollback
 restored `hosted-2026-10-27.3` before ParadeDB acceptance. The same frozen query
@@ -355,8 +366,8 @@ do not validate the live native-only path; the timeout cause remains unproven. N
 
 The validated Collector policy and two managed edition charts are applied.
 Existing metrics, sanitized logs and sampled traces were verified in Splunk.
-New edition metric/span delivery remains unverified because its application was
-rolled back. The failed request had no downloadable APM trace. Five editions /
-248,951,107 occurrences remain public and v14 stays hidden. Resolve and qualify
-the native timeout before repeating the normal release. See the
+At that stage, new edition metric/span delivery was unverified because its
+application had rolled back. The failed request had no downloadable APM trace. Five editions /
+248,951,107 occurrences remain public and v14 stayed hidden. The next step was to resolve and qualify the native timeout
+before retrying that rollout. See the
 [rollout report](research/edition-observability-rollout-2026-11-10.md).

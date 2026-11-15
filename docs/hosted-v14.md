@@ -56,7 +56,29 @@ separate shared-cache full-source measurements from the older isolated fixture's
 cold tests; neither is a claim of sustained Internet capacity. The existing CPU,
 memory, pool, timeout and quota limits remain acceptance constraints.
 
-Status on 7 November 2026: the complete selected source is committed and verified,
+### Current status — 15 November 2026
+
+The live `.15.2` application serves the existing five editions. Its fresh
+five-edition qualification and guarded rollout passed, including measured
+first-name/postcode refinements and the selected surname-prefix route. This does
+not replace six-edition acceptance or make v14 public.
+
+Selected source projections and indexes are complete for 43,744,633 listings,
+including 6,092,008 businesses. The fourth six-edition attempt matched its initial
+paired probe and 1,536 sampled fields, then failed four searches during the fixed
+355-case preparation. Those failed results remain retained; no new full
+six-edition acceptance is claimed.
+
+Compatible patched PostgreSQL/native-extension engines and renewed qualification
+remain prerequisites. The follow-on controls must bind the exact successful
+inputs/runtime/lifecycles, prove selected-partition cold behavior and maintenance
+exclusion, build a separate six-edition live-reference bundle and publish through
+a guarded visibility transition. Input-seal library tests and an invented local
+maintenance prototype alone do not satisfy those operational requirements.
+
+### Retained preparation history — 7 November 2026
+
+On 7 November 2026: the complete selected source is committed and verified,
 the derived index and native maintenance are complete, and all 1,536 spread field
 samples match both original records and independent source projections. The
 [aggregate progress report](validation/v14-2008-03-hosted-progress.json) retains the

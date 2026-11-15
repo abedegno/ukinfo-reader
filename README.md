@@ -67,7 +67,8 @@ establish compatibility; use [edition identification and fingerprints](docs/edit
 people. The public archive’s edition selector lists imports that are ready to search;
 operators can also check the [live catalogue](https://ukinfo.6153112.xyz/api/datasets).
 v14 is supported by the reader and folder importer. Its selected hosted import is
-verified privately and awaits search acceptance; see [hosted status](docs/hosted-v14.md).
+verified privately and awaits patched-engine and six-edition search acceptance;
+see [hosted status](docs/hosted-v14.md).
 Dates above identify distribution/mastering, not verified electoral-roll reference dates.
 The supplied 2004 SE media has no separate business listings.
 
