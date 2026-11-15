@@ -594,8 +594,17 @@ func (a *API) buildCandidateFiltersWith(ctx context.Context, q query, planAddres
 			// A run-time array can make the source index probe the full
 			// dictionary; relational membership permits a selective set join.
 			if filter.column == "first_id" && q.Surname != "" && q.Match == "exact" && !strings.HasSuffix(q.Surname, "*") {
-				termCTEs = append(termCTEs, fmt.Sprintf("%s AS MATERIALIZED (SELECT id FROM terms WHERE %s)", name, predicate))
-				conditions = append(conditions, fmt.Sprintf("%s IN (SELECT id FROM %s)", filter.column, name))
+				if q.Kind == "person" && q.Postcode != "" && q.Near == "" && !q.hasAddress() {
+					// Surname and postcode already restrict the source candidates.
+					// Check their first-name keys instead of materializing the entire
+					// prefix dictionary. OFFSET fences the primary-key lookup from
+					// being flattened back into a global prefix scan. Given-name and
+					// middle-initial boundaries remain in record refinement.
+					conditions = append(conditions, fmt.Sprintf("EXISTS (SELECT 1 FROM (SELECT key FROM terms WHERE id=entries.first_id OFFSET 0) first_term WHERE %s)", predicate))
+				} else {
+					termCTEs = append(termCTEs, fmt.Sprintf("%s AS MATERIALIZED (SELECT id FROM terms WHERE %s)", name, predicate))
+					conditions = append(conditions, fmt.Sprintf("%s IN (SELECT id FROM %s)", filter.column, name))
+				}
 			} else {
 				termCTEs = append(termCTEs, fmt.Sprintf("%s AS MATERIALIZED (SELECT array_agg(id) AS ids FROM terms WHERE %s)", name, predicate))
 				conditions = append(conditions, fmt.Sprintf("%s=ANY((SELECT ids FROM %s)::integer[])", filter.column, name))
