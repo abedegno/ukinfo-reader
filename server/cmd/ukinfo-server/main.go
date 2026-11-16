@@ -142,6 +142,12 @@ func run() error {
 	if command != "serve" {
 		config.ConnConfig.RuntimeParams["statement_timeout"] = "0"
 	}
+	// Keep health probes independent of serving-connection initialization.
+	healthConfig := config.Copy()
+	var sourceReady func()
+	if command == "serve" {
+		sourceReady = catalog.ConfigureSourcePreparation(config)
+	}
 	db, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
 		return fmt.Errorf("database configuration failed")
@@ -316,6 +322,12 @@ func run() error {
 	if err = db.QueryRow(ctx, "SELECT max(version) FROM catalog_schema").Scan(&version); err != nil || version != catalog.SchemaVersion {
 		return fmt.Errorf("catalogue schema unavailable; run migrate with an owner connection")
 	}
+	if sourceReady != nil {
+		sourceReady()
+		if err = db.Ping(ctx); err != nil {
+			return errors.New("source metadata preparation unavailable")
+		}
+	}
 	listener, err := net.Listen("tcp", *listen)
 	if err != nil {
 		return err
@@ -384,7 +396,6 @@ func run() error {
 		}
 		api.ParadeDB = searchDB
 	}
-	healthConfig := config.Copy()
 	healthConfig.MaxConns, healthConfig.MinConns = 1, 0
 	healthConfig.ConnConfig.RuntimeParams["statement_timeout"] = "1000"
 	healthDB, e := pgxpool.NewWithConfig(ctx, healthConfig)
