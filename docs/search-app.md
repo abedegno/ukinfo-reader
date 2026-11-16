@@ -4,7 +4,7 @@ A shared Go service serves the web UI and searches PostgreSQL 18. Electron launc
 that same service with an app-managed local PostgreSQL process. The original Python
 reader remains the verified decoder and importer: searches do not run Python.
 
-Development preview. The [public archive](https://ukinfo.6153112.xyz) serves the four
+Development preview. The [public archive](https://ukinfo.6153112.xyz) serves the five
 complete editions. Hosted capacity depends on storage and workload; broad national
 grouping/sorting and cold HDD reads can exceed query deadlines.
 Exact and prefix name searches, postcode district/sector searches, optional nearby
@@ -33,8 +33,10 @@ all desktop releases remain drafts.
 - All six [verified release profiles](editions.md) can be imported from prepared folders.
   The five hosted editions (**248,951,107** occurrences) have passed PostgreSQL
   record/projection verification. The additional v14 source (**43,799,502** entries)
-  has passed complete reader validation and remains a local source; it has not been
-  imported or performance-qualified on the hosted service. Modern entries retain their
+  has passed complete reader validation. The selected hosted v14 stream has
+  **43,744,633** entries after excluding **54,869 CO1** entries and is staged privately
+  on the NAS. Its full hosted performance/publication qualification is unfinished;
+  v14 is not public. See [hosted v14 status](hosted-v14.md). Modern entries retain their
   electoral/telephone/business types.
 - Business searching covers the validated **2003 SE**, **2005 V10.5 SE** and **v14** business streams, including
   updates/deletions already applied by the reader. The supplied **2004 SE** disc has no

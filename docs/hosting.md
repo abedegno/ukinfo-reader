@@ -175,6 +175,20 @@ one connection and a one-second deadline. `/api/health` bypasses the 32-request 
 admission queue. A genuine database failure still returns 503. A health success does
 not prove that a representative search or catalogue verification succeeds.
 
+Before listening, `serve` validates the catalogue schema and initializes the serving
+connection's fixed catalogue/vocabulary statement descriptions. This performs no
+searches, binds no search values and preloads no archive records. Startup can take
+slightly longer; first requests avoid that metadata preparation work. Each replacement
+connection initializes before use, and normal requests still read authoritative data
+and visibility rules. The added initialization is bounded by its caller context and
+five seconds, whichever expires first; request and SQL deadlines are unchanged.
+
+Local desktop migration runs before initialization is activated, so an empty archive
+can still open the import wizard. Import/migration commands and the independent health
+pool retain their previous behavior. Explicit pgx modes other than cached statements
+also retain their previous protocol behavior, without this preparation. See the
+[source-read measurements and limitations](research/source-read-tails-2026-11-16.md).
+
 `http://127.0.0.1:9091/metrics` exposes Prometheus text counters/histograms by fixed route
 and status, active requests and search-pool occupancy/cancelled acquisitions. The
 listener rejects non-loopback bind addresses and is absent unless requested. Do not
