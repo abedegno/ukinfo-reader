@@ -17,3 +17,7 @@ A fresh immutable runtime and unchanged full acceptance remain required. `.15.2`
 All 45 catalog tests passed on a fresh PostgreSQL 18.7 instance, including the vocabulary-work gate under both custom and generic plans, 66 paging combinations and the Unicode-boundary regression. The separate ParadeDB integration test requires its own target and is left to hosted CI. Local server `go test ./...`, `go vet ./...` and diff checks pass; independent review found no important issues. A sandbox-denied loopback bind in the initial local run was resolved by running the existing HTTP tests with loopback permission.
 
 The initial full synthetic run exhausted its 512 MB temporary PostgreSQL filesystem with WAL and restarted PostgreSQL; the retained log identifies `No space left on device`. The passing full run used a disposable 2 GB memory-backed filesystem, a 3 GB container memory cap and the same one-CPU limit. This changes the test harness capacity, not the archive qualification workload or gates. No archive data was mounted in that instance.
+
+## Full qualification result
+
+The `.15.4` candidate failed the unchanged full five-edition qualification with one query timeout and no content mismatches; load and all ten source-cold gates passed. It was not deployed. The subsequent [membership-plan investigation](broad-membership-2026-11-16.md) identifies a remaining custom-plan join-order problem for a broad valid given-name expansion.
