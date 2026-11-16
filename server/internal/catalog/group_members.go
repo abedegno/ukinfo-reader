@@ -1,6 +1,7 @@
 package catalog
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"slices"
@@ -16,12 +17,15 @@ type listingMember struct {
 	editions []string
 }
 
+const groupMemberBatch = 16
+
 const groupMemberSQL = `SELECT group_key,count(*),min(id) FROM research_keys
  WHERE dataset_id=$1 AND group_key=ANY($2::bytea[]) GROUP BY group_key`
 
 // Count every occurrence and resolve its canonical min(dataset,id) source in
 // the same covered group-index pass. A scalar edition anchor prunes each probe;
-// at most two reads overlap. Preserve the database's edition-key collation.
+// each read contains at most 16 distinct keys and at most two reads overlap.
+// Preserve the database's edition-key collation.
 func (a *API) groupMembers(ctx context.Context, datasets []int16, groups [][]byte) (map[string]listingMember, error) {
 	type edition struct {
 		id  int16
@@ -49,46 +53,61 @@ func (a *API) groupMembers(ctx context.Context, datasets []int16, groups [][]byt
 	for i, d := range editions {
 		ranks[d.key] = i
 	}
+	// ANY has set semantics. Deduplicate before splitting so repeated caller
+	// keys cannot count an edition twice when they cross a batch boundary.
+	keys := make([][]byte, 0, len(groups))
+	seen := make(map[string]bool, len(groups))
+	for _, key := range groups {
+		if !seen[string(key)] {
+			seen[string(key)] = true
+			keys = append(keys, key)
+		}
+	}
+	// Keep each edition's probes in key order without reordering caller input.
+	slices.SortFunc(keys, bytes.Compare)
 	totals := map[string]listingMember{}
 	var mu sync.Mutex
 	group, ctx := errgroup.WithContext(ctx)
 	group.SetLimit(2)
 	for _, d := range editions {
-		group.Go(func() error {
-			rows, err := a.searchRows(ctx, "group_members", groupMemberSQL, []any{d.id, groups}, false)
-			if err != nil {
-				return err
-			}
-			defer rows.Close()
-			found := map[string]listingMember{}
-			for rows.Next() {
-				var key []byte
-				var count int64
-				var first int32
-				if err = rows.Scan(&key, &count, &first); err != nil {
+		for start := 0; start < len(keys); start += groupMemberBatch {
+			batch := keys[start:min(start+groupMemberBatch, len(keys))]
+			group.Go(func() error {
+				rows, err := a.searchRows(ctx, "group_members", groupMemberSQL, []any{d.id, batch}, false)
+				if err != nil {
 					return err
 				}
-				if len(key) != 32 || count < 1 || first < 1 {
-					return recordIntegrity("invalid grouped occurrence count")
+				defer rows.Close()
+				found := map[string]listingMember{}
+				for rows.Next() {
+					var key []byte
+					var count int64
+					var first int32
+					if err = rows.Scan(&key, &count, &first); err != nil {
+						return err
+					}
+					if len(key) != 32 || count < 1 || first < 1 {
+						return recordIntegrity("invalid grouped occurrence count")
+					}
+					found[hex.EncodeToString(key)] = listingMember{dataset: d.id, id: first, count: count}
 				}
-				found[hex.EncodeToString(key)] = listingMember{dataset: d.id, id: first, count: count}
-			}
-			if err = rows.Err(); err != nil {
-				return err
-			}
-			mu.Lock()
-			for key, member := range found {
-				m := totals[key]
-				if m.dataset == 0 || member.dataset < m.dataset || member.dataset == m.dataset && member.id < m.id {
-					m.dataset, m.id = member.dataset, member.id
+				if err = rows.Err(); err != nil {
+					return err
 				}
-				m.count += member.count
-				m.editions = append(m.editions, d.key)
-				totals[key] = m
-			}
-			mu.Unlock()
-			return nil
-		})
+				mu.Lock()
+				for key, member := range found {
+					m := totals[key]
+					if m.dataset == 0 || member.dataset < m.dataset || member.dataset == m.dataset && member.id < m.id {
+						m.dataset, m.id = member.dataset, member.id
+					}
+					m.count += member.count
+					m.editions = append(m.editions, d.key)
+					totals[key] = m
+				}
+				mu.Unlock()
+				return nil
+			})
+		}
 	}
 	if err = group.Wait(); err != nil {
 		return nil, err
