@@ -612,7 +612,15 @@ func (a *API) buildCandidateFiltersWith(ctx context.Context, q query, planAddres
 			// dictionary; relational membership permits a selective set join.
 			if filter.column == "first_id" && q.Surname != "" && q.Match == "exact" && !strings.HasSuffix(q.Surname, "*") {
 				termCTEs = append(termCTEs, fmt.Sprintf("%s AS MATERIALIZED (SELECT id FROM terms WHERE %s)", name, predicate))
-				conditions = append(conditions, fmt.Sprintf("%s IN (SELECT id FROM %s)", filter.column, name))
+				membership := fmt.Sprintf("%s IN (SELECT id FROM %s)", filter.column, name)
+				if given && q.Postcode != "" {
+					// A sparse vocabulary histogram can underestimate thousands of
+					// valid middle-name forms as one. Keep membership as a Boolean
+					// filter so that estimate cannot drive one entry probe per name.
+					// IS TRUE preserves WHERE semantics, including NULL exclusion.
+					membership = "(" + membership + ") IS TRUE"
+				}
+				conditions = append(conditions, membership)
 			} else {
 				termCTEs = append(termCTEs, fmt.Sprintf("%s AS MATERIALIZED (SELECT array_agg(id) AS ids FROM terms WHERE %s)", name, predicate))
 				conditions = append(conditions, fmt.Sprintf("%s=ANY((SELECT ids FROM %s)::integer[])", filter.column, name))

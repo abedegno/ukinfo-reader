@@ -182,3 +182,118 @@ func TestGivenNameUnicodeBoundariesIntegration(t *testing.T) {
 		}
 	}
 }
+
+// A coarse vocabulary histogram can estimate one matching given-name form while
+// thousands actually match. The postcode must still anchor the entry lookup.
+func TestGivenNamePostcodeMembershipWorkIntegration(t *testing.T) {
+	db, cfg := firstPostcodeFixture(t)
+	ctx := context.Background()
+	if _, err := db.Exec(ctx, `INSERT INTO terms(key) SELECT 'j aaaa'||lpad(i::text,6,'0') FROM generate_series(1,9700) i;
+ INSERT INTO entries(id,dataset_id,kind,name_id,first_id,postcode_id)
+ SELECT 100+i,1,0,(SELECT id FROM terms WHERE key='invented'),(SELECT id FROM terms WHERE key='amy'),0 FROM generate_series(1,20000) i;
+ ALTER TABLE terms ALTER COLUMN key SET STATISTICS 1; ANALYZE;`); err != nil {
+		t.Fatal(err)
+	}
+	for _, mode := range []string{"force_custom_plan", "force_generic_plan"} {
+		t.Run(mode, func(t *testing.T) {
+			c := cfg.Copy()
+			c.MaxConns = 1
+			c.ConnConfig.RuntimeParams["plan_cache_mode"] = mode
+			pool, err := pgxpool.NewWithConfig(ctx, c)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer pool.Close()
+			a := NewAPI(pool)
+			defer a.decoder.Close()
+			q, err := parse(mustValues("dataset=first-postcode&kind=person&match=exact&surname=Invented&first_name=J&first_match=given&postcode=ZZ9"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			f, status, err := a.buildCandidateFiltersWith(ctx, q, false)
+			if err != nil || status != 200 {
+				t.Fatal(status, err)
+			}
+			if len(f.termCTEs) == 0 {
+				t.Fatal("fixture did not exercise broad membership")
+			}
+			sql := "WITH " + strings.Join(f.termCTEs, ",") + " SELECT id FROM entries WHERE " + strings.Join(f.conditions, " AND ") + " ORDER BY postcode_id,name_id,first_id,id LIMIT 51"
+			conn, err := pool.Acquire(ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer conn.Release()
+			desc, err := conn.Conn().Prepare(ctx, "given_membership_work", sql)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer conn.Conn().Deallocate(ctx, "given_membership_work")
+			if len(desc.ParamOIDs) != len(f.args) {
+				t.Fatal("unexpected prepared bindings")
+			}
+			literals := make([]string, len(f.args))
+			for i, arg := range f.args {
+				typ, ok := conn.Conn().TypeMap().TypeForOID(desc.ParamOIDs[i])
+				if !ok {
+					t.Fatal("unknown fixture parameter type")
+				}
+				encoded, err := conn.Conn().TypeMap().Encode(desc.ParamOIDs[i], pgx.TextFormatCode, arg, nil)
+				if err != nil {
+					t.Fatal(err)
+				}
+				literal := "NULL"
+				if encoded != nil {
+					literal = "'" + strings.ReplaceAll(string(encoded), "'", "''") + "'"
+				}
+				literals[i] = literal + "::" + pgx.Identifier{typ.Name}.Sanitize()
+			}
+			execute := "EXECUTE given_membership_work(" + strings.Join(literals, ",") + ")"
+			rows, err := conn.Query(ctx, execute)
+			if err != nil {
+				t.Fatal(err)
+			}
+			ids := []int64{}
+			for rows.Next() {
+				var id int64
+				if err = rows.Scan(&id); err != nil {
+					t.Fatal(err)
+				}
+				ids = append(ids, id)
+			}
+			err = rows.Err()
+			rows.Close()
+			if err != nil {
+				t.Fatal(err)
+			}
+			sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+			if !reflect.DeepEqual(ids, []int64{1, 2, 3, 10}) {
+				t.Fatalf("membership identities=%v", ids)
+			}
+			var raw []byte
+			if err = conn.QueryRow(ctx, "EXPLAIN(ANALYZE,BUFFERS,FORMAT JSON) "+execute).Scan(&raw); err != nil {
+				t.Fatal(err)
+			}
+			var plans []struct{ Plan map[string]any }
+			if err = json.Unmarshal(raw, &plans); err != nil {
+				t.Fatal(err)
+			}
+			loops := 0.0
+			var visit func(map[string]any)
+			visit = func(p map[string]any) {
+				if name, _ := p["Relation Name"].(string); strings.HasPrefix(name, "entries_") {
+					n, _ := p["Actual Loops"].(float64)
+					loops += n
+				}
+				if ch, ok := p["Plans"].([]any); ok {
+					for _, v := range ch {
+						visit(v.(map[string]any))
+					}
+				}
+			}
+			visit(plans[0].Plan)
+			if loops > 32 {
+				t.Fatalf("selective membership made %.0f entry probes; want <=32", loops)
+			}
+		})
+	}
+}
