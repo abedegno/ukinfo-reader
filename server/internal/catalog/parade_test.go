@@ -557,8 +557,8 @@ func TestParadeIntegration(t *testing.T) {
 	if parade.metrics.plans["paradedb"] == 0 {
 		t.Fatal("checks only exercised fallback")
 	}
-	// The serving SQL must retain the extension's Top-K path for both the
-	// compact dictionary ordering and lexical ordering, including continuation.
+	// Keep extension Top-K for existing routes and ordinary scalar planning
+	// for postcode-only name ordering, including continuation.
 	editions, e := searchEditions(ctx, source, keys[0])
 	if e != nil {
 		t.Fatal(e)
@@ -587,9 +587,41 @@ func TestParadeIntegration(t *testing.T) {
 			if e = reader.QueryRow(ctx, "EXPLAIN(FORMAT JSON) "+sql, args...).Scan(&raw); e != nil {
 				t.Fatal(e)
 			}
-			if !bytes.Contains(raw, []byte("TopKScanExecState")) {
+			if paradePostcodeScalar(q) {
+				// Eight-row fixtures may legitimately favor a sequential scan.
+				// Require the new SQL route without forcing the planner.
+				if strings.Contains(sql, "@@@") || bytes.Contains(raw, []byte("TopKScanExecState")) {
+					t.Fatal("scalar postcode plan reverted to BM25")
+				}
+			} else if !bytes.Contains(raw, []byte("TopKScanExecState")) {
 				t.Fatalf("missing Top-K for invented %s continuation=%v", input, after.ID != 0)
 			}
+		}
+	}
+	// The large full-postcode equality fixture can retain name order directly
+	// in the covering index. Check the actual natural plan for both pages,
+	// without imposing an index on the tiny compatibility fixtures above.
+	coverEditions, err := searchEditions(ctx, source, "parade-large-anchor")
+	if err != nil || len(coverEditions) != 1 {
+		t.Fatal("cover plan edition", err)
+	}
+	coverQ, err := parse(mustValues("dataset=parade-large-anchor&postcode=XY9+9ZZ&sort=name&limit=2"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	coverQ.Catalogue = "invented-bound-catalogue"
+	coverPositions, err := parade.paradePositions(ctx, coverQ, coverEditions, paradePosition{})
+	if err != nil || len(coverPositions) != 2 {
+		t.Fatal("cover plan positions", err)
+	}
+	for _, after := range []paradePosition{{}, coverPositions[0]} {
+		sql, args := paradeSQL(coverQ, coverEditions[0], after)
+		var raw []byte
+		if err := reader.QueryRow(ctx, "EXPLAIN(FORMAT JSON) "+sql, args...).Scan(&raw); err != nil {
+			t.Fatal(err)
+		}
+		if strings.Contains(sql, "@@@") || bytes.Contains(raw, []byte("TopKScanExecState")) || !bytes.Contains(raw, []byte("Index Only Scan")) || !bytes.Contains(raw, []byte(paradePostcodeIndexName(coverEditions[0]))) {
+			t.Fatal("large postcode plan did not use covering index")
 		}
 	}
 	plans, e := CaptureParadeTrialPlans(ctx, source, reader, []ParadeTrialCase{{Path: "/api/search", Query: "dataset=" + keys[0] + "&postcode=AA1"}}, []int{0})
