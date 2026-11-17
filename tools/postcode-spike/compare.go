@@ -21,6 +21,8 @@ type observation struct {
 	Rows         int     `json:"rows"`
 }
 type aggregate struct {
+	ExecutionOnly     bool            `json:"execution_only,omitempty"`
+	Plan              *planSummary    `json:"plan,omitempty"`
 	Mode              string          `json:"mode,omitempty"`
 	IndexValidated    bool            `json:"index_validated,omitempty"`
 	CaptureFailure    *captureFailure `json:"capture_failure,omitempty"`

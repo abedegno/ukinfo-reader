@@ -168,3 +168,29 @@ func TestCoveringModeSelectsOnlyGuardedMeasurement(t *testing.T) {
 		t.Fatal("unknown mode admitted")
 	}
 }
+
+func TestPlanModeIsSeparateExecutionOnlyDiagnostic(t *testing.T) {
+	dir := t.TempDir()
+	input := filepath.Join(dir, "cases.json")
+	output := filepath.Join(dir, "result.json")
+	os.WriteFile(input, []byte(`[{"path":"/api/search","query":"dataset=invented-a&postcode=AA1&sort=name"},{"path":"/api/search","query":"dataset=invented-b&postcode=BB11BB&sort=name"}]`), 0600)
+	called := false
+	exec := execution{capture: func(context.Context, []workloadCase) ([]statement, error) { return twoStatements(), nil }, plan: func(context.Context, []statement) (aggregate, error) {
+		called = true
+		r := newAggregate()
+		r.Complete = true
+		r.ExecutionOnly = true
+		r.Requests = 1
+		r.Plan = &planSummary{GenericPlanConfirmed: true}
+		return r, nil
+	}}
+	if err := runWith(context.Background(), []string{"--cases", input, "--output", output, "--mode", "covering-plan"}, exec); err != nil || !called {
+		t.Fatal("plan mode unavailable")
+	}
+	raw, _ := os.ReadFile(output)
+	var r aggregate
+	json.Unmarshal(raw, &r)
+	if r.Mode != "covering-plan" || !r.ExecutionOnly || r.SQLRowsEqual || r.Requests != 1 || r.Plan == nil {
+		t.Fatal("plan probe mislabeled as equivalence")
+	}
+}
