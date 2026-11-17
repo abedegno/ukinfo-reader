@@ -174,6 +174,10 @@ func measureMode(ctx context.Context, statements []statement, covering bool, pla
 			err = ctx.Err()
 		}
 		comparisonErr = err
+		var boundary *planProbeError
+		if errors.As(err, &boundary) {
+			report.PlanFailureStage = boundary.stage
+		}
 		report.Observations = []observation{{"native_scalar", classifyError(err), float64(time.Since(started)) / float64(time.Millisecond), int(summary.RootRows)}}
 		if err == nil {
 			report.Plan = &summary

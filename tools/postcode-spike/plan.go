@@ -21,7 +21,7 @@ type planSummary struct {
 	IndexOnlyScans       int64   `json:"index_only_scans"`
 	OtherIndexScans      int64   `json:"other_index_scans"`
 	SequentialScans      int64   `json:"sequential_scans"`
-	ScanRows             int64   `json:"scan_rows"`
+	ScanRows             float64 `json:"scan_rows"`
 	HeapFetchesAvailable bool    `json:"heap_fetches_available"`
 	HeapFetches          int64   `json:"heap_fetches"`
 	RootRows             int64   `json:"root_rows"`
@@ -51,6 +51,18 @@ func planCount(m map[string]any, key string) (int64, error) {
 	}
 	return v, nil
 }
+func planRows(m map[string]any) (float64, error) {
+	n, ok := m["Actual Rows"].(json.Number)
+	if !ok {
+		return 0, errors.New("missing actual rows")
+	}
+	v, err := n.Float64()
+	if err != nil || math.IsNaN(v) || math.IsInf(v, 0) || v < 0 || v > float64(maxPlanCounter) {
+		return 0, errors.New("invalid actual rows")
+	}
+	return v, nil
+}
+
 func planMS(m map[string]any, key string) (float64, error) {
 	n, ok := m[key].(json.Number)
 	if !ok {
@@ -83,10 +95,12 @@ func summarizeExplain(raw []byte, expected string) (planSummary, error) {
 		return bad()
 	}
 	var err error
-	if p.RootRows, err = planCount(root, "Actual Rows"); err != nil || p.RootRows > 2147483647 {
+	rootRows, rowErr := planRows(root)
+	if rowErr != nil || rootRows > 2147483647 || math.Trunc(rootRows) != rootRows {
 		return bad()
 	}
-	if p.RootLoops, err = planCount(root, "Actual Loops"); err != nil || p.RootLoops < 1 {
+	p.RootRows = int64(rootRows)
+	if p.RootLoops, err = planCount(root, "Actual Loops"); err != nil || p.RootLoops != 1 {
 		return bad()
 	}
 	counters := []struct {
@@ -110,7 +124,7 @@ func summarizeExplain(raw []byte, expected string) (planSummary, error) {
 		if depth > 16 || p.Nodes > 128 {
 			return errors.New("plan exceeds bound")
 		}
-		rows, e := planCount(n, "Actual Rows")
+		rows, e := planRows(n)
 		if e != nil {
 			return e
 		}
@@ -206,10 +220,10 @@ func summarizeExplain(raw []byte, expected string) (planSummary, error) {
 			return errors.New("unknown native plan node")
 		}
 		if scan {
-			if loops != 0 && rows > maxPlanCounter/loops {
+			if loops != 0 && rows > float64(maxPlanCounter)/float64(loops) {
 				return errors.New("scan counter overflow")
 			}
-			p.ScanRows += rows * loops
+			p.ScanRows += rows * float64(loops)
 			if typ != "Seq Scan" {
 				name, ok := n["Index Name"].(string)
 				if !ok || len(name) < 1 || len(name) > 63 {
@@ -218,7 +232,7 @@ func summarizeExplain(raw []byte, expected string) (planSummary, error) {
 				p.ExpectedIndexUsed = p.ExpectedIndexUsed || (loops > 0 && name == expected)
 			}
 		}
-		if p.ScanRows > maxPlanCounter || p.HeapFetches > maxPlanCounter {
+		if p.ScanRows > float64(maxPlanCounter) || p.HeapFetches > maxPlanCounter {
 			return errors.New("aggregate exceeds bound")
 		}
 		if children, exists := n["Plans"]; exists {
@@ -244,6 +258,15 @@ func summarizeExplain(raw []byte, expected string) (planSummary, error) {
 	return p, nil
 }
 
+// Only these code-owned stages are exported; causes remain in NAS memory.
+type planProbeError struct {
+	stage string
+	cause error
+}
+
+func (e *planProbeError) Error() string { return "native plan probe failed: " + e.stage }
+func (e *planProbeError) Unwrap() error { return e.cause }
+
 type preparedPlanConnection interface {
 	Prepare(context.Context, string, string) (*pgconn.StatementDescription, error)
 	QueryRow(context.Context, string, ...any) pgx.Row
@@ -253,17 +276,17 @@ type preparedPlanConnection interface {
 func probePreparedPlan(ctx context.Context, conn preparedPlanConnection, s statement, expected string) (summary planSummary, failure error) {
 	native, err := coveringVariant(s.SQL, s.Args)
 	if err != nil {
-		return summary, errors.New("exact district query required")
+		return summary, &planProbeError{"statement", err}
 	}
 	const name = "ukinfo_postcode_cover_probe"
 	if _, err = conn.Prepare(ctx, name, native); err != nil {
-		return summary, errors.New("native prepare failed")
+		return summary, &planProbeError{"prepare", err}
 	}
 	defer func() {
 		cleanup, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
 		if conn.Deallocate(cleanup, name) != nil && failure == nil {
-			failure = errors.New("native deallocation failed")
+			failure = &planProbeError{"deallocate", errors.New("native deallocation failed")}
 		}
 	}()
 	// pgx simple protocol safely encodes EXECUTE's argument expressions. The
@@ -272,15 +295,15 @@ func probePreparedPlan(ctx context.Context, conn preparedPlanConnection, s state
 	var raw []byte
 	err = conn.QueryRow(ctx, "EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON,TIMING OFF,SUMMARY ON) EXECUTE "+name+"($1,$2,$3,$4,$5,$6,$7)", args...).Scan(&raw)
 	if err != nil {
-		return summary, err
+		return summary, &planProbeError{"execute", err}
 	}
 	summary, err = summarizeExplain(raw, expected)
 	if err != nil {
-		return planSummary{}, err
+		return planSummary{}, &planProbeError{"summary", err}
 	}
 	var generic, custom int64
 	if conn.QueryRow(ctx, "SELECT generic_plans,custom_plans FROM pg_prepared_statements WHERE name='"+name+"'").Scan(&generic, &custom) != nil || generic != 1 || custom != 0 {
-		return planSummary{}, errors.New("actual generic plan not confirmed")
+		return planSummary{}, &planProbeError{"generic_counters", errors.New("actual generic plan not confirmed")}
 	}
 	summary.GenericPlanConfirmed = true
 	return summary, nil

@@ -135,3 +135,34 @@ func TestParallelWorkerSortSpillAndMemoryAreIncluded(t *testing.T) {
 		t.Fatal("parallel worker sort work disappeared")
 	}
 }
+
+func TestPostgres18DecimalRowsAndPerLoopAverages(t *testing.T) {
+	raw := strings.Replace(string(inventedPlan()), `"Actual Rows":51`, `"Actual Rows":51.00`, 1)
+	raw = strings.Replace(raw, `"Actual Rows":400,"Actual Loops":1`, `"Actual Rows":400.33,"Actual Loops":3`, 1)
+	p, err := summarizeExplain([]byte(raw), "p8_pc_d1_aaaaaaaaaaaaaaaaaaaaaaaa_cover")
+	if err != nil || p.RootRows != 51 || float64(p.ScanRows) < 1200.98 || float64(p.ScanRows) > 1201.00 {
+		t.Fatal("PostgreSQL18 decimal or per-loop row format rejected")
+	}
+	for _, bad := range []string{`"Actual Rows":-0.01`, `"Actual Rows":1e999`, `"Actual Rows":null`, `"Actual Rows":"51.00"`, `"Actual Rows":51.01`} {
+		if _, err := summarizeExplain([]byte(strings.Replace(raw, `"Actual Rows":51.00`, bad, 1)), "p8_pc_d1_aaaaaaaaaaaaaaaaaaaaaaaa_cover"); err == nil {
+			t.Fatal("invalid root row count accepted")
+		}
+	}
+}
+
+func TestProbeFailureStageIsClosedWithoutPrivateErrorText(t *testing.T) {
+	for _, stage := range []string{"prepare", "execute", "summary", "generic_counters"} {
+		c := &probeConnection{t: t, raw: inventedPlan(), generic: 1, failure: stage}
+		if stage == "summary" {
+			c.raw = []byte(`{"PRIVATE":"RAW"}`)
+		}
+		if stage == "generic_counters" {
+			c.generic = 0
+		}
+		_, err := probePreparedPlan(context.Background(), c, twoStatements()[0], "p8_pc_d1_aaaaaaaaaaaaaaaaaaaaaaaa_cover")
+		var boundary *planProbeError
+		if !errors.As(err, &boundary) || boundary.stage != stage || strings.Contains(err.Error(), "PRIVATE") {
+			t.Fatal("probe failure boundary missing or private")
+		}
+	}
+}
