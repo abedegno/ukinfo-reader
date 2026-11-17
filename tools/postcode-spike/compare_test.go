@@ -106,3 +106,25 @@ func TestOnlyClosedErrorsAreExported(t *testing.T) {
 		}
 	}
 }
+
+func TestMixedPartialAndFullCasesRunBothDifferentSQLVariants(t *testing.T) {
+	cases := twoStatements()
+	cases[1] = statement{candidatePrefix + "d1_aaaaaaaaaaaaaaaaaaaaaaaa" + fullCandidateTail, []any{int16(0), "AA11AA", 51}}
+	seen := []string{}
+	report, err := compare(context.Background(), cases, func(_ context.Context, s statement) reading {
+		if strings.Contains(s.SQL, "postcode @@@ pdb.regex(") {
+			seen = append(seen, "postcode_prefilter")
+		} else {
+			seen = append(seen, "scalar")
+		}
+		return reading{Rows: 1, Digest: [32]byte{1}, Milliseconds: 1}
+	})
+	if err != nil || !report.Complete || !report.SQLRowsEqual {
+		t.Fatal("mixed shapes rejected")
+	}
+	for i, o := range report.Observations {
+		if seen[i] != o.Strategy {
+			t.Fatal("reported strategy differs from measured SQL")
+		}
+	}
+}

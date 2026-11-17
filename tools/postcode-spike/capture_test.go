@@ -129,3 +129,29 @@ func TestFailedCaptureExplainsOnlyClosedStructureAndStatus(t *testing.T) {
 		t.Fatal("private capture escaped")
 	}
 }
+
+func TestFullPostcodeVariantsPreserveExactScalarAndBindExistingValue(t *testing.T) {
+	sql := candidatePrefix + "d1_aaaaaaaaaaaaaaaaaaaaaaaa" + fullCandidateTail
+	args := []any{int16(0), "AA11AA", 51}
+	scalar, err := scalarVariant(sql, args)
+	if err != nil || scalar != sql {
+		t.Fatal("full scalar template not preserved")
+	}
+	indexed, err := prefilterVariant(sql, args)
+	expected := strings.Replace(sql, " AND id @@@", " AND postcode @@@ pdb.regex($2) AND id @@@", 1)
+	if err != nil || indexed != expected {
+		t.Fatal("exact redundant prefilter missing")
+	}
+	c := &capture{}
+	c.TraceQueryStart(context.Background(), nil, pgx.TraceQueryStartData{SQL: sql, Args: args})
+	if _, err := c.only(); err != nil || !c.failure(503).KnownArguments {
+		t.Fatal("full capture rejected")
+	}
+	for _, value := range []any{"AA1", "AA1.*", nil, "AA11ÄA"} {
+		bad := append([]any(nil), args...)
+		bad[1] = value
+		if _, err := prefilterVariant(sql, bad); err == nil {
+			t.Fatal("unverified full literal accepted")
+		}
+	}
+}

@@ -65,6 +65,10 @@ func compare(ctx context.Context, statements []statement, run func(context.Conte
 		if err != nil {
 			return result, errors.New("invalid captured statement")
 		}
+		prefilter, err := prefilterVariant(original.SQL, original.Args)
+		if err != nil {
+			return result, errors.New("invalid captured statement")
+		}
 		var baseline reading
 		haveBaseline := false
 		for _, useScalar := range schedules[i] {
@@ -72,6 +76,7 @@ func compare(ctx context.Context, statements []statement, run func(context.Conte
 				return result, errors.New("comparison budget exhausted")
 			}
 			query := original
+			query.SQL = prefilter
 			label := "postcode_prefilter"
 			if useScalar {
 				query.SQL = scalar
