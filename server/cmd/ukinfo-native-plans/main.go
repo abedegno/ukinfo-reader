@@ -144,7 +144,7 @@ func run() error {
 		return errors.New("explicit private reader configuration required")
 	}
 	cfg.MaxConns = 8
-	cfg.ConnConfig.RuntimeParams["statement_timeout"] = "2000"
+	cfg.ConnConfig.RuntimeParams["statement_timeout"] = strconv.FormatInt(catalog.SourceReadTimeout.Milliseconds(), 10)
 	cfg.ConnConfig.RuntimeParams["default_transaction_read_only"] = "on"
 	cfg.ConnConfig.RuntimeParams["plan_cache_mode"] = *sourcePlanMode
 	cfg.ConnConfig.ConnectTimeout = 5 * time.Second

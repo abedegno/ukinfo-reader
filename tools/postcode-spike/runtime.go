@@ -22,7 +22,7 @@ func poolConfig(uri string, target bool) (*pgxpool.Config, error) {
 	if err != nil || uri == "" {
 		return nil, errors.New("explicit private reader required")
 	}
-	user, host, db, timeout := "ukinfo_v14_verify", "ukinfo-db", "ukinfo", "2000"
+	user, host, db, timeout := "ukinfo_v14_verify", "ukinfo-db", "ukinfo", strconv.FormatInt(catalog.SourceReadTimeout.Milliseconds(), 10)
 	cfg.MaxConns = 8
 	cfg.MinConns = 1
 	if target {

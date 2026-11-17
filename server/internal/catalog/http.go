@@ -351,11 +351,7 @@ func (a *API) searchPage(w http.ResponseWriter, r *http.Request, export bool) {
 		}
 		return
 	}
-	timeout := 2 * time.Second
-	if q.Near != "" || q.hasAddress() || q.hasRefinements() || q.needsResearch() || q.Sort != "" {
-		timeout = 5 * time.Second
-	}
-	ctx, cancel := context.WithTimeout(r.Context(), timeout)
+	ctx, cancel := searchRequestContext(r.Context(), q)
 	defer cancel()
 	if q.hasAddress() || q.hasRefinements() || q.needsResearch() || q.Sort != "" {
 		select {
