@@ -215,3 +215,5 @@ network-isolated nginx with a temporary verified self-signed certificate and an 
 static upstream. A burst yields 11 accepted / 9 HTTP-429 search requests and 3 accepted /
 3 HTTP-429 exports. It tests TLS verification and the configured quota semantics; it
 does not test a public certificate, DNS, a production VM or database throughput.
+
+Basic search requests and the default serving source SQL statement budget have a three-second limit, allowing cold reads on HDD storage. Refined searches retain their five-second request budget, target statements remain limited to four seconds, and independent health queries remain limited to one second. Pool sizes, quotas and concurrency limits are unchanged. This is bounded extra waiting time, not a claim that queries execute faster; the original cold and p95 load gates still apply.

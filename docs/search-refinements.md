@@ -99,7 +99,7 @@ five-second total deadline. Individual ordinary SQL statements retain the servin
 role's timeout; address-index statements use their existing bounded transaction. A
 failure/timeout returns 503, never a silently incomplete successful page. Narrow the
 indexed constraint when a broad sparse refinement exceeds the deadline. Plain indexed
-name matching retains its existing two-second request deadline.
+name matching uses a three-second request deadline for cold HDD reads.
 
 Full-postcode searches now use postcode-leading ordering, as district/sector searches
 already did. Since the exact postcode is constant, this retains the same occurrence

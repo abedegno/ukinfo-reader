@@ -18,6 +18,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -138,7 +139,7 @@ func run() error {
 	config.MaxConns = 8
 	config.MinConns = 1
 	config.ConnConfig.ConnectTimeout = 5 * time.Second
-	config.ConnConfig.RuntimeParams["statement_timeout"] = "2000"
+	config.ConnConfig.RuntimeParams["statement_timeout"] = strconv.FormatInt(catalog.SourceReadTimeout.Milliseconds(), 10)
 	if command != "serve" {
 		config.ConnConfig.RuntimeParams["statement_timeout"] = "0"
 	}

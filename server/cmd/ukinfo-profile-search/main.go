@@ -13,6 +13,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -145,7 +146,7 @@ func run(args []string) error {
 	if err != nil {
 		return errors.New("invalid private database configuration")
 	}
-	cfg.ConnConfig.RuntimeParams["statement_timeout"] = "2000"
+	cfg.ConnConfig.RuntimeParams["statement_timeout"] = strconv.FormatInt(catalog.SourceReadTimeout.Milliseconds(), 10)
 	cfg.ConnConfig.RuntimeParams["default_transaction_read_only"] = "on"
 	cfg.MaxConns = 8
 	cfg.MinConns = 1

@@ -10,7 +10,7 @@ import (
 
 func TestReaderPoolsKeepServingBoundsAndRejectOwnerOrForeignRouting(t *testing.T) {
 	source, err := poolConfig("postgres://ukinfo_v14_verify:PRIVATE@ukinfo-db:5432/ukinfo?sslmode=disable", false)
-	if err != nil || source.MaxConns != 8 || source.MinConns != 1 || source.ConnConfig.RuntimeParams["default_transaction_read_only"] != "on" || source.ConnConfig.RuntimeParams["statement_timeout"] != "2000" || source.AfterConnect == nil {
+	if err != nil || source.MaxConns != 8 || source.MinConns != 1 || source.ConnConfig.RuntimeParams["default_transaction_read_only"] != "on" || source.ConnConfig.RuntimeParams["statement_timeout"] != "3000" || source.AfterConnect == nil {
 		t.Fatal("source settings changed")
 	}
 	target, err := poolConfig("postgres://ukinfo_parade_search:PRIVATE@ukinfo-parade-preview-db:5432/ukinfo_search?sslmode=disable", true)
