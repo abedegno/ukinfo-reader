@@ -21,6 +21,8 @@ type observation struct {
 	Rows         int     `json:"rows"`
 }
 type aggregate struct {
+	Mode              string          `json:"mode,omitempty"`
+	IndexValidated    bool            `json:"index_validated,omitempty"`
 	CaptureFailure    *captureFailure `json:"capture_failure,omitempty"`
 	SetupMilliseconds float64         `json:"connection_setup_ms"`
 	Stage             string          `json:"stage"`
@@ -54,33 +56,43 @@ func classifyError(err error) string {
 // Each case gets both strategies in each early/late half. This controls the
 // fixed ordering bias of the old plans utility; caches remain uncontrolled.
 func compare(ctx context.Context, statements []statement, run func(context.Context, statement) reading) (aggregate, error) {
+	return compareStrategies(ctx, statements, run, func(s statement) (string, string, error) {
+		a, err := prefilterVariant(s.SQL, s.Args)
+		if err != nil {
+			return "", "", err
+		}
+		b, err := scalarVariant(s.SQL, s.Args)
+		return a, b, err
+	}, [2]string{"postcode_prefilter", "scalar"}, false)
+}
+
+func compareStrategies(ctx context.Context, statements []statement, run func(context.Context, statement) reading, variants func(statement) (string, string, error), labels [2]string, sharedBaseline bool) (aggregate, error) {
 	result := newAggregate()
 	if len(statements) != 2 {
 		return result, errors.New("two captured statements required")
 	}
 	equal, valid := true, true
 	schedules := [][]bool{{false, true, true, false}, {true, false, false, true}}
+	var baseline reading
+	haveBaseline := false
 	for i, original := range statements {
-		scalar, err := scalarVariant(original.SQL, original.Args)
+		first, second, err := variants(original)
 		if err != nil {
 			return result, errors.New("invalid captured statement")
 		}
-		prefilter, err := prefilterVariant(original.SQL, original.Args)
-		if err != nil {
-			return result, errors.New("invalid captured statement")
+		if !sharedBaseline {
+			haveBaseline = false
 		}
-		var baseline reading
-		haveBaseline := false
 		for _, useScalar := range schedules[i] {
 			if ctx.Err() != nil {
 				return result, errors.New("comparison budget exhausted")
 			}
 			query := original
-			query.SQL = prefilter
-			label := "postcode_prefilter"
+			query.SQL = first
+			label := labels[0]
 			if useScalar {
-				query.SQL = scalar
-				label = "scalar"
+				query.SQL = second
+				label = labels[1]
 			}
 			sample := run(ctx, query)
 			if sample.Err == nil && ctx.Err() != nil {

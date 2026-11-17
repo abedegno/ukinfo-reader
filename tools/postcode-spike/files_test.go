@@ -137,3 +137,34 @@ func TestCaptureStructureFailureIsSavedWithoutPrivateDetails(t *testing.T) {
 		t.Fatal("capture boundary omitted")
 	}
 }
+
+func TestCoveringModeSelectsOnlyGuardedMeasurement(t *testing.T) {
+	dir := t.TempDir()
+	input := filepath.Join(dir, "cases.json")
+	output := filepath.Join(dir, "result.json")
+	os.WriteFile(input, []byte(`[{"path":"/api/search","query":"dataset=invented-a&postcode=AA1&sort=name"},{"path":"/api/search","query":"dataset=invented-b&postcode=BB11BB&sort=name"}]`), 0600)
+	called := false
+	exec := execution{capture: func(context.Context, []workloadCase) ([]statement, error) { return twoStatements(), nil }, measure: func(context.Context, []statement) (aggregate, error) {
+		t.Fatal("unguarded legacy measure called")
+		return aggregate{}, nil
+	}, cover: func(context.Context, []statement) (aggregate, error) {
+		called = true
+		r := newAggregate()
+		r.Complete = true
+		r.IndexValidated = true
+		return r, nil
+	}}
+	if err := runWith(context.Background(), []string{"--cases", input, "--output", output, "--mode", "covering"}, exec); err != nil || !called {
+		t.Fatal("covering mode unavailable")
+	}
+	body, _ := os.ReadFile(output)
+	var r aggregate
+	json.Unmarshal(body, &r)
+	if r.Mode != "covering" || !r.IndexValidated {
+		t.Fatal("covering receipt omitted admission")
+	}
+	called = false
+	if runWith(context.Background(), []string{"--cases", input, "--output", filepath.Join(dir, "other.json"), "--mode", "unknown"}, exec) == nil || called {
+		t.Fatal("unknown mode admitted")
+	}
+}

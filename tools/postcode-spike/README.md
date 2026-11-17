@@ -26,3 +26,26 @@ If API-to-SQL capture fails, the incomplete receipt optionally contains
 `capture_failure`: HTTP status, captured candidate-statement count, and booleans
 for the canonical SQL template and argument bindings. It includes no query,
 arguments or raw error text. Successful receipts retain their original shape.
+
+`--mode covering` is a separate focused comparison for the retained district
+case. It requires the original district/full two-case capture, then measures the
+same district eight times in BM25/native/native/BM25 and
+native/BM25/BM25/native order. The full case is captured to validate the original
+cohort, but is not timed in this mode. The native SQL keeps every scalar range,
+precision predicate, argument, ordering and limit; it removes the redundant
+regex and `pdb.all()` index predicates. All eight results share one ordered-row
+baseline. An error or row difference prevents any equivalence claim.
+
+Before and after comparison, the nonprivileged reader must see the exact ready,
+valid, complete-edition covering index and generation-bound projection. Admission
+checks column/key order, included fields, C collations, direction, ownership,
+version and size, and rejects partial/expression/unique indexes. The aggregate
+adds `mode` and `index_validated`; neither field appears in legacy receipts.
+The planner is unrestricted. Strategy labels identify query forms; the presence
+of the index does not prove which physical access path PostgreSQL selects.
+No plan forcing, prewarming or cache eviction is performed, and this diagnostic
+cannot qualify the API, cold performance, cursors or publication.
+
+```sh
+./postcode-spike --mode covering --cases /work/cases.private.json --output /work/covering.json
+```

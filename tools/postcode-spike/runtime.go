@@ -2,10 +2,14 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"reflect"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/abedegno/ukinfo-reader/server/internal/catalog"
@@ -101,6 +105,13 @@ func captureStatements(ctx context.Context, cases []workloadCase) ([]statement, 
 }
 
 func measure(ctx context.Context, statements []statement) (aggregate, error) {
+	return measureMode(ctx, statements, false)
+}
+func measureCovering(ctx context.Context, statements []statement) (aggregate, error) {
+	return measureMode(ctx, statements, true)
+}
+
+func measureMode(ctx context.Context, statements []statement, covering bool) (aggregate, error) {
 	cfg, err := poolConfig(os.Getenv("TARGET_DATABASE_URL"), true)
 	if err != nil {
 		return newAggregate(), err
@@ -119,7 +130,35 @@ func measure(ctx context.Context, statements []statement) (aggregate, error) {
 		return report, errors.New("measurement connection unavailable")
 	}
 	defer conn.Release()
-	report, comparisonErr := compare(ctx, statements, func(ctx context.Context, s statement) reading {
+	compareFn := compare
+	var before coverIndex
+	var indexTable string
+	readIndex := func() (coverIndex, error) {
+		value := coverIndex{}
+		dataset, err := strconv.Atoi(strings.Split(indexTable[1:], "_")[0])
+		if err != nil {
+			return value, errors.New("canonical table required")
+		}
+		var raw []byte
+		err = conn.QueryRow(ctx, coverIndexSQL, "p8_pc_"+indexTable+"_cover", indexTable, dataset).Scan(&raw)
+		if err != nil || json.Unmarshal(raw, &value) != nil || validateCoverIndex(value, indexTable) != nil {
+			return value, errors.New("reviewed covering index unavailable")
+		}
+		return value, nil
+	}
+	if covering {
+		district, err := districtStatement(statements)
+		if err != nil {
+			return newAggregate(), err
+		}
+		indexTable = candidateSQL.FindStringSubmatch(district.SQL)[1]
+		before, err = readIndex()
+		if err != nil {
+			return newAggregate(), err
+		}
+		compareFn = compareCovering
+	}
+	report, comparisonErr := compareFn(ctx, statements, func(ctx context.Context, s statement) reading {
 		start := time.Now()
 		rows, err := conn.Query(ctx, s.SQL, s.Args...)
 		out := reading{}
@@ -130,6 +169,16 @@ func measure(ctx context.Context, statements []statement) (aggregate, error) {
 		out.Err = err
 		return out
 	})
+	if covering {
+		after, err := readIndex()
+		if err != nil || !reflect.DeepEqual(before, after) {
+			report.Complete = false
+			report.SQLRowsEqual = false
+			comparisonErr = errors.New("covering index changed during comparison")
+		} else {
+			report.IndexValidated = true
+		}
+	}
 	report.SetupMilliseconds = setupMS
 	return report, comparisonErr
 }
