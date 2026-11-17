@@ -108,3 +108,26 @@ func (c *capture) only() (statement, error) {
 	return item, nil
 }
 func (c *capture) reset() { c.mu.Lock(); c.found = nil; c.mu.Unlock() }
+
+// A failed capture reports boundary facts only, never SQL, values or errors.
+type captureFailure struct {
+	Status         int  `json:"http_status"`
+	Statements     int  `json:"candidate_statements"`
+	KnownSQL       bool `json:"known_sql_template"`
+	KnownArguments bool `json:"known_argument_bindings"`
+}
+
+func (*captureFailure) Error() string { return "candidate capture boundary failed" }
+func (c *capture) failure(status int) *captureFailure {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	d := &captureFailure{Status: status, Statements: len(c.found)}
+	if len(c.found) == 1 {
+		s := c.found[0]
+		shape := candidateSQL.FindStringSubmatch(s.SQL)
+		d.KnownSQL = len(shape) == 2 && s.SQL == candidatePrefix+shape[1]+candidateTail
+		_, err := scalarVariant(s.SQL, s.Args)
+		d.KnownArguments = d.KnownSQL && err == nil
+	}
+	return d
+}

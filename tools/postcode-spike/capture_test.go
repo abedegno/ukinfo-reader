@@ -107,3 +107,25 @@ func TestUnknownConjunctionsAndExtraClausesAreRejected(t *testing.T) {
 		}
 	}
 }
+
+func TestFailedCaptureExplainsOnlyClosedStructureAndStatus(t *testing.T) {
+	c := &capture{}
+	d := c.failure(503)
+	if d.Status != 503 || d.Statements != 0 || d.KnownSQL || d.KnownArguments {
+		t.Fatal("missing-query diagnostic changed")
+	}
+	args := []any{int16(0), "AA1", "AA1\U0010ffff", 6, "AA1", "AA1(.{3})?", 51}
+	c.TraceQueryStart(context.Background(), nil, pgx.TraceQueryStartData{SQL: testSQL, Args: args})
+	d = c.failure(503)
+	if !d.KnownSQL || !d.KnownArguments || d.Statements != 1 {
+		t.Fatal("canonical capture missing")
+	}
+	c.found[0].Args[5] = "SECRET"
+	d = c.failure(503)
+	if !d.KnownSQL || d.KnownArguments {
+		t.Fatal("bad binding hidden")
+	}
+	if strings.Contains(d.Error(), "SECRET") || strings.Contains(d.Error(), "AA1") {
+		t.Fatal("private capture escaped")
+	}
+}

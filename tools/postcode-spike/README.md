@@ -21,3 +21,8 @@ cd tools/postcode-spike
 go test -race -count=1 ./...
 go vet ./...
 ```
+
+If API-to-SQL capture fails, the incomplete receipt optionally contains
+`capture_failure`: HTTP status, captured candidate-statement count, and booleans
+for the canonical SQL template and argument bindings. It includes no query,
+arguments or raw error text. Successful receipts retain their original shape.
