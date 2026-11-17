@@ -189,9 +189,23 @@ func (a *API) paradeResults(ctx context.Context, q query) (searchResult, int, bo
 			a.metrics.plan("paradedb_fallback")
 			return searchResult{}, 0, false, nil
 		}
+		if paradePostcodeScalar(q) {
+			_, valid, indexErr := paradePostcodeIndexState(inventoryCtx, a.ParadeDB, d)
+			if indexErr != nil || !valid {
+				if indexErr == nil {
+					indexErr = errors.New("derived postcode coverage unavailable")
+				}
+				end(indexErr)
+				return searchResult{}, 503, true, searchReadError(indexErr)
+			}
+		}
 	}
 	end(nil)
 	a.metrics.plan("paradedb")
+	if paradePostcodeScalar(q) {
+		a.metrics.plan("paradedb_postcode_scalar")
+	}
+
 	var distances map[int32]postcodeDistance
 	var geography *GeographySearch
 	if q.Near != "" {
@@ -388,10 +402,13 @@ func paradeCompare(q query, a, b paradePosition) int {
 	return 0
 }
 func paradeSQL(q query, d paradeEdition, after paradePosition) (string, []any) {
+	if paradePostcodeScalar(q) {
+		return paradeSQLBuild(q, d, after, false, nil, false, true)
+	}
 	return paradeSQLPrefix(q, d, after, true)
 }
 func paradeSQLPrefix(q query, d paradeEdition, after paradePosition, prefilter bool) (string, []any) {
-	return paradeSQLBuild(q, d, after, prefilter, nil, paradeFirstResidual(q))
+	return paradeSQLBuild(q, d, after, prefilter, nil, paradeFirstResidual(q), false)
 }
 
 // Broad first-name ranges can dominate an otherwise selective exact name/town
@@ -411,10 +428,10 @@ func paradeFirstResidual(q query) bool {
 type paradeNamePair struct{ Name, First string }
 
 func paradeSQLBounds(q query, d paradeEdition, after paradePosition, prefilter bool, pair *paradeNamePair) (string, []any) {
-	return paradeSQLBuild(q, d, after, prefilter, pair, false)
+	return paradeSQLBuild(q, d, after, prefilter, pair, false, false)
 }
 
-func paradeSQLBuild(q query, d paradeEdition, after paradePosition, prefilter bool, pair *paradeNamePair, firstResidual bool) (string, []any) {
+func paradeSQLBuild(q query, d paradeEdition, after paradePosition, prefilter bool, pair *paradeNamePair, firstResidual bool, scalarPostcode bool) (string, []any) {
 	args := []any{}
 	fields := q
 	if firstResidual {
@@ -459,7 +476,9 @@ func paradeSQLBuild(q query, d paradeEdition, after paradePosition, prefilter bo
 		args = append(args, regexp.QuoteMeta(q.Postcode)+fmt.Sprintf("(.{%d})?", q.PostcodeLength-len(q.Postcode)))
 		conditions = append(conditions, fmt.Sprintf("postcode @@@ pdb.regex($%d)", len(args)))
 	}
-	conditions = append(conditions, "id @@@ pdb.all()")
+	if !scalarPostcode {
+		conditions = append(conditions, "id @@@ pdb.all()")
+	}
 	order := []string{}
 	for _, key := range paradeOrder(q) {
 		if key != "dataset_id" {

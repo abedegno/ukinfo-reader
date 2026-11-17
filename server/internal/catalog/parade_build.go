@@ -129,6 +129,14 @@ func buildParadeEdition(ctx context.Context, source, target *pgx.Conn, d paradeE
 		return errors.New("derived checkpoint unavailable")
 	}
 	if ready {
+		if options.CheckResources != nil {
+			if err = options.CheckResources(); err != nil {
+				return err
+			}
+		}
+		if err = ensureParadePostcodeIndex(ctx, target, d, true); err != nil {
+			return err
+		}
 		if options.ReaderRole != "" {
 			_, err = target.Exec(ctx, "GRANT SELECT ON "+table+" TO "+pgx.Identifier{options.ReaderRole}.Sanitize())
 		}
@@ -269,6 +277,9 @@ func buildParadeEdition(ctx context.Context, source, target *pgx.Conn, d paradeE
 	var valid bool
 	if err = target.QueryRow(ctx, "SELECT indisvalid AND indisready AND indrelid=$1::regclass FROM pg_index WHERE indexrelid=$2::regclass", table, "ukinfo_search."+d.table()+"_search").Scan(&valid); err != nil || !valid {
 		return errors.New("derived index is not valid")
+	}
+	if err = ensureParadePostcodeIndex(ctx, target, d, false); err != nil {
+		return err
 	}
 	if _, err = target.Exec(ctx, "VACUUM(ANALYZE) "+table); err != nil {
 		return errors.New("derived vacuum failed")

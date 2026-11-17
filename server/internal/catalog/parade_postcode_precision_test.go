@@ -19,7 +19,7 @@ func TestParadePostcodePrefilterKeepsDistrictSectorAndStoredPartial(t *testing.T
 			if err != nil {
 				t.Fatal(err)
 			}
-			sql, args := paradeSQL(q, paradeEdition{ID: 1, Key: "invented"}, paradePosition{})
+			sql, args := paradeSQLPrefix(q, paradeEdition{ID: 1, Key: "invented"}, paradePosition{}, true)
 			if !strings.Contains(sql, "postcode_length=$") || !strings.Contains(sql, " OR postcode=$") || !strings.Contains(sql, "postcode >= $") {
 				t.Fatal("authoritative scalar precision lost")
 			}

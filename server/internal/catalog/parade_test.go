@@ -258,6 +258,8 @@ func TestParadeIntegration(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	targetCandidates := &postcodeCandidateTracer{}
+	rc.ConnConfig.Tracer = targetCandidates
 	rc.ConnConfig.RuntimeParams["role"] = role
 	rc.ConnConfig.RuntimeParams["default_transaction_read_only"] = "on"
 	rc.ConnConfig.RuntimeParams["statement_timeout"] = "4000"
@@ -421,6 +423,78 @@ func TestParadeIntegration(t *testing.T) {
 	} {
 		check(q)
 	}
+	t.Run("postcode scalar index readiness and complete paging", func(t *testing.T) {
+		d := originalEdition[0]
+		request := "dataset=" + keys[0] + "&postcode=AA1&sort=name&limit=2"
+		for _, query := range []string{request, "dataset=all&kind=business&postcode=AA1&sort=name&limit=2", "dataset=all&postcode=AA11AA&sort=name&limit=2", "dataset=parade-postal&postcode=W1+1&sort=name&limit=1", "dataset=all&postcode=ZZ99&sort=name&limit=2"} {
+			before := parade.metrics.plans["paradedb_postcode_scalar"]
+			nativeBefore, bm25Before := targetCandidates.native.Load(), targetCandidates.bm25.Load()
+			func() {
+				targetCandidates.enabled.Store(true)
+				defer targetCandidates.enabled.Store(false)
+				check(query)
+			}()
+			if targetCandidates.native.Load() <= nativeBefore || targetCandidates.bm25.Load() != bm25Before {
+				t.Fatal("handler did not execute scalar candidate SQL after catalogue binding")
+			}
+			if parade.metrics.plans["paradedb_postcode_scalar"] <= before {
+				t.Fatal("postcode parity did not use scalar route")
+			}
+		}
+		index := pgx.Identifier{"ukinfo_search", paradePostcodeIndexName(d)}.Sanitize()
+		table := pgx.Identifier{"ukinfo_search", d.table()}.Sanitize()
+		if _, err := target.Exec(ctx, `CREATE COLLATION ukinfo_search."C" FROM pg_catalog."C"`); err != nil {
+			t.Fatal(err)
+		}
+		recipes := []string{
+			"(kind,postcode,name,first_full,id) INCLUDE(name_id,first_id,postcode_id,postcode_length) WHERE kind=0",
+			"(kind,postcode text_pattern_ops,name,first_full,id) INCLUDE(name_id,first_id,postcode_id,postcode_length)",
+			`(kind,postcode COLLATE ukinfo_search."C",name,first_full,id) INCLUDE(name_id,first_id,postcode_id,postcode_length)`,
+			"(kind,postcode,name DESC,first_full,id) INCLUDE(name_id,first_id,postcode_id,postcode_length)",
+			"(kind,postcode,name,first_full,id) INCLUDE(name_id,first_id,postcode_id)",
+		}
+		for _, recipe := range recipes {
+			if _, err := target.Exec(ctx, "DROP INDEX "+index); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := target.Exec(ctx, "CREATE INDEX "+pgx.Identifier{paradePostcodeIndexName(d)}.Sanitize()+" ON "+table+" "+recipe); err != nil {
+				t.Fatal(err)
+			}
+			exists, valid, err := paradePostcodeIndexState(ctx, reader, d)
+			if err != nil || !exists || valid {
+				t.Fatal("malformed index admitted", err)
+			}
+			before := parade.metrics.plans["paradedb_fallback"]
+			w := httptest.NewRecorder()
+			parade.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/search?"+request, nil))
+			if w.Code != 503 || parade.metrics.plans["paradedb_fallback"] != before {
+				t.Fatal("malformed index caused partial result or source fallback", w.Code)
+			}
+			if _, err := BuildParadeIndex(ctx, source, target, keys[0], options); err == nil {
+				t.Fatal("builder accepted malformed existing index")
+			}
+			if _, err := target.Exec(ctx, "DROP INDEX "+index); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := BuildParadeIndex(ctx, source, target, keys[0], options); err != nil {
+				t.Fatal("ready-edition concurrent index migration", err)
+			}
+			check(request)
+		}
+		if _, err := target.Exec(ctx, "DROP INDEX "+index); err != nil {
+			t.Fatal(err)
+		}
+		w := httptest.NewRecorder()
+		parade.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/search?"+request, nil))
+		if w.Code != 503 {
+			t.Fatal("missing covering index did not fail closed", w.Code)
+		}
+		check("dataset=" + keys[0] + "&surname=Researchonly&postcode=AA1&sort=name&limit=2")
+		if _, err := BuildParadeIndex(ctx, source, target, keys[0], options); err != nil {
+			t.Fatal(err)
+		}
+		check(request)
+	})
 	// A two-word given name accepts an exact value or a following word, while
 	// rejecting the longer final word. Its five matches begin after 98 earlier
 	// rows, so limiting the inner candidates would silently lose whole pages.
@@ -483,8 +557,8 @@ func TestParadeIntegration(t *testing.T) {
 	if parade.metrics.plans["paradedb"] == 0 {
 		t.Fatal("checks only exercised fallback")
 	}
-	// The serving SQL must retain the extension's Top-K path for both the
-	// compact dictionary ordering and lexical ordering, including continuation.
+	// Keep extension Top-K for existing routes and ordinary scalar planning
+	// for postcode-only name ordering, including continuation.
 	editions, e := searchEditions(ctx, source, keys[0])
 	if e != nil {
 		t.Fatal(e)
@@ -513,9 +587,41 @@ func TestParadeIntegration(t *testing.T) {
 			if e = reader.QueryRow(ctx, "EXPLAIN(FORMAT JSON) "+sql, args...).Scan(&raw); e != nil {
 				t.Fatal(e)
 			}
-			if !bytes.Contains(raw, []byte("TopKScanExecState")) {
+			if paradePostcodeScalar(q) {
+				// Eight-row fixtures may legitimately favor a sequential scan.
+				// Require the new SQL route without forcing the planner.
+				if strings.Contains(sql, "@@@") || bytes.Contains(raw, []byte("TopKScanExecState")) {
+					t.Fatal("scalar postcode plan reverted to BM25")
+				}
+			} else if !bytes.Contains(raw, []byte("TopKScanExecState")) {
 				t.Fatalf("missing Top-K for invented %s continuation=%v", input, after.ID != 0)
 			}
+		}
+	}
+	// The large full-postcode equality fixture can retain name order directly
+	// in the covering index. Check the actual natural plan for both pages,
+	// without imposing an index on the tiny compatibility fixtures above.
+	coverEditions, err := searchEditions(ctx, source, "parade-large-anchor")
+	if err != nil || len(coverEditions) != 1 {
+		t.Fatal("cover plan edition", err)
+	}
+	coverQ, err := parse(mustValues("dataset=parade-large-anchor&postcode=XY9+9ZZ&sort=name&limit=2"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	coverQ.Catalogue = "invented-bound-catalogue"
+	coverPositions, err := parade.paradePositions(ctx, coverQ, coverEditions, paradePosition{})
+	if err != nil || len(coverPositions) != 2 {
+		t.Fatal("cover plan positions", err)
+	}
+	for _, after := range []paradePosition{{}, coverPositions[0]} {
+		sql, args := paradeSQL(coverQ, coverEditions[0], after)
+		var raw []byte
+		if err := reader.QueryRow(ctx, "EXPLAIN(FORMAT JSON) "+sql, args...).Scan(&raw); err != nil {
+			t.Fatal(err)
+		}
+		if strings.Contains(sql, "@@@") || bytes.Contains(raw, []byte("TopKScanExecState")) || !bytes.Contains(raw, []byte("Index Only Scan")) || !bytes.Contains(raw, []byte(paradePostcodeIndexName(coverEditions[0]))) {
+			t.Fatal("large postcode plan did not use covering index")
 		}
 	}
 	plans, e := CaptureParadeTrialPlans(ctx, source, reader, []ParadeTrialCase{{Path: "/api/search", Query: "dataset=" + keys[0] + "&postcode=AA1"}}, []int{0})
