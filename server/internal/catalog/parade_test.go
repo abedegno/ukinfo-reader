@@ -258,6 +258,8 @@ func TestParadeIntegration(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	targetCandidates := &postcodeCandidateTracer{}
+	rc.ConnConfig.Tracer = targetCandidates
 	rc.ConnConfig.RuntimeParams["role"] = role
 	rc.ConnConfig.RuntimeParams["default_transaction_read_only"] = "on"
 	rc.ConnConfig.RuntimeParams["statement_timeout"] = "4000"
@@ -421,6 +423,78 @@ func TestParadeIntegration(t *testing.T) {
 	} {
 		check(q)
 	}
+	t.Run("postcode scalar index readiness and complete paging", func(t *testing.T) {
+		d := originalEdition[0]
+		request := "dataset=" + keys[0] + "&postcode=AA1&sort=name&limit=2"
+		for _, query := range []string{request, "dataset=all&kind=business&postcode=AA1&sort=name&limit=2", "dataset=all&postcode=AA11AA&sort=name&limit=2", "dataset=parade-postal&postcode=W1+1&sort=name&limit=1", "dataset=all&postcode=ZZ99&sort=name&limit=2"} {
+			before := parade.metrics.plans["paradedb_postcode_scalar"]
+			nativeBefore, bm25Before := targetCandidates.native.Load(), targetCandidates.bm25.Load()
+			func() {
+				targetCandidates.enabled.Store(true)
+				defer targetCandidates.enabled.Store(false)
+				check(query)
+			}()
+			if targetCandidates.native.Load() <= nativeBefore || targetCandidates.bm25.Load() != bm25Before {
+				t.Fatal("handler did not execute scalar candidate SQL after catalogue binding")
+			}
+			if parade.metrics.plans["paradedb_postcode_scalar"] <= before {
+				t.Fatal("postcode parity did not use scalar route")
+			}
+		}
+		index := pgx.Identifier{"ukinfo_search", paradePostcodeIndexName(d)}.Sanitize()
+		table := pgx.Identifier{"ukinfo_search", d.table()}.Sanitize()
+		if _, err := target.Exec(ctx, `CREATE COLLATION ukinfo_search."C" FROM pg_catalog."C"`); err != nil {
+			t.Fatal(err)
+		}
+		recipes := []string{
+			"(kind,postcode,name,first_full,id) INCLUDE(name_id,first_id,postcode_id,postcode_length) WHERE kind=0",
+			"(kind,postcode text_pattern_ops,name,first_full,id) INCLUDE(name_id,first_id,postcode_id,postcode_length)",
+			`(kind,postcode COLLATE ukinfo_search."C",name,first_full,id) INCLUDE(name_id,first_id,postcode_id,postcode_length)`,
+			"(kind,postcode,name DESC,first_full,id) INCLUDE(name_id,first_id,postcode_id,postcode_length)",
+			"(kind,postcode,name,first_full,id) INCLUDE(name_id,first_id,postcode_id)",
+		}
+		for _, recipe := range recipes {
+			if _, err := target.Exec(ctx, "DROP INDEX "+index); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := target.Exec(ctx, "CREATE INDEX "+pgx.Identifier{paradePostcodeIndexName(d)}.Sanitize()+" ON "+table+" "+recipe); err != nil {
+				t.Fatal(err)
+			}
+			exists, valid, err := paradePostcodeIndexState(ctx, reader, d)
+			if err != nil || !exists || valid {
+				t.Fatal("malformed index admitted", err)
+			}
+			before := parade.metrics.plans["paradedb_fallback"]
+			w := httptest.NewRecorder()
+			parade.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/search?"+request, nil))
+			if w.Code != 503 || parade.metrics.plans["paradedb_fallback"] != before {
+				t.Fatal("malformed index caused partial result or source fallback", w.Code)
+			}
+			if _, err := BuildParadeIndex(ctx, source, target, keys[0], options); err == nil {
+				t.Fatal("builder accepted malformed existing index")
+			}
+			if _, err := target.Exec(ctx, "DROP INDEX "+index); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := BuildParadeIndex(ctx, source, target, keys[0], options); err != nil {
+				t.Fatal("ready-edition concurrent index migration", err)
+			}
+			check(request)
+		}
+		if _, err := target.Exec(ctx, "DROP INDEX "+index); err != nil {
+			t.Fatal(err)
+		}
+		w := httptest.NewRecorder()
+		parade.Handler().ServeHTTP(w, httptest.NewRequest("GET", "/api/search?"+request, nil))
+		if w.Code != 503 {
+			t.Fatal("missing covering index did not fail closed", w.Code)
+		}
+		check("dataset=" + keys[0] + "&surname=Researchonly&postcode=AA1&sort=name&limit=2")
+		if _, err := BuildParadeIndex(ctx, source, target, keys[0], options); err != nil {
+			t.Fatal(err)
+		}
+		check(request)
+	})
 	// A two-word given name accepts an exact value or a following word, while
 	// rejecting the longer final word. Its five matches begin after 98 earlier
 	// rows, so limiting the inner candidates would silently lose whole pages.
