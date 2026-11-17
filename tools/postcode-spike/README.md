@@ -49,3 +49,34 @@ cannot qualify the API, cold performance, cursors or publication.
 ```sh
 ./postcode-spike --mode covering --cases /work/cases.private.json --output /work/covering.json
 ```
+
+`--mode covering-plan` runs a separate, execution-only diagnostic. It explicitly
+prepares the reviewed native district SELECT, then runs `EXPLAIN ANALYZE EXECUTE`
+with buffers and timing-per-node disabled. pgx safely encodes the EXECUTE
+arguments through its simple protocol. PostgreSQL's prepared-statement counters
+must show exactly one generic execution and zero custom executions. The query
+still has the four-second timeout, unrestricted planner and original pool bounds.
+Index metadata must remain identical before and after. This mode does not run
+the eight-query comparison or claim ordered-row equality.
+
+The closed summary reports expected-index use, index-only and sequential scans,
+heap fetches, scan rows, root buffer reads/hits, sort storage and total execution
+time. Raw plans, predicates, parameters and object names never leave NAS memory.
+Oversized, deep, malformed, unknown or nonfinite execution data is rejected.
+The result is explicitly execution-only; it does not qualify cold performance,
+API/cursor behavior, the failed public references or publication. Closing the
+connection remains bounded if deallocation fails.
+
+```sh
+./postcode-spike --mode covering-plan --cases /work/cases.private.json --output /work/plan.json
+```
+
+PostgreSQL documents [prepared plan inspection](https://www.postgresql.org/docs/18/sql-prepare.html)
+and [EXPLAIN execution](https://www.postgresql.org/docs/18/sql-explain.html).
+
+Index-use and scan counters require positive execution loops. Sort summaries
+include bounded worker-local spills and allocation sizes as well as the leader;
+`sorts` counts executed Sort nodes, `sort_workers` their reported workers, and
+`max_sort_kb` is the largest individual allocation. `scan_rows` sums displayed
+per-loop rows times loops and can inherit EXPLAIN's rounding. Shared/temp block
+counts come from the root to avoid double-counting nested node totals.

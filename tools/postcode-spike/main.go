@@ -28,18 +28,19 @@ type execution struct {
 	capture func(context.Context, []workloadCase) ([]statement, error)
 	measure func(context.Context, []statement) (aggregate, error)
 	cover   func(context.Context, []statement) (aggregate, error)
+	plan    func(context.Context, []statement) (aggregate, error)
 }
 
 func run(parent context.Context, args []string) error {
-	return runWith(parent, args, execution{capture: captureStatements, measure: measure, cover: measureCovering})
+	return runWith(parent, args, execution{capture: captureStatements, measure: measure, cover: measureCovering, plan: measureCoveringPlan})
 }
 func runWith(parent context.Context, args []string, exec execution) (failure error) {
 	f := flag.NewFlagSet("postcode-spike", flag.ContinueOnError)
 	f.SetOutput(io.Discard)
-	mode := f.String("mode", "prefilter", "prefilter or covering diagnostic")
+	mode := f.String("mode", "prefilter", "prefilter, covering or covering-plan diagnostic")
 	input := f.String("cases", "", "private two-case subset")
 	output := f.String("output", "", "new private aggregate")
-	if f.Parse(args) != nil || (*mode != "prefilter" && *mode != "covering") || f.NArg() != 0 || !filepath.IsAbs(*input) || !filepath.IsAbs(*output) || filepath.Clean(*input) == filepath.Clean(*output) {
+	if f.Parse(args) != nil || (*mode != "prefilter" && *mode != "covering" && *mode != "covering-plan") || f.NArg() != 0 || !filepath.IsAbs(*input) || !filepath.IsAbs(*output) || filepath.Clean(*input) == filepath.Clean(*output) {
 		return errors.New("explicit private paths required")
 	}
 	cases, err := readCases(*input)
@@ -54,7 +55,7 @@ func runWith(parent context.Context, args []string, exec execution) (failure err
 	log.SetOutput(io.Discard)
 	defer log.SetOutput(previousLog)
 	report := newAggregate()
-	if *mode == "covering" {
+	if *mode != "prefilter" {
 		report.Mode = *mode
 	}
 	report.Stage = "capture"
@@ -81,12 +82,15 @@ func runWith(parent context.Context, args []string, exec execution) (failure err
 	if *mode == "covering" {
 		measureFn = exec.cover
 	}
+	if *mode == "covering-plan" {
+		measureFn = exec.plan
+	}
 	if measureFn == nil {
 		return errors.New("measurement mode unavailable")
 	}
 	measured, comparisonErr := measureFn(ctx, statements)
 	report = measured
-	if *mode == "covering" {
+	if *mode != "prefilter" {
 		report.Mode = *mode
 	}
 	report.Stage = "compare"

@@ -105,13 +105,17 @@ func captureStatements(ctx context.Context, cases []workloadCase) ([]statement, 
 }
 
 func measure(ctx context.Context, statements []statement) (aggregate, error) {
-	return measureMode(ctx, statements, false)
+	return measureMode(ctx, statements, false, false)
 }
 func measureCovering(ctx context.Context, statements []statement) (aggregate, error) {
-	return measureMode(ctx, statements, true)
+	return measureMode(ctx, statements, true, false)
 }
 
-func measureMode(ctx context.Context, statements []statement, covering bool) (aggregate, error) {
+func measureCoveringPlan(ctx context.Context, statements []statement) (aggregate, error) {
+	return measureMode(ctx, statements, true, true)
+}
+
+func measureMode(ctx context.Context, statements []statement, covering bool, planMode bool) (aggregate, error) {
 	cfg, err := poolConfig(os.Getenv("TARGET_DATABASE_URL"), true)
 	if err != nil {
 		return newAggregate(), err
@@ -158,17 +162,38 @@ func measureMode(ctx context.Context, statements []statement, covering bool) (ag
 		}
 		compareFn = compareCovering
 	}
-	report, comparisonErr := compareFn(ctx, statements, func(ctx context.Context, s statement) reading {
-		start := time.Now()
-		rows, err := conn.Query(ctx, s.SQL, s.Args...)
-		out := reading{}
-		if err == nil {
-			out.Rows, out.Digest, err = digestRows(rows)
+	report := newAggregate()
+	var comparisonErr error
+	if planMode {
+		district, _ := districtStatement(statements) // validated before metadata admission
+		report.ExecutionOnly = true
+		report.Requests = 1
+		started := time.Now()
+		summary, err := probePreparedPlan(ctx, conn.Conn(), district, "p8_pc_"+indexTable+"_cover")
+		if err == nil && ctx.Err() != nil {
+			err = ctx.Err()
 		}
-		out.Milliseconds = float64(time.Since(start)) / float64(time.Millisecond)
-		out.Err = err
-		return out
-	})
+		comparisonErr = err
+		report.Observations = []observation{{"native_scalar", classifyError(err), float64(time.Since(started)) / float64(time.Millisecond), int(summary.RootRows)}}
+		if err == nil {
+			report.Plan = &summary
+			report.Complete = true
+		} else {
+			report.Errors = 1
+		}
+	} else {
+		report, comparisonErr = compareFn(ctx, statements, func(ctx context.Context, s statement) reading {
+			start := time.Now()
+			rows, err := conn.Query(ctx, s.SQL, s.Args...)
+			out := reading{}
+			if err == nil {
+				out.Rows, out.Digest, err = digestRows(rows)
+			}
+			out.Milliseconds = float64(time.Since(start)) / float64(time.Millisecond)
+			out.Err = err
+			return out
+		})
+	}
 	if covering {
 		after, err := readIndex()
 		if err != nil || !reflect.DeepEqual(before, after) {
