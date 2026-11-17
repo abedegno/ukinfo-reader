@@ -46,6 +46,7 @@ jobs:
           go vet ./...
           go test -race -count=1 ./...
           (cd ../tools/search-load && go test -race -count=1 ./... && go vet ./...)
+          (cd ../tools/postcode-spike && test -z "$(gofmt -l .)" && go test -race -count=1 ./... && go vet ./...)
           go build -o ../build/desktop/ukinfo-server ./cmd/ukinfo-server
       - name: Native PostgreSQL lifecycle (Linux)
         working-directory: server
