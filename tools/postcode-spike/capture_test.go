@@ -107,3 +107,51 @@ func TestUnknownConjunctionsAndExtraClausesAreRejected(t *testing.T) {
 		}
 	}
 }
+
+func TestFailedCaptureExplainsOnlyClosedStructureAndStatus(t *testing.T) {
+	c := &capture{}
+	d := c.failure(503)
+	if d.Status != 503 || d.Statements != 0 || d.KnownSQL || d.KnownArguments {
+		t.Fatal("missing-query diagnostic changed")
+	}
+	args := []any{int16(0), "AA1", "AA1\U0010ffff", 6, "AA1", "AA1(.{3})?", 51}
+	c.TraceQueryStart(context.Background(), nil, pgx.TraceQueryStartData{SQL: testSQL, Args: args})
+	d = c.failure(503)
+	if !d.KnownSQL || !d.KnownArguments || d.Statements != 1 {
+		t.Fatal("canonical capture missing")
+	}
+	c.found[0].Args[5] = "SECRET"
+	d = c.failure(503)
+	if !d.KnownSQL || d.KnownArguments {
+		t.Fatal("bad binding hidden")
+	}
+	if strings.Contains(d.Error(), "SECRET") || strings.Contains(d.Error(), "AA1") {
+		t.Fatal("private capture escaped")
+	}
+}
+
+func TestFullPostcodeVariantsPreserveExactScalarAndBindExistingValue(t *testing.T) {
+	sql := candidatePrefix + "d1_aaaaaaaaaaaaaaaaaaaaaaaa" + fullCandidateTail
+	args := []any{int16(0), "AA11AA", 51}
+	scalar, err := scalarVariant(sql, args)
+	if err != nil || scalar != sql {
+		t.Fatal("full scalar template not preserved")
+	}
+	indexed, err := prefilterVariant(sql, args)
+	expected := strings.Replace(sql, " AND id @@@", " AND postcode @@@ pdb.regex($2) AND id @@@", 1)
+	if err != nil || indexed != expected {
+		t.Fatal("exact redundant prefilter missing")
+	}
+	c := &capture{}
+	c.TraceQueryStart(context.Background(), nil, pgx.TraceQueryStartData{SQL: sql, Args: args})
+	if _, err := c.only(); err != nil || !c.failure(503).KnownArguments {
+		t.Fatal("full capture rejected")
+	}
+	for _, value := range []any{"AA1", "AA1.*", nil, "AA11ÄA"} {
+		bad := append([]any(nil), args...)
+		bad[1] = value
+		if _, err := prefilterVariant(sql, bad); err == nil {
+			t.Fatal("unverified full literal accepted")
+		}
+	}
+}

@@ -119,3 +119,21 @@ func TestCatalogStandardLoggerCannotBypassSanitization(t *testing.T) {
 		t.Fatal("logger output not restored")
 	}
 }
+
+func TestCaptureStructureFailureIsSavedWithoutPrivateDetails(t *testing.T) {
+	dir := t.TempDir()
+	input := filepath.Join(dir, "cases.json")
+	output := filepath.Join(dir, "report.json")
+	os.WriteFile(input, []byte(`[{"path":"/api/search","query":"dataset=invented-a&postcode=AA1&sort=name"},{"path":"/api/search","query":"dataset=invented-b&postcode=BB2&sort=name"}]`), 0600)
+	exec := execution{capture: func(context.Context, []workloadCase) ([]statement, error) {
+		return []statement{{}}, &captureFailure{Status: 503, Statements: 1, KnownSQL: true}
+	}}
+	if runWith(context.Background(), []string{"--cases", input, "--output", output}, exec) == nil {
+		t.Fatal("capture accepted")
+	}
+	body, _ := os.ReadFile(output)
+	var report aggregate
+	if json.Unmarshal(body, &report) != nil || report.CaptureFailure == nil || report.CaptureFailure.Status != 503 || !report.CaptureFailure.KnownSQL || report.CaptureFailure.KnownArguments {
+		t.Fatal("capture boundary omitted")
+	}
+}

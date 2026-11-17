@@ -21,19 +21,20 @@ type observation struct {
 	Rows         int     `json:"rows"`
 }
 type aggregate struct {
-	SetupMilliseconds float64       `json:"connection_setup_ms"`
-	Stage             string        `json:"stage"`
-	Captures          int           `json:"cancelled_capture_requests"`
-	SchemaVersion     int           `json:"schema_version"`
-	DiagnosticOnly    bool          `json:"diagnostic_only"`
-	Complete          bool          `json:"complete"`
-	Requests          int           `json:"requests"`
-	Errors            int           `json:"errors"`
-	SQLRowsEqual      bool          `json:"sql_rows_equal"`
-	PlanMode          string        `json:"plan_mode"`
-	SQLSeconds        int           `json:"sql_seconds"`
-	CacheConditions   string        `json:"cache_conditions"`
-	Observations      []observation `json:"observations"`
+	CaptureFailure    *captureFailure `json:"capture_failure,omitempty"`
+	SetupMilliseconds float64         `json:"connection_setup_ms"`
+	Stage             string          `json:"stage"`
+	Captures          int             `json:"cancelled_capture_requests"`
+	SchemaVersion     int             `json:"schema_version"`
+	DiagnosticOnly    bool            `json:"diagnostic_only"`
+	Complete          bool            `json:"complete"`
+	Requests          int             `json:"requests"`
+	Errors            int             `json:"errors"`
+	SQLRowsEqual      bool            `json:"sql_rows_equal"`
+	PlanMode          string          `json:"plan_mode"`
+	SQLSeconds        int             `json:"sql_seconds"`
+	CacheConditions   string          `json:"cache_conditions"`
+	Observations      []observation   `json:"observations"`
 }
 
 func classifyError(err error) string {
@@ -64,6 +65,10 @@ func compare(ctx context.Context, statements []statement, run func(context.Conte
 		if err != nil {
 			return result, errors.New("invalid captured statement")
 		}
+		prefilter, err := prefilterVariant(original.SQL, original.Args)
+		if err != nil {
+			return result, errors.New("invalid captured statement")
+		}
 		var baseline reading
 		haveBaseline := false
 		for _, useScalar := range schedules[i] {
@@ -71,6 +76,7 @@ func compare(ctx context.Context, statements []statement, run func(context.Conte
 				return result, errors.New("comparison budget exhausted")
 			}
 			query := original
+			query.SQL = prefilter
 			label := "postcode_prefilter"
 			if useScalar {
 				query.SQL = scalar

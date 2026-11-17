@@ -91,7 +91,7 @@ func captureStatements(ctx context.Context, cases []workloadCase) ([]statement, 
 		handler.ServeHTTP(response, req)
 		item, err := tracer.only()
 		if err != nil || response.Code != 503 {
-			return statements, errors.New("cancelled exact candidate capture required")
+			return statements, tracer.failure(response.Code)
 		}
 		statements = append(statements, item)
 	}

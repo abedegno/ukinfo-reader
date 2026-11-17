@@ -26,6 +26,8 @@ type capture struct {
 }
 
 const candidatePrefix = "SELECT id,name_id,first_id,postcode_id,name,first_full FROM ukinfo_search."
+const fullCandidateTail = " WHERE kind=$1 AND ((postcode=$2)) AND id @@@ pdb.all() ORDER BY name,first_full,id LIMIT $3"
+
 const candidateTail = " WHERE kind=$1 AND ((postcode >= $2 AND postcode < $3)) AND (postcode_length=$4 OR postcode=$5) AND postcode @@@ pdb.regex($6) AND id @@@ pdb.all() ORDER BY name,first_full,id LIMIT $7"
 
 var candidateSQL = regexp.MustCompile("^" + regexp.QuoteMeta(candidatePrefix) + `(d[1-9][0-9]*_[a-f0-9]{24})` + regexp.QuoteMeta(" WHERE "))
@@ -53,6 +55,18 @@ func validateCases(cases []workloadCase) error {
 func scalarVariant(sql string, args []any) (string, error) {
 	bad := func() (string, error) { return "", errors.New("unknown candidate statement") }
 	shape := candidateSQL.FindStringSubmatch(sql)
+	if len(shape) == 2 && sql == candidatePrefix+shape[1]+fullCandidateTail {
+		if len(args) != 3 {
+			return bad()
+		}
+		kind, k := args[0].(int16)
+		value, v := args[1].(string)
+		limit, l := args[2].(int)
+		if !k || kind != 0 || !v || !regexp.MustCompile(`^(?:[A-Z]{1,2}[0-9][A-Z0-9]?[0-9][A-Z]{2}|GIR0AA)$`).MatchString(value) || !l || limit < 1 || limit > 129 {
+			return bad()
+		}
+		return sql, nil
+	}
 	if len(shape) != 2 || sql != candidatePrefix+shape[1]+candidateTail || len(args) != 7 {
 		return bad()
 	}
@@ -82,6 +96,17 @@ func scalarVariant(sql string, args []any) (string, error) {
 	return sql[:match[0]] + fmt.Sprintf("($%d::text IS NOT NULL)", parameter) + sql[match[1]:], nil
 }
 
+func prefilterVariant(sql string, args []any) (string, error) {
+	if _, err := scalarVariant(sql, args); err != nil {
+		return "", err
+	}
+	shape := candidateSQL.FindStringSubmatch(sql)
+	if sql == candidatePrefix+shape[1]+fullCandidateTail {
+		return candidatePrefix + shape[1] + " WHERE kind=$1 AND ((postcode=$2)) AND postcode @@@ pdb.regex($2) AND id @@@ pdb.all() ORDER BY name,first_full,id LIMIT $3", nil
+	}
+	return sql, nil
+}
+
 func (c *capture) TraceQueryStart(ctx context.Context, _ *pgx.Conn, d pgx.TraceQueryStartData) context.Context {
 	if !candidateSQL.MatchString(d.SQL) {
 		return ctx
@@ -108,3 +133,26 @@ func (c *capture) only() (statement, error) {
 	return item, nil
 }
 func (c *capture) reset() { c.mu.Lock(); c.found = nil; c.mu.Unlock() }
+
+// A failed capture reports boundary facts only, never SQL, values or errors.
+type captureFailure struct {
+	Status         int  `json:"http_status"`
+	Statements     int  `json:"candidate_statements"`
+	KnownSQL       bool `json:"known_sql_template"`
+	KnownArguments bool `json:"known_argument_bindings"`
+}
+
+func (*captureFailure) Error() string { return "candidate capture boundary failed" }
+func (c *capture) failure(status int) *captureFailure {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	d := &captureFailure{Status: status, Statements: len(c.found)}
+	if len(c.found) == 1 {
+		s := c.found[0]
+		shape := candidateSQL.FindStringSubmatch(s.SQL)
+		d.KnownSQL = len(shape) == 2 && (s.SQL == candidatePrefix+shape[1]+candidateTail || s.SQL == candidatePrefix+shape[1]+fullCandidateTail)
+		_, err := scalarVariant(s.SQL, s.Args)
+		d.KnownArguments = d.KnownSQL && err == nil
+	}
+	return d
+}

@@ -66,6 +66,10 @@ func runWith(parent context.Context, args []string, exec execution) (failure err
 	statements, err := exec.capture(ctx, cases)
 	report.Captures = len(statements)
 	if err != nil {
+		var boundary *captureFailure
+		if errors.As(err, &boundary) {
+			report.CaptureFailure = boundary
+		}
 		return errors.New("exact candidate capture incomplete")
 	}
 	measured, comparisonErr := exec.measure(ctx, statements)
