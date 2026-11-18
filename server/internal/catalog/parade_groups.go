@@ -163,14 +163,14 @@ func (a *API) paradeGroupedCandidates(ctx context.Context, q query, editions []p
 // identity remains the source research index's canonical contract, not a new hash
 // computed from the derived projection or an inferred household/person identity.
 func (a *API) paradeGroupKeys(ctx context.Context, positions []paradePosition) (map[[2]int32]string, error) {
+	const groupKeyBatch = 128
 	requested := map[int16][]int32{}
 	for _, p := range positions {
 		requested[p.Dataset] = append(requested[p.Dataset], p.ID)
 	}
 	out := map[[2]int32]string{}
-	// A wide pair can scatter source IDs across hundreds of heap pages. Bound
-	// each read and overlap at most two within the existing source pool, rather
-	// than leaving one long streaming statement on the request's critical path.
+	// Batch sorted IDs per edition to reduce round trips for dense groups. Bound
+	// each read and overlap at most two within the existing source pool.
 	type batch struct {
 		dataset int16
 		ids     []int32
@@ -178,8 +178,8 @@ func (a *API) paradeGroupKeys(ctx context.Context, positions []paradePosition) (
 	batches := []batch{}
 	for dataset, ids := range requested {
 		slices.Sort(ids)
-		for start := 0; start < len(ids); start += 32 {
-			batches = append(batches, batch{dataset, ids[start:min(start+32, len(ids))]})
+		for start := 0; start < len(ids); start += groupKeyBatch {
+			batches = append(batches, batch{dataset, ids[start:min(start+groupKeyBatch, len(ids))]})
 		}
 	}
 	var mu sync.Mutex

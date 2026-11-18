@@ -272,8 +272,8 @@ func testGroupKeyReads(t *testing.T, db *pgxpool.Pool, dataset int16) {
 	if err != nil || !reflect.DeepEqual(got, want) {
 		t.Fatal("batched keys changed complete source mapping", err)
 	}
-	if trace.calls.Load() != 5 || trace.largest.Load() > 32 {
-		t.Fatal("unbounded source key read", trace.calls.Load(), trace.largest.Load())
+	if trace.calls.Load() != 2 || trace.largest.Load() != 128 {
+		t.Fatal("unexpected source key batching", trace.calls.Load(), trace.largest.Load())
 	}
 	canceled, cancel := context.WithCancel(ctx)
 	defer cancel()
