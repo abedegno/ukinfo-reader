@@ -343,16 +343,15 @@ invented string/numeric canaries on both variants; no credentials or archive dat
 are needed. Homelab's collector must receive the matching policy before relying
 on these labels in hosted dashboards.
 
-## Hosted rollout status — 15 November 2026
+## Hosted telemetry rollout record — 15 November 2026
 
-Edition telemetry is present in the live `hosted-2026-11-15.2` application. The
-five-edition guarded rollout passed, and the Collector was checked to share the
-current app's network namespace. Earlier five-stream metric delivery was verified
+Edition telemetry was present in the `hosted-2026-11-15.2` application. The
+five-edition guarded rollout passed, and the Collector shared that app's network
+namespace. Earlier five-stream metric delivery was verified
 in eu0 Observability Cloud; fresh sampled trace delivery was not independently
 rechecked for this rollout. Existing sampling and privacy rules are unchanged.
-Five editions / 248,951,107 listings remain public; v14 is hidden. The historical
-failed native rollout below remains retained, rather than being relabelled as a
-successful global-native fallback.
+At that point the archive served five editions and v14 was hidden. See the
+[hosted v14 release status](hosted-v14.md) for the current catalogue.
 
 ## Retained rollout history — 10 November 2026
 

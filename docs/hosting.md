@@ -3,18 +3,19 @@
 ## Current deployment and capacity
 
 The [public archive](https://ukinfo.6153112.xyz) runs the Go service and PostgreSQL 18
-in Docker on a NAS, through a dedicated Cloudflare Tunnel. It serves five complete
-editions (248,951,107 source occurrences) with no sample/demo datasets. The database has no public port; the API uses
+in Docker on a NAS, through a dedicated Cloudflare Tunnel. It serves six editions
+with 292,695,740 listings, including the [selected v14 import](hosted-v14.md).
+The database has no public port; the API uses
 a SELECT-only role, explicit tunnel-peer trust, per-client quotas and bounded work.
 See [public service controls](#public-service-through-cloudflare-tunnel).
 
-As of 15 November 2026, the live application is `hosted-2026-11-15.2`. Guarded
-rollout passed 12 basic, 64 source-reference and one grouped checks plus public
-smoke. Fresh fixed five-edition qualification had zero candidate errors or content
-mismatches, C1/C4 p95 of 95/150 ms and a maximum cold probe of 2.349 seconds under
-the unchanged three-second gate. Target cache was uncontrolled; this is measured
-acceptance, not a capacity guarantee. v14 remains hidden. Compatible patched
-engines and separate six-edition validation are required before publication.
+As of 18 November 2026, the live application is `hosted-2026-11-18.4` with
+ParadeDB. Guarded publication passed 12 basic checks, 64 source-reference
+checks, one grouped check and public smoke. Fixed six-edition qualification
+recorded p95 of 87.94 ms at one client and 174.54 ms at four. The selected v14
+source-cold probes had a 244.597 ms maximum against the three-second limit.
+Those probes cleared v14 source partitions and used shared dictionary and
+ParadeDB caches.
 
 The original 17 October 2026 hosting shortlist below is a dated planning record.
 Prices, provider allowances and availability must be checked before provisioning.

@@ -1,4 +1,4 @@
-# Hosted selection and import of v14
+# Hosted v14 selection and release
 
 The raw archival reader validates 43,799,502 v14 source occurrences. The hosted
 selection is explicitly different: the disc's own `data_sources.htm` describes CO1
@@ -43,12 +43,11 @@ matching or retrospective cross-edition removal is inferred from this source bit
 
 ## Operations and acceptance
 
-Homelab holds the reproducible staging/import/index/verification/publication
-controls. Keep v14 hidden from the serving role until all source/research/business
-and derived indexes, verification and six-edition search acceptance finish. The
-existing five editions and hidden 2003 rollback copy are retained. The expected
-six-edition hosted total is **292,695,740**; the six raw reader profiles total
-292,750,609 occurrences.
+Homelab holds the reproducible staging, import, indexing, verification and
+publication controls. The guarded rollout required complete source, research,
+business and derived indexes, plus sealed six-edition search acceptance. The
+public archive serves **292,695,740** listings. The six raw reader profiles
+total **292,750,609** occurrences.
 
 Real queries, source IDs, records, coordinates and response hashes stay on NAS.
 Public smoke uses inventory/health/UI and invented input. Aggregate reports must
@@ -56,25 +55,37 @@ separate shared-cache full-source measurements from the older isolated fixture's
 cold tests; neither is a claim of sustained Internet capacity. The existing CPU,
 memory, pool, timeout and quota limits remain acceptance constraints.
 
-### Current status — 15 November 2026
+### Public release — 18 November 2026
 
-The live `.15.2` application serves the existing five editions. Its fresh
+The selected v14 edition is available in the [public archive](https://ukinfo.6153112.xyz)
+and [live catalogue](https://ukinfo.6153112.xyz/api/datasets). It contributes
+43,744,633 listings, including 6,092,008 businesses. The deployment runs
+`hosted-2026-11-18.4` with ParadeDB.
+
+Private six-edition qualification matched 1,536 sampled fields and 896 paired
+pages. The one-client and four-client load tests each served 710 requests with
+zero errors, recording p95 of 87.94 ms and 174.54 ms. All six selected-partition
+source-cold probes passed, with a maximum of 244.597 ms under the three-second
+limit. The dictionary and ParadeDB caches were shared.
+
+The public release passed 12 basic checks, 64 source-reference checks, one
+grouped check and public smoke. It also verified the exact edition counts and
+CO1 exclusions, then cleared the deployment lease and private verifier sessions.
+
+### Retained rollout history — 15 November 2026
+
+The live `.15.2` application served the existing five editions. Its
 five-edition qualification and guarded rollout passed, including measured
-first-name/postcode refinements and the selected surname-prefix route. This does
-not replace six-edition acceptance or make v14 public.
+first-name/postcode refinements and the selected surname-prefix route.
 
 Selected source projections and indexes are complete for 43,744,633 listings,
 including 6,092,008 businesses. The fourth six-edition attempt matched its initial
 paired probe and 1,536 sampled fields, then failed four searches during the fixed
-355-case preparation. Those failed results remain retained; no new full
-six-edition acceptance is claimed.
+355-case preparation. The failed results were retained for comparison.
 
-Compatible patched PostgreSQL/native-extension engines and renewed qualification
-remain prerequisites. The follow-on controls must bind the exact successful
-inputs/runtime/lifecycles, prove selected-partition cold behavior and maintenance
-exclusion, build a separate six-edition live-reference bundle and publish through
-a guarded visibility transition. Input-seal library tests and an invented local
-maintenance prototype alone do not satisfy those operational requirements.
+The remaining prerequisites at that point included compatible PostgreSQL and
+extension engines, renewed qualification, a selected-partition cold check with
+maintenance exclusion, and a separate six-edition live-reference bundle.
 
 ### Retained preparation history — 7 November 2026
 
@@ -84,9 +95,9 @@ samples match both original records and independent source projections. The
 [aggregate progress report](validation/v14-2008-03-hosted-progress.json) retains the
 initial timeouts and subsequent observations.
 
-Publication remains blocked by the strict search acceptance. Calibration matched
+Search acceptance blocked publication at that point. Calibration matched
 348 of 355 cases; seven native searches timed out, with zero candidate errors or
 mismatches. The fresh legacy probe matched all 250 references. These observations
 follow one fixed whole-cohort warmup and do not qualify six-edition cold latency.
-Concurrent load gates have not run. The public site still serves five editions;
-v14 is private while native-reference validation is resolved.
+Concurrent load tests had yet to run. The public site served five editions while
+native-reference validation continued privately.

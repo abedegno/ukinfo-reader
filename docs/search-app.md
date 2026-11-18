@@ -31,13 +31,11 @@ all desktop releases remain drafts.
 - Go 1.26+ (tested with 1.26.11), PostgreSQL **18**, Python 3.10+ for importing discs.
 - Node 22.12+ and npm for desktop development/browser tests, not hosted serving.
 - All six [verified release profiles](editions.md) can be imported from prepared folders.
-  The five hosted editions (**248,951,107** occurrences) have passed PostgreSQL
-  record/projection verification. The additional v14 source (**43,799,502** entries)
-  has passed complete reader validation. The selected hosted v14 stream has
-  **43,744,633** entries after excluding **54,869 CO1** entries and is staged privately
-  on the NAS. Its full hosted performance/publication qualification is unfinished;
-  v14 is not public. See [hosted v14 status](hosted-v14.md). Modern entries retain their
-  electoral/telephone/business types.
+  The public archive serves **292,695,740** listings across all six editions.
+  The v14 source contains **43,799,502** entries. The selected hosted import has
+  **43,744,633** listings after excluding **54,869 CO1** entries and passed the
+  six-edition search and publication checks. See [hosted v14 status](hosted-v14.md).
+  Modern entries retain their electoral, telephone and business types.
 - Business searching covers the validated **2003 SE**, **2005 V10.5 SE** and **v14** business streams, including
   updates/deletions already applied by the reader. The supplied **2004 SE** disc has no
   business listings. Early-edition business-related source fields remain visible as
