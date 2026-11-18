@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"golang.org/x/sync/errgroup"
@@ -46,7 +47,28 @@ func scanCandidatePositions(rows pgx.Rows) ([]cursor, error) {
 	return out, rows.Err()
 }
 
-func (a *API) sourceCandidatePositions(ctx context.Context, sql string, args []any, addressBudget bool) ([]cursor, error) {
+func (a *API) sourceCandidatePositions(ctx context.Context, sql string, args []any, addressBudget, customPlan bool) (_ []cursor, err error) {
+	if customPlan {
+		ctx, end := a.searchPhase(ctx, "candidates")
+		defer func() { end(err) }()
+		tx, err := a.DB.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadOnly})
+		if err != nil {
+			return nil, err
+		}
+		defer func() {
+			cleanup, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+			_ = tx.Rollback(cleanup)
+		}()
+		if _, err = tx.Exec(ctx, "SET LOCAL plan_cache_mode=force_custom_plan"); err != nil {
+			return nil, err
+		}
+		rows, err := tx.Query(ctx, sql, args...)
+		if err != nil {
+			return nil, err
+		}
+		return scanCandidatePositions(rows)
+	}
 	rows, err := a.searchRows(ctx, "candidates", sql, args, addressBudget)
 	if err != nil {
 		return nil, err

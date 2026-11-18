@@ -412,6 +412,7 @@ type candidateFilters struct {
 	addressStream        bool
 	placePostings        bool
 	businessSearch       bool
+	customCandidatePlan  bool
 	geography            *GeographySearch
 	nearbyIDs            []int32
 	radiusArg            int
@@ -526,6 +527,7 @@ func (a *API) buildCandidateFiltersWith(ctx context.Context, q query, planAddres
 		}
 	}
 	termCTEs := []string{}
+	customCandidatePlan := false
 	for _, filter := range []struct {
 		column, key string
 		postcode    bool
@@ -615,6 +617,12 @@ func (a *API) buildCandidateFiltersWith(ctx context.Context, q query, planAddres
 					// filter so that estimate cannot drive one entry probe per name.
 					// IS TRUE preserves WHERE semantics, including NULL exclusion.
 					membership = "(" + membership + ") IS TRUE"
+					// This candidate query is sensitive to actual surname and postcode
+					// selectivity. Given-name matching is itself a refinement; only
+					// exclude additional filters outside this measured search shape.
+					customCandidatePlan = q.Kind == "person" && q.Sort == "" && q.Near == "" &&
+						!q.hasAddress() && q.House == "" && q.Building == "" && q.Flat == "" &&
+						q.Middle == "" && !q.needsResearch()
 				}
 				conditions = append(conditions, membership)
 			} else {
@@ -670,7 +678,7 @@ func (a *API) buildCandidateFiltersWith(ctx context.Context, q query, planAddres
 
 	}
 
-	f := candidateFilters{q: q, datasetKeys: datasetKeys, datasetIDs: datasetIDs, args: args, conditions: conditions, termCTEs: termCTEs, missing: missing, areaOnly: areaOnly, geography: geography, nearbyIDs: nearbyIDs, radiusArg: radiusArg, distances: distances, businessSearch: businessReady}
+	f := candidateFilters{q: q, datasetKeys: datasetKeys, datasetIDs: datasetIDs, args: args, conditions: conditions, termCTEs: termCTEs, missing: missing, areaOnly: areaOnly, geography: geography, nearbyIDs: nearbyIDs, radiusArg: radiusArg, distances: distances, businessSearch: businessReady, customCandidatePlan: customCandidatePlan}
 	if planAddresses {
 		if err = a.matchSelectiveAddresses(ctx, &f); err != nil {
 			return candidateFilters{}, 503, searchReadError(err)
@@ -824,7 +832,7 @@ func (a *API) searchCandidates(ctx context.Context, q query) (searchResult, int,
 			a.metrics.plan("source_postcode_parallel")
 			selected, e = a.sourceParallelPage(ctx, queryArgs, conditions, datasetIDs, q.Limit-len(ids)+1, sourcePostcodeOrder)
 		} else {
-			selected, e = a.sourceCandidatePositions(ctx, sql, args, q.hasAddress())
+			selected, e = a.sourceCandidatePositions(ctx, sql, args, q.hasAddress(), f.customCandidatePlan)
 		}
 		if e != nil {
 			log.Printf("Search query failed: %v", e)
