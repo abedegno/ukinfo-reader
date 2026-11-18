@@ -609,9 +609,16 @@ func (a *API) buildCandidateFiltersWith(ctx context.Context, q query, planAddres
 			// A run-time array can make the source index probe the full
 			// dictionary; relational membership permits a selective set join.
 			if filter.column == "first_id" && q.Surname != "" && q.Match == "exact" && !strings.HasSuffix(q.Surname, "*") {
-				termCTEs = append(termCTEs, fmt.Sprintf("%s AS MATERIALIZED (SELECT id FROM terms WHERE %s)", name, predicate))
+				termQuery := "SELECT id FROM terms WHERE " + predicate
 				membership := fmt.Sprintf("%s IN (SELECT id FROM %s)", filter.column, name)
 				if given && q.Postcode != "" {
+					// The exact key and trailing-space range are disjoint. Splitting
+					// them permits covering dictionary scans instead of a bitmap heap
+					// read when this broad membership is executed again.
+					termQuery = fmt.Sprintf(
+						"SELECT id FROM terms WHERE key=$%d UNION ALL SELECT id FROM terms WHERE key >= $%d AND key < $%d",
+						len(args)-2, len(args)-1, len(args),
+					)
 					// A sparse vocabulary histogram can underestimate thousands of
 					// valid middle-name forms as one. Keep membership as a Boolean
 					// filter so that estimate cannot drive one entry probe per name.
@@ -624,6 +631,7 @@ func (a *API) buildCandidateFiltersWith(ctx context.Context, q query, planAddres
 						!q.hasAddress() && q.House == "" && q.Building == "" && q.Flat == "" &&
 						q.Middle == "" && !q.needsResearch()
 				}
+				termCTEs = append(termCTEs, fmt.Sprintf("%s AS MATERIALIZED (%s)", name, termQuery))
 				conditions = append(conditions, membership)
 			} else {
 				termCTEs = append(termCTEs, fmt.Sprintf("%s AS MATERIALIZED (SELECT array_agg(id) AS ids FROM terms WHERE %s)", name, predicate))
