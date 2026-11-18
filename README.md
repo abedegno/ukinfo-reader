@@ -66,9 +66,9 @@ establish compatibility; use [edition identification and fingerprints](docs/edit
 **292,750,609 source occurrences** across the six validated editions. These are not distinct
 people. The public archive’s edition selector lists imports that are ready to search;
 operators can also check the [live catalogue](https://ukinfo.6153112.xyz/api/datasets).
-v14 is supported by the reader and folder importer. Its selected hosted import is
-verified privately and awaits patched-engine and six-edition search acceptance;
-see [hosted status](docs/hosted-v14.md).
+v14 is supported by the reader and folder importer. The public archive includes
+the selected v14 import, with **43,744,633 listings** after CO1 exclusions.
+See [hosted status and selection](docs/hosted-v14.md).
 Dates above identify distribution/mastering, not verified electoral-roll reference dates.
 The supplied 2004 SE media has no separate business listings.
 

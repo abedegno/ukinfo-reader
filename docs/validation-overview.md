@@ -56,7 +56,8 @@ cover **9,868 invented cases** with zero mismatches. A separate
 [all-locality comparison](validation/v14-2008-03-locality-comparison.json) accounts
 for 50 intentional flagged differences from stale original formatter overrides,
 with zero unexplained differences across 27,957 locality rows. Source-wide checks
-establish internal consistency, not independent historical accuracy. The hosted
-archive has not imported or performance-qualified v14.
+establish internal consistency, not independent historical accuracy. The selected
+hosted v14 import passed six-edition search and publication checks. See the
+[hosted validation and CO1 selection](hosted-v14.md).
 
 [Edition identities and provenance](editions.md) · [Binary format reference](../FORMAT.md)

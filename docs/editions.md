@@ -58,8 +58,8 @@ See [preparation, format differences and limitations](formats/v14.md),
 [complete validation](validation/v14-2008-03.json) and
 [original-decoder comparisons](validation/v14-2008-03-reference-comparison.json).
 The reader retains raw codes and source warnings for partial postcodes and malformed
-telephone prefixes. Its selected hosted import is verified privately, but search
-acceptance is unfinished and it is not published. See [hosted status and selection](hosted-v14.md).
+telephone prefixes. The public archive includes the selected v14 import with
+43,744,633 listings after CO1 exclusions. See [hosted status and selection](hosted-v14.md).
 
 ## Identify your copy
 
