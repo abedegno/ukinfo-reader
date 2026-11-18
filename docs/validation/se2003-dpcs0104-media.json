@@ -5,5 +5,6 @@
   "sha256": "d57572336799d87649ed0339bd0334a8cd0c5508e6781ab16fb7a785c9f4ad2e",
   "installer_product_name": "UK-Info 2003 SE",
   "disc_id": "DPCS0104DVD",
-  "provenance": "User-supplied local image; no public archive identity has been verified."
+  "provenance": "User-supplied local image. Internet Archive lists the same filename, byte size and SHA-1 for the Computer Shopper (UK) issue 191 cover DVD, dated January 2004.",
+  "archive_item": "https://archive.org/details/computer-shopper-uk-cover-dvd-191"
 }
