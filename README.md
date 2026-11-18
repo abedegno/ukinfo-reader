@@ -58,7 +58,7 @@ establish compatibility; use [edition identification and fingerprints](docs/edit
 | --- | --- | ---: | --- |
 | UK-Info Disk SE | PC Format 78 · January 1998 | 27,983,545 | [PC Format 78](https://archive.org/details/pc-format-78) |
 | UK-Info Disk SE 4.0 | PC Format 94 · April 1999 | 46,355,850 | [PC Format 94b](https://archive.org/details/pcf-94b-apr-1999-uk-info) |
-| UK-Info 2003 SE · residential + business | DPCS0104DVD | 59,886,841 | [Supplied-disc fingerprints](docs/formats/2003-se.md) |
+| UK-Info 2003 SE · residential + business | Computer Shopper (UK) 191 · January 2004 | 59,886,841 | [Computer Shopper 191 cover DVD](https://archive.org/details/computer-shopper-uk-cover-dvd-191) |
 | UK-Info 2004 SE · residential | PC Plus 218 · July 2004 | 63,373,974 | [PC Plus 218 DVD](https://archive.org/details/pcp-218-dvd) |
 | UK-Info Disk V10.5 SE · residential + business | PC Format 175 · June 2005 | 51,350,897 | [PC Format 175 DVDs](https://archive.org/details/pcf-175-dvd-1-06-05.7z) |
 | UK-Info Disk v14 · residential + business | Installation and data CDs · mastered March 2008 | 43,799,502 | [UK-Info Disk v14](https://archive.org/details/uk-info-disk-v14-2008) |
@@ -74,6 +74,7 @@ Select the matching file inside each Internet Archive item:
 
 - **1998:** `PC_FORMAT_78.iso`.
 - **1999:** `PCF 94b apr 1999 UK-INFO.iso`; the item also contains another ISO.
+- **2003 SE:** `DPCS0104DVD.ISO` from the January 2004 cover DVD. See the [disc preparation guide](docs/formats/2003-se.md).
 - **2004:** `PCP218_DVD.iso`.
 - **2005:** `PCF175DVD2_06_05.7z`. UK-Info is on **DVD 2**, despite `dvd-1` in the item URL.
 - **2008 (v14):** `uk-info-disk-v14-2008.zip`, which contains both original disc

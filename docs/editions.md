@@ -4,7 +4,7 @@
 |---|---|---|---|
 | `se-pcf78-1998-01` | UK-Info Disk SE | PC Format issue 78, January 1998 | Supported; entire database validated with documented source defects |
 | `se4-pcf94-1999-04` | UK-Info Disk SE 4.0 | PC Format issue 94, April 1999 | Supported; entire database validated |
-| `se2003-dpcs0104` | UK-Info 2003 SE | Supplied DPCS0104DVD image | Supported residential and business searches/exports; source anomalies documented |
+| `se2003-dpcs0104` | UK-Info 2003 SE | Computer Shopper (UK) issue 191 · January 2004 | Supported residential and business searches/exports; source anomalies documented |
 | `se2004-pcp218-2004-07` | UK-Info 2004 SE | PC Plus issue 218, July 2004 | Supported residential searches/exports; source anomalies documented |
 | `se2005-pcf175-2005-06` | UK-Info Disk V10.5 SE | PC Format issue 175, June 2005 | Supported residential and business searches/exports, including updates/deletions |
 | `v14-2008-03` | UK-Info Disk v14 | Supplied installation/data CDs, mastered March 2008 | Supported residential and business searches/exports; source anomalies documented |
@@ -24,7 +24,8 @@ The reader validates **59,886,841 source entries**, including **2,471,038 busine
 Seventeen unresolved name references are flagged with raw codes retained. The source
 omits its industry-description dictionary: business names, addresses, telephone/fax
 and SIC codes are available, while missing descriptions are explicitly flagged.
-No public archive source has been verified for this particular supplied image.
+The [Computer Shopper issue 191 Internet Archive item](https://archive.org/details/computer-shopper-uk-cover-dvd-191)
+lists `DPCS0104DVD.ISO` with the same SHA-1 and size as the verified local image.
 
 ## 2004 SE and V10.5 SE (2005)
 
