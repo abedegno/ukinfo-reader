@@ -12,6 +12,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -27,6 +28,7 @@ type pageBlockTracer struct {
 	cancelAfter       int32
 	successful        atomic.Int32
 	completedAtCancel atomic.Int32
+	wideReady         chan struct{}
 }
 
 func (p *pageBlockTracer) TraceQueryStart(ctx context.Context, _ *pgx.Conn, d pgx.TraceQueryStartData) context.Context {
@@ -45,6 +47,15 @@ func (p *pageBlockTracer) TraceQueryStart(ctx context.Context, _ *pgx.Conn, d pg
 			}
 		}
 		ctx = context.WithValue(ctx, pageBlockTraceKey{}, true)
+		if p.wideReady != nil {
+			if n == 4 {
+				close(p.wideReady)
+			}
+			select {
+			case <-p.wideReady:
+			case <-ctx.Done():
+			}
+		}
 		if p.cancel != nil && (p.cancelAfter == 0 || p.blocks.Load() >= p.cancelAfter) {
 			p.completedAtCancel.Store(p.successful.Load())
 			p.cancel()
@@ -87,6 +98,7 @@ func TestCrossEditionRecordBatchIntegration(t *testing.T) {
 	}
 	cfg.ConnConfig.RuntimeParams["search_path"] = schema
 	cfg.ConnConfig.Tracer = trace
+	cfg.MaxConns = 8
 	db, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
 		t.Fatal(err)
@@ -236,11 +248,11 @@ func TestCrossEditionRecordBatchIntegration(t *testing.T) {
 	// spanning ten distinct blocks in one edition plus five other editions.
 	var input bytes.Buffer
 	enc := json.NewEncoder(&input)
-	enc.Encode(Manifest{Type: "manifest", Protocol: 1, Dataset: "batch-many", Edition: "invented-many", Expected: 1280, SHA256: map[string]string{"invented": strings.Repeat("a", 64)}})
-	for i := 0; i < 1280; i++ {
+	enc.Encode(Manifest{Type: "manifest", Protocol: 1, Dataset: "batch-many", Edition: "invented-many", Expected: 1408, SHA256: map[string]string{"invented": strings.Repeat("a", 64)}})
+	for i := 0; i < 1408; i++ {
 		enc.Encode(map[string]any{"type": "record", "source_id": fmt.Sprint(i), "record": map[string]any{"surname": "Manyblocks", "firstName": "June", "postcode": "ZZ1 1ZZ", "marker": i}})
 	}
-	enc.Encode(map[string]any{"type": "end", "count": 1280})
+	enc.Encode(map[string]any{"type": "end", "count": 1408})
 	trace.enabled.Store(false)
 	if _, err = Import(ctx, db, &input); err != nil {
 		t.Fatal(err)
@@ -273,6 +285,21 @@ func TestCrossEditionRecordBatchIntegration(t *testing.T) {
 	if trace.largest.Load() != 4 || trace.maximum.Load() > 2 || trace.active.Load() != 0 {
 		t.Fatal("wide read bounds exceeded", trace.largest.Load(), trace.maximum.Load(), trace.active.Load())
 	}
+	t.Run("four full batches overlap", func(t *testing.T) {
+		wide[many] = append(wide[many], 10*128+1)
+		defer func() { wide[many] = wide[many][:10] }()
+		trace.wideReady = make(chan struct{})
+		defer func() { trace.wideReady = nil }()
+		trace.blocks.Store(0)
+		trace.maximum.Store(0)
+		bounded, release := context.WithTimeout(ctx, 10*time.Second)
+		defer release()
+		all, err := api.loadPageRecords(bounded, wide)
+		if err != nil || len(all) != 16 || trace.blocks.Load() != 4 || trace.maximum.Load() != 4 || trace.active.Load() != 0 {
+			t.Fatalf("dense page did not complete four overlapping reads: records=%d reads=%d overlap=%d active=%d: %v",
+				len(all), trace.blocks.Load(), trace.maximum.Load(), trace.active.Load(), err)
+		}
+	})
 	late, lateCancel := context.WithCancel(ctx)
 	trace.cancel = lateCancel
 	trace.cancelAfter = 3
