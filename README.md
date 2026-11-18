@@ -18,8 +18,8 @@ with a web interface, an Electron desktop preview and a documented Python reader
 
 | Use | Start here | What you need |
 | --- | --- | --- |
-| Search online | [Public archive](https://ukinfo.6153112.xyz) | A browser; no login or import |
-| Use a local desktop archive | [Desktop setup](docs/desktop-setup.md) and [builds](docs/desktop-releases.md) | Supported source media; macOS or Linux x86-64 |
+| Search online | [Public archive](https://ukinfo.6153112.xyz) | A browser |
+| Build a local desktop archive | [Desktop setup](docs/desktop-setup.md) and [builds](docs/desktop-releases.md) | Supported source media and macOS (Apple Silicon or Intel) or Linux x86-64 |
 | Host your own instance | [Production deployment](docs/production.md) and [hosting](docs/hosting.md) | Go service, PostgreSQL 18 and imported source media |
 | Read or export original files | [Python quick start](docs/reader-quick-start.md) | Python 3.10+ and extracted source files |
 | Investigate another edition | [Edition support guide](docs/adding-editions.md) | Source identity, format evidence and validation |
@@ -61,14 +61,12 @@ establish compatibility; use [edition identification and fingerprints](docs/edit
 | UK-Info 2003 SE · residential + business | DPCS0104DVD | 59,886,841 | [Supplied-disc fingerprints](docs/formats/2003-se.md) |
 | UK-Info 2004 SE · residential | PC Plus 218 · July 2004 | 63,373,974 | [PC Plus 218 DVD](https://archive.org/details/pcp-218-dvd) |
 | UK-Info Disk V10.5 SE · residential + business | PC Format 175 · June 2005 | 51,350,897 | [PC Format 175 DVDs](https://archive.org/details/pcf-175-dvd-1-06-05.7z) |
-| UK-Info Disk v14 · residential + business | Supplied installation/data CDs · mastered March 2008 | 43,799,502 | [Source fingerprints and preparation](docs/formats/v14.md) |
+| UK-Info Disk v14 · residential + business | Installation and data CDs · mastered March 2008 | 43,799,502 | [UK-Info Disk v14](https://archive.org/details/uk-info-disk-v14-2008) |
 
-**292,750,609 source occurrences** across the six validated editions. These are not distinct
-people. The public archive’s edition selector lists imports that are ready to search;
-operators can also check the [live catalogue](https://ukinfo.6153112.xyz/api/datasets).
-v14 is supported by the reader and folder importer. The public archive includes
-the selected v14 import, with **43,744,633 listings** after CO1 exclusions.
-See [hosted status and selection](docs/hosted-v14.md).
+The six source editions contain **292,750,609 listing occurrences**. The public
+archive serves **292,695,740 listings**, including **43,744,633 v14 listings** after
+54,869 CO1 exclusions. [Live catalogue](https://ukinfo.6153112.xyz/api/datasets) ·
+[Hosted v14 selection](docs/hosted-v14.md).
 Dates above identify distribution/mastering, not verified electoral-roll reference dates.
 The supplied 2004 SE media has no separate business listings.
 
@@ -78,6 +76,10 @@ Select the matching file inside each Internet Archive item:
 - **1999:** `PCF 94b apr 1999 UK-INFO.iso`; the item also contains another ISO.
 - **2004:** `PCP218_DVD.iso`.
 - **2005:** `PCF175DVD2_06_05.7z`. UK-Info is on **DVD 2**, despite `dvd-1` in the item URL.
+- **2008 (v14):** `uk-info-disk-v14-2008.zip`, which contains both original disc
+  images, their companion files and `SHA256SUMS`. Extract the ZIP and
+  [prepare both discs](docs/formats/v14.md), then select the prepared folder in the
+  desktop importer.
 
 All six supported editions have complete source validation reports. Known source defects and
 uncertain field meanings are documented in the [validation overview](docs/validation-overview.md)
@@ -89,11 +91,10 @@ separate investigation and validation.
 The **Python reader** decodes original files and streams verified imports. The
 **Go service** searches an indexed **PostgreSQL 18** catalogue and embeds the web UI.
 The **Electron app** runs the same service and a private local PostgreSQL instance.
-Hosted deployments can optionally accelerate selected searches with a
-separate [ParadeDB index](docs/paradedb-preview.md); desktop and default deployments
-retain native search. See the [measured rollout](docs/research/parade-rollout-2026-10-26.md),
-[tail-latency follow-up](docs/research/tail-search-2026-10-27.md), and
-[latest grouped-read acceptance](docs/research/grouped-search-2026-10-27.md) for results and limits.
+The public archive uses [ParadeDB](docs/paradedb-preview.md) for selected searches.
+Desktop and default self-hosted setups use native PostgreSQL search. The
+[hosted v14 release notes](docs/hosted-v14.md#public-release--18-november-2026)
+record the six-edition performance and publication checks.
 Search requests do not run Python; the original Windows executables are never run.
 
 Desktop packages include their runtimes. Archive data normally lives in the OS
@@ -101,10 +102,10 @@ application-data folder, independently of the executable. Physical database back
 require a matching OS, CPU architecture and PostgreSQL major version; use logical
 transfers or re-import for other platforms. See [archive management](docs/catalogue-management.md).
 
-For hosting, the four-edition base catalogue measured **38.26 GiB**; the fully indexed
-development database measured **86.40 GiB** before WAL, backups and recovery headroom.
-See [storage measurements and deployment guidance](docs/hosting.md). Optional indexes
-and postcode coordinates are additional to the base catalogue.
+For storage planning, the historical four-edition base measured **38.26 GiB** and
+the indexed development database measured **86.40 GiB**. Size your deployment
+for the editions and indexes you plan to use, plus WAL, backups and recovery space.
+See the [storage measurements and deployment guidance](docs/hosting.md).
 
 ## Contribute or report a problem
 
