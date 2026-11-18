@@ -16,9 +16,9 @@ type sourceRecordKey struct {
 	id      int32
 }
 
-// loadPageRecords batches a native page across editions. Four blocks per SQL
-// statement and two in-flight statements are global to the page, rather than
-// multiplied by its edition count. Candidate order is restored by the caller.
+// loadPageRecords batches a native page across editions. Each statement reads
+// at most four blocks. The page shares two in-flight reads, or four when it
+// needs at least four full batches. The caller restores candidate order.
 func (a *API) loadPageRecords(ctx context.Context, requested map[int16][]int32) (out map[sourceRecordKey]result, loadErr error) {
 	ctx, end := a.searchPhase(ctx, "records")
 	defer func() { end(loadErr) }()
@@ -85,7 +85,11 @@ func (a *API) loadPageRecords(ctx context.Context, requested map[int16][]int32) 
 		}
 	}
 	group, childCtx := errgroup.WithContext(ctx)
-	group.SetLimit(2)
+	parallelReads := 2
+	if len(keys) >= 4*recordBlocksPerRead {
+		parallelReads = 4
+	}
+	group.SetLimit(parallelReads)
 	var mu sync.Mutex
 	for offset := 0; offset < len(keys); offset += recordBlocksPerRead {
 		batch := keys[offset:min(offset+recordBlocksPerRead, len(keys))]
