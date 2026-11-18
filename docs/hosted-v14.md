@@ -63,9 +63,10 @@ and [live catalogue](https://ukinfo.6153112.xyz/api/datasets). It contributes
 `hosted-2026-11-18.4` with ParadeDB.
 
 Private six-edition qualification matched 1,536 sampled fields and 896 paired
-pages. The one-client and four-client load tests each served 710 requests with
-zero errors, recording p95 of 87.94 ms and 174.54 ms. All six selected-partition
-source-cold probes passed, with a maximum of 244.597 ms under the three-second
+pages. The one-client and four-client load tests used shared caches and each
+served 710 requests with zero errors, recording p95 of 87.94 ms and 174.54 ms.
+All six selected-partition source-cold probes passed, with a maximum of
+244.597 ms under the three-second
 limit. The dictionary and ParadeDB caches were shared.
 
 The public release passed 12 basic checks, 64 source-reference checks, one

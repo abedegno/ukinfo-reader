@@ -11,9 +11,10 @@ See [public service controls](#public-service-through-cloudflare-tunnel).
 
 As of 18 November 2026, the live application is `hosted-2026-11-18.4` with
 ParadeDB. Guarded publication passed 12 basic checks, 64 source-reference
-checks, one grouped check and public smoke. Fixed six-edition qualification
-recorded p95 of 87.94 ms at one client and 174.54 ms at four. The selected v14
-source-cold probes had a 244.597 ms maximum against the three-second limit.
+checks, one grouped check and public smoke. With shared caches, the fixed
+six-edition load tests recorded p95 of 87.94 ms at one client and 174.54 ms at four.
+The selected v14 source-cold probes had a 244.597 ms maximum against the
+three-second limit.
 Those probes cleared v14 source partitions and used shared dictionary and
 ParadeDB caches.
 
