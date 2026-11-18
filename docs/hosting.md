@@ -27,8 +27,8 @@ for postcode coordinates and indexes, plus import/WAL headroom.
 The later [research-index measurements](research/review-validation.md) add **45.84 GiB**
 for complete grouping/archival lookup/business classification indexes. The combined
 local database, including the existing address/coordinate indexes and small development
-samples, measures **86.40 GiB**. These are initial four-edition measurements, before the 2003 import and later hosted
-projections; they are not the current five-edition footprint. The 38.26 GiB figure is that base catalogue. An 80 GB
+samples, measured **86.40 GiB**. These figures describe the historical four-edition
+development deployment before the 2003 import and later hosted projections. An 80 GB
 disk cannot hold the measured fully indexed installation; OS, WAL, temporary builds,
 growth and backups need additional space.
 The [local full-corpus measurements](research/compact-catalogue.md) tested the Go API and
@@ -90,7 +90,8 @@ start with **4 GB RAM** and enough disk for the measured catalogue, OS, WAL, tem
 index builds and recovery space. Treat the local 1 GiB benchmark cap as an experiment,
 not a production RAM recommendation. The 40 GB CX23 disk is smaller than the measured
 four-edition base database even before OS space. The 80 GB CX33 can accommodate the
-base catalogue, but **cannot hold the current 86.40 GiB fully indexed database**.
+base catalogue. The historical fully indexed development database measured
+**86.40 GiB**, which already exceeds that disk's capacity.
 For all optional features, budget a larger disk or attached volume; 150–200 GiB is a
 planning allowance to verify against actual WAL/build/retention needs, not a measured
 minimum. Keep recoverable backups on separate storage. Additional volumes change the
