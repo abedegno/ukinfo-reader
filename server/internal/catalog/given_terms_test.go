@@ -217,6 +217,9 @@ func TestGivenNamePostcodeMembershipWorkIntegration(t *testing.T) {
 			if len(f.termCTEs) == 0 {
 				t.Fatal("fixture did not exercise broad membership")
 			}
+			if !strings.Contains(f.termCTEs[0], "UNION ALL SELECT id FROM terms WHERE key >=") {
+				t.Fatal("broad given-name membership did not preserve disjoint dictionary lookups")
+			}
 			if !f.customCandidatePlan {
 				t.Fatal("broad given-name and postcode query did not select custom planning")
 			}
