@@ -217,6 +217,14 @@ func TestGivenNamePostcodeMembershipWorkIntegration(t *testing.T) {
 			if len(f.termCTEs) == 0 {
 				t.Fatal("fixture did not exercise broad membership")
 			}
+			if !f.customCandidatePlan {
+				t.Fatal("broad given-name and postcode query did not select custom planning")
+			}
+			q.Middle = "a"
+			filtered, status, err := a.buildCandidateFiltersWith(ctx, q, false)
+			if err != nil || status != 200 || len(filtered.termCTEs) == 0 || filtered.customCandidatePlan {
+				t.Fatalf("additional middle-name filter should keep default planning: status %d, %v", status, err)
+			}
 			sql := "WITH " + strings.Join(f.termCTEs, ",") + " SELECT id FROM entries WHERE " + strings.Join(f.conditions, " AND ") + " ORDER BY postcode_id,name_id,first_id,id LIMIT 51"
 			conn, err := pool.Acquire(ctx)
 			if err != nil {
