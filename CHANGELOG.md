@@ -1,5 +1,13 @@
 # Changelog
 
+## Hosted archive update (18 November 2026)
+
+- UK-Info Disk v14 (2008) went live in the [public archive](https://ukinfo.6153112.xyz).
+  The archive now covers six editions from 1998 to 2008, with 292,695,740 listings.
+- The [hosted v14 import](docs/hosted-v14.md) adds 43,744,633 listings, including
+  6,092,008 businesses, after excluding 54,869 residential entries flagged for
+  removal in the original data. The deployment uses ParadeDB for search.
+
 ## Unreleased
 
 - Add an explicit hosted v14 CO1 selection: exclude 54,869 flagged residential
@@ -9,8 +17,7 @@
 - Support the exact supplied UK-Info Disk v14 two-disc release, mastered March 2008:
   residential/business readers, raw-image preparation, source telephone-prefix
   extraction, folder imports and complete source validation. Preserve malformed
-  prefixes and partial-address precision as explicit warnings; keep the edition
-  off the hosted archive until a separately authorized import and acceptance.
+  prefixes and partial-address precision as explicit warnings.
 
 - Extend optional hybrid routing to validated grouped/address, alphabetical postcode/
   classification, broad exact-surname and nearby/address shapes; retain native
